@@ -17,7 +17,8 @@
   <div class="box">
     <h1>ROJ <span>// SWARM PROTOCOL</span></h1>
     <p>Twój rój okrętów-sadów żywi się planetami, słońcami, kometami i meteorytami rozsianymi w przestrzeni — a w pobliżu czasem pojawia się czarna dziura, której lepiej unikać. Każda pochłonięta planeta daje punkty ewolucji — inwestuj je w prędkość, moc i odporność termiczną roju, albo powołuj nowe jednostki.</p>
-    <button id="startBtn">WEJDŹ NA ORBITĘ</button>
+    <input id="nickInput" type="text" maxlength="24" autocomplete="off" placeholder="Ksywka dowódcy roju">
+    <button id="startBtn" disabled>WEJDŹ NA ORBITĘ</button>
   </div>
 </div>
 
@@ -33,6 +34,11 @@
   Prawy przycisk + przeciąg = obrót kamery · scroll = zoom<br>
   Lewy klik / zaznaczenie ramką = wybór statków<br>
   Klik na planetę = rozkaz kursu dla wybranych (lub całego roju)
+</div>
+
+<div class="hud panel" id="playersPanel">
+  <div class="title">GRACZE</div>
+  <ul id="playersListEl"></ul>
 </div>
 
 <div id="legend">

@@ -65,6 +65,28 @@ canvas{ display:block; touch-action:none; cursor: grab; }
   max-width: 220px; line-height: 1.5;
 }
 
+#playersPanel{
+  top: 132px; right: 18px;
+  padding: 12px 16px 10px;
+  min-width: 190px; max-width: 220px;
+  pointer-events:auto;
+}
+#playersPanel .title{
+  font-family: var(--font-head); font-weight:700; font-size: 12px;
+  letter-spacing: 0.08em; color: var(--ink); margin-bottom: 8px;
+  border-bottom: 1px solid rgba(79,227,198,0.2); padding-bottom: 6px;
+}
+#playersPanel ul{ list-style:none; margin:0; padding:0; }
+#playersPanel li{
+  display:flex; align-items:center; gap:7px;
+  font-family: var(--font-mono); font-size: 12px; color: var(--ink-dim);
+  margin: 5px 0;
+}
+#playersPanel li .dot{ width:8px; height:8px; border-radius:50%; flex:none; }
+#playersPanel li .name{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#playersPanel li b{ color: var(--teal); font-weight:600; }
+#playersPanel li.me .name{ color: var(--ink); font-weight:600; }
+
 #dock{
   position:fixed; z-index:6; left:50%; bottom:18px; transform: translateX(-50%);
   display:flex; gap:10px; align-items:flex-end;
@@ -159,6 +181,15 @@ canvas{ display:block; touch-action:none; cursor: grab; }
 }
 #banner h1 span{ color: var(--teal); }
 #banner p{ color: var(--ink-dim); font-size: 14px; line-height:1.6; margin: 0 0 22px; }
+#banner input{
+  display:block; width: 100%; max-width: 320px; margin: 0 auto 14px;
+  font-family: var(--font-mono); font-size: 14px; color: var(--ink);
+  background: rgba(255,255,255,0.05); border: 1px solid var(--panel-edge);
+  padding: 11px 14px; text-align:center; letter-spacing:0.02em;
+  clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+}
+#banner input::placeholder{ color: var(--ink-dim); }
+#banner input:focus{ outline:none; border-color: var(--teal); }
 #banner button{
   font-family: var(--font-head); font-weight:600; font-size: 14px;
   background: var(--teal); color: #04211c; border: none;
@@ -166,10 +197,15 @@ canvas{ display:block; touch-action:none; cursor: grab; }
   clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
 }
 #banner button:hover{ filter: brightness(1.08); }
+#banner button:disabled{
+  background: rgba(255,255,255,0.08); color: var(--ink-dim); cursor: not-allowed;
+}
+#banner button:disabled:hover{ filter:none; }
 #banner.hidden{ display:none; }
 
 @media (max-width: 720px){
   #hint{ display:none; }
+  #playersPanel{ display:none; }
   #dock{ flex-wrap: wrap; max-width: 96vw; justify-content:center; bottom: 10px; }
   .node{ width: 96px; padding: 8px 9px 9px; }
   #legend{ display:none; }

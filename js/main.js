@@ -12,6 +12,8 @@ import { updateBlackHoles } from "./world/blackholes.js";
 import { spawnInitialFleet, updateShips, reconcileFleetSize } from "./ships/swarm.js";
 import { refreshDock } from "./ui/dock.js";
 import { updateTelemetry } from "./ui/hud.js";
+import { initBanner } from "./ui/banner.js";
+import { renderPlayersList } from "./ui/players.js";
 import { maintainPlanetCount, flushDamage } from "./net/bodiesSync.js";
 import { updateRemoteShips, maybeBroadcastShips } from "./net/shipsBroadcast.js";
 import { initNet } from "./net/connect.js";
@@ -29,6 +31,7 @@ if(!NET_ENABLED){
 spawnInitialFleet();
 refreshDock();
 reconcileFleetSize();
+initBanner();
 
 if(NET_ENABLED){
   initNet();
@@ -61,15 +64,12 @@ function tick(){
   if(uiTimer > 0.4){
     uiTimer = 0;
     updateTelemetry();
+    renderPlayersList();
   }
 
   ctx.renderer.render(ctx.scene, ctx.camera);
   requestAnimationFrame(tick);
 }
-
-document.getElementById("startBtn").addEventListener("click", function(){
-  document.getElementById("banner").classList.add("hidden");
-});
 
 updateCamera(0);
 ctx.renderer.render(ctx.scene, ctx.camera);
