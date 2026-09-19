@@ -87,6 +87,45 @@ export function applyHealthVisual(obj){
   obj.crackMesh.material.opacity = Math.min(1, (1-healthFrac)*1.2);
 }
 
+// Poświata słońca z prawdziwym gradientem na geometrii 3D (efekt Fresnela:
+// jasno na "limbusie" - brzegu widocznej tarczy, ciemno na wprost kamery) —
+// w przeciwieństwie do jednolitego koloru z pulsującą przezroczystością,
+// który wygląda jak płaska, jednolita powłoka bez gradientu. Renderowana od
+// wewnątrz (BackSide) nieco większej sfery niż słońce, więc poświata "wypływa"
+// miękko poza widoczną krawędź.
+const CORONA_VERTEX_SHADER = `
+  varying vec3 vNormal;
+  void main(){
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+const CORONA_FRAGMENT_SHADER = `
+  uniform vec3 glowColor;
+  uniform float uPulse;
+  varying vec3 vNormal;
+  void main(){
+    float rim = 1.0 - max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0);
+    float alpha = pow(rim, 2.2) * uPulse;
+    gl_FragColor = vec4(glowColor, alpha);
+  }
+`;
+
+function buildCoronaMesh(radius){
+  const geo = new THREE.SphereGeometry(radius*1.5, 24, 16);
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      glowColor: { value: new THREE.Color(0xffcf7a) },
+      uPulse: { value: 0.9 }
+    },
+    vertexShader: CORONA_VERTEX_SHADER,
+    fragmentShader: CORONA_FRAGMENT_SHADER,
+    transparent: true, depthWrite: false,
+    blending: THREE.AdditiveBlending, side: THREE.BackSide
+  });
+  return new THREE.Mesh(geo, mat);
+}
+
 // Prawdziwe promienie 3D słońca: cienkie płaszczyzny (nie sprite/billboard)
 // wystrzelone w losowych kierunkach w przestrzeni i losowo obrócone wokół
 // własnej osi ("roll") — dzięki temu, w przeciwieństwie do płaskiego obrazka
@@ -172,12 +211,7 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   let sunHalo = null;
   let sunRays = null;
   if(kind === "sun"){
-    const coronaGeo = new THREE.SphereGeometry(radius*1.4, 20, 14);
-    const coronaMat = new THREE.MeshBasicMaterial({
-      color: 0xffcf7a, transparent:true, opacity:0.35,
-      blending: THREE.AdditiveBlending, depthWrite:false
-    });
-    corona = new THREE.Mesh(coronaGeo, coronaMat);
+    corona = buildCoronaMesh(radius);
     mesh.add(corona);
 
     const haloMat = new THREE.SpriteMaterial({
@@ -329,7 +363,7 @@ export function updateBodies(dt){
 
     if(p.corona){
       p.coronaPhase += dt*2.2;
-      p.corona.material.opacity = 0.28 + 0.14*Math.abs(Math.sin(p.coronaPhase));
+      p.corona.material.uniforms.uPulse.value = 0.75 + 0.35*Math.abs(Math.sin(p.coronaPhase));
       const cs = 1 + 0.05*Math.abs(Math.sin(p.coronaPhase*0.7));
       p.corona.scale.setScalar(cs);
     }
