@@ -119,8 +119,13 @@ export function updateBlackHoles(dt){
   for(let i=ctx.blackholes.length-1; i>=0; i--){
     const bh = ctx.blackholes[i];
     bh.life += dt;
-    bh.disk.rotation.z += dt*0.6;
-    bh.disk.material.map.offset.x += dt*bh.flowSpeed;
+    // Obracamy caly mesh (nie przesuwamy tekstury przez offset.x) - RingGeometry
+    // ma plaskie mapowanie UV (u,v z pozycji x,y, nie z kata), wiec przesuwanie
+    // offsetu slizga teksture jak plaski obrazek: jasny srodek wjezdza z boku i
+    // wypada po drugiej stronie, a prawdziwy srodek (dziura w geometrii) zawsze
+    // wyglada ciemno. Obrot wokol wlasnej osi zachowuje symetrie - jasny punkt
+    // tekstury (o ile w ogole widoczny) kraca sie razem z reszta wokol srodka.
+    bh.disk.rotation.z += dt*(0.6 + bh.flowSpeed);
     bh.pulsePhase += dt*3;
     bh.horizon.material.opacity = 0.6 + 0.35*Math.abs(Math.sin(bh.pulsePhase));
     bh.halo.material.opacity = 0.75 + 0.2*Math.abs(Math.sin(bh.pulsePhase*0.8));
