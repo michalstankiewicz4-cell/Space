@@ -35,7 +35,8 @@ js/
   ships/             player's ship swarm (movement, eating, bite-beam)
   ui/                HUD (telemetry, players list, collapsible panels, Wiki/Tech/Fleet buttons and modals,
                      legend, upgrade dock) and the Setup modal (banner.js)
-  net/               multiplayer: identity, "steward" election, world sync, ship broadcast
+  net/               multiplayer: identity, "steward" election, world sync, ship broadcast,
+                     Realtime reconnect handling
   main.js            entry point — wires the modules together and runs the game loop
 supabase/schema.sql  database schema (tables, RLS, RPC functions) to paste into the Supabase SQL Editor
 ```

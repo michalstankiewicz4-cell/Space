@@ -187,4 +187,10 @@ local (`localStorage`).
   still resolve to their own plain, unversioned URLs either way).
   `js/versionCheck.js` covers the "already open" case instead, by
   periodically re-fetching `js/version.js` itself and blocking play once
-  it detects this tab is older than what's actually deployed.
+  it detects this tab is older than what's actually deployed. Its "Refresh
+  now" button doesn't use `location.reload()` (that's just F5 — it can
+  still serve `js/main.js`/`css/style.css` from cache if they're within
+  the freshness window) but navigates to a `?_=<timestamp>` cache-busted
+  URL instead, which forces a genuine fetch since the browser has never
+  seen that exact URL. There's no standard cross-browser JS API for a true
+  hard reload (Ctrl+Shift+R) — this is the practical workaround.
