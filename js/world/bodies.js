@@ -3,7 +3,7 @@ import { removeItem } from "../core/utils.js";
 import { FIELD_RADIUS, MAX_PLANETS } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
-import { generateCrackTexture, makeRockGeometry, makeSunGlowTexture } from "./textures.js";
+import { generateCrackTexture, makeRockGeometry, makeSunHaloTexture, makeSunRayTexture } from "./textures.js";
 import { spawnTailParticle } from "../fx/particles.js";
 import { hideBolt } from "../ships/swarm.js";
 
@@ -87,6 +87,41 @@ export function applyHealthVisual(obj){
   obj.crackMesh.material.opacity = Math.min(1, (1-healthFrac)*1.2);
 }
 
+// Prawdziwe promienie 3D słońca: cienkie płaszczyzny (nie sprite/billboard)
+// wystrzelone w losowych kierunkach w przestrzeni i losowo obrócone wokół
+// własnej osi ("roll") — dzięki temu, w przeciwieństwie do płaskiego obrazka
+// zwróconego zawsze do kamery, mają realną paralaksę przy obrocie widoku.
+function buildSunRays(radius){
+  const group = new THREE.Group();
+  const rayTexture = makeSunRayTexture();
+  const rayCount = 12;
+  const up = new THREE.Vector3(0, 1, 0);
+
+  for(let i=0;i<rayCount;i++){
+    const long = i % 2 === 0;
+    const length = radius * (long ? (2.6+Math.random()*0.9) : (1.5+Math.random()*0.7));
+    const width = radius * (0.32 + Math.random()*0.16);
+
+    const geo = new THREE.PlaneGeometry(width, length);
+    geo.translate(0, length/2, 0); // (0,0,0) lokalnie = nasada promienia przy powierzchni
+
+    const mat = new THREE.MeshBasicMaterial({
+      map: rayTexture, transparent: true, opacity: 0.8,
+      blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
+    });
+    const plane = new THREE.Mesh(geo, mat);
+
+    const dir = new THREE.Vector3(Math.random()*2-1, Math.random()*2-1, Math.random()*2-1);
+    if(dir.lengthSq() < 0.0001) dir.set(0,1,0);
+    dir.normalize();
+    plane.quaternion.setFromUnitVectors(up, dir);
+    plane.rotateY(Math.random()*Math.PI*2); // losowy obrot wokol wlasnej osi (teraz = dir)
+
+    group.add(plane);
+  }
+  return group;
+}
+
 // Buduje mesh + wpis w `ctx.planets` z wiersza ciała (lokalnego lub z sieci).
 // `elapsedSec` przesuwa komety do miejsca, w którym powinny być "teraz"
 // (ważne dla gracza dołączającego do już trwającej gry).
@@ -128,11 +163,14 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   const scorchMesh = new THREE.Mesh(scorchGeo, scorchMat);
   mesh.add(scorchMesh);
 
-  // slonce: poswiata korony (3D, blisko powierzchni) + sprite z gradientowymi
-  // promieniami zwrocony do kamery (jak halo czarnej dziury - z kazdego kata
-  // wyglada tak samo dobrze) + wlasne swiatlo
+  // slonce: poswiata korony (3D, blisko powierzchni) + okragla łuna (sprite
+  // zwrocony do kamery - dla gladkiej poswiaty kat widzenia nie ma znaczenia)
+  // + prawdziwe promienie 3D (patrz buildSunRays - realne obiekty w
+  // przestrzeni, wiec przy obrocie kamery maja paralakse, nie sa plaskim
+  // obrazkiem) + wlasne swiatlo
   let corona = null;
-  let sunburst = null;
+  let sunHalo = null;
+  let sunRays = null;
   if(kind === "sun"){
     const coronaGeo = new THREE.SphereGeometry(radius*1.4, 20, 14);
     const coronaMat = new THREE.MeshBasicMaterial({
@@ -142,13 +180,16 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     corona = new THREE.Mesh(coronaGeo, coronaMat);
     mesh.add(corona);
 
-    const sunburstMat = new THREE.SpriteMaterial({
-      map: makeSunGlowTexture(), color: 0xffffff, transparent:true, opacity:0.85,
+    const haloMat = new THREE.SpriteMaterial({
+      map: makeSunHaloTexture(), color: 0xffffff, transparent:true, opacity:0.85,
       blending: THREE.AdditiveBlending, depthWrite:false
     });
-    sunburst = new THREE.Sprite(sunburstMat);
-    sunburst.scale.setScalar(radius*5.2);
-    mesh.add(sunburst);
+    sunHalo = new THREE.Sprite(haloMat);
+    sunHalo.scale.setScalar(radius*4.4);
+    mesh.add(sunHalo);
+
+    sunRays = buildSunRays(radius);
+    mesh.add(sunRays);
 
     const sunLight = new THREE.PointLight(0xffcf8a, 1.6, radius*40);
     mesh.add(sunLight);
@@ -180,7 +221,8 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     pendingDamage: 0,
     spin: (Math.random()-0.5)*0.6,
     corona: corona,
-    sunburst: sunburst,
+    sunHalo: sunHalo,
+    sunRays: sunRays,
     coronaPhase: Math.random()*10,
     dying: false,
     crackMesh: crackMesh,
@@ -292,11 +334,20 @@ export function updateBodies(dt){
       p.corona.scale.setScalar(cs);
     }
 
-    if(p.sunburst){
-      p.sunburst.material.rotation += dt*0.09;
+    if(p.sunHalo){
+      p.sunHalo.material.rotation += dt*0.09;
       const pulse = 1 + 0.06*Math.abs(Math.sin(p.coronaPhase*0.55));
-      p.sunburst.scale.setScalar(p.radius*5.2*pulse);
-      p.sunburst.material.opacity = 0.78 + 0.12*Math.abs(Math.sin(p.coronaPhase*0.9));
+      p.sunHalo.scale.setScalar(p.radius*4.4*pulse);
+      p.sunHalo.material.opacity = 0.78 + 0.12*Math.abs(Math.sin(p.coronaPhase*0.9));
+    }
+
+    if(p.sunRays){
+      // wlasny, nieco szybszy obrot niz baza slonca (p.spin) - realna
+      // geometria 3D, wiec przy obrocie kamery promienie maja paralakse
+      p.sunRays.rotation.y += dt*0.15;
+      p.sunRays.rotation.x += dt*0.045;
+      const pulse = 1 + 0.08*Math.abs(Math.sin(p.coronaPhase*0.7));
+      p.sunRays.scale.setScalar(pulse);
     }
 
     if(p.moving){
