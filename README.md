@@ -24,12 +24,25 @@ js/
   ui/                HUD (telemetria, licznik graczy) i dok z drzewkiem ulepszeń
   net/               multiplayer: tożsamość, wybór "stewarda", synchronizacja świata, transmisja statków
   main.js            punkt wejścia — spina moduły i uruchamia pętlę gry
+js/content.js        parametry generowania ciał (promienie, HP, wygląd promieni/warkoczy/szumu terenu) — patrz "Edytor obiektów" niżej
 supabase/schema.sql  schemat bazy (tabele, RLS, funkcje RPC) do wklejenia w Supabase SQL Editor
 ```
 
 Dodanie nowej mechaniki (np. kolejny typ ulepszenia, nowy rodzaj ciała
 niebieskiego) zwykle oznacza edycję jednego pliku w odpowiednim folderze,
 bez dotykania reszty.
+
+## Edytor obiektów
+
+[`editor.html`](editor.html) to osobne narzędzie deweloperskie (nie link z
+poziomu gry) do dostrajania wyglądu proceduralnie generowanych ciał —
+suwak na każdy parametr w [`js/content.js`](js/content.js), z podglądem 3D
+na żywo. Podgląd korzysta z tych samych funkcji co gra, więc to co widać
+w edytorze wygląda identycznie w rozgrywce.
+
+Ponieważ strona nie ma backendu, przycisk "Pobierz content.js" ściąga
+zmieniony plik do Pobranych — trzeba go ręcznie podmienić w miejsce
+`js/content.js` w repo, żeby zmiany trafiły do gry.
 
 ## Multiplayer / Supabase setup
 
