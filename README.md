@@ -4,69 +4,85 @@
 
 Play: https://michalstankiewicz4-cell.github.io/Space/
 
-## Struktura projektu
+See [`CHANGELOG.md`](CHANGELOG.md) for the version history, and
+[`CLAUDE.md`](CLAUDE.md) for a condensed technical/context brief (useful
+background if you're picking this project back up after a while).
 
-Zwykła statyczna strona — bez kroku budowania, bez npm. `index.html` to
-cienki szkielet (DOM + CSS), cała logika jest w natywnych modułach ES pod
-`js/`, ładowanych przez `<script type="module" src="js/main.js">`:
+## Project structure
+
+A plain static site — no build step, no npm. `index.html` is a thin shell
+(DOM + CSS); all the logic lives in native ES modules under `js/`, loaded
+via `<script type="module" src="js/main.js">`:
 
 ```
-css/style.css        style gry (HUD, drzewko ulepszeń, banner startowy)
+css/style.css        game styling (HUD, upgrade dock, start banner, Setup modal)
 js/
-  config.js          stałe dostrajające rozgrywkę (drzewko ulepszeń, promienie, interwały sieciowe)
-  i18n.js            teksty UI (domyślnie EN, przełącznik na PL — patrz banner startowy)
-  env.js             adres i klucz Supabase (anon key — bezpieczny do commitowania, patrz niżej)
-  supabaseClient.js  singleton klienta Supabase
-  core/              współdzielony stan gry (scena/kolekcje bytów, punkty gracza) + drobne narzędzia
-  scene/             kamera, renderer, sterowanie myszką/zaznaczanie
-  world/             logika ciał niebieskich (mesh/tekstury/animacja) — dane per-typ w js/bodies/
-  bodies/            7 typów ciał, każdy w osobnym pliku (sun.js, icePlanet.js, neutralPlanet.js,
-                     volcanicPlanet.js, comet.js, meteoroid.js, blackhole.js) — patrz "Edytor obiektów" niżej
-  content.js         zbiera pliki z js/bodies/ w jedno miejsce, z którego czyta gra i edytor
-  fx/                cząsteczki, odłamki, fala uderzeniowa, pył — efekty rozpadu planety
-  ships/             rój statków gracza (ruch, zjadanie, promień-piorun)
-  ui/                HUD (telemetria, licznik graczy) i dok z drzewkiem ulepszeń
-  net/               multiplayer: tożsamość, wybór "stewarda", synchronizacja świata, transmisja statków
-  main.js            punkt wejścia — spina moduły i uruchamia pętlę gry
-supabase/schema.sql  schemat bazy (tabele, RLS, funkcje RPC) do wklejenia w Supabase SQL Editor
+  version.js         current version number (shown next to the title) — bump on every meaningful release
+  settings.js         local player prefs (mouse invert/swap), persisted in localStorage
+  config.js          gameplay tuning constants (upgrade tree, radii, network intervals)
+  i18n.js            UI text (English by default, Polish toggle — see the start screen)
+  env.js             Supabase URL/key (anon key — safe to commit, see below)
+  supabaseClient.js  Supabase client singleton
+  core/              shared game state (scene/entity collections, player points) + small utilities
+  scene/             camera, renderer, mouse controls/selection, hover tooltip
+  world/             celestial body logic (mesh/textures/animation) — per-type data lives in js/bodies/
+  bodies/            7 body types, one file each (sun.js, icePlanet.js, neutralPlanet.js,
+                     volcanicPlanet.js, comet.js, meteoroid.js, blackhole.js) — see "Object editor" below
+  content.js         aggregates js/bodies/ into one place the game and the editor both read from
+  fx/                particles, debris, shockwaves, dust — planet-breakup effects
+  ships/             player's ship swarm (movement, eating, bite-beam)
+  ui/                HUD (telemetry, players list, collapsible panels, legend/Wiki toggle) and the upgrade dock
+  net/               multiplayer: identity, "steward" election, world sync, ship broadcast
+  main.js            entry point — wires the modules together and runs the game loop
+supabase/schema.sql  database schema (tables, RLS, RPC functions) to paste into the Supabase SQL Editor
 ```
 
-Dodanie nowej mechaniki (np. kolejny typ ulepszenia, nowy rodzaj ciała
-niebieskiego) zwykle oznacza edycję jednego pliku w odpowiednim folderze,
-bez dotykania reszty.
+Adding a new mechanic (e.g. another upgrade type, a new kind of celestial
+body) usually means editing a single file in the right folder, without
+touching the rest.
 
-## Edytor obiektów
+## Object editor
 
-[`editor.html`](editor.html) to osobne narzędzie deweloperskie (nie link z
-poziomu gry) do dostrajania wyglądu proceduralnie generowanych ciał —
-osobna zakładka i suwak na każdy parametr dla każdego z 7 typów w
-[`js/bodies/`](js/bodies), z podglądem 3D na żywo. Podgląd korzysta z tych
-samych funkcji co gra, więc to co widać w edytorze wygląda identycznie w
-rozgrywce.
+[`editor.html`](editor.html) is a separate developer tool (not linked from
+the game itself) for tuning the look of the procedurally generated bodies —
+one tab and one slider per parameter for each of the 7 types in
+[`js/bodies/`](js/bodies), with a live 3D preview. The preview reuses the
+exact same functions as the game, so what you see in the editor looks
+identical in actual play.
 
-Ponieważ strona nie ma backendu, przycisk "Download" ściąga plik tekstowy
-z gotowymi do wklejenia blokami `export const ... = {...}` — po jednym na
-każdy plik w `js/bodies/`, które trzeba ręcznie podmienić w repo.
+Since the site has no backend, the "Download" button produces a text file
+with ready-to-paste `export const ... = {...}` blocks — one per file in
+`js/bodies/` — which you then manually swap into the repo.
 
 ## Multiplayer / Supabase setup
 
-Świat (planety, komety, słońca, meteoryty, czarne dziury) i statki innych
-graczy są współdzielone na żywo przez [Supabase](https://supabase.com), bez
-żadnego logowania (niewidoczna sesja anonimowa). Punkty i poziomy ulepszeń
-zostają lokalne w przeglądarce (`localStorage`), jak wcześniej.
+The world (planets, comets, suns, meteoroids, black holes) and other
+players' ships are shared live via [Supabase](https://supabase.com), with
+no login at all (an invisible anonymous session). Points and upgrade
+levels stay local to the browser (`localStorage`), as before.
 
-Żeby uruchomić własną instancję:
+To run your own instance:
 
-1. Załóż darmowy projekt na [supabase.com](https://supabase.com).
-2. W **SQL Editor** wklej i uruchom zawartość [`supabase/schema.sql`](supabase/schema.sql).
-3. **Authentication → Sign In / Providers** → włącz **Anonymous Sign-ins**.
-4. **Database → Replication** → włącz Realtime dla tabeli `bodies`
+1. Create a free project at [supabase.com](https://supabase.com).
+2. In the **SQL Editor**, paste and run the contents of
+   [`supabase/schema.sql`](supabase/schema.sql).
+3. **Authentication → Sign In / Providers** → enable **Anonymous Sign-ins**.
+4. **Database → Replication** → enable Realtime for the `bodies` table
    (insert / update / delete).
-5. **Project Settings → API** → skopiuj **Project URL** i **anon public key**
-   i wklej je w [`js/env.js`](js/env.js) w stałych `SUPABASE_URL` / `SUPABASE_ANON_KEY`
-   (albo ustaw `window.ROJ_ENV = {SUPABASE_URL, SUPABASE_ANON_KEY}` przed
-   załadowaniem gry, żeby wskazać na inny projekt bez edytowania pliku).
+5. **Project Settings → API** → copy the **Project URL** and **anon public
+   key** and paste them into [`js/env.js`](js/env.js) as the
+   `SUPABASE_URL` / `SUPABASE_ANON_KEY` constants (or set
+   `window.ROJ_ENV = {SUPABASE_URL, SUPABASE_ANON_KEY}` before the game
+   loads, to point at a different project without editing the file).
 
-Anon key jest z założenia publiczny (bezpieczeństwo zapewniają reguły RLS
-zdefiniowane w `schema.sql`), więc można go bezpiecznie trzymać w kodzie
-statycznej strony na GitHub Pages.
+The anon key is public by design (security comes from the RLS policies
+defined in `schema.sql`), so it's safe to keep in the code of a static
+site hosted on GitHub Pages.
+
+## Versioning
+
+Bump [`js/version.js`](js/version.js) and add an entry to
+[`CHANGELOG.md`](CHANGELOG.md) for every meaningful change (a new feature,
+a balance change, a fix worth telling apart from the previous build) —
+this is what tells two GitHub Pages deploys apart, especially right after
+a push while caches can still lag.

@@ -1,0 +1,54 @@
+# Changelog
+
+All notable changes to the game, version by version. The version number is
+shown next to the title on the start screen and in the browser tab title
+(see [`js/version.js`](js/version.js)).
+
+## [1.1.0]
+
+### Added
+- Centered **Setup** modal window (replacing the panel built into the
+  banner), with **Language**, **Mouse** and **Help** tabs.
+- Mouse settings: invert X/Y camera rotation (right-drag) and swap
+  left/right mouse button — persisted locally (`js/settings.js`).
+- **Help** tab in Setup with the controls explanation (previously a
+  permanent hint box on the HUD).
+- **Wiki** button that shows/hides the celestial body legend (previously
+  always visible in the bottom-left corner).
+- Vertical collapse toggle on the telemetry and players HUD panels.
+- Hover tooltip on any celestial body: type, health and estimated point
+  value (planets/suns/comets/meteoroids), or remaining lifetime and a
+  hazard warning (black holes).
+
+### Changed
+- Players panel moved to the top-right (the spot freed up by removing the
+  permanent controls hint).
+- On-screen messages (planet devoured, orders, selection) are now
+  centered on screen instead of pinned to the top-left.
+- Panel collapse buttons enlarged (previously barely clickable).
+
+## [1.0.0]
+
+First versioned snapshot of the game — covers all work up to this point:
+
+### Added
+- Multiplayer via Supabase (anonymous session, no login): a shared, live
+  world (planets, suns, comets, meteoroids, black holes) and other
+  players' swarms visible in real time; a "steward" election handles
+  world upkeep without a dedicated backend.
+- Nickname required before entering the game, plus a players-online panel.
+- Multiplayer hardening (RLS policies, protection against a malicious client).
+- Animated, volumetric-looking sun corona and gradient rays (real 3D
+  geometry, not a flat sprite).
+- Fixed black hole disk rotation (texture no longer slides sideways).
+- Comets reworked to look like rocky meteoroids with a fading tail.
+- Neutral planets with a realistic surface (oceans, continents, polar
+  caps, equatorial deserts) generated with simplex noise.
+- Standalone parameter editor (`editor.html`) for all 7 body types, with
+  a live 3D preview and file-download export.
+- Body types split into 7 separate files/objects (`js/bodies/*.js`).
+- Full English UI by default, with a Polish toggle.
+- Small quality-of-life additions: a dice button to randomize the
+  nickname, Escape reopens the start screen, inverted horizontal
+  right-drag camera rotation.
+- Introduced the version number shown in the game's title.
