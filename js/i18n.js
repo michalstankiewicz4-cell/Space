@@ -10,7 +10,8 @@ const STRINGS = {
       nickSuggestionPrefix: "e.g.",
       start: "ENTER ORBIT",
       setup: "⚙ Setup",
-      language: "Language"
+      language: "Language",
+      nickRejected: "Please choose a different nickname."
     },
     setup: {
       title: "Setup",
@@ -74,7 +75,8 @@ const STRINGS = {
       nickSuggestionPrefix: "np.",
       start: "WEJDŹ NA ORBITĘ",
       setup: "⚙ Ustawienia",
-      language: "Język"
+      language: "Język",
+      nickRejected: "Wybierz inny nick."
     },
     setup: {
       title: "Ustawienia",

@@ -1,4 +1,5 @@
 import { IDENTITY_ADJECTIVES, IDENTITY_NOUNS } from "../config.js";
+import { containsProfanity } from "../moderation.js";
 
 // Anonymous client identifier (persisted in this browser) — used to elect
 // the world's "steward" and to tell other players' ships apart.
@@ -32,7 +33,7 @@ export function hasConfirmedNick(){
 
 export function confirmNick(nick){
   const trimmed = (nick||"").trim().slice(0, 24);
-  if(!trimmed) return null;
+  if(!trimmed || containsProfanity(trimmed)) return null;
   myIdentity.nick = trimmed;
   writeStored("roj-nick", trimmed);
   return trimmed;

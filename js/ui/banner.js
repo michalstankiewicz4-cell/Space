@@ -52,6 +52,7 @@ function switchSetupTab(tab){
 export function initBanner(){
   const banner = document.getElementById("banner");
   const nickInput = document.getElementById("nickInput");
+  const nickError = document.getElementById("nickError");
   const startBtn = document.getElementById("startBtn");
   const setupBtn = document.getElementById("setupBtn");
   const setupModal = document.getElementById("setupModal");
@@ -74,6 +75,7 @@ export function initBanner(){
 
   nickInput.addEventListener("input", function(){
     startBtn.disabled = nickInput.value.trim().length === 0;
+    nickError.classList.add("hidden");
   });
 
   nickInput.addEventListener("keydown", function(e){
@@ -81,7 +83,11 @@ export function initBanner(){
   });
 
   startBtn.addEventListener("click", function(){
-    if(!confirmNick(nickInput.value)) return;
+    if(!confirmNick(nickInput.value)){
+      nickError.classList.remove("hidden");
+      return;
+    }
+    nickError.classList.add("hidden");
     banner.classList.add("hidden");
   });
 

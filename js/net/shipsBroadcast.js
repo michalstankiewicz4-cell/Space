@@ -7,6 +7,7 @@ import { clientId, myIdentity } from "./identity.js";
 import { state } from "../core/gameState.js";
 import { updatePlayersHud } from "../ui/hud.js";
 import { roomChannel } from "./connect.js";
+import { containsProfanity } from "../moderation.js";
 import { t } from "../i18n.js";
 
 function makeGhostShipMesh(colorHex){
@@ -49,7 +50,12 @@ export function handleRemoteShips(payload){
   }
   rp.lastSeen = Date.now();
   if(typeof payload.nick === "string" && payload.nick.trim()){
-    rp.nick = payload.nick.trim().slice(0, NET_MAX_NICK_LENGTH);
+    // Own-nick confirmation already blocks profanity (see net/identity.js),
+    // but that's a courtesy, not a security boundary — a modified client
+    // can broadcast anything straight over the WebSocket. Re-checking here
+    // means everyone else still sees a clean fallback name regardless.
+    const candidate = payload.nick.trim().slice(0, NET_MAX_NICK_LENGTH);
+    rp.nick = containsProfanity(candidate) ? t("players.defaultName") : candidate;
   }
   rp.points = Number.isFinite(Number(payload.points)) ? Number(payload.points) : rp.points;
   rp.eaten = Number.isFinite(Number(payload.eaten)) ? Number(payload.eaten) : rp.eaten;

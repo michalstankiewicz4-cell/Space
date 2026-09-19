@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=1.2.2">
+<link rel="stylesheet" href="css/style.css?v=1.3.0">
 </head>
 <body>
 
@@ -21,6 +21,7 @@
       <input id="nickInput" type="text" maxlength="24" autocomplete="off" placeholder="Swarm commander's nickname">
       <button id="nickRandomBtn" type="button" title="Random nickname">🎲</button>
     </div>
+    <div id="nickError" class="hidden">Please choose a different nickname.</div>
     <div id="bannerButtons">
       <button id="startBtn" disabled>ENTER ORBIT</button>
       <button id="setupBtn" type="button">⚙ Setup</button>
@@ -139,6 +140,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script type="module" src="js/main.js?v=1.2.2"></script>
+<script type="module" src="js/main.js?v=1.3.0"></script>
 </body>
 </html>

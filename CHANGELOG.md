@@ -4,6 +4,18 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.3.0]
+
+### Added
+- Nickname profanity filter (`js/moderation.js`): rejects offensive
+  nicknames (English/Polish, with basic leetspeak-evasion handling) when a
+  player tries to confirm their own nick, with an on-screen message. Since
+  a modified client could still broadcast a raw nick straight over the
+  WebSocket regardless, every remote player's nick is also re-checked
+  before display and swapped for the generic fallback name if it's flagged
+  — the real defense, matching this project's existing "never trust
+  broadcast data" approach to multiplayer.
+
 ## [1.2.2]
 
 ### Fixed

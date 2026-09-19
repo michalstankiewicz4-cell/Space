@@ -6,6 +6,7 @@ export function applyStaticText(){
   document.getElementById("bannerDesc").textContent = t("banner.desc");
   document.getElementById("nickInput").placeholder = t("banner.nickPlaceholder");
   document.getElementById("startBtn").textContent = t("banner.start");
+  document.getElementById("nickError").textContent = t("banner.nickRejected");
   document.getElementById("setupBtn").textContent = t("banner.setup");
   document.getElementById("setupLangLabel").textContent = t("banner.language");
 
