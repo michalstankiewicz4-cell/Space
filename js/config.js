@@ -41,6 +41,15 @@ export const NET_PLANET_TOPUP_S = 1.0;
 export const NET_REMOTE_PLAYER_TIMEOUT_MS = 6000;
 export const NET_GHOST_LERP_SPEED = 6;
 
+// Twarde limity na dane przychodzące od innych klientów przez broadcast —
+// broadcast nie ma żadnej walidacji po stronie serwera, więc nadawca może
+// wysłać cokolwiek. Te limity nie ograniczają uczciwej gry (nikt nie ma
+// więcej niż kilkadziesiąt statków), ale nie pozwalają jednej złośliwej
+// wiadomości zawiesić przeglądarki wszystkich innych graczy.
+export const NET_MAX_REMOTE_SHIPS = 40;
+export const NET_MAX_REMOTE_PLAYERS = 60;
+export const NET_MAX_NICK_LENGTH = 24;
+
 // Czarne dziury: pierwszy spawn i odstęp między kolejnymi
 export const BLACKHOLE_FIRST_SPAWN_MIN_S = 18;
 export const BLACKHOLE_FIRST_SPAWN_RANGE_S = 12;

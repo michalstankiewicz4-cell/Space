@@ -1,5 +1,8 @@
 import { ctx } from "../core/context.js";
-import { NET_SHIP_BROADCAST_MS, NET_REMOTE_PLAYER_TIMEOUT_MS, NET_GHOST_LERP_SPEED } from "../config.js";
+import {
+  NET_SHIP_BROADCAST_MS, NET_REMOTE_PLAYER_TIMEOUT_MS, NET_GHOST_LERP_SPEED,
+  NET_MAX_REMOTE_SHIPS, NET_MAX_REMOTE_PLAYERS, NET_MAX_NICK_LENGTH
+} from "../config.js";
 import { clientId, myIdentity } from "./identity.js";
 import { state } from "../core/gameState.js";
 import { updatePlayersHud } from "../ui/hud.js";
@@ -17,18 +20,39 @@ function makeGhostShipMesh(colorHex){
   return mesh;
 }
 
+function isValidHexColor(c){
+  return typeof c === "string" && /^#[0-9a-fA-F]{6}$/.test(c);
+}
+
+function safeCoord(v){
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.max(-1000, Math.min(1000, n)) : 0;
+}
+
+// Broadcast nie ma żadnej walidacji po stronie serwera — payload może
+// przygotować dowolny klient, wprost przez WebSocket, z pominięciem naszego
+// UI. Dlatego wszystko stąd traktujemy jako niezaufane i przycinamy/waliduj-
+// emy zanim cokolwiek trafi na scenę (patrz NET_MAX_* w config.js).
 export function handleRemoteShips(payload){
-  if(!payload || payload.id === clientId) return;
+  if(!payload || typeof payload.id !== "string" || payload.id === clientId) return;
   let rp = ctx.remotePlayers[payload.id];
   if(!rp){
-    rp = ctx.remotePlayers[payload.id] = { meshes: [], color: payload.color || "#ff7a45", nick: payload.nick || "Gracz" };
+    if(Object.keys(ctx.remotePlayers).length >= NET_MAX_REMOTE_PLAYERS) return;
+    rp = ctx.remotePlayers[payload.id] = {
+      meshes: [],
+      color: isValidHexColor(payload.color) ? payload.color : "#ff7a45",
+      nick: "Gracz"
+    };
     updatePlayersHud();
   }
   rp.lastSeen = Date.now();
-  rp.nick = payload.nick || rp.nick;
-  rp.points = payload.points;
-  rp.eaten = payload.eaten;
-  const list = payload.ships || [];
+  if(typeof payload.nick === "string" && payload.nick.trim()){
+    rp.nick = payload.nick.trim().slice(0, NET_MAX_NICK_LENGTH);
+  }
+  rp.points = Number.isFinite(Number(payload.points)) ? Number(payload.points) : rp.points;
+  rp.eaten = Number.isFinite(Number(payload.eaten)) ? Number(payload.eaten) : rp.eaten;
+
+  const list = Array.isArray(payload.ships) ? payload.ships.slice(0, NET_MAX_REMOTE_SHIPS) : [];
   while(rp.meshes.length < list.length) rp.meshes.push(makeGhostShipMesh(rp.color));
   while(rp.meshes.length > list.length){
     const mOld = rp.meshes.pop();
@@ -38,7 +62,8 @@ export function handleRemoteShips(payload){
   for(let i=0;i<list.length;i++){
     const mesh = rp.meshes[i];
     if(!mesh.userData.target) mesh.userData.target = new THREE.Vector3();
-    mesh.userData.target.set(list[i][0], list[i][1], list[i][2]);
+    const p = Array.isArray(list[i]) ? list[i] : [];
+    mesh.userData.target.set(safeCoord(p[0]), safeCoord(p[1]), safeCoord(p[2]));
     if(!mesh.userData.inited){
       mesh.position.copy(mesh.userData.target);
       mesh.userData.inited = true;

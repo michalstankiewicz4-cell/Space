@@ -48,6 +48,60 @@ create policy "world_meta readable by anyone" on world_meta for select using (tr
 drop policy if exists "world_meta writable by authed" on world_meta;
 create policy "world_meta writable by authed" on world_meta for update to authenticated using (true);
 
+-- Rozsądne granice wartości na wierszach `bodies`. RLS pilnuje TEGO, KTO może
+-- pisać (każdy z sesją anonimową), ale nie tego, CO wpisze — bez tych CHECK
+-- ktokolwiek znający klucz anon (jest publiczny z założenia) mógłby wstawić
+-- np. radius=1e9 albo health ujemny i popsuć renderowanie u wszystkich graczy.
+-- Zakresy dobrane z marginesem ponad to, co generuje sama gra (js/world/*).
+alter table bodies drop constraint if exists bodies_radius_check;
+alter table bodies add constraint bodies_radius_check check (radius > 0 and radius <= 6);
+
+alter table bodies drop constraint if exists bodies_temp_check;
+alter table bodies add constraint bodies_temp_check check (temp >= -1 and temp <= 1);
+
+alter table bodies drop constraint if exists bodies_health_check;
+alter table bodies add constraint bodies_health_check check (health is null or (health >= 0 and health <= 200));
+
+alter table bodies drop constraint if exists bodies_max_health_check;
+alter table bodies add constraint bodies_max_health_check check (max_health is null or (max_health > 0 and max_health <= 200));
+
+alter table bodies drop constraint if exists bodies_value_bonus_check;
+alter table bodies add constraint bodies_value_bonus_check check (value_bonus >= 0 and value_bonus <= 100);
+
+alter table bodies drop constraint if exists bodies_pos_check;
+alter table bodies add constraint bodies_pos_check check (
+  abs(pos_x) <= 100 and abs(pos_y) <= 100 and abs(pos_z) <= 100
+);
+
+alter table bodies drop constraint if exists bodies_vel_check;
+alter table bodies add constraint bodies_vel_check check (
+  (vel_x is null or abs(vel_x) <= 20) and
+  (vel_y is null or abs(vel_y) <= 20) and
+  (vel_z is null or abs(vel_z) <= 20)
+);
+
+alter table bodies drop constraint if exists bodies_max_life_check;
+alter table bodies add constraint bodies_max_life_check check (max_life is null or (max_life > 0 and max_life <= 120));
+
+-- Twardy limit liczby ciał naraz — bez tego ktokolwiek mógłby wstawiać
+-- (nawet poprawne, w granicach powyższych CHECK) wiersze bez końca i zalać
+-- wspólny świat tysiącami obiektów, co zawiesza renderowanie u wszystkich.
+create or replace function enforce_bodies_cap()
+returns trigger
+language plpgsql
+as $$
+begin
+  if (select count(*) from bodies) >= 40 then
+    raise exception 'Limit ciał w świecie osiągnięty (40)';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_bodies_cap on bodies;
+create trigger trg_bodies_cap before insert on bodies
+  for each row execute function enforce_bodies_cap();
+
 -- Realtime: klienci muszą dostawać insert/update/delete dla `bodies` na żywo.
 do $$
 begin
@@ -63,6 +117,11 @@ end $$;
 -- zadał ostateczny cios (killed = true => tylko on liczy sobie punkty).
 -- Gdy zdrowie spada do zera, wiersz jest od razu usuwany (DELETE), co
 -- wszystkim klientom uruchamia wspólną animację wybuchu przez Realtime.
+-- `p_amount` jest przycinany do rozsądnego maksimum na jedno wywołanie —
+-- klient wysyła je co ~150ms (patrz NET_DAMAGE_FLUSH_MS), więc nawet mocno
+-- rozwinięty gracz (max. ulepszenia + cały rój) nie zbliża się do tego limitu,
+-- ale ktoś wołający RPC bezpośrednio z dużą wartością nie zabije niczym
+-- jednym wywołaniem.
 create or replace function bite_body(p_body_id uuid, p_amount float)
 returns table(id uuid, health float, killed boolean)
 language plpgsql
@@ -70,8 +129,9 @@ security invoker
 as $$
 declare
   v_health float;
+  v_amount float := least(greatest(p_amount, 0), 300);
 begin
-  update bodies set health = greatest(0, bodies.health - p_amount), updated_at = now()
+  update bodies set health = greatest(0, bodies.health - v_amount), updated_at = now()
     where bodies.id = p_body_id and bodies.health is not null
     returning bodies.health into v_health;
 
