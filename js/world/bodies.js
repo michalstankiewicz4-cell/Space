@@ -1,7 +1,7 @@
 import { ctx } from "../core/context.js";
 import { removeItem } from "../core/utils.js";
 import { FIELD_RADIUS, MAX_PLANETS } from "../config.js";
-import { CONTENT } from "../content.js";
+import { CONTENT, BODY_TYPES } from "../content.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
 import {
@@ -11,34 +11,40 @@ import {
 import { spawnTailParticle } from "../fx/particles.js";
 import { hideBolt } from "../ships/swarm.js";
 
-export function pickBodyKind(){
-  const r = Math.random();
-  const w = CONTENT.spawnWeights;
-  if(r < w.sun) return "sun";
-  if(r < w.sun + w.comet) return "comet";
-  if(r < w.sun + w.comet + w.meteoroid) return "meteoroid";
-  return "planet";
+// Picks one of the 7 body types (everything in js/bodies/* except
+// blackhole.js, which spawns on its own timer — see world/blackholes.js),
+// weighted by .spawnWeight. Weights don't need to sum to 1.
+export function pickBodyType(){
+  const total = BODY_TYPES.reduce(function(s, t){ return s + t.spawnWeight; }, 0);
+  let r = Math.random() * total;
+  for(let i=0;i<BODY_TYPES.length;i++){
+    if(r < BODY_TYPES[i].spawnWeight) return BODY_TYPES[i];
+    r -= BODY_TYPES[i].spawnWeight;
+  }
+  return BODY_TYPES[BODY_TYPES.length-1];
 }
 
-export function bodyParams(kind){
-  if(kind === "sun"){
-    const s = CONTENT.sun;
-    return { radiusMin:s.radiusMin, radiusMax:s.radiusMax, forcedTemp:1, healthMult:s.healthMult, valueBonus:s.valueBonus, emissive:s.emissive };
-  }
-  if(kind === "meteoroid"){
-    const m = CONTENT.meteoroid;
-    return { radiusMin:m.radiusMin, radiusMax:m.radiusMax, forcedTemp:null, tempRange:m.tempRange, healthMult:m.healthMult, valueBonus:m.valueBonus, emissive:m.emissive };
-  }
-  if(kind === "comet"){
-    const cm = CONTENT.comet;
-    return { radiusMin:cm.radiusMin, radiusMax:cm.radiusMax, forcedTemp:-1, healthMult:cm.healthMult, valueBonus:cm.valueBonus, emissive:cm.emissive };
-  }
-  const p = CONTENT.planet;
-  return { radiusMin:p.radiusMin, radiusMax:p.radiusMax, forcedTemp:null, tempRange:p.tempRange, healthMult:p.healthMult, valueBonus:p.valueBonus, emissive:p.emissive };
+// A "planet" DB row only stores kind+temp, not which of the 3 planet
+// variants (ice/neutral/volcanic) generated it — so it's re-derived from
+// temp whenever needed (e.g. when a client materializes a row it didn't
+// generate itself). Falls back to sign-based classification so it always
+// resolves to exactly one variant even if the ranges are edited to overlap
+// or leave a gap.
+export function variantForTemp(temp){
+  const np = CONTENT.neutralPlanet;
+  if(temp >= np.tempMin && temp <= np.tempMax) return np;
+  return temp < 0 ? CONTENT.icePlanet : CONTENT.volcanicPlanet;
+}
+
+export function bodyParams(kind, temp){
+  if(kind === "sun") return CONTENT.sun;
+  if(kind === "meteoroid") return CONTENT.meteoroid;
+  if(kind === "comet") return CONTENT.comet;
+  return variantForTemp(temp!=null ? temp : 0);
 }
 
 export function tempColor(t){
-  // t w zakresie -1 (lod) .. 1 (ogien)
+  // t ranges -1 (ice) .. 1 (lava)
   if(t < -0.15){
     const k = Math.min(1, (-t));
     return new THREE.Color().setHSL(0.58 - 0.03*k, 0.75, 0.55 - 0.1*k);
@@ -49,17 +55,18 @@ export function tempColor(t){
   return new THREE.Color().setHSL(0.33, 0.35, 0.5);
 }
 
-// Czysta funkcja: losuje parametry nowego ciała (bez tworzenia mesha/sceny).
-// Używana zarówno do zasiewania sieciowego (INSERT do Supabase), jak i do
-// trybu lokalnego (offline, gdy multiplayer nie jest skonfigurowany).
-export function randomPlanetSpawnData(forcedKind){
-  const kind = forcedKind || pickBodyKind();
-  const params = bodyParams(kind);
-  const radius = params.radiusMin + Math.random()*(params.radiusMax-params.radiusMin);
-  const temp = params.forcedTemp!==null && params.forcedTemp!==undefined ? params.forcedTemp : (Math.random()*2-1)*(params.tempRange||1);
+// Pure function: rolls the parameters for a new body (no mesh/scene side
+// effects). Used both for network seeding (INSERT into Supabase) and for
+// offline mode (multiplayer not configured). `forcedType` is one of the
+// exported CONTENT.* objects (e.g. CONTENT.icePlanet) — pass it to force a
+// specific type instead of rolling one via pickBodyType().
+export function randomPlanetSpawnData(forcedType){
+  const type = forcedType || pickBodyType();
+  const radius = type.radiusMin + Math.random()*(type.radiusMax-type.radiusMin);
+  const temp = type.tempMin + Math.random()*(type.tempMax-type.tempMin);
 
   let pos, vel = null;
-  if(kind === "comet"){
+  if(type.kind === "comet"){
     // start tuz za granica pola, lecac po linii przez srodek obszaru gry
     const shellDist = FIELD_RADIUS*1.15;
     const theta0 = Math.random()*Math.PI*2;
@@ -84,9 +91,9 @@ export function randomPlanetSpawnData(forcedKind){
   }
 
   return {
-    kind: kind, radius: radius, temp: temp,
-    health: radius*params.healthMult, maxHealth: radius*params.healthMult,
-    valueBonus: params.valueBonus,
+    kind: type.kind, radius: radius, temp: temp,
+    health: radius*type.healthMult, maxHealth: radius*type.healthMult,
+    valueBonus: type.valueBonus,
     pos: pos, vel: vel
   };
 }
@@ -168,15 +175,15 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   const kind = row.kind;
   const radius = row.radius;
   const temp = row.temp;
-  const params = bodyParams(kind);
+  const params = bodyParams(kind, temp);
   const color = kind==="sun" ? new THREE.Color().setHSL(0.09,0.9,0.6)
     : kind==="comet" ? new THREE.Color(0xffffff)
     : tempColor(temp);
   const geo = (kind==="meteoroid" || kind==="comet") ? makeRockGeometry(radius) : new THREE.SphereGeometry(radius, 22, 16);
-  // planeta neutralna (ani wulkaniczna, ani lodowa) dostaje realistyczna mape
-  // powierzchni (ocean/kontynenty/czapy polarne/pustynia rownikowa) zamiast
-  // plaskiego koloru - i bez emisji, zeby nie "swiecila" jak lawa/lod
-  const isNeutralPlanet = kind === "planet" && Math.abs(temp) <= CONTENT.neutralPlanet.tempThreshold;
+  // The neutral planet variant (neither volcanic nor icy) gets a real
+  // surface map (ocean/continents/ice caps/desert) instead of a flat color,
+  // and no emissive glow so it doesn't shine like lava/ice.
+  const isNeutralPlanet = kind === "planet" && params === CONTENT.neutralPlanet;
   const mat = isNeutralPlanet
     ? new THREE.MeshStandardMaterial({
         map: makePlanetSurfaceTexture(), roughness: 0.8, metalness: 0.05
@@ -288,8 +295,8 @@ export function materializePlanet(row, pos, vel, elapsedSec){
 }
 
 // Tryb offline (multiplayer nieskonfigurowany): tworzy ciało od razu, bez sieci.
-export function spawnPlanetLocalOnly(forcedKind){
-  const data = randomPlanetSpawnData(forcedKind);
+export function spawnPlanetLocalOnly(forcedType){
+  const data = randomPlanetSpawnData(forcedType);
   materializePlanet({
     id: "local-"+Math.random().toString(36).slice(2),
     kind: data.kind, radius: data.radius, temp: data.temp,
@@ -303,8 +310,8 @@ export function spawnPlanetLocalOnly(forcedKind){
 // zmaterializowane), zeby dosypywanie (maintainPlanetCount) nie doliczalo
 // ich sobie jeszcze raz, gdy odpowiedz sieci sie spoznia.
 export let pendingSpawnCount = 0;
-export function requestSpawnPlanet(forcedKind){
-  const data = randomPlanetSpawnData(forcedKind);
+export function requestSpawnPlanet(forcedType){
+  const data = randomPlanetSpawnData(forcedType);
   pendingSpawnCount++;
   supabase.from("bodies").insert({
     kind: data.kind, radius: data.radius, temp: data.temp,

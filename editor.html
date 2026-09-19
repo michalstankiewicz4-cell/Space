@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ROJ // Edytor obiektów</title>
+<title>ROJ // Object Editor</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/editor.css">
@@ -13,19 +13,20 @@
 <div id="editorLayout">
   <div id="stage"></div>
   <div id="panel">
-    <h1>ROJ <span>// EDYTOR OBIEKTÓW</span></h1>
+    <h1>ROJ <span>// OBJECT EDITOR</span></h1>
     <p class="hint">
-      Suwaki zmieniają <code>js/content.js</code> na żywo — podgląd po lewej
-      pokazuje dokładnie to, co zobaczą gracze. "Pobierz content.js" zapisuje
-      plik do folderu Pobrane; podmień nim <code>js/content.js</code> w
-      projekcie, żeby zmiany trafiły do gry.
+      Each of the 7 body types (js/bodies/*.js) has its own tab and its own
+      properties. Sliders change the live preview on the left instantly —
+      it uses the same code as the game, so what you see here is what
+      players see. "Download" saves a text file with one ready-to-paste
+      block per file; there's no backend to save to directly.
     </p>
 
     <div id="kindTabs"></div>
     <div id="fields"></div>
 
-    <button id="rerollBtn">🎲 Wylosuj ponownie</button>
-    <button id="downloadBtn">⬇ Pobierz content.js</button>
+    <button id="rerollBtn">🎲 Reroll</button>
+    <button id="downloadBtn">⬇ Download</button>
     <div id="saveNote"></div>
   </div>
 </div>
