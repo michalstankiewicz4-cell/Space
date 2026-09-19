@@ -4,6 +4,22 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.4.1]
+
+### Fixed
+- A destroyed planet/sun/meteoroid could occasionally vanish silently
+  (no breakup effect) for other players instead of exploding. The
+  DELETE handler decided "was this eaten?" from a locally-tracked
+  `health` value that depends on an earlier, separate UPDATE event
+  having already arrived — if that update was ever delayed or dropped
+  (e.g. a brief network hiccup, plausibly right as someone's connection
+  is dropping), the guess came out wrong. Since a planet/sun/meteoroid
+  can never leave the database for any reason other than being eaten
+  (only comets ever legitimately despawn by flying out of the field),
+  it's now always treated as eaten regardless of local health state;
+  comets keep the health-based check since they're the one case that
+  genuinely has two outcomes.
+
 ## [1.4.0]
 
 ### Added

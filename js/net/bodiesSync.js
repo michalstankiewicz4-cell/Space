@@ -60,7 +60,15 @@ export function onBodyDeleted(oldRow){
   }
 
   if(ctx.planets.indexOf(obj) === -1) return;
-  const wasEaten = obj.maxHealth != null && obj.health <= 0;
+  // A planet/sun/meteoroid can NEVER leave the DB for any reason other
+  // than being eaten (only comets ever self-despawn for "flew out of the
+  // field" — see the p.moving check in world/bodies.js#updateBodies), so
+  // for anything else a DELETE always means "eaten", full stop — no need
+  // to guess from locally-tracked `health`, which depends on having
+  // already received a separate, earlier UPDATE event in the right order.
+  // That fragile guess is only actually needed for comets, which really
+  // do have two legitimate reasons to disappear.
+  const wasEaten = obj.kind !== "comet" || (obj.maxHealth != null && obj.health <= 0);
   if(wasEaten && !obj.dying){
     // eaten by someone - shared explosion for everyone; points are awarded
     // only to the client that got killed:true from bite_body (see flushDamage)
