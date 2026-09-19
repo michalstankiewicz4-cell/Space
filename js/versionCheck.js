@@ -46,7 +46,19 @@ async function checkOnce(){
 
 export function initVersionCheck(){
   const reloadBtn = document.getElementById("outdatedReloadBtn");
-  if(reloadBtn) reloadBtn.addEventListener("click", function(){ location.reload(); });
+  if(reloadBtn) reloadBtn.addEventListener("click", function(){
+    // A plain location.reload() is just F5 — it can still serve
+    // sub-resources (js/main.js, css/style.css) straight from the HTTP
+    // cache if they're within GitHub Pages' 10-minute freshness window,
+    // since a normal reload only revalidates resources the browser
+    // already considers stale. There's no standard cross-browser JS API
+    // for a true hard reload (Ctrl+Shift+R) — `reload(true)` is a
+    // long-removed non-standard Firefox-ism. Navigating to a cache-busted
+    // URL instead guarantees a real fetch: it's a URL the browser has
+    // never seen, so there's nothing cached to serve. `replace()` (not
+    // setting `.href`) avoids leaving a junk entry in browser history.
+    location.replace(location.pathname + "?_=" + Date.now());
+  });
   checkOnce();
   setInterval(checkOnce, CHECK_INTERVAL_MS);
 }

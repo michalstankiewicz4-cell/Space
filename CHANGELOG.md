@@ -4,6 +4,18 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.5.1]
+
+### Fixed
+- The "Refresh now" button on the outdated-version overlay used a plain
+  `location.reload()` — effectively F5, which can still serve
+  `js/main.js`/`css/style.css` straight from cache if they're within
+  GitHub Pages' 10-minute freshness window, since a normal reload only
+  revalidates resources the browser already considers stale. There's no
+  standard cross-browser JS API for a true hard reload (Ctrl+Shift+R).
+  Now navigates to a cache-busted URL instead (`?_=<timestamp>`), which
+  guarantees a real fetch since it's a URL the browser has never seen.
+
 ## [1.5.0]
 
 ### Fixed
