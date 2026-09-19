@@ -4,6 +4,21 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.2.1]
+
+### Fixed
+- Diagnosed a live incident where a player left their tab open but
+  inactive (frozen/backgrounded) after building up a large fleet and
+  eating much of the shared world — since Presence-based steward election
+  only reacts to an explicit disconnect, that stalled client stayed
+  "steward" forever, so nobody topped up the world (confirmed live: body
+  count dropped 8→6→4→4 over 45s with zero replenishment). Added a
+  staleness fallback: if nothing has spawned in 8-12s (jittered per
+  client) despite being under the target count, any client tops up
+  instead of waiting forever for a steward that may never reconnect.
+  Verified live: growth resumed within the expected window once the
+  fallback engaged.
+
 ## [1.2.0]
 
 ### Added

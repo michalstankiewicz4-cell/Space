@@ -18,6 +18,7 @@ import { t } from "../i18n.js";
 // Builds a local object (planet/comet/... or black hole) from a `bodies` row.
 export function materializeBody(row){
   if(ctx.netBodies[row.id]) return;
+  lastSpawnSeenAt = Date.now();
   const pos = new THREE.Vector3(row.pos_x, row.pos_y, row.pos_z);
   if(row.kind === "blackhole"){
     materializeBlackHole(row, pos);
@@ -95,14 +96,31 @@ export function flushDamage(){
   });
 }
 
+// Presence-based steward election (see net/presence.js) only reacts to a
+// client explicitly joining/leaving — it has no liveness/heartbeat check,
+// so a steward whose tab is backgrounded/frozen (but whose socket hasn't
+// actually disconnected yet) stays "steward" forever while doing nothing,
+// and the world just drains as things get eaten with nobody topping it up.
+// `lastSpawnSeenAt` (bumped in materializeBody on every INSERT this client
+// sees, from any source) tracks how long it's actually been since anything
+// last spawned; if that's gone on far longer than the normal top-up cadence
+// despite being under MAX_PLANETS, any client can step in instead of
+// waiting forever for a steward that may never reconnect. Jittered per
+// client so idle clients don't all fire the fallback in the same instant.
+const STALE_TOPUP_MS = 8000 + Math.random() * 4000;
+let lastSpawnSeenAt = Date.now();
+
 let topUpTimer = 0;
 export function maintainPlanetCount(dt){
   topUpTimer -= dt;
   if(topUpTimer > 0) return;
   topUpTimer = NET_PLANET_TOPUP_S;
   if(ctx.planets.length + pendingSpawnCount >= MAX_PLANETS) return;
-  if(NET_ENABLED){ if(isSteward) requestSpawnPlanet(); }
-  else { spawnPlanetLocalOnly(); }
+  if(NET_ENABLED){
+    if(isSteward || (Date.now() - lastSpawnSeenAt > STALE_TOPUP_MS)) requestSpawnPlanet();
+  } else {
+    spawnPlanetLocalOnly();
+  }
 }
 
 export function bootstrapWorld(){
