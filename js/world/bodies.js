@@ -87,34 +87,6 @@ export function applyHealthVisual(obj){
   obj.crackMesh.material.opacity = Math.min(1, (1-healthFrac)*1.2);
 }
 
-// Poświata słońca jako prawdziwy gradient odległości od powierzchni: kilka
-// współśrodkowych powłok o rosnącym promieniu i malejącej nieprzezroczystości
-// — blisko słońca widoczna wyraźnie, im dalej od niego tym bardziej znika,
-// aż do pełnej przezroczystości na zewnętrznej powłoce. Prostsze i pewniejsze
-// niż shader zależny od kąta patrzenia (fresnel dawał odwrotny efekt: jasno
-// na brzegu, ciemno przy słońcu — nie o to chodziło).
-const CORONA_LAYERS = [
-  { scale: 1.12, opacity: 0.55 },
-  { scale: 1.34, opacity: 0.30 },
-  { scale: 1.62, opacity: 0.14 },
-  { scale: 2.00, opacity: 0.05 }
-];
-
-function buildCoronaMesh(radius){
-  const group = new THREE.Group();
-  CORONA_LAYERS.forEach(function(layer){
-    const geo = new THREE.SphereGeometry(radius*layer.scale, 20, 14);
-    const mat = new THREE.MeshBasicMaterial({
-      color: 0xffcf7a, transparent: true, opacity: layer.opacity,
-      blending: THREE.AdditiveBlending, depthWrite: false
-    });
-    const shell = new THREE.Mesh(geo, mat);
-    shell.userData.baseOpacity = layer.opacity;
-    group.add(shell);
-  });
-  return group;
-}
-
 // Prawdziwe promienie 3D słońca: cienkie płaszczyzny (nie sprite/billboard)
 // wystrzelone w losowych kierunkach w przestrzeni i losowo obrócone wokół
 // własnej osi ("roll") — dzięki temu, w przeciwieństwie do płaskiego obrazka
@@ -191,24 +163,20 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   const scorchMesh = new THREE.Mesh(scorchGeo, scorchMat);
   mesh.add(scorchMesh);
 
-  // slonce: poswiata korony (3D, blisko powierzchni) + okragla łuna (sprite
-  // zwrocony do kamery - dla gladkiej poswiaty kat widzenia nie ma znaczenia)
-  // + prawdziwe promienie 3D (patrz buildSunRays - realne obiekty w
-  // przestrzeni, wiec przy obrocie kamery maja paralakse, nie sa plaskim
-  // obrazkiem) + wlasne swiatlo
-  let corona = null;
+  // slonce: gladka, jednowarstwowa poswiata (sprite zwrocony do kamery -
+  // canvas-owy gradient interpoluje w sposob ciagly, bez "schodkow" jakie
+  // dawaly wczesniej warstwy sfer 3D) + prawdziwe promienie 3D (patrz
+  // buildSunRays - realne obiekty w przestrzeni, maja paralakse przy obrocie
+  // kamery) + wlasne swiatlo
   let sunHalo = null;
   let sunRays = null;
   if(kind === "sun"){
-    corona = buildCoronaMesh(radius);
-    mesh.add(corona);
-
     const haloMat = new THREE.SpriteMaterial({
-      map: makeSunHaloTexture(), color: 0xffffff, transparent:true, opacity:0.85,
+      map: makeSunHaloTexture(), color: 0xffffff, transparent:true, opacity:0.9,
       blending: THREE.AdditiveBlending, depthWrite:false
     });
     sunHalo = new THREE.Sprite(haloMat);
-    sunHalo.scale.setScalar(radius*4.4);
+    sunHalo.scale.setScalar(radius*5.0);
     mesh.add(sunHalo);
 
     sunRays = buildSunRays(radius);
@@ -243,10 +211,9 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     valueBonus: row.value_bonus||0,
     pendingDamage: 0,
     spin: (Math.random()-0.5)*0.6,
-    corona: corona,
     sunHalo: sunHalo,
     sunRays: sunRays,
-    coronaPhase: Math.random()*10,
+    sunPhase: Math.random()*10,
     dying: false,
     crackMesh: crackMesh,
     scorchCanvas: scorchCanvas,
@@ -350,21 +317,12 @@ export function updateBodies(dt){
     if(p.dying) continue;
     p.mesh.rotation.y += p.spin*dt;
 
-    if(p.corona){
-      p.coronaPhase += dt*2.2;
-      const pulseFactor = 0.85 + 0.3*Math.abs(Math.sin(p.coronaPhase));
-      p.corona.children.forEach(function(shell){
-        shell.material.opacity = shell.userData.baseOpacity * pulseFactor;
-      });
-      const cs = 1 + 0.05*Math.abs(Math.sin(p.coronaPhase*0.7));
-      p.corona.scale.setScalar(cs);
-    }
-
     if(p.sunHalo){
+      p.sunPhase += dt*2.2;
       p.sunHalo.material.rotation += dt*0.09;
-      const pulse = 1 + 0.06*Math.abs(Math.sin(p.coronaPhase*0.55));
-      p.sunHalo.scale.setScalar(p.radius*4.4*pulse);
-      p.sunHalo.material.opacity = 0.78 + 0.12*Math.abs(Math.sin(p.coronaPhase*0.9));
+      const pulse = 1 + 0.06*Math.abs(Math.sin(p.sunPhase*0.55));
+      p.sunHalo.scale.setScalar(p.radius*5.0*pulse);
+      p.sunHalo.material.opacity = 0.82 + 0.14*Math.abs(Math.sin(p.sunPhase*0.9));
     }
 
     if(p.sunRays){
@@ -372,7 +330,7 @@ export function updateBodies(dt){
       // geometria 3D, wiec przy obrocie kamery promienie maja paralakse
       p.sunRays.rotation.y += dt*0.15;
       p.sunRays.rotation.x += dt*0.045;
-      const pulse = 1 + 0.08*Math.abs(Math.sin(p.coronaPhase*0.7));
+      const pulse = 1 + 0.08*Math.abs(Math.sin(p.sunPhase*0.7));
       p.sunRays.scale.setScalar(pulse);
     }
 
