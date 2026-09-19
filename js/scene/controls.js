@@ -108,7 +108,7 @@ export function initControls(){
     if(camDragging){
       const dx = e.clientX-camLastX, dy = e.clientY-camLastY;
       camLastX=e.clientX; camLastY=e.clientY;
-      camState.az -= dx*0.0045;
+      camState.az += dx*0.0045;
       camState.pol = clampPol(camState.pol - dy*0.0045);
       return;
     }

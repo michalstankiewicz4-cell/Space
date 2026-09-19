@@ -231,7 +231,7 @@ function initEditorControls(){
     if(!dragging) return;
     const dx = e.clientX - lastX, dy = e.clientY - lastY;
     lastX = e.clientX; lastY = e.clientY;
-    camState.az -= dx*0.006;
+    camState.az += dx*0.006;
     camState.pol = Math.max(0.2, Math.min(Math.PI-0.2, camState.pol - dy*0.006));
   });
   window.addEventListener("pointerup", function(){ dragging = false; });
