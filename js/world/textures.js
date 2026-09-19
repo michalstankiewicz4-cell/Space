@@ -1,95 +1,141 @@
 // Proceduralne tekstury/geometrie używane przez ciała niebieskie.
 
-// Mapa powierzchni "neutralnej" planety (ocean/kontynenty/czapy polarne/
-// pustynia równikowa) — mapowanie równoleżnikowe (equirectangular), zgodne
-// z domyślnym UV sfery w three.js (u = długość geogr., v = szerokość geogr.,
-// v=0.5 to równik), więc na obracającej się kuli wygląda realnie, a nie jak
-// naklejka na płask. Kontynenty są rysowane też "zawinięte" na krawędziach
-// (u blisko 0/1), żeby przy obrocie nie było widać szwu.
-function paintLandBlob(c, w, h, u, v, rx, ry, color){
-  function ellipse(cx){
-    c.save();
-    c.translate(cx, v);
-    c.scale(rx, ry);
-    const grad = c.createRadialGradient(0, 0, 0, 0, 0, 1);
-    grad.addColorStop(0, color);
-    grad.addColorStop(0.8, color);
-    grad.addColorStop(1, "rgba(0,0,0,0)");
-    c.fillStyle = grad;
-    c.beginPath();
-    c.arc(0, 0, 1, 0, Math.PI*2);
-    c.fill();
-    c.restore();
+// Kompaktowy szum simplex 3D (algorytm Perlina/Gustavsona, domena publiczna).
+// Permutacja losowana przy kazdym wywolaniu makeSimplex3(), wiec kazda
+// planeta dostaje inny uklad kontynentow.
+function makeSimplex3(){
+  const grad3 = [
+    [1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],
+    [1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],
+    [0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]
+  ];
+  const p = [];
+  for(let i=0;i<256;i++) p[i] = i;
+  for(let i=255;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    const tmp = p[i]; p[i]=p[j]; p[j]=tmp;
   }
-  ellipse(u);
-  if(u - rx < 0) ellipse(u + w);
-  if(u + rx > w) ellipse(u - w);
+  const perm = new Array(512);
+  const permMod12 = new Array(512);
+  for(let i=0;i<512;i++){
+    perm[i] = p[i & 255];
+    permMod12[i] = perm[i] % 12;
+  }
+
+  const F3 = 1/3, G3 = 1/6;
+  function dot3(g, x, y, z){ return g[0]*x + g[1]*y + g[2]*z; }
+
+  return function noise3(xin, yin, zin){
+    const s = (xin+yin+zin)*F3;
+    const i = Math.floor(xin+s), j = Math.floor(yin+s), k = Math.floor(zin+s);
+    const t = (i+j+k)*G3;
+    const x0 = xin-(i-t), y0 = yin-(j-t), z0 = zin-(k-t);
+
+    let i1,j1,k1, i2,j2,k2;
+    if(x0>=y0){
+      if(y0>=z0){ i1=1;j1=0;k1=0; i2=1;j2=1;k2=0; }
+      else if(x0>=z0){ i1=1;j1=0;k1=0; i2=1;j2=0;k2=1; }
+      else { i1=0;j1=0;k1=1; i2=1;j2=0;k2=1; }
+    } else {
+      if(y0<z0){ i1=0;j1=0;k1=1; i2=0;j2=1;k2=1; }
+      else if(x0<z0){ i1=0;j1=1;k1=0; i2=0;j2=1;k2=1; }
+      else { i1=0;j1=1;k1=0; i2=1;j2=1;k2=0; }
+    }
+
+    const x1=x0-i1+G3, y1=y0-j1+G3, z1=z0-k1+G3;
+    const x2=x0-i2+2*G3, y2=y0-j2+2*G3, z2=z0-k2+2*G3;
+    const x3=x0-1+3*G3, y3=y0-1+3*G3, z3=z0-1+3*G3;
+
+    const ii=i&255, jj=j&255, kk=k&255;
+    const gi0 = permMod12[ii+perm[jj+perm[kk]]];
+    const gi1 = permMod12[ii+i1+perm[jj+j1+perm[kk+k1]]];
+    const gi2 = permMod12[ii+i2+perm[jj+j2+perm[kk+k2]]];
+    const gi3 = permMod12[ii+1+perm[jj+1+perm[kk+1]]];
+
+    let n0=0, n1=0, n2=0, n3=0;
+    let t0 = 0.6 - x0*x0 - y0*y0 - z0*z0;
+    if(t0>=0){ t0*=t0; n0 = t0*t0*dot3(grad3[gi0], x0,y0,z0); }
+    let t1 = 0.6 - x1*x1 - y1*y1 - z1*z1;
+    if(t1>=0){ t1*=t1; n1 = t1*t1*dot3(grad3[gi1], x1,y1,z1); }
+    let t2 = 0.6 - x2*x2 - y2*y2 - z2*z2;
+    if(t2>=0){ t2*=t2; n2 = t2*t2*dot3(grad3[gi2], x2,y2,z2); }
+    let t3 = 0.6 - x3*x3 - y3*y3 - z3*z3;
+    if(t3>=0){ t3*=t3; n3 = t3*t3*dot3(grad3[gi3], x3,y3,z3); }
+
+    return 32*(n0+n1+n2+n3);
+  };
 }
 
+// Suma kilku oktaw szumu (fractal Brownian motion) - drobne, coraz slabsze
+// "pofalowania" nalozone na duzy ksztalt, dajace naturalna, postrzepiona
+// linie brzegowa zamiast gladkich okregow.
+function fbm3(noise3, x, y, z, octaves){
+  let sum = 0, amp = 0.5, freq = 1, norm = 0;
+  for(let o=0; o<octaves; o++){
+    sum += noise3(x*freq, y*freq, z*freq) * amp;
+    norm += amp;
+    amp *= 0.5;
+    freq *= 2.15;
+  }
+  return sum / norm;
+}
+
+// Mapa powierzchni "neutralnej" planety: ocean/kontynenty/czapy polarne/
+// pustynia równikowa, generowane szumem simplex próbkowanym w prawdziwych
+// punktach 3D na powierzchni jednostkowej kuli (nie na płaskiej siatce u,v)
+// — dzięki temu tekstura zawija się bez szwu na długości geograficznej I
+// poprawnie zbiega się na biegunach, zamiast się "spłaszczać". Mapowanie
+// równoleżnikowe (equirectangular) odpowiada domyślnemu UV sfery w three.js.
 export function makePlanetSurfaceTexture(){
   const w = 512, h = 256;
   const canvas = document.createElement("canvas");
   canvas.width = w; canvas.height = h;
   const c = canvas.getContext("2d");
+  const img = c.createImageData(w, h);
+  const data = img.data;
 
-  // ocean
-  c.fillStyle = "#1f6fae";
-  c.fillRect(0, 0, w, h);
+  const noise3 = makeSimplex3();
+  const scale = 1.6 + Math.random()*0.8;
+  const seaLevel = -0.05 + Math.random()*0.1;
 
-  // kontynenty: kilka duzych plam + satelickie "wyspy", kolor zalezny od
-  // odleglosci od rownika (biom) - pustynia blisko rownika, step/zielen w
-  // srodkowych szerokosciach, jasniej/bielej blisko biegunow
-  const continentCount = 6 + Math.floor(Math.random()*4);
-  for(let i=0;i<continentCount;i++){
-    const v = h*(0.12 + Math.random()*0.76);
-    const u = Math.random()*w;
-    const size = 28 + Math.random()*64;
-    const distFromEquator = Math.abs(v - h/2) / (h/2); // 0 = rownik, 1 = biegun
+  for(let y=0; y<h; y++){
+    const lat = (y/h)*Math.PI - Math.PI/2; // -pi/2 (biegun) .. pi/2 (biegun)
+    const cosLat = Math.cos(lat), sinLat = Math.sin(lat);
+    const distFromEquator = Math.abs(y-h/2)/(h/2); // 0 rownik, 1 biegun
 
-    let landColor;
-    if(distFromEquator < 0.2){
-      landColor = "#cdb46c"; // pustynia rownikowa
-    } else if(distFromEquator > 0.72){
-      landColor = "#e8f0f2"; // bliskie biegunom - sniezne/tundra
-    } else {
-      landColor = Math.random() < 0.5 ? "#4f8f4a" : "#6f7a3d"; // las/step
-    }
+    for(let x=0; x<w; x++){
+      const lon = (x/w)*Math.PI*2;
+      const nx = cosLat*Math.cos(lon)*scale;
+      const ny = sinLat*scale;
+      const nz = cosLat*Math.sin(lon)*scale;
+      const elevation = fbm3(noise3, nx, ny, nz, 5);
 
-    paintLandBlob(c, w, h, u, v, size*(0.6+Math.random()*0.6), size*(0.32+Math.random()*0.38), landColor);
-    const satellites = 1 + Math.floor(Math.random()*2);
-    for(let k=0;k<satellites;k++){
-      paintLandBlob(
-        c, w, h,
-        u + (Math.random()-0.5)*size*1.6, v + (Math.random()-0.5)*size*0.9,
-        size*(0.18+Math.random()*0.14), size*(0.12+Math.random()*0.1),
-        landColor
-      );
+      let r, g, b;
+      if(elevation < seaLevel){
+        const depth = Math.min(1, (seaLevel-elevation)/0.35);
+        r = 22 + 18*(1-depth); g = 72 + 38*(1-depth); b = 122 + 68*(1-depth);
+      } else {
+        const landHeight = Math.min(1, (elevation-seaLevel)/0.4);
+        if(distFromEquator < 0.16){
+          r = 205 + 25*landHeight; g = 180 + 20*landHeight; b = 120 + 15*landHeight; // pustynia
+        } else if(distFromEquator > 0.72){
+          r = 210 + 30*landHeight; g = 222 + 20*landHeight; b = 226 + 20*landHeight; // tundra/snieg
+        } else {
+          r = 60 + 40*landHeight; g = 118 + 55*landHeight; b = 58 + 28*landHeight; // las/step
+        }
+      }
+
+      // czapy polarne - bieleja takze ocean blisko biegunow (zamarzniete morze)
+      if(distFromEquator > 0.8){
+        const t = (distFromEquator-0.8)/0.2;
+        r += (250-r)*t; g += (252-g)*t; b += (255-b)*t;
+      }
+
+      const idx = (y*w+x)*4;
+      data[idx] = r; data[idx+1] = g; data[idx+2] = b; data[idx+3] = 255;
     }
   }
-
-  // delikatne "szumy" - drobne cetki dla wrazenia faktury terenu, nie plaska plama
-  for(let i=0;i<260;i++){
-    const x = Math.random()*w, y = Math.random()*h;
-    const r = 1+Math.random()*2.5;
-    c.fillStyle = "rgba(255,255,255,"+(0.02+Math.random()*0.05)+")";
-    c.beginPath();
-    c.arc(x,y,r,0,Math.PI*2);
-    c.fill();
-  }
-
-  // czapy polarne
-  const capH = h*0.15;
-  const topCap = c.createLinearGradient(0,0,0,capH);
-  topCap.addColorStop(0, "rgba(255,255,255,0.95)");
-  topCap.addColorStop(1, "rgba(255,255,255,0)");
-  c.fillStyle = topCap;
-  c.fillRect(0,0,w,capH);
-
-  const bottomCap = c.createLinearGradient(0,h,0,h-capH);
-  bottomCap.addColorStop(0, "rgba(255,255,255,0.95)");
-  bottomCap.addColorStop(1, "rgba(255,255,255,0)");
-  c.fillStyle = bottomCap;
-  c.fillRect(0,h-capH,w,capH);
+  c.putImageData(img, 0, 0);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.wrapS = THREE.RepeatWrapping;
