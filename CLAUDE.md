@@ -64,11 +64,45 @@ local (`localStorage`).
   spawning/topping-up bodies and black holes; re-elected automatically if
   it disconnects. `pendingSpawnCount` in `js/world/bodies.js` tracks
   in-flight inserts so top-up logic doesn't over-spawn while an insert is
-  still in transit.
+  still in transit. Presence re-election only fires on an explicit
+  disconnect, so a steward whose tab is backgrounded/frozen (but whose
+  socket hasn't actually dropped) can stay "steward" forever while doing
+  nothing — `maintainPlanetCount()` in `js/net/bodiesSync.js` has a
+  jittered staleness fallback (any client tops up if nothing has spawned
+  in 8-12s despite being under `MAX_PLANETS`) so the world doesn't stay
+  starved waiting for a steward that may never come back.
+- **DELETE on `bodies` always means "eaten" except for comets.** A
+  planet/sun/meteoroid has no other legitimate way to leave the database;
+  only comets can also self-despawn locally for flying out of the field.
+  `onBodyDeleted()` in `js/net/bodiesSync.js` uses this to decide whether
+  to play the breakup effect — don't reintroduce a health-based guess for
+  non-comet kinds, since that depends on a separate, earlier UPDATE event
+  having already arrived in order, which isn't guaranteed under network
+  jitter (this was a real bug: an eaten planet could silently vanish with
+  no explosion for other players if that UPDATE lagged behind the DELETE).
 - **Settings vs. identity vs. i18n**: three separate small persisted
   modules, deliberately not merged — `js/settings.js` (local input/UX
   prefs: mouse invert/swap), `js/net/identity.js` (nickname/color, shared
   with other players), `js/i18n.js` (language toggle).
+- **Nickname moderation is defense-in-depth, not just input validation.**
+  `js/moderation.js`'s `containsProfanity()` is checked both when a player
+  confirms their own nick (`net/identity.js`, a courtesy — just blocks the
+  UI path) and again on every remote nick before display
+  (`net/shipsBroadcast.js`, swapped for the generic fallback name if
+  flagged) — the second check is the real defense, since a modified client
+  can broadcast anything straight over the WebSocket regardless of what
+  its own UI would allow.
+- **Ship cam** (`js/scene/shipcam.js`): a picture-in-picture "cockpit" view
+  rendered as a *second* render pass into a small corner rectangle of the
+  same canvas/renderer (`setViewport`/`setScissor`, right after the main
+  full-screen render in `main.js`'s `tick()`) — not a second
+  `WebGLRenderer`. The viewport/scissor must be reset to full-canvas
+  before next frame's main render or it stays clipped to the small rect.
+  A ship's mesh group faces its travel direction along local **+Z**, not
+  the `-Z` that `Object3D.lookAt()`'s usual convention would suggest
+  (verified empirically, not yet root-caused) — the ship cam camera
+  corrects for this with a 180°-about-Y flip before copying the mesh's
+  quaternion, since a camera always looks down its own -Z.
 
 ## Security model (Supabase)
 
@@ -137,3 +171,6 @@ local (`localStorage`).
   window for *new* page loads — it can't do anything for a tab that's
   already open, and doesn't reach the files `js/main.js` `import`s (those
   still resolve to their own plain, unversioned URLs either way).
+  `js/versionCheck.js` covers the "already open" case instead, by
+  periodically re-fetching `js/version.js` itself and blocking play once
+  it detects this tab is older than what's actually deployed.

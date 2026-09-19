@@ -15,23 +15,26 @@ A plain static site — no build step, no npm. `index.html` is a thin shell
 via `<script type="module" src="js/main.js">`:
 
 ```
-css/style.css        game styling (HUD, upgrade dock, start banner, Setup modal)
+css/style.css        game styling (HUD, upgrade dock, start banner, Setup/Tech/Fleet modals)
 js/
   version.js         current version number (shown next to the title) — bump on every meaningful release
+  versionCheck.js    periodically checks for a newer deploy; blocks play with a "please refresh" overlay if this tab is stale
+  moderation.js      nickname profanity filter (own nick at input time, remote nicks before display)
   settings.js         local player prefs (mouse invert/swap), persisted in localStorage
   config.js          gameplay tuning constants (upgrade tree, radii, network intervals)
   i18n.js            UI text (English by default, Polish toggle — see the start screen)
   env.js             Supabase URL/key (anon key — safe to commit, see below)
   supabaseClient.js  Supabase client singleton
   core/              shared game state (scene/entity collections, player points) + small utilities
-  scene/             camera, renderer, mouse controls/selection, hover tooltip
+  scene/             camera, renderer, mouse controls/selection, hover tooltip, ship cam (picture-in-picture cockpit view)
   world/             celestial body logic (mesh/textures/animation) — per-type data lives in js/bodies/
   bodies/            7 body types, one file each (sun.js, icePlanet.js, neutralPlanet.js,
                      volcanicPlanet.js, comet.js, meteoroid.js, blackhole.js) — see "Object editor" below
   content.js         aggregates js/bodies/ into one place the game and the editor both read from
   fx/                particles, debris, shockwaves, dust — planet-breakup effects
   ships/             player's ship swarm (movement, eating, bite-beam)
-  ui/                HUD (telemetry, players list, collapsible panels, legend/Wiki toggle) and the upgrade dock
+  ui/                HUD (telemetry, players list, collapsible panels, Wiki/Tech/Fleet buttons and modals,
+                     legend, upgrade dock) and the Setup modal (banner.js)
   net/               multiplayer: identity, "steward" election, world sync, ship broadcast
   main.js            entry point — wires the modules together and runs the game loop
 supabase/schema.sql  database schema (tables, RLS, RPC functions) to paste into the Supabase SQL Editor
@@ -85,4 +88,10 @@ Bump [`js/version.js`](js/version.js) and add an entry to
 [`CHANGELOG.md`](CHANGELOG.md) for every meaningful change (a new feature,
 a balance change, a fix worth telling apart from the previous build) —
 this is what tells two GitHub Pages deploys apart, especially right after
-a push while caches can still lag.
+a push while caches can still lag. Also bump the `?v=` query param on
+`css/style.css` and `js/main.js` in [`index.html`](index.html) to the same
+value — it's a hardcoded literal (not read from `js/version.js`), so it's
+easy to forget. A tab left open across a deploy won't pick either up on
+its own regardless; [`js/versionCheck.js`](js/versionCheck.js) handles
+that case by blocking play with a "please refresh" prompt once it detects
+a newer version is live.
