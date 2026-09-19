@@ -3,7 +3,7 @@ import { removeItem } from "../core/utils.js";
 import { FIELD_RADIUS, MAX_PLANETS } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
-import { generateCrackTexture, makeRockGeometry, makeSunHaloTexture, makeSunRayTexture } from "./textures.js";
+import { generateCrackTexture, makeRockGeometry, makeSunHaloTexture, makeSunRayTexture, makeCometTailTexture } from "./textures.js";
 import { spawnTailParticle } from "../fx/particles.js";
 import { hideBolt } from "../ships/swarm.js";
 
@@ -122,6 +122,35 @@ function buildSunRays(radius){
   return group;
 }
 
+// Warkocz komety: dwie skrzyzowane plaszczyzny (klasyczny trik "crossed
+// billboard" - widoczne z niemal kazdego kata, w przeciwienstwie do jednej
+// plaskiej plaszczyzny ktora znika widziana "na krawedz") ciagnace sie w
+// kierunku przeciwnym do predkosci. Kierunek lotu komety jest stały przez
+// cale jej zycie, wiec liczymy orientacje raz, przy tworzeniu.
+function buildCometTail(radius, vel){
+  const group = new THREE.Group();
+  if(!vel || vel.lengthSq() < 0.0001) return group;
+
+  const length = radius * (9 + Math.random()*4);
+  const width = radius * (1.43 + Math.random()*0.39); // +30% wzgledem poprzedniej szerokosci
+  const geo = new THREE.PlaneGeometry(width, length);
+  geo.translate(0, length/2, 0);
+  const mat = new THREE.MeshBasicMaterial({
+    map: makeCometTailTexture(), transparent: true, opacity: 0.85,
+    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
+  });
+
+  const dir = vel.clone().normalize().multiplyScalar(-1);
+  const up = new THREE.Vector3(0, 1, 0);
+  for(let i=0;i<2;i++){
+    const plane = new THREE.Mesh(geo, mat);
+    plane.quaternion.setFromUnitVectors(up, dir);
+    plane.rotateY(i * Math.PI/2);
+    group.add(plane);
+  }
+  return group;
+}
+
 // Buduje mesh + wpis w `ctx.planets` z wiersza ciała (lokalnego lub z sieci).
 // `elapsedSec` przesuwa komety do miejsca, w którym powinny być "teraz"
 // (ważne dla gracza dołączającego do już trwającej gry).
@@ -130,8 +159,10 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   const radius = row.radius;
   const temp = row.temp;
   const params = bodyParams(kind);
-  const color = kind==="sun" ? new THREE.Color().setHSL(0.09,0.9,0.6) : tempColor(temp);
-  const geo = kind==="meteoroid" ? makeRockGeometry(radius) : new THREE.SphereGeometry(radius, 22, 16);
+  const color = kind==="sun" ? new THREE.Color().setHSL(0.09,0.9,0.6)
+    : kind==="comet" ? new THREE.Color(0xffffff)
+    : tempColor(temp);
+  const geo = (kind==="meteoroid" || kind==="comet") ? makeRockGeometry(radius) : new THREE.SphereGeometry(radius, 22, 16);
   const mat = new THREE.MeshStandardMaterial({
     color: color, emissive: color, emissiveIntensity: params.emissive,
     roughness: 0.65, metalness: 0.15
@@ -184,6 +215,13 @@ export function materializePlanet(row, pos, vel, elapsedSec){
 
     const sunLight = new THREE.PointLight(0xffcf8a, 1.6, radius*40);
     mesh.add(sunLight);
+  }
+
+  // kometa: warkocz ciagnacy sie za nia w strone przeciwna do lotu
+  let cometTail = null;
+  if(kind === "comet"){
+    cometTail = buildCometTail(radius, vel);
+    mesh.add(cometTail);
   }
 
   // subtelny pierscien orbitalny na co kilka planet (nie dla komet) - decyzja czysto

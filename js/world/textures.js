@@ -170,6 +170,36 @@ export function makeSunRayTexture(){
   return new THREE.CanvasTexture(canvas);
 }
 
+// Tekstura "warkocza" komety: jasna/nieprzezroczysta u nasady (przy samej
+// komecie), gasnaca do pelnej przezroczystosci na koncu ogona, z miekkim
+// zanikiem po bokach — ta sama konstrukcja co promien slonca, tylko w
+// zimnych, bialo-blekitnych barwach lodu.
+export function makeCometTailTexture(){
+  const w = 64, h = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const c = canvas.getContext("2d");
+
+  const vgrad = c.createLinearGradient(0, h, 0, 0);
+  vgrad.addColorStop(0,    "rgba(225,242,255,0.8)");
+  vgrad.addColorStop(0.2,  "rgba(200,228,255,0.45)");
+  vgrad.addColorStop(0.55, "rgba(175,210,255,0.16)");
+  vgrad.addColorStop(1,    "rgba(160,200,255,0)");
+  c.fillStyle = vgrad;
+  c.fillRect(0, 0, w, h);
+
+  const hgrad = c.createLinearGradient(0, 0, w, 0);
+  hgrad.addColorStop(0,   "rgba(0,0,0,0)");
+  hgrad.addColorStop(0.5, "rgba(0,0,0,1)");
+  hgrad.addColorStop(1,   "rgba(0,0,0,0)");
+  c.globalCompositeOperation = "destination-in";
+  c.fillStyle = hgrad;
+  c.fillRect(0, 0, w, h);
+  c.globalCompositeOperation = "source-over";
+
+  return new THREE.CanvasTexture(canvas);
+}
+
 export function generateDustTexture(){
   const size = 128;
   const canvas = document.createElement("canvas");
