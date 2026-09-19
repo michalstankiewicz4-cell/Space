@@ -30,7 +30,9 @@ export function renderPlayersList(){
 
     const nameEl = document.createElement("span");
     nameEl.className = "name";
-    nameEl.textContent = r.nick + (r.isMe ? t("players.you") : "");
+    const fullName = r.nick + (r.isMe ? t("players.you") : "");
+    nameEl.textContent = fullName;
+    nameEl.title = fullName; // shows the full nick on hover if it's truncated with "…"
     li.appendChild(nameEl);
 
     const ptsEl = document.createElement("b");
