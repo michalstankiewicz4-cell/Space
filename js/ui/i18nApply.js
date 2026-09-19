@@ -12,17 +12,17 @@ export function applyStaticText(){
   document.getElementById("setupModalTitle").textContent = t("setup.title");
   document.querySelector('#setupTabs button[data-tab="language"]').textContent = t("setup.tabLanguage");
   document.querySelector('#setupTabs button[data-tab="mouse"]').textContent = t("setup.tabMouse");
+  document.querySelector('#setupTabs button[data-tab="help"]').textContent = t("setup.tabHelp");
   document.getElementById("invertXLabel").textContent = t("setup.invertX");
   document.getElementById("invertYLabel").textContent = t("setup.invertY");
   document.getElementById("swapButtonsLabel").textContent = t("setup.swapButtons");
+  document.getElementById("setupHelpText").innerHTML = t("hint");
 
   document.getElementById("telemetryTitle").textContent = t("telemetry.title");
   document.getElementById("labelPoints").textContent = t("telemetry.points");
   document.getElementById("labelShips").textContent = t("telemetry.ships");
   document.getElementById("labelEaten").textContent = t("telemetry.eaten");
   document.getElementById("labelPlayers").textContent = t("telemetry.players");
-
-  document.getElementById("hint").innerHTML = t("hint");
 
   document.getElementById("playersTitle").textContent = t("players.title");
 

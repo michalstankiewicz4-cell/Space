@@ -14,6 +14,7 @@ import { spawnInitialFleet, updateShips, reconcileFleetSize } from "./ships/swar
 import { refreshDock } from "./ui/dock.js";
 import { updateTelemetry } from "./ui/hud.js";
 import { initBanner } from "./ui/banner.js";
+import { initPanels } from "./ui/panels.js";
 import { renderPlayersList } from "./ui/players.js";
 import { maintainPlanetCount, flushDamage } from "./net/bodiesSync.js";
 import { updateRemoteShips, maybeBroadcastShips } from "./net/shipsBroadcast.js";
@@ -36,6 +37,7 @@ spawnInitialFleet();
 refreshDock();
 reconcileFleetSize();
 initBanner();
+initPanels();
 
 if(NET_ENABLED){
   initNet();

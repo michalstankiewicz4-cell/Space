@@ -16,6 +16,7 @@ const STRINGS = {
       title: "Setup",
       tabLanguage: "Language",
       tabMouse: "Mouse",
+      tabHelp: "Help",
       invertX: "Invert X (right-drag)",
       invertY: "Invert Y (right-drag)",
       swapButtons: "Swap left/right mouse button"
@@ -64,6 +65,7 @@ const STRINGS = {
       title: "Ustawienia",
       tabLanguage: "Język",
       tabMouse: "Mysz",
+      tabHelp: "Pomoc",
       invertX: "Odwróć X (obrót PPM)",
       invertY: "Odwróć Y (obrót PPM)",
       swapButtons: "Zamień lewy/prawy przycisk myszy"

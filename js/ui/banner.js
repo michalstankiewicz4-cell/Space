@@ -40,6 +40,7 @@ function switchSetupTab(tab){
   });
   document.getElementById("setupTabLanguage").classList.toggle("hidden", tab !== "language");
   document.getElementById("setupTabMouse").classList.toggle("hidden", tab !== "mouse");
+  document.getElementById("setupTabHelp").classList.toggle("hidden", tab !== "help");
 }
 
 // Start screen: the player must give a nickname before "ENTER ORBIT"

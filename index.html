@@ -37,6 +37,7 @@
     <div id="setupTabs">
       <button type="button" data-tab="language" class="active">Language</button>
       <button type="button" data-tab="mouse">Mouse</button>
+      <button type="button" data-tab="help">Help</button>
     </div>
 
     <div id="setupTabLanguage" class="setupTabPanel">
@@ -52,29 +53,41 @@
       <label class="setupCheckRow"><input type="checkbox" id="invertYCheck"><span id="invertYLabel">Invert Y (right-drag)</span></label>
       <label class="setupCheckRow"><input type="checkbox" id="swapButtonsCheck"><span id="swapButtonsLabel">Swap left/right mouse button</span></label>
     </div>
+
+    <div id="setupTabHelp" class="setupTabPanel hidden">
+      <div id="setupHelpText">
+        Right button + drag = rotate camera · scroll = zoom<br>
+        Left click / box select = select ships<br>
+        Click a planet = course order for selected (or whole swarm)
+      </div>
+    </div>
   </div>
 </div>
 
 <div class="hud panel" id="telemetry">
-  <div class="title" id="telemetryTitle">ROJ // TELEMETRY</div>
-  <div class="row"><span id="labelPoints">Evolution points</span><b id="statPoints">0</b></div>
-  <div class="row"><span id="labelShips">Units</span><b id="statShips">0</b></div>
-  <div class="row"><span id="labelEaten">Planets devoured</span><b id="statEaten">0</b></div>
-  <div class="row"><span id="labelPlayers">Players online</span><b id="statPlayers">1</b></div>
-</div>
-
-<div class="hud" id="hint">
-  Right button + drag = rotate camera · scroll = zoom<br>
-  Left click / box select = select ships<br>
-  Click a planet = course order for selected (or whole swarm)
+  <div class="panelTitleBar">
+    <div class="title" id="telemetryTitle">ROJ // TELEMETRY</div>
+    <button class="collapseBtn" id="telemetryCollapseBtn" type="button">▾</button>
+  </div>
+  <div class="panelBody" id="telemetryBody">
+    <div class="row"><span id="labelPoints">Evolution points</span><b id="statPoints">0</b></div>
+    <div class="row"><span id="labelShips">Units</span><b id="statShips">0</b></div>
+    <div class="row"><span id="labelEaten">Planets devoured</span><b id="statEaten">0</b></div>
+    <div class="row"><span id="labelPlayers">Players online</span><b id="statPlayers">1</b></div>
+  </div>
 </div>
 
 <div class="hud panel" id="playersPanel">
-  <div class="title" id="playersTitle">PLAYERS</div>
-  <ul id="playersListEl"></ul>
+  <div class="panelTitleBar">
+    <div class="title" id="playersTitle">PLAYERS</div>
+    <button class="collapseBtn" id="playersCollapseBtn" type="button">▾</button>
+  </div>
+  <ul id="playersListEl" class="panelBody"></ul>
 </div>
 
-<div id="legend">
+<button id="wikiBtn" class="hud" type="button">📖 Wiki</button>
+
+<div id="legend" class="hidden">
   <div class="lg"><span class="dot" style="background:#4fa8ff"></span><span id="legendIce">Ice planets</span></div>
   <div class="lg"><span class="dot" style="background:#8fd88f"></span><span id="legendNeutral">Neutral planets</span></div>
   <div class="lg"><span class="dot" style="background:#ff7a45"></span><span id="legendVolcanic">Volcanic planets</span></div>
