@@ -181,8 +181,11 @@ canvas{ display:block; touch-action:none; cursor: grab; }
 }
 #banner h1 span{ color: var(--teal); }
 #banner p{ color: var(--ink-dim); font-size: 14px; line-height:1.6; margin: 0 0 22px; }
+#nickRow{
+  display:flex; gap:8px; width:100%; max-width: 320px; margin: 0 auto 14px;
+}
 #banner input{
-  display:block; width: 100%; max-width: 320px; margin: 0 auto 14px;
+  display:block; flex:1; min-width:0; margin:0;
   font-family: var(--font-mono); font-size: 14px; color: var(--ink);
   background: rgba(255,255,255,0.05); border: 1px solid var(--panel-edge);
   padding: 11px 14px; text-align:center; letter-spacing:0.02em;
@@ -190,6 +193,12 @@ canvas{ display:block; touch-action:none; cursor: grab; }
 }
 #banner input::placeholder{ color: var(--ink-dim); }
 #banner input:focus{ outline:none; border-color: var(--teal); }
+#nickRandomBtn{
+  flex: none; padding: 0 14px !important; font-size: 16px !important;
+  background: rgba(255,255,255,0.06) !important; color: var(--ink) !important;
+  border: 1px solid var(--panel-edge) !important;
+}
+#nickRandomBtn:hover{ border-color: var(--teal) !important; filter:none !important; }
 #banner button{
   font-family: var(--font-head); font-weight:600; font-size: 14px;
   background: var(--teal); color: #04211c; border: none;
@@ -204,7 +213,7 @@ canvas{ display:block; touch-action:none; cursor: grab; }
 #banner.hidden{ display:none; }
 
 #bannerButtons{ display:flex; gap:10px; justify-content:center; align-items:center; }
-#setupBtn{
+#banner button#setupBtn{
   background: rgba(255,255,255,0.06); color: var(--ink-dim);
   border: 1px solid var(--panel-edge); padding: 12px 18px;
 }

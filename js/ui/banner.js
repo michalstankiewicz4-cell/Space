@@ -30,6 +30,7 @@ export function initBanner(){
   const startBtn = document.getElementById("startBtn");
   const setupBtn = document.getElementById("setupBtn");
   const setupPanel = document.getElementById("setupPanel");
+  const nickRandomBtn = document.getElementById("nickRandomBtn");
 
   applyStaticText();
   updateNickPlaceholder();
@@ -55,12 +56,26 @@ export function initBanner(){
     setupPanel.classList.toggle("hidden");
   });
 
+  nickRandomBtn.addEventListener("click", function(){
+    nickInput.value = randomNickSuggestion();
+    startBtn.disabled = nickInput.value.trim().length === 0;
+    nickInput.focus();
+  });
+
   document.querySelectorAll("#setupLangButtons button").forEach(function(btn){
     btn.addEventListener("click", function(){
       if(!LANGS.includes(btn.dataset.lang)) return;
       setLang(btn.dataset.lang);
       onLanguageChanged();
     });
+  });
+
+  // Escape reopens the start screen at any time (e.g. to change the
+  // nickname or language mid-game), and closes it again the same way.
+  window.addEventListener("keydown", function(e){
+    if(e.key !== "Escape") return;
+    banner.classList.toggle("hidden");
+    if(!banner.classList.contains("hidden")) nickInput.focus();
   });
 
   nickInput.focus();
