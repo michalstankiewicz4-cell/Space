@@ -5,8 +5,8 @@ import { bodyVariantKey, bodyValueEstimate } from "../world/bodies.js";
 import { t } from "../i18n.js";
 import { settings } from "../settings.js";
 
-// Kamera: PRAWY przycisk = obrót, scroll = zoom (chyba że gracz zamienił
-// przyciski w Setup — patrz rotateButton()/selectButton() niżej).
+// Camera: RIGHT button = rotate, scroll = zoom (unless the player swapped
+// the buttons in Setup — see rotateButton()/selectButton() below).
 export const camState = { az: 0.6, pol: 1.05, radius: 46, autoSpin: true };
 let camDragging = false, camLastX = 0, camLastY = 0;
 function clampPol(p){ return Math.max(0.35, Math.min(Math.PI-0.35, p)); }
@@ -136,8 +136,8 @@ function commandTo(planet, list, cmdFlashEl){
   showToast(list.length===ctx.ships.length ? t("toast.orderAll") : t("toast.orderSome")(list.length));
 }
 
-// Podpina obsługę myszki (kamera, zaznaczanie statków, rozkazy kursu).
-// Wywołaj raz, po initScene().
+// Wires up mouse handling (camera, ship selection, course orders).
+// Call once, after initScene().
 export function initControls(){
   const selectBoxEl = document.getElementById("selectBox");
   const cmdFlashEl = document.getElementById("cmdFlash");
@@ -189,7 +189,7 @@ export function initControls(){
       }
       return;
     }
-    // hover cursor feedback (nie podczas przeciagania)
+    // hover cursor feedback (not while dragging)
     const overShip = pickShipAt(e);
     const overPlanet = overShip ? null : pickPlanetAt(e);
     const overBlackHole = (overShip || overPlanet) ? null : pickBlackHoleAt(e);

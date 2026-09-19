@@ -29,7 +29,7 @@ function connectRoom(){
 
 export function initNet(){
   supabase.auth.signInAnonymously().then(function(res){
-    if(res.error){ console.warn("Anonimowe logowanie Supabase nieudane", res.error); }
+    if(res.error){ console.warn("Supabase anonymous sign-in failed", res.error); }
     connectRoom();
   });
 }

@@ -3,10 +3,10 @@ import { state } from "../core/gameState.js";
 import { myIdentity } from "../net/identity.js";
 import { t } from "../i18n.js";
 
-// Buduje listę wyłącznie przez DOM API (textContent/style.background), nigdy
-// przez innerHTML — nick i kolor innego gracza to dane od niezaufanego
-// klienta (przychodzą przez broadcast), więc nie mogą trafiać do HTML jako
-// surowy tekst.
+// Builds the list purely through the DOM API (textContent/style.background),
+// never through innerHTML — another player's nick and color are data from an
+// untrusted client (they arrive via broadcast), so they must never end up in
+// the HTML as raw text.
 export function renderPlayersList(){
   const el = document.getElementById("playersListEl");
   if(!el) return;

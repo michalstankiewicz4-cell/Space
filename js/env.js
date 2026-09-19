@@ -1,11 +1,11 @@
-// Konfiguracja środowiska (Supabase). Zobacz README.md, sekcja
-// "Multiplayer / Supabase setup". `anon key` jest z założenia publiczny
-// (bezpieczeństwo zapewniają reguły RLS w supabase/schema.sql), więc trzymanie
-// go w tym pliku jest bezpieczne — to hasła/service-role key nigdy tu nie trafiają.
+// Environment configuration (Supabase). See README.md, section
+// "Multiplayer / Supabase setup". The `anon key` is public by design
+// (security comes from the RLS policies in supabase/schema.sql), so keeping
+// it in this file is safe — passwords/service-role keys never go here.
 //
-// Można nadpisać te wartości bez edytowania tego pliku (np. do testów na
-// innym projekcie Supabase) — wystarczy przed załadowaniem gry ustawić
-// `window.ROJ_ENV = { SUPABASE_URL, SUPABASE_ANON_KEY }`.
+// These values can be overridden without editing this file (e.g. to test
+// against a different Supabase project) — just set
+// `window.ROJ_ENV = { SUPABASE_URL, SUPABASE_ANON_KEY }` before the game loads.
 
 const DEFAULTS = {
   SUPABASE_URL: "https://qbtbquzylmgheaqlljhg.supabase.co",
@@ -17,9 +17,9 @@ const overrides = (typeof window !== "undefined" && window.ROJ_ENV) || {};
 export const SUPABASE_URL = overrides.SUPABASE_URL || DEFAULTS.SUPABASE_URL;
 export const SUPABASE_ANON_KEY = overrides.SUPABASE_ANON_KEY || DEFAULTS.SUPABASE_ANON_KEY;
 
-// Gra działa w trybie lokalnym (offline), jeśli multiplayer nie jest
-// skonfigurowany albo skrypt supabase-js (ładowany klasycznym <script> w
-// index.html) się nie wczytał.
+// The game runs in local (offline) mode if multiplayer isn't configured, or
+// if the supabase-js script (loaded via a classic <script> in index.html)
+// failed to load.
 export const NET_ENABLED = !!SUPABASE_URL && !!SUPABASE_ANON_KEY &&
   SUPABASE_URL.indexOf("YOUR_SUPABASE") === -1 &&
   SUPABASE_ANON_KEY.indexOf("YOUR_SUPABASE") === -1 &&

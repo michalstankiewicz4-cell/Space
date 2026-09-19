@@ -19,7 +19,7 @@ function makeShipMesh(){
   const glow = new THREE.PointLight(0x4fe3c6, 0.5, 6);
   group.add(glow);
 
-  // pierscien zaznaczenia (widoczny tylko gdy statek wybrany)
+  // selection ring (visible only when the ship is selected)
   const ringGeo = new THREE.RingGeometry(0.42, 0.5, 24);
   const ringMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.9, side:THREE.DoubleSide, depthWrite:false });
   const ring = new THREE.Mesh(ringGeo, ringMat);
@@ -27,7 +27,7 @@ function makeShipMesh(){
   ring.visible = false;
   group.add(ring);
 
-  // niewidzialna sfera pod raycasting - latwiej trafic mala jednostke myszka
+  // invisible sphere for raycasting - makes it easier to click a small unit
   const pickGeo = new THREE.SphereGeometry(0.55, 8, 8);
   const pickMat = new THREE.MeshBasicMaterial({ transparent:true, opacity:0 });
   const pickMesh = new THREE.Mesh(pickGeo, pickMat);
@@ -121,9 +121,9 @@ function makeBoltMesh(color, opacity){
   return mesh;
 }
 
-// przebudowuje geometrie promienia KAZDA RAMKE, uzywajac aktualnej pozycji
-// statku i biezacego punktu kontaktu - dzieki temu promien plynnie
-// "rozciaga sie" wraz z orbitowaniem statku, a nie "skacze" co kilka ramek
+// rebuilds the beam geometry EVERY FRAME, using the ship's current position
+// and the current contact point - this way the beam smoothly "stretches"
+// as the ship orbits, instead of "jumping" every few frames
 function regenBolt(sh, surfacePoint){
   if(!sh.boltCore){
     sh.boltCore = makeBoltMesh(0xeafbff, 0.95);
@@ -192,11 +192,11 @@ export function updateShips(dt){
       sh.vel.lerp(toTarget.multiplyScalar(baseSpeed*0.15), 0.08);
       sh.pos.addScaledVector(sh.vel, dt);
       sh.mesh.position.copy(sh.pos);
-      // orientacja w strone ruchu
+      // orient towards the direction of travel
       const lookTarget = new THREE.Vector3().addVectors(sh.pos, sh.vel);
       sh.mesh.lookAt(lookTarget);
     } else {
-      // orbituj lekko wokol planety podczas zjadania
+      // orbit gently around the planet while eating
       sh.eatPulse += dt*4;
       const orbit = new THREE.Vector3(Math.cos(sh.eatPulse), Math.sin(sh.eatPulse*0.7)*0.4, Math.sin(sh.eatPulse)).multiplyScalar(eatRange*0.9);
       const orbitPos = new THREE.Vector3().addVectors(sh.target.mesh.position, orbit);
@@ -211,8 +211,9 @@ export function updateShips(dt){
 
       pulseBolt(sh, dt);
 
-      // planeta NIE kurczy sie - peka: nakladka peknieс odslania sie z uszkodzeniem,
-      // a przy niskim "zdrowiu" dostaje lekkie drzenie napiecia przed rozpadem
+      // the planet does NOT shrink - it cracks: the crack overlay reveals
+      // itself with damage, and at low "health" gets a light tension shake
+      // before breaking apart
       const healthFrac = Math.max(0, sh.target.health/sh.target.maxHealth);
       const damage = 1-healthFrac;
       sh.target.crackMesh.material.opacity = Math.min(1, damage*1.2);
@@ -227,14 +228,14 @@ export function updateShips(dt){
         sh.target.mesh.position.copy(sh.target.basePos).add(shk);
       }
 
-      // odpryski/czasteczki + promien-piorun + ogniste slady na powierzchni
+      // debris/particles + lightning-beam + scorch marks on the surface
       const outward = new THREE.Vector3().subVectors(sh.pos, sh.target.mesh.position).normalize();
       const surfacePoint = new THREE.Vector3().addVectors(sh.target.mesh.position, outward.clone().multiplyScalar(sh.target.radius));
 
-      // ksztalt zygzaka odswieza sie z mniejsza czestotliwoscia (efekt "trzasku"),
-      // ale geometria promienia jest przebudowywana KAZDA RAMKE wedlug aktualnej
-      // pozycji statku - dzieki temu promien plynnie ciagnie sie za statkiem,
-      // gdy ten orbituje wokol planety po trafieniu
+      // the zigzag shape refreshes at a lower rate (a "crackle" effect), but
+      // the beam geometry is rebuilt EVERY FRAME from the ship's current
+      // position - this way the beam smoothly trails the ship as it orbits
+      // the planet after making contact
       sh.boltJitterTimer -= dt;
       if(sh.boltJitterTimer <= 0 || !sh.boltJitterOffsets){
         sh.boltJitterTimer = 0.09;
@@ -251,8 +252,8 @@ export function updateShips(dt){
 
       if(sh.target.health <= 0){
         if(!NET_ENABLED && !sh.target.dying){
-          // tryb offline: brak serwera do rozstrzygania "kto zadał ostatni cios",
-          // więc zjedzenie rozstrzyga się od razu lokalnie, jak dawniej
+          // offline mode: no server to arbitrate "who landed the last hit",
+          // so the kill is resolved immediately, locally, as before
           const gained = bodyValueEstimate(sh.target);
           state.points += gained;
           state.eaten += 1;
@@ -263,8 +264,8 @@ export function updateShips(dt){
           refreshDock();
           save();
         } else {
-          // tryb sieciowy: serwer (bite_body RPC) rozstrzyga kto dostaje punkty,
-          // wybuch i sprzątanie przychodzą przez Realtime DELETE dla wszystkich
+          // networked mode: the server (bite_body RPC) decides who gets the
+          // points; the explosion and cleanup arrive via Realtime DELETE for everyone
           hideBolt(sh);
           sh.target = null;
         }

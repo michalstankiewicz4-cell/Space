@@ -15,7 +15,7 @@ import { showToast } from "../ui/hud.js";
 import { isSteward } from "./presence.js";
 import { t } from "../i18n.js";
 
-// Buduje lokalny obiekt (planeta/kometa/... lub czarna dziura) z wiersza `bodies`.
+// Builds a local object (planet/comet/... or black hole) from a `bodies` row.
 export function materializeBody(row){
   if(ctx.netBodies[row.id]) return;
   const pos = new THREE.Vector3(row.pos_x, row.pos_y, row.pos_z);
@@ -37,11 +37,12 @@ export function onBodyUpdated(row){
   }
 }
 
-// UWAGA: Supabase Realtime dla DELETE potrafi przesłać w `oldRow` tylko klucz
-// główny (id) — bez REPLICA IDENTITY FULL reszta kolumn (health, kind...) jest
-// nieobecna, nie `null`. Dlatego celowo NIE polegamy tu na `oldRow` poza `id` —
-// czy to była "czarna dziura" i czy miała zdrowie <= 0 sprawdzamy z lokalnie
-// już znanego obiektu (`obj`), który jest zawsze kompletny i aktualny.
+// NOTE: Supabase Realtime for DELETE can send only the primary key (id) in
+// `oldRow` — without REPLICA IDENTITY FULL the other columns (health, kind...)
+// are simply absent, not `null`. So we deliberately do NOT rely on `oldRow`
+// beyond `id` — whether this was a "black hole" and whether its health was
+// <= 0 is checked against the already-known local object (`obj`), which is
+// always complete and up to date.
 export function onBodyDeleted(oldRow){
   const obj = ctx.netBodies[oldRow.id];
   if(!obj) return;
@@ -60,13 +61,13 @@ export function onBodyDeleted(oldRow){
   if(ctx.planets.indexOf(obj) === -1) return;
   const wasEaten = obj.maxHealth != null && obj.health <= 0;
   if(wasEaten && !obj.dying){
-    // zjedzona przez kogos - wspolny wybuch dla wszystkich; punkty przyznaje
-    // wylacznie klient ktory dostal killed:true z bite_body (patrz flushDamage)
+    // eaten by someone - shared explosion for everyone; points are awarded
+    // only to the client that got killed:true from bite_body (see flushDamage)
     triggerBreakup(obj);
     destroyPlanet(obj);
     refreshDock();
   } else {
-    // po prostu wyleciala poza pole (kometa) - bez punktow
+    // just flew out of the field (comet) - no points
     despawnLocalOnly(obj);
   }
 }

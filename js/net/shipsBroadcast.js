@@ -30,10 +30,11 @@ function safeCoord(v){
   return Number.isFinite(n) ? Math.max(-1000, Math.min(1000, n)) : 0;
 }
 
-// Broadcast nie ma żadnej walidacji po stronie serwera — payload może
-// przygotować dowolny klient, wprost przez WebSocket, z pominięciem naszego
-// UI. Dlatego wszystko stąd traktujemy jako niezaufane i przycinamy/waliduj-
-// emy zanim cokolwiek trafi na scenę (patrz NET_MAX_* w config.js).
+// Broadcast has no server-side validation whatsoever — the payload can be
+// crafted by any client, straight over the WebSocket, bypassing our UI
+// entirely. So everything coming from here is treated as untrusted and
+// clamped/validated before it ever reaches the scene (see NET_MAX_* in
+// config.js).
 export function handleRemoteShips(payload){
   if(!payload || typeof payload.id !== "string" || payload.id === clientId) return;
   let rp = ctx.remotePlayers[payload.id];

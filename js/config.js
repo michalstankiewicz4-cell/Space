@@ -1,8 +1,8 @@
-// Stałe konfiguracyjne gry — dane, nie logika. Zmieniaj tu, nie w kodzie.
+// Game configuration constants — data, not logic. Change here, not in code.
 
 export const FIELD_RADIUS = 34;
 export const MAX_PLANETS = 14;
-export const ORBIT_RADIUS = 3.6; // stała odległość orbity zjadania, niezależna od rozmiaru planety
+export const ORBIT_RADIUS = 3.6; // fixed eating-orbit distance, independent of planet size
 export const MAX_PARTICLES = 420;
 
 // Swarm upgrade tree. Display names come from i18n (t("upgrades."+key)),
@@ -35,18 +35,18 @@ export const TREE = {
   }
 };
 
-// Multiplayer: interwały i limity czasowe
+// Multiplayer: intervals and time limits
 export const NET_SHIP_BROADCAST_MS = 120;
 export const NET_DAMAGE_FLUSH_MS = 150;
 export const NET_PLANET_TOPUP_S = 1.0;
 export const NET_REMOTE_PLAYER_TIMEOUT_MS = 6000;
 export const NET_GHOST_LERP_SPEED = 6;
 
-// Twarde limity na dane przychodzące od innych klientów przez broadcast —
-// broadcast nie ma żadnej walidacji po stronie serwera, więc nadawca może
-// wysłać cokolwiek. Te limity nie ograniczają uczciwej gry (nikt nie ma
-// więcej niż kilkadziesiąt statków), ale nie pozwalają jednej złośliwej
-// wiadomości zawiesić przeglądarki wszystkich innych graczy.
+// Hard limits on data coming from other clients via broadcast — broadcast
+// has no server-side validation at all, so the sender can send anything.
+// These limits don't constrain fair play (nobody has more than a few dozen
+// ships), but they stop one malicious message from freezing every other
+// player's browser.
 export const NET_MAX_REMOTE_SHIPS = 40;
 export const NET_MAX_REMOTE_PLAYERS = 60;
 export const NET_MAX_NICK_LENGTH = 24;

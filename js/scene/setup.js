@@ -1,8 +1,8 @@
 import { ctx } from "../core/context.js";
 
-// Tworzy scenę/kamerę/renderer + oświetlenie + tło gwiazd, montuje canvas w
-// DOM i podpina obsługę resize. Wywołaj raz, na starcie, przed jakimkolwiek
-// innym modułem odwołującym się do ctx.scene/camera/renderer.
+// Creates the scene/camera/renderer + lighting + starfield background,
+// mounts the canvas in the DOM and wires up resize handling. Call once, on
+// startup, before any other module that references ctx.scene/camera/renderer.
 export function initScene(){
   const stage = document.getElementById("stage");
   const scene = new THREE.Scene();

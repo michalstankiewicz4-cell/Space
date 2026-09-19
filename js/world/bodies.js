@@ -121,10 +121,10 @@ export function applyHealthVisual(obj){
   obj.crackMesh.material.opacity = Math.min(1, (1-healthFrac)*1.2);
 }
 
-// Prawdziwe promienie 3D słońca: cienkie płaszczyzny (nie sprite/billboard)
-// wystrzelone w losowych kierunkach w przestrzeni i losowo obrócone wokół
-// własnej osi ("roll") — dzięki temu, w przeciwieństwie do płaskiego obrazka
-// zwróconego zawsze do kamery, mają realną paralaksę przy obrocie widoku.
+// Real 3D sun rays: thin planes (not a sprite/billboard) shot out in random
+// directions in space and randomly rotated around their own axis ("roll") —
+// this way, unlike a flat image always facing the camera, they have real
+// parallax as the view rotates.
 function buildSunRays(radius){
   const group = new THREE.Group();
   const rayTexture = makeSunRayTexture();
@@ -137,7 +137,7 @@ function buildSunRays(radius){
     const width = radius * (s.rayWidthMin + Math.random()*s.rayWidthRange);
 
     const geo = new THREE.PlaneGeometry(width, length);
-    geo.translate(0, length/2, 0); // (0,0,0) lokalnie = nasada promienia przy powierzchni
+    geo.translate(0, length/2, 0); // local (0,0,0) = ray base at the surface
 
     const mat = new THREE.MeshBasicMaterial({
       map: rayTexture, transparent: true, opacity: 0.8,
@@ -149,18 +149,18 @@ function buildSunRays(radius){
     if(dir.lengthSq() < 0.0001) dir.set(0,1,0);
     dir.normalize();
     plane.quaternion.setFromUnitVectors(up, dir);
-    plane.rotateY(Math.random()*Math.PI*2); // losowy obrot wokol wlasnej osi (teraz = dir)
+    plane.rotateY(Math.random()*Math.PI*2); // random rotation around its own axis (now = dir)
 
     group.add(plane);
   }
   return group;
 }
 
-// Warkocz komety: dwie skrzyzowane plaszczyzny (klasyczny trik "crossed
-// billboard" - widoczne z niemal kazdego kata, w przeciwienstwie do jednej
-// plaskiej plaszczyzny ktora znika widziana "na krawedz") ciagnace sie w
-// kierunku przeciwnym do predkosci. Kierunek lotu komety jest stały przez
-// cale jej zycie, wiec liczymy orientacje raz, przy tworzeniu.
+// Comet tail: two crossed planes (the classic "crossed billboard" trick -
+// visible from almost any angle, unlike a single flat plane that disappears
+// when seen "edge-on") trailing in the direction opposite to velocity. A
+// comet's direction of travel is constant for its whole life, so we compute
+// the orientation once, at creation.
 function buildCometTail(radius, vel){
   const group = new THREE.Group();
   if(!vel || vel.lengthSq() < 0.0001) return group;
@@ -185,9 +185,9 @@ function buildCometTail(radius, vel){
   return group;
 }
 
-// Buduje mesh + wpis w `ctx.planets` z wiersza ciała (lokalnego lub z sieci).
-// `elapsedSec` przesuwa komety do miejsca, w którym powinny być "teraz"
-// (ważne dla gracza dołączającego do już trwającej gry).
+// Builds a mesh + entry in `ctx.planets` from a body row (local or networked).
+// `elapsedSec` advances comets to where they should be "now" (important for
+// a player joining a game already in progress).
 export function materializePlanet(row, pos, vel, elapsedSec){
   const kind = row.kind;
   const radius = row.radius;
@@ -213,7 +213,7 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   mesh.position.copy(pos);
   ctx.scene.add(mesh);
 
-  // nakladka pekniec - niewidoczna na starcie, odslania sie w miare obgryzania
+  // crack overlay - invisible at first, revealed as the body gets bitten down
   const crackGeo = new THREE.SphereGeometry(radius*1.02, 22, 16);
   const crackMat = new THREE.MeshBasicMaterial({
     map: generateCrackTexture(), transparent:true, opacity:0,
@@ -222,7 +222,7 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   const crackMesh = new THREE.Mesh(crackGeo, crackMat);
   mesh.add(crackMesh);
 
-  // nakladka ognistych sladow - zaczyna calkowicie czysta, wypalana przez promien statkow
+  // scorch-mark overlay - starts completely clean, burned in by ships' beams
   const scorchCanvas = document.createElement("canvas");
   scorchCanvas.width = 256; scorchCanvas.height = 256;
   const scorchCtx = scorchCanvas.getContext("2d");
@@ -236,11 +236,11 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   const scorchMesh = new THREE.Mesh(scorchGeo, scorchMat);
   mesh.add(scorchMesh);
 
-  // slonce: gladka, jednowarstwowa poswiata (sprite zwrocony do kamery -
-  // canvas-owy gradient interpoluje w sposob ciagly, bez "schodkow" jakie
-  // dawaly wczesniej warstwy sfer 3D) + prawdziwe promienie 3D (patrz
-  // buildSunRays - realne obiekty w przestrzeni, maja paralakse przy obrocie
-  // kamery) + wlasne swiatlo
+  // sun: a smooth, single-layer glow (a sprite facing the camera - the
+  // canvas gradient interpolates continuously, without the "banding" that
+  // earlier layered 3D-sphere shells produced) + real 3D rays (see
+  // buildSunRays - real objects in space, with parallax as the camera
+  // rotates) + its own light
   let sunHalo = null;
   let sunRays = null;
   if(kind === "sun"){
@@ -259,15 +259,15 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     mesh.add(sunLight);
   }
 
-  // kometa: warkocz ciagnacy sie za nia w strone przeciwna do lotu
+  // comet: a tail trailing behind it, opposite the direction of travel
   let cometTail = null;
   if(kind === "comet"){
     cometTail = buildCometTail(radius, vel);
     mesh.add(cometTail);
   }
 
-  // subtelny pierscien orbitalny na co kilka planet (nie dla komet) - decyzja czysto
-  // kosmetyczna, losowana niezaleznie przez kazdego klienta
+  // a subtle orbital ring on some planets (not comets) - a purely cosmetic
+  // choice, rolled independently by each client
   if(kind!=="comet" && Math.random() < 0.3){
     const rg = new THREE.RingGeometry(radius*1.5, radius*1.75, 40);
     const rm = new THREE.MeshBasicMaterial({ color:color, transparent:true, opacity:0.25, side:THREE.DoubleSide });
@@ -311,7 +311,7 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   return p;
 }
 
-// Tryb offline (multiplayer nieskonfigurowany): tworzy ciało od razu, bez sieci.
+// Offline mode (multiplayer not configured): creates the body immediately, no networking.
 export function spawnPlanetLocalOnly(forcedType){
   const data = randomPlanetSpawnData(forcedType);
   materializePlanet({
@@ -321,11 +321,11 @@ export function spawnPlanetLocalOnly(forcedType){
   }, data.pos, data.vel, 0);
 }
 
-// Tryb sieciowy: tylko steward wysyla INSERT; mesh powstaje u wszystkich
-// (wliczajac stewarda) po odebraniu echa przez Realtime — jedna sciezka kodu.
-// `pendingSpawnCount` liczy inserty "w locie" (wyslane, jeszcze nie
-// zmaterializowane), zeby dosypywanie (maintainPlanetCount) nie doliczalo
-// ich sobie jeszcze raz, gdy odpowiedz sieci sie spoznia.
+// Networked mode: only the steward sends the INSERT; the mesh is created for
+// everyone (including the steward) once the Realtime echo arrives — a single
+// code path. `pendingSpawnCount` counts inserts "in flight" (sent, not yet
+// materialized), so the top-up logic (maintainPlanetCount) doesn't count them
+// again while the network response is still pending.
 export let pendingSpawnCount = 0;
 export function requestSpawnPlanet(forcedType){
   const data = randomPlanetSpawnData(forcedType);
@@ -369,8 +369,8 @@ export function paintScorch(planet, worldPoint, intensity){
   planet.scorchTexture.needsUpdate = true;
 }
 
-// Usuwa ciało tylko lokalnie (mesh + tablica), bez dotykania sieci.
-// Używane gdy usunięcie przychodzi już potwierdzone przez Realtime DELETE.
+// Removes a body only locally (mesh + array), without touching the network.
+// Used when the removal has already arrived confirmed via Realtime DELETE.
 export function despawnLocalOnly(p){
   ctx.ships.forEach(function(other){
     if(other.target===p){ other.target=null; hideBolt(other); }
@@ -380,9 +380,10 @@ export function despawnLocalOnly(p){
   removeItem(ctx.planets, p);
 }
 
-// Wywoływane przez klienta, który LOKALNIE zauważył np. że kometa wyleciała
-// poza pole gry — usuwa u siebie od razu i zgłasza usunięcie do sieci
-// (DELETE jest idempotentny, więc echo Realtime u innych nic nie popsuje).
+// Called by the client that LOCALLY noticed, e.g., that a comet flew outside
+// the play field — removes it locally right away and reports the removal to
+// the network (DELETE is idempotent, so the Realtime echo on other clients
+// won't break anything).
 export function despawnBodySilently(p){
   despawnLocalOnly(p);
   if(NET_ENABLED && p.dbId){
@@ -406,8 +407,8 @@ export function updateBodies(dt){
     }
 
     if(p.sunRays){
-      // wlasny, nieco szybszy obrot niz baza slonca (p.spin) - realna
-      // geometria 3D, wiec przy obrocie kamery promienie maja paralakse
+      // its own, slightly faster rotation than the sun's base (p.spin) -
+      // real 3D geometry, so the rays get parallax as the camera rotates
       p.sunRays.rotation.y += dt*0.15;
       p.sunRays.rotation.x += dt*0.045;
       const pulse = 1 + 0.08*Math.abs(Math.sin(p.sunPhase*0.7));
@@ -444,7 +445,7 @@ export function destroyPlanet(p){
     if(el >= 1){ ctx.scene.remove(p.mesh); return; }
     let s;
     if(el < 0.22){
-      s = 1 + (el/0.22)*0.18; // krotki blysk-rozdecie
+      s = 1 + (el/0.22)*0.18; // short flash-swell
     } else {
       const e2 = (el-0.22)/0.78;
       s = (1.18)*(1-e2);
@@ -460,8 +461,8 @@ export function destroyPlanet(p){
   removeItem(ctx.planets, p);
 }
 
-// Zasiew startowy w trybie offline (bez multiplayera). W trybie sieciowym
-// świat przychodzi z bazy — patrz net/bodiesSync.js.
+// Initial seeding in offline mode (no multiplayer). In networked mode the
+// world comes from the database — see net/bodiesSync.js.
 export function seedLocalWorld(){
   for(let i=0;i<MAX_PLANETS;i++) spawnPlanetLocalOnly();
 }

@@ -1,7 +1,8 @@
-// Usuwa pierwsze wystąpienie `item` z tablicy w miejscu (bez tworzenia nowej
-// tablicy) — używane wszędzie tam, gdzie inaczej trzeba by robić
-// `arr = arr.filter(x => x !== item)`, co nie działa na tablicy zaimportowanej
-// z innego modułu (nie można podmienić cudzego bindingu, można go tylko mutować).
+// Removes the first occurrence of `item` from an array in place (without
+// creating a new array) — used everywhere that would otherwise need
+// `arr = arr.filter(x => x !== item)`, which doesn't work on an array
+// imported from another module (you can't reassign someone else's binding,
+// only mutate it).
 export function removeItem(arr, item){
   const i = arr.indexOf(item);
   if(i !== -1) arr.splice(i, 1);

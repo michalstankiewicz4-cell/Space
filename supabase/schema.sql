@@ -1,5 +1,5 @@
--- ROJ // SWARM PROTOCOL — schemat multiplayer (wklej w Supabase SQL Editor)
--- Zobacz README.md, sekcja "Multiplayer / Supabase setup", po pełną instrukcję.
+-- ROJ // SWARM PROTOCOL — multiplayer schema (paste into the Supabase SQL Editor)
+-- See README.md, section "Multiplayer / Supabase setup", for the full instructions.
 
 create extension if not exists pgcrypto;
 
@@ -48,11 +48,11 @@ create policy "world_meta readable by anyone" on world_meta for select using (tr
 drop policy if exists "world_meta writable by authed" on world_meta;
 create policy "world_meta writable by authed" on world_meta for update to authenticated using (true);
 
--- Rozsądne granice wartości na wierszach `bodies`. RLS pilnuje TEGO, KTO może
--- pisać (każdy z sesją anonimową), ale nie tego, CO wpisze — bez tych CHECK
--- ktokolwiek znający klucz anon (jest publiczny z założenia) mógłby wstawić
--- np. radius=1e9 albo health ujemny i popsuć renderowanie u wszystkich graczy.
--- Zakresy dobrane z marginesem ponad to, co generuje sama gra (js/world/*).
+-- Sensible bounds on `bodies` row values. RLS guards WHO can write (anyone
+-- with an anonymous session), but not WHAT they write — without these CHECK
+-- constraints, anyone who knows the anon key (public by design) could insert
+-- e.g. radius=1e9 or a negative health and break rendering for every player.
+-- Ranges chosen with headroom above what the game itself generates (js/world/*).
 alter table bodies drop constraint if exists bodies_radius_check;
 alter table bodies add constraint bodies_radius_check check (radius > 0 and radius <= 6);
 
@@ -83,16 +83,17 @@ alter table bodies add constraint bodies_vel_check check (
 alter table bodies drop constraint if exists bodies_max_life_check;
 alter table bodies add constraint bodies_max_life_check check (max_life is null or (max_life > 0 and max_life <= 120));
 
--- Twardy limit liczby ciał naraz — bez tego ktokolwiek mógłby wstawiać
--- (nawet poprawne, w granicach powyższych CHECK) wiersze bez końca i zalać
--- wspólny świat tysiącami obiektów, co zawiesza renderowanie u wszystkich.
+-- Hard cap on the number of bodies at once — without this, anyone could keep
+-- inserting (even valid, within the CHECK constraints above) rows forever
+-- and flood the shared world with thousands of objects, freezing rendering
+-- for everyone.
 create or replace function enforce_bodies_cap()
 returns trigger
 language plpgsql
 as $$
 begin
   if (select count(*) from bodies) >= 40 then
-    raise exception 'Limit ciał w świecie osiągnięty (40)';
+    raise exception 'World body limit reached (40)';
   end if;
   return new;
 end;
@@ -102,7 +103,7 @@ drop trigger if exists trg_bodies_cap on bodies;
 create trigger trg_bodies_cap before insert on bodies
   for each row execute function enforce_bodies_cap();
 
--- Realtime: klienci muszą dostawać insert/update/delete dla `bodies` na żywo.
+-- Realtime: clients need to receive insert/update/delete for `bodies` live.
 do $$
 begin
   if not exists (
@@ -113,15 +114,14 @@ begin
   end if;
 end $$;
 
--- Atomowe "ugryzienie" ciała. Zwraca zdrowie po ataku i czy ten wywołujący
--- zadał ostateczny cios (killed = true => tylko on liczy sobie punkty).
--- Gdy zdrowie spada do zera, wiersz jest od razu usuwany (DELETE), co
--- wszystkim klientom uruchamia wspólną animację wybuchu przez Realtime.
--- `p_amount` jest przycinany do rozsądnego maksimum na jedno wywołanie —
--- klient wysyła je co ~150ms (patrz NET_DAMAGE_FLUSH_MS), więc nawet mocno
--- rozwinięty gracz (max. ulepszenia + cały rój) nie zbliża się do tego limitu,
--- ale ktoś wołający RPC bezpośrednio z dużą wartością nie zabije niczym
--- jednym wywołaniem.
+-- Atomic "bite" of a body. Returns its health after the hit and whether
+-- this caller landed the final blow (killed = true => only they get points).
+-- When health drops to zero, the row is deleted immediately (DELETE), which
+-- triggers the shared explosion animation for every client via Realtime.
+-- `p_amount` is clamped to a sensible max per call — a client sends one
+-- roughly every ~150ms (see NET_DAMAGE_FLUSH_MS), so even a heavily upgraded
+-- player (max upgrades + a full swarm) stays nowhere near this limit, but
+-- someone calling the RPC directly with a huge value can't one-shot anything.
 create or replace function bite_body(p_body_id uuid, p_amount float)
 returns table(id uuid, health float, killed boolean)
 language plpgsql
@@ -148,8 +148,8 @@ begin
 end;
 $$;
 
--- Jednorazowa flaga: pierwszy klient, który to wywoła po starcie pustego
--- świata, dostaje `true` i to on zasiewa startowy komplet ciał.
+-- One-shot flag: the first client to call this after the world starts empty
+-- gets `true` back, and that's the one that seeds the initial set of bodies.
 create or replace function claim_world_init()
 returns boolean
 language sql

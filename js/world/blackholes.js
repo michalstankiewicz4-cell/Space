@@ -49,8 +49,8 @@ export function materializeBlackHole(row, pos){
   horizon.rotation.x = Math.PI/2 + (Math.random()-0.5)*0.3;
   group.add(horizon);
 
-  // poswiata lensingu grawitacyjnego - sprite (zawsze zwrocony do kamery),
-  // wiec z kazdego kata widac ja jako okrag - jak na prawdziwych zdjeciach czarnych dziur
+  // gravitational-lensing glow - a sprite (always facing the camera), so
+  // from any angle it looks like a ring - like in real black hole photos
   const haloMat = new THREE.SpriteMaterial({
     map: makeHaloTexture(), color:0xfff3d9, transparent:true, opacity:0.9,
     blending: THREE.AdditiveBlending, depthWrite:false
@@ -118,12 +118,13 @@ export function updateBlackHoles(dt){
   for(let i=ctx.blackholes.length-1; i>=0; i--){
     const bh = ctx.blackholes[i];
     bh.life += dt;
-    // Obracamy caly mesh (nie przesuwamy tekstury przez offset.x) - RingGeometry
-    // ma plaskie mapowanie UV (u,v z pozycji x,y, nie z kata), wiec przesuwanie
-    // offsetu slizga teksture jak plaski obrazek: jasny srodek wjezdza z boku i
-    // wypada po drugiej stronie, a prawdziwy srodek (dziura w geometrii) zawsze
-    // wyglada ciemno. Obrot wokol wlasnej osi zachowuje symetrie - jasny punkt
-    // tekstury (o ile w ogole widoczny) kraca sie razem z reszta wokol srodka.
+    // We rotate the whole mesh (not the texture via offset.x) - RingGeometry
+    // has planar UV mapping (u,v from x,y position, not from angle), so
+    // animating the offset slides the texture like a flat image: the bright
+    // center slides in from one side and falls out the other, while the true
+    // center (the hole in the geometry) always looks dark. Rotating around
+    // its own axis preserves symmetry - the texture's bright spot (if visible
+    // at all) circles around the center along with everything else.
     bh.disk.rotation.z += dt*(0.6 + bh.flowSpeed);
     bh.pulsePhase += dt*3;
     bh.horizon.material.opacity = 0.6 + 0.35*Math.abs(Math.sin(bh.pulsePhase));
@@ -155,7 +156,7 @@ export function updateBlackHoles(dt){
   }
 
   if(ctx.blackholes.length === 0 && blackHoleTimer <= 0){
-    // zabezpieczenie: gdyby dziura wygasla w tym samym momencie co zerowanie timera
+    // safety net: in case the hole expired at the exact same moment the timer reset
     blackHoleTimer = CONTENT.blackhole.respawnMinS + Math.random()*CONTENT.blackhole.respawnRangeS;
   }
 

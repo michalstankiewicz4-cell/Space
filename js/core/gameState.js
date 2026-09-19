@@ -1,8 +1,8 @@
 import { TREE } from "../config.js";
 
-// Postęp gracza — celowo lokalny (localStorage), nie zsynchronizowany przez
-// sieć. Świat (planety/statki innych graczy) jest współdzielony, ale to,
-// ile masz punktów i jak rozwinięty jest Twój rój, zostaje na tym urządzeniu.
+// Player progress — deliberately local (localStorage), not synced over the
+// network. The world (planets/other players' ships) is shared, but how many
+// points you have and how developed your swarm is stays on this device.
 export const state = {
   points: 1000000,
   eaten: 0,

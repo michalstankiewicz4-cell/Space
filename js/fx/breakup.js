@@ -2,8 +2,8 @@ import { ctx } from "../core/context.js";
 import { makeRockGeometry, generateDustTexture } from "../world/textures.js";
 import { spawnExplosionParticles } from "./particles.js";
 
-// Rozpad planety (odłamki + fala uderzeniowa + pył) — wszystko czysto
-// wizualne, wywoływane raz w momencie zjedzenia/zniszczenia ciała.
+// Planet breakup (debris + shockwave + dust) — purely visual, triggered
+// once at the moment a body is eaten/destroyed.
 
 function spawnFragments(planet){
   const color = planet.mesh.material.color;
@@ -43,8 +43,8 @@ export function updateFragments(dt){
       ctx.fragments.splice(i,1);
       continue;
     }
-    // opor niezalezny od liczby ramek - spowalnia w ciagu ok. 2-3 sekund,
-    // po czym odlamek dryfuje/wisi w miejscu az do wygaśniecia (dluzszy zywot)
+    // frame-rate independent drag - slows down over roughly 2-3 seconds,
+    // after which the fragment drifts/hangs in place until it expires (longer lifespan)
     f.vel.multiplyScalar(Math.pow(0.45, dt));
     f.mesh.position.addScaledVector(f.vel, dt);
     f.mesh.rotation.x += f.angVel.x*dt;

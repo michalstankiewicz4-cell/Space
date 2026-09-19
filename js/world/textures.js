@@ -1,9 +1,9 @@
-// Proceduralne tekstury/geometrie używane przez ciała niebieskie.
+// Procedural textures/geometries used by celestial bodies.
 import { CONTENT } from "../content.js";
 
-// Kompaktowy szum simplex 3D (algorytm Perlina/Gustavsona, domena publiczna).
-// Permutacja losowana przy kazdym wywolaniu makeSimplex3(), wiec kazda
-// planeta dostaje inny uklad kontynentow.
+// Compact 3D simplex noise (Perlin/Gustavson algorithm, public domain).
+// The permutation is randomized on every call to makeSimplex3(), so every
+// planet gets a different continent layout.
 function makeSimplex3(){
   const grad3 = [
     [1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],
@@ -67,9 +67,9 @@ function makeSimplex3(){
   };
 }
 
-// Suma kilku oktaw szumu (fractal Brownian motion) - drobne, coraz slabsze
-// "pofalowania" nalozone na duzy ksztalt, dajace naturalna, postrzepiona
-// linie brzegowa zamiast gladkich okregow.
+// Sum of several noise octaves (fractal Brownian motion) - small, ever
+// weaker "ripples" layered on top of the large shape, giving a natural,
+// jagged coastline instead of smooth circles.
 function fbm3(noise3, x, y, z, octaves){
   let sum = 0, amp = 0.5, freq = 1, norm = 0;
   for(let o=0; o<octaves; o++){
@@ -81,12 +81,12 @@ function fbm3(noise3, x, y, z, octaves){
   return sum / norm;
 }
 
-// Mapa powierzchni "neutralnej" planety: ocean/kontynenty/czapy polarne/
-// pustynia równikowa, generowane szumem simplex próbkowanym w prawdziwych
-// punktach 3D na powierzchni jednostkowej kuli (nie na płaskiej siatce u,v)
-// — dzięki temu tekstura zawija się bez szwu na długości geograficznej I
-// poprawnie zbiega się na biegunach, zamiast się "spłaszczać". Mapowanie
-// równoleżnikowe (equirectangular) odpowiada domyślnemu UV sfery w three.js.
+// Surface map for the "neutral" planet variant: ocean/continents/polar
+// caps/equatorial desert, generated with simplex noise sampled at real 3D
+// points on the surface of a unit sphere (not on a flat u,v grid) — this
+// makes the texture wrap seamlessly across longitude AND converge correctly
+// at the poles, instead of "flattening out". The equirectangular mapping
+// matches three.js's default sphere UVs.
 export function makePlanetSurfaceTexture(){
   const w = 512, h = 256;
   const canvas = document.createElement("canvas");
@@ -101,9 +101,9 @@ export function makePlanetSurfaceTexture(){
   const seaLevel = np.seaLevelMin + Math.random()*np.seaLevelRange;
 
   for(let y=0; y<h; y++){
-    const lat = (y/h)*Math.PI - Math.PI/2; // -pi/2 (biegun) .. pi/2 (biegun)
+    const lat = (y/h)*Math.PI - Math.PI/2; // -pi/2 (pole) .. pi/2 (pole)
     const cosLat = Math.cos(lat), sinLat = Math.sin(lat);
-    const distFromEquator = Math.abs(y-h/2)/(h/2); // 0 rownik, 1 biegun
+    const distFromEquator = Math.abs(y-h/2)/(h/2); // 0 equator, 1 pole
 
     for(let x=0; x<w; x++){
       const lon = (x/w)*Math.PI*2;
@@ -119,15 +119,15 @@ export function makePlanetSurfaceTexture(){
       } else {
         const landHeight = Math.min(1, (elevation-seaLevel)/0.4);
         if(distFromEquator < 0.16){
-          r = 205 + 25*landHeight; g = 180 + 20*landHeight; b = 120 + 15*landHeight; // pustynia
+          r = 205 + 25*landHeight; g = 180 + 20*landHeight; b = 120 + 15*landHeight; // desert
         } else if(distFromEquator > 0.72){
-          r = 210 + 30*landHeight; g = 222 + 20*landHeight; b = 226 + 20*landHeight; // tundra/snieg
+          r = 210 + 30*landHeight; g = 222 + 20*landHeight; b = 226 + 20*landHeight; // tundra/snow
         } else {
-          r = 60 + 40*landHeight; g = 118 + 55*landHeight; b = 58 + 28*landHeight; // las/step
+          r = 60 + 40*landHeight; g = 118 + 55*landHeight; b = 58 + 28*landHeight; // forest/steppe
         }
       }
 
-      // czapy polarne - bieleja takze ocean blisko biegunow (zamarzniete morze)
+      // polar caps - the ocean near the poles whitens too (frozen sea)
       if(distFromEquator > 0.8){
         const t = (distFromEquator-0.8)/0.2;
         r += (250-r)*t; g += (252-g)*t; b += (255-b)*t;
@@ -204,7 +204,7 @@ export function makeAccretionTexture(){
   ctx2d.fillStyle = grad;
   ctx2d.fillRect(0,0,size,size);
 
-  // turbulencja plazmy - losowe promieniste pasma zamiast gladkiego gradientu
+  // plasma turbulence - random radiating streaks instead of a smooth gradient
   ctx2d.globalCompositeOperation = "source-atop";
   for(let i=0;i<26;i++){
     const ang = Math.random()*Math.PI*2;
@@ -218,8 +218,8 @@ export function makeAccretionTexture(){
     ctx2d.fillRect(0,0,size,size);
   }
 
-  // asymetria Dopplera - jedna strona (materia leca w nasza strone) jasniejsza i bielsza,
-  // druga (oddalajaca sie) przygaszona i przesunieta w czerwien
+  // Doppler asymmetry - one side (matter flying towards us) brighter and
+  // whiter, the other (receding) dimmed and shifted towards red
   const doppler = ctx2d.createLinearGradient(0,0,size,0);
   doppler.addColorStop(0, "rgba(255,255,255,0.55)");
   doppler.addColorStop(0.5, "rgba(255,255,255,0)");
@@ -253,10 +253,10 @@ export function makeHaloTexture(){
   return new THREE.CanvasTexture(canvas);
 }
 
-// Miękka, okrągła łuna słońca — sprite zwrócony do kamery (jak halo czarnej
-// dziury). Gradient kończy się (alpha=0) wyraźnie przed krawędzią tekstury
-// (maxR < połowa canvasu), więc naprawdę gaśnie do pełnej przezroczystości,
-// bez twardego obcięcia na brzegu.
+// Soft, round sun glow — a sprite facing the camera (like the black hole's
+// halo). The gradient ends (alpha=0) well before the texture's edge (maxR <
+// half the canvas), so it truly fades to full transparency instead of being
+// hard-clipped at the edge.
 export function makeSunHaloTexture(){
   const size = 256;
   const canvas = document.createElement("canvas");
@@ -265,10 +265,10 @@ export function makeSunHaloTexture(){
   const cx = size/2, cy = size/2;
   const maxR = size*0.42;
 
-  // Uwaga: sam dysk słońca (nieprzezroczysta bryła) zasłania środek tego
-  // sprite'a aż do ok. połowy jego promienia (patrz sunHalo w world/bodies.js)
-  // — realnie widoczna jest dopiero zewnętrzna część gradientu, więc jasność
-  // jest tu skoncentrowana w paśmie 0.3-0.6, a nie w niewidocznym środku.
+  // Note: the sun's own disk (an opaque solid) covers the center of this
+  // sprite up to about half its radius (see sunHalo in world/bodies.js) —
+  // only the outer part of the gradient is actually visible, so the
+  // brightness here is concentrated in the 0.3-0.6 band, not the hidden center.
   const glow = ctx2d.createRadialGradient(cx,cy,0, cx,cy,maxR);
   glow.addColorStop(0,    "rgba(255,250,230,1)");
   glow.addColorStop(0.3,  "rgba(255,240,190,0.95)");
@@ -281,18 +281,18 @@ export function makeSunHaloTexture(){
   return new THREE.CanvasTexture(canvas);
 }
 
-// Tekstura jednego "promienia" — cienkiej beleczki: jasna/nieprzezroczysta u
-// nasady (blisko słońca), gasnąca do pełnej przezroczystości na końcu, z
-// miękkim zanikiem po bokach. Naklejana na prawdziwą geometrię 3D (patrz
-// buildSunRays w world/bodies.js), nie na płaski sprite — dzięki temu przy
-// obrocie kamery promienie mają realną głębię i paralaksę.
+// Texture for a single "ray" — a thin blade: bright/opaque at the base
+// (near the sun), fading to full transparency at the tip, with a soft
+// falloff on both edges. Applied to real 3D geometry (see buildSunRays in
+// world/bodies.js), not a flat sprite — so the rays have real depth and
+// parallax as the camera rotates.
 export function makeSunRayTexture(){
   const w = 64, h = 256;
   const canvas = document.createElement("canvas");
   canvas.width = w; canvas.height = h;
   const c = canvas.getContext("2d");
 
-  // pionowo: dol tekstury (u nasady promienia) jasny, gora (koniec) przezroczysta
+  // vertically: the bottom of the texture (ray base) is bright, the top (tip) transparent
   const vgrad = c.createLinearGradient(0, h, 0, 0);
   vgrad.addColorStop(0,    "rgba(255,250,230,0.85)");
   vgrad.addColorStop(0.12, "rgba(255,225,160,0.5)");
@@ -301,7 +301,7 @@ export function makeSunRayTexture(){
   c.fillStyle = vgrad;
   c.fillRect(0, 0, w, h);
 
-  // poziomo: zanik do przezroczystosci na obu bokach ("ostrze" promienia)
+  // horizontally: fade to transparency on both edges (the ray's "blade" shape)
   const hgrad = c.createLinearGradient(0, 0, w, 0);
   hgrad.addColorStop(0,   "rgba(0,0,0,0)");
   hgrad.addColorStop(0.5, "rgba(0,0,0,1)");
@@ -314,10 +314,10 @@ export function makeSunRayTexture(){
   return new THREE.CanvasTexture(canvas);
 }
 
-// Tekstura "warkocza" komety: jasna/nieprzezroczysta u nasady (przy samej
-// komecie), gasnaca do pelnej przezroczystosci na koncu ogona, z miekkim
-// zanikiem po bokach — ta sama konstrukcja co promien slonca, tylko w
-// zimnych, bialo-blekitnych barwach lodu.
+// Comet "tail" texture: bright/opaque at the base (right by the comet),
+// fading to full transparency at the tip of the tail, with a soft falloff
+// on both edges — the same construction as the sun's rays, just in cold,
+// white-blue ice tones.
 export function makeCometTailTexture(){
   const w = 64, h = 256;
   const canvas = document.createElement("canvas");

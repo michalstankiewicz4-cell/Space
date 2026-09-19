@@ -1,22 +1,22 @@
-// Współdzielony, zmienny stan gry (scena Three.js + kolekcje bytów).
-// Zamiast eksportować osobne zmienne (które trzeba by re-eksportować przy
-// każdej reasygnacji), moduły mutują pola/tablice tego obiektu w miejscu
-// (push/splice), nigdy go nie podmieniają — dzięki temu każdy moduł, który
-// go zaimportuje, zawsze widzi aktualny stan.
+// Shared, mutable game state (Three.js scene + entity collections). Instead
+// of exporting separate variables (which would need to be re-exported on
+// every reassignment), modules mutate this object's fields/arrays in place
+// (push/splice), never replace it — so every module that imports it always
+// sees the current state.
 export const ctx = {
   scene: null,
   camera: null,
   renderer: null,
 
   ships: [],
-  planets: [],       // planety, słońca, komety, meteoryty — wszystko "jadalne"
+  planets: [],       // planets, suns, comets, meteoroids — everything "edible"
   blackholes: [],
   fragments: [],
   shockwaves: [],
   dustParticles: [],
 
-  // Multiplayer: dbId -> lokalny obiekt (ciało lub czarna dziura) i
-  // client_id -> stan zdalnego gracza. Współdzielone między world/* i net/*.
+  // Multiplayer: dbId -> local object (body or black hole), and
+  // client_id -> remote player state. Shared between world/* and net/*.
   netBodies: {},
   remotePlayers: {}
 };

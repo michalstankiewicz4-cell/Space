@@ -11,8 +11,8 @@ for(let pi=0; pi<MAX_PARTICLES; pi++){
   particlePool.push({ active:false, life:0, maxLife:0, pos:new THREE.Vector3(), vel:new THREE.Vector3(), color:new THREE.Color() });
 }
 
-// Tworzy wspólny system cząsteczek (odprysków/wybuchów/smug komet) i dodaje
-// go do sceny. Wywołaj raz, po initScene().
+// Creates the shared particle system (debris/explosions/comet trails) and
+// adds it to the scene. Call once, after initScene().
 export function initParticles(){
   particleGeo = new THREE.BufferGeometry();
   particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions,3));

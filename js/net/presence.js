@@ -1,10 +1,10 @@
 import { clientId } from "./identity.js";
 
-// "Steward" to klient odpowiedzialny za dosypywanie ciał i czarnych dziur w
-// świecie (patrz net/bodiesSync.js, world/blackholes.js) — wybierany
-// deterministycznie jako obecność z najmniejszą parą (joined_at, client_id),
-// więc przy rozłączeniu obecnego stewarda kolejny klient przejmuje rolę sam,
-// bez dodatkowej koordynacji.
+// The "steward" is the client responsible for topping up bodies and black
+// holes in the world (see net/bodiesSync.js, world/blackholes.js) —
+// deterministically elected as the presence with the smallest
+// (joined_at, client_id) pair, so when the current steward disconnects, the
+// next client picks up the role on its own, with no extra coordination.
 export let isSteward = false;
 let presenceState = {};
 

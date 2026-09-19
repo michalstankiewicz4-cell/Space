@@ -1,7 +1,7 @@
 import { IDENTITY_ADJECTIVES, IDENTITY_NOUNS } from "../config.js";
 
-// Anonimowy identyfikator klienta (persystentny w tej przeglądarce) — używany
-// do wyboru "stewarda" świata i do odróżniania statków innych graczy.
+// Anonymous client identifier (persisted in this browser) — used to elect
+// the world's "steward" and to tell other players' ships apart.
 export const clientId = (function(){
   try{
     let v = localStorage.getItem("roj-client-id");
@@ -23,9 +23,9 @@ export function randomNickSuggestion(){
   return IDENTITY_ADJECTIVES[Math.floor(Math.random()*IDENTITY_ADJECTIVES.length)]+" "+IDENTITY_NOUNS[Math.floor(Math.random()*IDENTITY_NOUNS.length)];
 }
 
-// Nick musi zostać jawnie potwierdzony przez gracza (patrz ui/banner.js) —
-// dopóki tego nie zrobi, `myIdentity.nick` jest tylko podpowiedzią, nigdy
-// niezapisaną, więc przy kolejnej wizycie bez potwierdzenia gra znów o niego zapyta.
+// The nickname must be explicitly confirmed by the player (see ui/banner.js)
+// — until they do, `myIdentity.nick` is just a suggestion, never saved, so on
+// the next visit without confirming, the game will ask for it again.
 export function hasConfirmedNick(){
   return !!readStored("roj-nick");
 }
