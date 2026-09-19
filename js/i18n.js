@@ -71,6 +71,9 @@ const STRINGS = {
       selected: function(n, total){ return "Selected: " + n + " / " + total; },
       blackholeDetected: "Black hole detected in sector",
       shipConsumed: "Ship pulled into a black hole!"
+    },
+    connection: {
+      reconnecting: "⚠ Reconnecting to server…"
     }
   },
   pl: {
@@ -141,6 +144,9 @@ const STRINGS = {
       selected: function(n, total){ return "Zaznaczono: " + n + " / " + total; },
       blackholeDetected: "Wykryto czarną dziurę w sektorze",
       shipConsumed: "Statek wciągnięty w czarną dziurę!"
+    },
+    connection: {
+      reconnecting: "⚠ Ponowne łączenie z serwerem…"
     }
   }
 };

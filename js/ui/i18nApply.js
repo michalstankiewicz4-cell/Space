@@ -11,6 +11,8 @@ export function applyStaticText(){
   document.getElementById("outdatedTitle").textContent = t("outdated.title");
   document.getElementById("outdatedText").textContent = t("outdated.text");
   document.getElementById("outdatedReloadBtn").textContent = t("outdated.reload");
+
+  document.getElementById("connectionStatus").textContent = t("connection.reconnecting");
   document.getElementById("setupBtn").textContent = t("banner.setup");
   document.getElementById("setupLangLabel").textContent = t("banner.language");
 

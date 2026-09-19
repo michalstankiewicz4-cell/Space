@@ -1,4 +1,5 @@
 import { ctx } from "../core/context.js";
+import { removeItem } from "../core/utils.js";
 import { MAX_PLANETS, NET_PLANET_TOPUP_S } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
@@ -13,6 +14,7 @@ import { triggerBreakup } from "../fx/breakup.js";
 import { state, save } from "../core/gameState.js";
 import { showToast } from "../ui/hud.js";
 import { isSteward } from "./presence.js";
+import { isConnected } from "./connect.js";
 import { t } from "../i18n.js";
 
 // Builds a local object (planet/comet/... or black hole) from a `bodies` row.
@@ -125,7 +127,15 @@ export function maintainPlanetCount(dt){
   topUpTimer = NET_PLANET_TOPUP_S;
   if(ctx.planets.length + pendingSpawnCount >= MAX_PLANETS) return;
   if(NET_ENABLED){
-    if(isSteward || (Date.now() - lastSpawnSeenAt > STALE_TOPUP_MS)) requestSpawnPlanet();
+    // Gated on isConnected(): a client whose Realtime channel has silently
+    // died stops receiving other clients' INSERTs, so its local
+    // ctx.planets.length looks perpetually low even if the real world is
+    // full — without this guard, that client would use the staleness
+    // fallback (or, if it was steward before disconnecting, its normal
+    // top-up path) to blindly insert new bodies forever via plain REST
+    // (which keeps working even with a dead socket), flooding the shared
+    // world for everyone else while the disconnected player never notices.
+    if(isConnected() && (isSteward || (Date.now() - lastSpawnSeenAt > STALE_TOPUP_MS))) requestSpawnPlanet();
   } else {
     spawnPlanetLocalOnly();
   }
@@ -134,7 +144,34 @@ export function maintainPlanetCount(dt){
 export function bootstrapWorld(){
   supabase.from("bodies").select("*").then(function(res){
     const rows = res.data || [];
+    const freshIds = {};
+    rows.forEach(function(row){ freshIds[row.id] = true; });
     rows.forEach(materializeBody);
+
+    // Reconcile: drop anything tracked locally that no longer exists
+    // server-side. On a first connect this is a no-op (nothing tracked
+    // yet); on a reconnect after a dropped Realtime channel, it catches up
+    // on deletes that happened while disconnected — Realtime never replays
+    // missed events, so this select-and-diff is the only way to find out.
+    // No explosion/points here: we don't know if it was eaten or (for a
+    // comet) flew away while we were gone, and guessing wrong to show a
+    // fake effect would be worse than just quietly removing it.
+    Object.keys(ctx.netBodies).forEach(function(id){
+      if(freshIds[id]) return;
+      const obj = ctx.netBodies[id];
+      delete ctx.netBodies[id];
+      if(ctx.blackholes.indexOf(obj) !== -1){
+        ctx.scene.remove(obj.group);
+        obj.core.geometry.dispose(); obj.core.material.dispose();
+        obj.horizon.geometry.dispose(); obj.horizon.material.dispose();
+        obj.disk.geometry.dispose(); obj.disk.material.dispose();
+        obj.halo.material.dispose();
+        removeItem(ctx.blackholes, obj);
+      } else if(ctx.planets.indexOf(obj) !== -1){
+        despawnLocalOnly(obj);
+      }
+    });
+
     if(rows.length === 0){
       supabase.rpc("claim_world_init").then(function(res2){
         if(res2.data === true){

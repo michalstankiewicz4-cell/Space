@@ -71,6 +71,20 @@ local (`localStorage`).
   jittered staleness fallback (any client tops up if nothing has spawned
   in 8-12s despite being under `MAX_PLANETS`) so the world doesn't stay
   starved waiting for a steward that may never come back.
+- **Realtime channel health has no free lunch.** `net/connect.js` handles
+  `subscribe()`'s `"CHANNEL_ERROR"`/`"TIMED_OUT"`/`"CLOSED"` statuses with
+  an exponential-backoff reconnect, and exposes `isConnected()`. Don't
+  assume a dead channel is rare/theoretical: local gameplay (ship
+  movement, `bite_body`, insert/delete) is plain REST and keeps working
+  fine even while the socket is dead, so a desynced client looks
+  completely normal to the player and, worse, can flood the world via the
+  steward top-up fallback if code doesn't check `isConnected()` first
+  (this happened once — see `js/net/bodiesSync.js#maintainPlanetCount`).
+  The reconnect-status badge in the HUD is deliberately driven by the
+  channel's own reported status, not a "haven't heard anything in a while"
+  timer — a healthy-but-quiet room (nobody else currently playing) would
+  otherwise be indistinguishable from a dead connection and trigger
+  constant false alarms.
 - **DELETE on `bodies` always means "eaten" except for comets.** A
   planet/sun/meteoroid has no other legitimate way to leave the database;
   only comets can also self-despawn locally for flying out of the field.

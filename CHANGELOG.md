@@ -4,6 +4,41 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.5.0]
+
+### Fixed
+- Diagnosed and fixed a class of silent multiplayer desync: the Realtime
+  channel's `subscribe()` callback only ever handled the `"SUBSCRIBED"`
+  status — a dropped socket (sleep/wake, network change, a token expiring
+  during a long background period) that didn't fully self-heal left a
+  client permanently deaf to other players' actions, while its own local
+  gameplay (ship movement, biting, spawning — all plain REST calls,
+  independent of the socket) kept working normally with zero visible sign
+  anything was wrong.
+- That silent desync also had a dangerous side effect on the steward
+  top-up logic added in 1.2.1: a disconnected client's view of the world
+  looks perpetually under-populated (it stops receiving others' spawns),
+  so it could end up flooding the shared world with duplicate bodies via
+  plain REST inserts, unaware anything was wrong.
+
+### Added
+- `net/connect.js` now handles `"CHANNEL_ERROR"`/`"TIMED_OUT"`/`"CLOSED"`
+  with an exponential-backoff reconnect (capped at 30s), and exposes
+  `isConnected()` so `maintainPlanetCount()` refuses to spawn anything
+  while disconnected, closing the flooding risk above.
+- A small non-blocking "⚠ Reconnecting to server…" badge appears while
+  disconnected — deliberately based on the channel's own reported status,
+  not a "gone quiet" timer, since a quiet-but-healthy connection (nobody
+  else playing right now) would otherwise look identical to a dead one.
+- `bootstrapWorld()` now reconciles local state against a fresh fetch on
+  every (re)connect, silently removing anything tracked locally that no
+  longer exists server-side — catching up on deletes a reconnecting client
+  missed while offline, since Realtime never replays missed events.
+
+Verified live: forcibly closing the channel correctly shows the badge and
+freezes local body count with no spawn attempts; the automatic reconnect
+recovers cleanly with no errors or duplicate state.
+
 ## [1.4.1]
 
 ### Fixed

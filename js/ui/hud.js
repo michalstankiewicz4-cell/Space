@@ -19,3 +19,12 @@ export function updatePlayersHud(){
   const el = document.getElementById("statPlayers");
   if(el) el.textContent = String(Object.keys(ctx.remotePlayers).length + 1);
 }
+
+// Purely informational — local gameplay (ship movement, biting, spawning)
+// keeps working during a disconnect since those don't depend on the
+// Realtime socket, so this never blocks anything, unlike the version-check
+// overlay. See net/connect.js for when this fires.
+export function setConnectionStatus(isConnected){
+  const el = document.getElementById("connectionStatus");
+  if(el) el.classList.toggle("hidden", isConnected);
+}
