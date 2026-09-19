@@ -19,8 +19,10 @@ local (`localStorage`).
 ## Working conventions
 
 - **Language**: the user writes in Polish; reply to them in Polish. All UI
-  text in the game itself, and all project docs (README, CHANGELOG, this
-  file, commit messages), are in **English**.
+  text in the game itself, all project docs (README, CHANGELOG, this file,
+  commit messages), and **all inline code comments** (JS and the SQL
+  schema) are in **English** — the `pl` dictionary in `js/i18n.js` is the
+  one deliberate exception, since that's translation data, not a comment.
 - **Versioning**: bump `js/version.js` and add a `CHANGELOG.md` entry for
   every meaningful change (feature, balance change, notable fix) — this
   is how two GitHub Pages deploys are told apart after a push.
@@ -63,6 +65,45 @@ local (`localStorage`).
   modules, deliberately not merged — `js/settings.js` (local input/UX
   prefs: mouse invert/swap), `js/net/identity.js` (nickname/color, shared
   with other players), `js/i18n.js` (language toggle).
+
+## Security model (Supabase)
+
+- **Rule: no client-writable UPDATE policy on `bodies` or `world_meta`.**
+  The only column that ever needs to change after insert is `bodies.health`
+  (via `bite_body`) and `world_meta.initialized` (via `claim_world_init`) —
+  both RPCs are `security definer` with a locked `search_path`, so they run
+  with the function owner's privileges and don't need a permissive RLS
+  policy to do their job. If a permissive `for update using (true)` policy
+  ever gets re-added, it reopens a real exploit: any anon-authenticated
+  client could set a body's `health` straight to 0 via a direct
+  `supabase.from('bodies').update(...)`, then land one trivial hit through
+  `bite_body` to instantly "kill" it and collect its full point value. This
+  was found and fixed once already (see `supabase/schema.sql` and
+  `CHANGELOG.md`) — don't reintroduce it when adding new mutable columns.
+- **INSERT/DELETE on `bodies` stay permissive on purpose.** Any
+  anon-authenticated client can insert or delete rows directly (steward
+  election is a client-side courtesy for spawning, not a security
+  boundary; DELETE is idempotent so it's safe for any client to call).
+  Residual risk: someone could grief the shared world by inserting junk up
+  to the 40-row cap (bounded/plausible-looking by the CHECK constraints, so
+  not rendering-breaking) or mass-deleting real bodies — both are
+  low-severity and self-healing (top-up logic and normal play repopulate
+  the world). Not currently worth the complexity of fixing further.
+- **Anonymous-auth spam**: the live project has
+  `rate_limit_anonymous_users = 30` (Supabase's own per-IP throttle — this
+  is what produces the 429s during heavy testing, see gotcha below) and
+  `security_captcha_enabled = False`. A single IP is already capped, but a
+  distributed attacker could still script sign-ups from many IPs to run up
+  anonymous-user counts (cost/MAU exposure, not a data exploit). Turning on
+  Supabase's hCaptcha/Turnstile bot protection for sign-ins would close
+  this, at the cost of extra setup (an hCaptcha account) — not done, since
+  it hasn't been asked for and trades against the "no login screen"
+  friction-free design.
+- The Management API token in the gitignored `pass` file can run arbitrary
+  SQL against the live project (`POST /v1/projects/{ref}/database/query`)
+  — useful for inspecting live state (row counts, auth user counts, current
+  RLS policies) or applying `schema.sql` changes directly, without needing
+  the user to paste anything into the Supabase SQL Editor by hand.
 
 ## Known gotchas
 

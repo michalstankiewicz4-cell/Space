@@ -4,6 +4,19 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.1.1]
+
+### Fixed
+- Closed a live exploit in the Supabase backend: `bodies` and `world_meta`
+  had a permissive `UPDATE` RLS policy that let any anon-authenticated
+  client bypass the atomic `bite_body` RPC entirely — set a body's health
+  straight to 0 with a direct `update`, then land one trivial hit to
+  instantly "kill" it and collect its full point value for free. Removed
+  the permissive policies and made `bite_body`/`claim_world_init`
+  `SECURITY DEFINER` (with a locked `search_path`) so they no longer need
+  one. Verified against the live project: the exploit is closed and normal
+  gameplay damage still works.
+
 ## [1.1.0]
 
 ### Added

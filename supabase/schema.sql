@@ -36,8 +36,15 @@ create policy "bodies readable by anyone" on bodies for select using (true);
 drop policy if exists "bodies writable by authed" on bodies;
 create policy "bodies writable by authed" on bodies for insert to authenticated with check (true);
 
+-- No general "update" policy on purpose: the only column that ever needs to
+-- change post-insert is `health`, and that must go through the atomic,
+-- clamped `bite_body` RPC below (SECURITY DEFINER) — never a direct client
+-- UPDATE. A permissive `for update using (true)` policy here would let any
+-- anon-authenticated client set any body's health straight to 0 via
+-- `supabase.from('bodies').update(...)`, then claim the kill (and its full
+-- point value) with a single trivial hit through bite_body — a free-points
+-- exploit that bypasses the whole point of making bite_body atomic.
 drop policy if exists "bodies updatable by authed" on bodies;
-create policy "bodies updatable by authed" on bodies for update to authenticated using (true) with check (true);
 
 drop policy if exists "bodies deletable by authed" on bodies;
 create policy "bodies deletable by authed" on bodies for delete to authenticated using (true);
@@ -45,8 +52,10 @@ create policy "bodies deletable by authed" on bodies for delete to authenticated
 drop policy if exists "world_meta readable by anyone" on world_meta;
 create policy "world_meta readable by anyone" on world_meta for select using (true);
 
+-- No update policy here either — `claim_world_init` below is SECURITY
+-- DEFINER, so it doesn't need one, and a permissive policy would let any
+-- client flip `initialized` back to false directly.
 drop policy if exists "world_meta writable by authed" on world_meta;
-create policy "world_meta writable by authed" on world_meta for update to authenticated using (true);
 
 -- Sensible bounds on `bodies` row values. RLS guards WHO can write (anyone
 -- with an anonymous session), but not WHAT they write — without these CHECK
@@ -122,10 +131,16 @@ end $$;
 -- roughly every ~150ms (see NET_DAMAGE_FLUSH_MS), so even a heavily upgraded
 -- player (max upgrades + a full swarm) stays nowhere near this limit, but
 -- someone calling the RPC directly with a huge value can't one-shot anything.
+-- SECURITY DEFINER + a locked search_path: this is the ONLY way `health`
+-- ever changes (there's no client-writable update policy on `bodies` at
+-- all, see above), so it runs with the owner's privileges rather than the
+-- caller's, and pins search_path so a caller can't hijack name resolution
+-- by creating same-named objects in a schema earlier on their own path.
 create or replace function bite_body(p_body_id uuid, p_amount float)
 returns table(id uuid, health float, killed boolean)
 language plpgsql
-security invoker
+security definer
+set search_path = public
 as $$
 declare
   v_health float;
@@ -150,10 +165,14 @@ $$;
 
 -- One-shot flag: the first client to call this after the world starts empty
 -- gets `true` back, and that's the one that seeds the initial set of bodies.
+-- SECURITY DEFINER for the same reason as bite_body: there's no
+-- client-writable update policy on `world_meta`, so this is the only path
+-- that can ever flip `initialized`.
 create or replace function claim_world_init()
 returns boolean
 language sql
-security invoker
+security definer
+set search_path = public
 as $$
   update world_meta set initialized = true where id = 1 and initialized = false
   returning true;
