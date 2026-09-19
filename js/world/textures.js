@@ -121,11 +121,15 @@ export function makeSunHaloTexture(){
   const cx = size/2, cy = size/2;
   const maxR = size*0.42;
 
+  // Uwaga: sam dysk słońca (nieprzezroczysta bryła) zasłania środek tego
+  // sprite'a aż do ok. połowy jego promienia (patrz sunHalo w world/bodies.js)
+  // — realnie widoczna jest dopiero zewnętrzna część gradientu, więc jasność
+  // jest tu skoncentrowana w paśmie 0.3-0.6, a nie w niewidocznym środku.
   const glow = ctx2d.createRadialGradient(cx,cy,0, cx,cy,maxR);
-  glow.addColorStop(0,    "rgba(255,250,230,0.9)");
-  glow.addColorStop(0.16, "rgba(255,228,165,0.55)");
-  glow.addColorStop(0.4,  "rgba(255,180,100,0.22)");
-  glow.addColorStop(0.75, "rgba(255,150,80,0.06)");
+  glow.addColorStop(0,    "rgba(255,250,230,1)");
+  glow.addColorStop(0.3,  "rgba(255,240,190,0.95)");
+  glow.addColorStop(0.5,  "rgba(255,210,140,0.7)");
+  glow.addColorStop(0.75, "rgba(255,175,100,0.25)");
   glow.addColorStop(1,    "rgba(255,140,60,0)");
   ctx2d.fillStyle = glow;
   ctx2d.fillRect(0,0,size,size);
