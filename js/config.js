@@ -50,13 +50,6 @@ export const NET_MAX_REMOTE_SHIPS = 40;
 export const NET_MAX_REMOTE_PLAYERS = 60;
 export const NET_MAX_NICK_LENGTH = 24;
 
-// Czarne dziury: pierwszy spawn i odstęp między kolejnymi
-export const BLACKHOLE_FIRST_SPAWN_MIN_S = 18;
-export const BLACKHOLE_FIRST_SPAWN_RANGE_S = 12;
-export const BLACKHOLE_RESPAWN_MIN_S = 34;
-export const BLACKHOLE_RESPAWN_RANGE_S = 24;
-export const BLACKHOLE_FADE_OUT_S = 1.6;
-
 // Generator losowej tożsamości gracza (bez logowania)
 export const IDENTITY_ADJECTIVES = ["Cichy","Zwinny","Dziki","Mroczny","Lodowy","Płomienny","Zjadliwy","Szybki","Głodny","Czujny"];
 export const IDENTITY_NOUNS = ["Rój","Kondor","Meteor","Kraken","Komar","Szerszeń","Wilk","Sokół","Wir","Pył"];

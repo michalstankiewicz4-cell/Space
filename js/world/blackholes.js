@@ -1,10 +1,7 @@
 import { ctx } from "../core/context.js";
 import { removeItem } from "../core/utils.js";
-import {
-  FIELD_RADIUS,
-  BLACKHOLE_FIRST_SPAWN_MIN_S, BLACKHOLE_FIRST_SPAWN_RANGE_S,
-  BLACKHOLE_RESPAWN_MIN_S, BLACKHOLE_RESPAWN_RANGE_S, BLACKHOLE_FADE_OUT_S
-} from "../config.js";
+import { FIELD_RADIUS } from "../config.js";
+import { CONTENT } from "../content.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
 import { makeAccretionTexture, makeHaloTexture } from "./textures.js";
@@ -16,10 +13,11 @@ import { refreshDock } from "../ui/dock.js";
 import { save } from "../core/gameState.js";
 import { isSteward } from "../net/presence.js";
 
-let blackHoleTimer = BLACKHOLE_FIRST_SPAWN_MIN_S + Math.random()*BLACKHOLE_FIRST_SPAWN_RANGE_S;
+let blackHoleTimer = CONTENT.blackhole.firstSpawnMinS + Math.random()*CONTENT.blackhole.firstSpawnRangeS;
 
 export function randomBlackHoleSpawnData(){
-  const radius = 1.1 + Math.random()*0.5;
+  const bh = CONTENT.blackhole;
+  const radius = bh.radiusMin + Math.random()*bh.radiusRange;
   const dist = 16 + Math.random()*(FIELD_RADIUS*0.8);
   const theta = Math.random()*Math.PI*2;
   const phi = Math.acos(2*Math.random()-1);
@@ -28,7 +26,7 @@ export function randomBlackHoleSpawnData(){
     dist*Math.sin(phi)*Math.sin(theta)*0.55,
     dist*Math.cos(phi)
   );
-  const maxLife = 26 + Math.random()*14;
+  const maxLife = bh.lifeMin + Math.random()*bh.lifeRange;
   return { radius: radius, pos: pos, maxLife: maxLife };
 }
 
@@ -113,7 +111,7 @@ export function updateBlackHoles(dt){
   if(blackHoleTimer <= 0 && ctx.blackholes.length === 0){
     if(NET_ENABLED){ if(isSteward) requestSpawnBlackHole(); }
     else { spawnBlackHoleLocalOnly(); }
-    blackHoleTimer = BLACKHOLE_RESPAWN_MIN_S + Math.random()*BLACKHOLE_RESPAWN_RANGE_S;
+    blackHoleTimer = CONTENT.blackhole.respawnMinS + Math.random()*CONTENT.blackhole.respawnRangeS;
   }
 
   for(let i=ctx.blackholes.length-1; i>=0; i--){
@@ -132,9 +130,9 @@ export function updateBlackHoles(dt){
     const haloPulseScale = 1 + 0.04*Math.abs(Math.sin(bh.pulsePhase*0.8));
     bh.halo.scale.setScalar(bh.radius*3.1*haloPulseScale);
 
-    const fadeStart = bh.maxLife - BLACKHOLE_FADE_OUT_S;
+    const fadeStart = bh.maxLife - CONTENT.blackhole.fadeOutS;
     if(bh.life >= fadeStart){
-      const e = Math.min(1, (bh.life-fadeStart)/BLACKHOLE_FADE_OUT_S);
+      const e = Math.min(1, (bh.life-fadeStart)/CONTENT.blackhole.fadeOutS);
       bh.group.scale.setScalar(1-e);
       bh.horizon.material.opacity *= (1-e);
       bh.halo.material.opacity *= (1-e);
@@ -157,7 +155,7 @@ export function updateBlackHoles(dt){
 
   if(ctx.blackholes.length === 0 && blackHoleTimer <= 0){
     // zabezpieczenie: gdyby dziura wygasla w tym samym momencie co zerowanie timera
-    blackHoleTimer = BLACKHOLE_RESPAWN_MIN_S + Math.random()*BLACKHOLE_RESPAWN_RANGE_S;
+    blackHoleTimer = CONTENT.blackhole.respawnMinS + Math.random()*CONTENT.blackhole.respawnRangeS;
   }
 
   if(ctx.blackholes.length === 0 || ctx.ships.length === 0) return;

@@ -1,4 +1,5 @@
 // Proceduralne tekstury/geometrie używane przez ciała niebieskie.
+import { CONTENT } from "../content.js";
 
 // Kompaktowy szum simplex 3D (algorytm Perlina/Gustavsona, domena publiczna).
 // Permutacja losowana przy kazdym wywolaniu makeSimplex3(), wiec kazda
@@ -94,9 +95,10 @@ export function makePlanetSurfaceTexture(){
   const img = c.createImageData(w, h);
   const data = img.data;
 
+  const np = CONTENT.neutralPlanet;
   const noise3 = makeSimplex3();
-  const scale = 1.6 + Math.random()*0.8;
-  const seaLevel = -0.05 + Math.random()*0.1;
+  const scale = np.noiseScaleMin + Math.random()*np.noiseScaleRange;
+  const seaLevel = np.seaLevelMin + Math.random()*np.seaLevelRange;
 
   for(let y=0; y<h; y++){
     const lat = (y/h)*Math.PI - Math.PI/2; // -pi/2 (biegun) .. pi/2 (biegun)
@@ -108,7 +110,7 @@ export function makePlanetSurfaceTexture(){
       const nx = cosLat*Math.cos(lon)*scale;
       const ny = sinLat*scale;
       const nz = cosLat*Math.sin(lon)*scale;
-      const elevation = fbm3(noise3, nx, ny, nz, 5);
+      const elevation = fbm3(noise3, nx, ny, nz, np.octaves);
 
       let r, g, b;
       if(elevation < seaLevel){

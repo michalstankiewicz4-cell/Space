@@ -1,6 +1,7 @@
 import { ctx } from "../core/context.js";
 import { removeItem } from "../core/utils.js";
 import { FIELD_RADIUS, MAX_PLANETS } from "../config.js";
+import { CONTENT } from "../content.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
 import {
@@ -12,23 +13,28 @@ import { hideBolt } from "../ships/swarm.js";
 
 export function pickBodyKind(){
   const r = Math.random();
-  if(r < 0.05) return "sun";
-  if(r < 0.15) return "comet";
-  if(r < 0.34) return "meteoroid";
+  const w = CONTENT.spawnWeights;
+  if(r < w.sun) return "sun";
+  if(r < w.sun + w.comet) return "comet";
+  if(r < w.sun + w.comet + w.meteoroid) return "meteoroid";
   return "planet";
 }
 
 export function bodyParams(kind){
   if(kind === "sun"){
-    return { radiusMin:3.0, radiusMax:4.3, forcedTemp:1, healthMult:30, valueBonus:40, emissive:0.95 };
+    const s = CONTENT.sun;
+    return { radiusMin:s.radiusMin, radiusMax:s.radiusMax, forcedTemp:1, healthMult:s.healthMult, valueBonus:s.valueBonus, emissive:s.emissive };
   }
   if(kind === "meteoroid"){
-    return { radiusMin:0.32, radiusMax:0.68, forcedTemp:null, tempRange:0.35, healthMult:15, valueBonus:0, emissive:0.28 };
+    const m = CONTENT.meteoroid;
+    return { radiusMin:m.radiusMin, radiusMax:m.radiusMax, forcedTemp:null, tempRange:m.tempRange, healthMult:m.healthMult, valueBonus:m.valueBonus, emissive:m.emissive };
   }
   if(kind === "comet"){
-    return { radiusMin:0.38, radiusMax:0.6, forcedTemp:-1, healthMult:17, valueBonus:25, emissive:0.4 };
+    const cm = CONTENT.comet;
+    return { radiusMin:cm.radiusMin, radiusMax:cm.radiusMax, forcedTemp:-1, healthMult:cm.healthMult, valueBonus:cm.valueBonus, emissive:cm.emissive };
   }
-  return { radiusMin:0.9, radiusMax:3.0, forcedTemp:null, tempRange:1, healthMult:22, valueBonus:0, emissive:0.28 };
+  const p = CONTENT.planet;
+  return { radiusMin:p.radiusMin, radiusMax:p.radiusMax, forcedTemp:null, tempRange:p.tempRange, healthMult:p.healthMult, valueBonus:p.valueBonus, emissive:p.emissive };
 }
 
 export function tempColor(t){
@@ -64,7 +70,8 @@ export function randomPlanetSpawnData(forcedKind){
       shellDist*Math.cos(phi0)
     );
     const aimPoint = new THREE.Vector3((Math.random()-0.5)*FIELD_RADIUS*0.5,(Math.random()-0.5)*FIELD_RADIUS*0.3,(Math.random()-0.5)*FIELD_RADIUS*0.5);
-    vel = new THREE.Vector3().subVectors(aimPoint,pos).normalize().multiplyScalar(3.2+Math.random()*1.8);
+    const speed = CONTENT.comet.speedMin + Math.random()*CONTENT.comet.speedRange;
+    vel = new THREE.Vector3().subVectors(aimPoint,pos).normalize().multiplyScalar(speed);
   } else {
     const dist = 10 + Math.random()*FIELD_RADIUS;
     const theta = Math.random()*Math.PI*2;
@@ -97,13 +104,13 @@ export function applyHealthVisual(obj){
 function buildSunRays(radius){
   const group = new THREE.Group();
   const rayTexture = makeSunRayTexture();
-  const rayCount = 12;
+  const s = CONTENT.sun;
   const up = new THREE.Vector3(0, 1, 0);
 
-  for(let i=0;i<rayCount;i++){
+  for(let i=0;i<s.rayCount;i++){
     const long = i % 2 === 0;
-    const length = radius * (long ? (2.6+Math.random()*0.9) : (1.5+Math.random()*0.7));
-    const width = radius * (0.32 + Math.random()*0.16);
+    const length = radius * (long ? (s.rayLengthLongMin+Math.random()*s.rayLengthLongRange) : (s.rayLengthShortMin+Math.random()*s.rayLengthShortRange));
+    const width = radius * (s.rayWidthMin + Math.random()*s.rayWidthRange);
 
     const geo = new THREE.PlaneGeometry(width, length);
     geo.translate(0, length/2, 0); // (0,0,0) lokalnie = nasada promienia przy powierzchni
@@ -134,8 +141,8 @@ function buildCometTail(radius, vel){
   const group = new THREE.Group();
   if(!vel || vel.lengthSq() < 0.0001) return group;
 
-  const length = radius * (9 + Math.random()*4);
-  const width = radius * (1.43 + Math.random()*0.39); // +30% wzgledem poprzedniej szerokosci
+  const length = radius * (CONTENT.comet.tailLengthMin + Math.random()*CONTENT.comet.tailLengthRange);
+  const width = radius * (CONTENT.comet.tailWidthMin + Math.random()*CONTENT.comet.tailWidthRange);
   const geo = new THREE.PlaneGeometry(width, length);
   geo.translate(0, length/2, 0);
   const mat = new THREE.MeshBasicMaterial({
@@ -169,7 +176,7 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   // planeta neutralna (ani wulkaniczna, ani lodowa) dostaje realistyczna mape
   // powierzchni (ocean/kontynenty/czapy polarne/pustynia rownikowa) zamiast
   // plaskiego koloru - i bez emisji, zeby nie "swiecila" jak lawa/lod
-  const isNeutralPlanet = kind === "planet" && Math.abs(temp) <= 0.15;
+  const isNeutralPlanet = kind === "planet" && Math.abs(temp) <= CONTENT.neutralPlanet.tempThreshold;
   const mat = isNeutralPlanet
     ? new THREE.MeshStandardMaterial({
         map: makePlanetSurfaceTexture(), roughness: 0.8, metalness: 0.05
@@ -218,7 +225,7 @@ export function materializePlanet(row, pos, vel, elapsedSec){
       blending: THREE.AdditiveBlending, depthWrite:false
     });
     sunHalo = new THREE.Sprite(haloMat);
-    sunHalo.scale.setScalar(radius*5.0);
+    sunHalo.scale.setScalar(radius*CONTENT.sun.haloScale);
     mesh.add(sunHalo);
 
     sunRays = buildSunRays(radius);
@@ -370,7 +377,7 @@ export function updateBodies(dt){
       p.sunPhase += dt*2.2;
       p.sunHalo.material.rotation += dt*0.09;
       const pulse = 1 + 0.06*Math.abs(Math.sin(p.sunPhase*0.55));
-      p.sunHalo.scale.setScalar(p.radius*5.0*pulse);
+      p.sunHalo.scale.setScalar(p.radius*CONTENT.sun.haloScale*pulse);
       p.sunHalo.material.opacity = 0.82 + 0.14*Math.abs(Math.sin(p.sunPhase*0.9));
     }
 

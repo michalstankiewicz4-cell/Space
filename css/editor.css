@@ -1,0 +1,57 @@
+html, body{ margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:var(--void); }
+#editorLayout{ position:fixed; inset:0; display:flex; }
+#stage{ position:relative; flex:1; min-width:0; }
+#stage canvas{ display:block; width:100%; height:100%; cursor:grab; }
+
+#panel{
+  width: 340px; flex: none;
+  background: #0c1220;
+  border-left: 1px solid var(--panel-edge);
+  overflow-y: auto;
+  padding: 16px 16px 90px;
+  font-family: var(--font-mono);
+  color: var(--ink);
+}
+#panel h1{
+  font-family: var(--font-head); font-size: 16px; margin: 0 0 4px;
+  letter-spacing: 0.04em;
+}
+#panel h1 span{ color: var(--teal); }
+#panel .hint{ color: var(--ink-dim); font-size: 11px; line-height:1.5; margin: 0 0 16px; }
+
+#kindTabs{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+#kindTabs button{
+  font-family: var(--font-mono); font-size: 11px; letter-spacing:0.03em;
+  background: rgba(255,255,255,0.05); color: var(--ink-dim);
+  border: 1px solid var(--panel-edge); padding: 7px 10px; cursor:pointer;
+  clip-path: polygon(0 5px, 5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%);
+}
+#kindTabs button.active{ background: rgba(79,227,198,0.18); color: var(--ink); border-color: var(--teal); }
+#kindTabs button:hover{ color: var(--ink); }
+
+.field{ margin-bottom: 12px; }
+.field label{
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-size: 11px; color: var(--ink-dim); margin-bottom: 4px;
+}
+.field label b{ color: var(--teal); font-weight:600; }
+.field input[type="range"]{ width:100%; accent-color: var(--teal); }
+
+.section-title{
+  font-family: var(--font-head); font-weight:700; font-size: 12px;
+  letter-spacing: 0.06em; color: var(--ink); margin: 18px 0 10px;
+  border-bottom: 1px solid rgba(79,227,198,0.2); padding-bottom: 6px;
+}
+.section-title:first-of-type{ margin-top: 0; }
+
+#rerollBtn, #downloadBtn{
+  width:100%; font-family: var(--font-head); font-weight:600; font-size: 13px;
+  background: rgba(255,255,255,0.06); color: var(--ink); border: 1px solid var(--panel-edge);
+  padding: 10px; cursor:pointer; margin-top: 6px;
+  clip-path: polygon(0 6px, 6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+}
+#downloadBtn{ background: var(--teal); color:#04211c; border:none; }
+#rerollBtn:hover{ filter: brightness(1.15); }
+#downloadBtn:hover{ filter: brightness(1.08); }
+
+#saveNote{ font-size: 10.5px; color: var(--ink-dim); margin-top: 8px; line-height:1.5; }

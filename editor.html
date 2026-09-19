@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROJ // Edytor obiektów</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+
+<div id="editorLayout">
+  <div id="stage"></div>
+  <div id="panel">
+    <h1>ROJ <span>// EDYTOR OBIEKTÓW</span></h1>
+    <p class="hint">
+      Suwaki zmieniają <code>js/content.js</code> na żywo — podgląd po lewej
+      pokazuje dokładnie to, co zobaczą gracze. "Pobierz content.js" zapisuje
+      plik do folderu Pobrane; podmień nim <code>js/content.js</code> w
+      projekcie, żeby zmiany trafiły do gry.
+    </p>
+
+    <div id="kindTabs"></div>
+    <div id="fields"></div>
+
+    <button id="rerollBtn">🎲 Wylosuj ponownie</button>
+    <button id="downloadBtn">⬇ Pobierz content.js</button>
+    <div id="saveNote"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module" src="js/editor/main.js"></script>
+</body>
+</html>
