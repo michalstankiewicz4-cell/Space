@@ -63,10 +63,13 @@ canvas{ display:block; touch-action:none; cursor: grab; }
 }
 .collapseBtn{
   pointer-events:auto; flex:none;
-  background:none; border:none; color: var(--ink-dim);
-  font-size: 11px; line-height:1; padding: 2px 3px; cursor:pointer;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--panel-edge); color: var(--ink-dim);
+  font-size: 16px; line-height:1; cursor:pointer;
+  width: 26px; height: 26px; padding:0;
+  display:flex; align-items:center; justify-content:center;
+  border-radius: 3px;
 }
-.collapseBtn:hover{ color: var(--ink); }
+.collapseBtn:hover{ color: var(--ink); border-color: var(--teal); }
 .panel.collapsed .panelBody{ display:none; }
 
 #playersPanel{
