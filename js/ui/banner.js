@@ -3,6 +3,9 @@ import { t, getLang, setLang, LANGS } from "../i18n.js";
 import { applyStaticText } from "./i18nApply.js";
 import { refreshDock } from "./dock.js";
 import { settings, saveSettings } from "../settings.js";
+import { isTechModalOpen, closeTechModal } from "./panels.js";
+import { isFleetModalOpen, closeFleetModal } from "./fleet.js";
+import { isShipCamActive, clearShipCamTarget } from "../scene/shipcam.js";
 
 function updateNickPlaceholder(){
   document.getElementById("nickInput").placeholder = t("banner.nickPlaceholder") + " (" + t("banner.nickSuggestionPrefix") + " " + randomNickSuggestion() + ")";
@@ -124,11 +127,16 @@ export function initBanner(){
     saveSettings();
   });
 
-  // Escape closes the setup modal if it's open; otherwise it reopens/closes
-  // the start screen itself (e.g. to change nickname or language mid-game).
+  // Escape closes whichever overlay is topmost first (tech/fleet modals,
+  // then setup, then the ship cam), and only once nothing else is open does
+  // it reopen/close the start screen itself (e.g. to change nickname or
+  // language mid-game).
   window.addEventListener("keydown", function(e){
     if(e.key !== "Escape") return;
+    if(isTechModalOpen()){ closeTechModal(); return; }
+    if(isFleetModalOpen()){ closeFleetModal(); return; }
     if(isSetupModalOpen()){ closeSetupModal(); return; }
+    if(isShipCamActive()){ clearShipCamTarget(); return; }
     banner.classList.toggle("hidden");
     if(!banner.classList.contains("hidden")) nickInput.focus();
   });

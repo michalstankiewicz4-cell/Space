@@ -1,5 +1,7 @@
 // Wires up the vertical collapse toggles on the telemetry/players HUD
-// panels, and the legend popup opened via the "Wiki" button.
+// panels, the legend popup opened via the "Wiki" button, and the Tech
+// modal (the upgrade tree, moved off the always-visible bottom dock and
+// into an on-demand centered modal — see #techModal in index.html).
 function wireCollapse(panelId, btnId){
   const panel = document.getElementById(panelId);
   const btn = document.getElementById(btnId);
@@ -8,6 +10,14 @@ function wireCollapse(panelId, btnId){
     const collapsed = panel.classList.toggle("collapsed");
     btn.textContent = collapsed ? "▸" : "▾";
   });
+}
+
+export function isTechModalOpen(){
+  return !document.getElementById("techModal").classList.contains("hidden");
+}
+
+export function closeTechModal(){
+  document.getElementById("techModal").classList.add("hidden");
 }
 
 export function initPanels(){
@@ -21,4 +31,15 @@ export function initPanels(){
       legend.classList.toggle("hidden");
     });
   }
+
+  const techBtn = document.getElementById("techBtn");
+  const techModal = document.getElementById("techModal");
+  const techCloseBtn = document.getElementById("techCloseBtn");
+  techBtn.addEventListener("click", function(){
+    techModal.classList.remove("hidden");
+  });
+  techCloseBtn.addEventListener("click", closeTechModal);
+  techModal.addEventListener("click", function(e){
+    if(e.target === techModal) closeTechModal();
+  });
 }

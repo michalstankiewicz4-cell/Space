@@ -28,11 +28,11 @@
   </div>
 </div>
 
-<div id="setupModal" class="hidden">
-  <div id="setupModalBox">
-    <div id="setupModalHeader">
-      <span id="setupModalTitle">Setup</span>
-      <button id="setupCloseBtn" type="button">✕</button>
+<div id="setupModal" class="modal hidden">
+  <div id="setupModalBox" class="modalBox">
+    <div class="modalHeader">
+      <span id="setupModalTitle" class="modalTitle">Setup</span>
+      <button id="setupCloseBtn" class="modalCloseBtn" type="button">✕</button>
     </div>
     <div id="setupTabs">
       <button type="button" data-tab="language" class="active">Language</button>
@@ -85,7 +85,36 @@
   <ul id="playersListEl" class="panelBody"></ul>
 </div>
 
-<button id="wikiBtn" class="hud" type="button">📖 Wiki</button>
+<div id="hudButtonsRow" class="hud">
+  <button id="wikiBtn" type="button">📖 Wiki</button>
+  <button id="techBtn" type="button">🛠 Tech</button>
+  <button id="fleetBtn" type="button">🚀 Fleet</button>
+</div>
+
+<div id="techModal" class="modal hidden">
+  <div id="techModalBox" class="modalBox">
+    <div class="modalHeader">
+      <span id="techModalTitle" class="modalTitle">Tech Tree</span>
+      <button id="techCloseBtn" class="modalCloseBtn" type="button">✕</button>
+    </div>
+    <div id="dock"></div>
+  </div>
+</div>
+
+<div id="fleetModal" class="modal hidden">
+  <div id="fleetModalBox" class="modalBox">
+    <div class="modalHeader">
+      <span id="fleetModalTitle" class="modalTitle">Fleet</span>
+      <button id="fleetCloseBtn" class="modalCloseBtn" type="button">✕</button>
+    </div>
+    <ul id="fleetListEl"></ul>
+  </div>
+</div>
+
+<div id="shipCam" class="hidden">
+  <div id="shipCamLabel">SHIP CAM</div>
+  <button id="shipCamCloseBtn" type="button">✕</button>
+</div>
 
 <div id="legend" class="hidden">
   <div class="lg"><span class="dot" style="background:#4fa8ff"></span><span id="legendIce">Ice planets</span></div>
@@ -107,8 +136,6 @@
 
 <div id="selectBox"></div>
 <div id="cmdFlash"></div>
-
-<div id="dock"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>

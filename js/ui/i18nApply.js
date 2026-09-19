@@ -26,6 +26,10 @@ export function applyStaticText(){
 
   document.getElementById("playersTitle").textContent = t("players.title");
 
+  document.getElementById("techModalTitle").textContent = t("tech.title");
+  document.getElementById("fleetModalTitle").textContent = t("fleet.title");
+  document.getElementById("shipCamLabel").textContent = t("fleet.shipCamLabel");
+
   document.getElementById("legendIce").textContent = t("legend.ice");
   document.getElementById("legendNeutral").textContent = t("legend.neutral");
   document.getElementById("legendVolcanic").textContent = t("legend.volcanic");

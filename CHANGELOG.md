@@ -4,6 +4,18 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.2.0]
+
+### Added
+- **Tech** button next to Wiki: the upgrade tree moves off the always-on
+  bottom dock into an on-demand centered modal (a responsive grid, so it
+  fits the screen regardless of size instead of a single row that could
+  overflow).
+- **Fleet** button: lists every ship in the swarm; clicking one opens a
+  small picture-in-picture **ship cam** — a second camera rendered into a
+  corner window, sitting at that ship and facing the way it's facing, like
+  a cockpit view. Closable from its own button or Escape.
+
 ## [1.1.1]
 
 ### Fixed

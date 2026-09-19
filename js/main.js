@@ -15,6 +15,8 @@ import { refreshDock } from "./ui/dock.js";
 import { updateTelemetry } from "./ui/hud.js";
 import { initBanner } from "./ui/banner.js";
 import { initPanels } from "./ui/panels.js";
+import { initFleet } from "./ui/fleet.js";
+import { initShipCam, updateShipCam, renderShipCamPIP } from "./scene/shipcam.js";
 import { renderPlayersList } from "./ui/players.js";
 import { maintainPlanetCount, flushDamage } from "./net/bodiesSync.js";
 import { updateRemoteShips, maybeBroadcastShips } from "./net/shipsBroadcast.js";
@@ -38,6 +40,8 @@ refreshDock();
 reconcileFleetSize();
 initBanner();
 initPanels();
+initFleet();
+initShipCam();
 
 if(NET_ENABLED){
   initNet();
@@ -73,7 +77,15 @@ function tick(){
     renderPlayersList();
   }
 
+  // Reset to full-canvas before the main render, in case last frame's ship
+  // cam PIP pass (below) left the viewport/scissor set to its small rect.
+  ctx.renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
+  ctx.renderer.setScissorTest(false);
   ctx.renderer.render(ctx.scene, ctx.camera);
+
+  updateShipCam();
+  renderShipCamPIP();
+
   requestAnimationFrame(tick);
 }
 

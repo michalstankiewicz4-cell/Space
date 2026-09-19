@@ -34,6 +34,12 @@ const STRINGS = {
       sun: "☀ Suns", comet: "☄ Comets", meteoroid: "🪨 Meteoroids", blackhole: "🌀 Black holes (hazard!)"
     },
     players: { title: "PLAYERS", you: " (You)", defaultName: "Player" },
+    tech: { title: "Tech Tree" },
+    fleet: {
+      title: "Fleet",
+      ship: function(n){ return "Ship " + n; },
+      shipCamLabel: "SHIP CAM"
+    },
     body: {
       ice: "Ice planet", neutral: "Neutral planet", volcanic: "Volcanic planet",
       sun: "Sun", comet: "Comet", meteoroid: "Meteoroid", blackhole: "Black hole"
@@ -92,6 +98,12 @@ const STRINGS = {
       sun: "☀ Słońca", comet: "☄ Komety", meteoroid: "🪨 Meteoryty", blackhole: "🌀 Czarne dziury (hazard!)"
     },
     players: { title: "GRACZE", you: " (Ty)", defaultName: "Gracz" },
+    tech: { title: "Drzewo rozwoju" },
+    fleet: {
+      title: "Flota",
+      ship: function(n){ return "Statek " + n; },
+      shipCamLabel: "KAMERA STATKU"
+    },
     body: {
       ice: "Planeta lodowa", neutral: "Planeta neutralna", volcanic: "Planeta wulkaniczna",
       sun: "Słońce", comet: "Kometa", meteoroid: "Meteoryt", blackhole: "Czarna dziura"
