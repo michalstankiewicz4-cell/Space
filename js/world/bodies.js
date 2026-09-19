@@ -3,7 +3,7 @@ import { removeItem } from "../core/utils.js";
 import { FIELD_RADIUS, MAX_PLANETS } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
-import { generateCrackTexture, makeRockGeometry } from "./textures.js";
+import { generateCrackTexture, makeRockGeometry, makeSunGlowTexture } from "./textures.js";
 import { spawnTailParticle } from "../fx/particles.js";
 import { hideBolt } from "../ships/swarm.js";
 
@@ -128,8 +128,11 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   const scorchMesh = new THREE.Mesh(scorchGeo, scorchMat);
   mesh.add(scorchMesh);
 
-  // slonce: dodatkowa poswiata korony + wlasne swiatlo
+  // slonce: poswiata korony (3D, blisko powierzchni) + sprite z gradientowymi
+  // promieniami zwrocony do kamery (jak halo czarnej dziury - z kazdego kata
+  // wyglada tak samo dobrze) + wlasne swiatlo
   let corona = null;
+  let sunburst = null;
   if(kind === "sun"){
     const coronaGeo = new THREE.SphereGeometry(radius*1.4, 20, 14);
     const coronaMat = new THREE.MeshBasicMaterial({
@@ -138,6 +141,15 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     });
     corona = new THREE.Mesh(coronaGeo, coronaMat);
     mesh.add(corona);
+
+    const sunburstMat = new THREE.SpriteMaterial({
+      map: makeSunGlowTexture(), color: 0xffffff, transparent:true, opacity:0.85,
+      blending: THREE.AdditiveBlending, depthWrite:false
+    });
+    sunburst = new THREE.Sprite(sunburstMat);
+    sunburst.scale.setScalar(radius*5.2);
+    mesh.add(sunburst);
+
     const sunLight = new THREE.PointLight(0xffcf8a, 1.6, radius*40);
     mesh.add(sunLight);
   }
@@ -168,6 +180,7 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     pendingDamage: 0,
     spin: (Math.random()-0.5)*0.6,
     corona: corona,
+    sunburst: sunburst,
     coronaPhase: Math.random()*10,
     dying: false,
     crackMesh: crackMesh,
@@ -277,6 +290,13 @@ export function updateBodies(dt){
       p.corona.material.opacity = 0.28 + 0.14*Math.abs(Math.sin(p.coronaPhase));
       const cs = 1 + 0.05*Math.abs(Math.sin(p.coronaPhase*0.7));
       p.corona.scale.setScalar(cs);
+    }
+
+    if(p.sunburst){
+      p.sunburst.material.rotation += dt*0.09;
+      const pulse = 1 + 0.06*Math.abs(Math.sin(p.coronaPhase*0.55));
+      p.sunburst.scale.setScalar(p.radius*5.2*pulse);
+      p.sunburst.material.opacity = 0.78 + 0.12*Math.abs(Math.sin(p.coronaPhase*0.9));
     }
 
     if(p.moving){

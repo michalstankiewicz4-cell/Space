@@ -109,6 +109,55 @@ export function makeHaloTexture(){
   return new THREE.CanvasTexture(canvas);
 }
 
+// Miękka łuna + promienie słoneczne — sprite zwrócony do kamery (jak halo
+// czarnej dziury), więc z każdego kąta wygląda tak samo dobrze. Gradientowe
+// kliny dają wrażenie rozbłysku bez prawdziwego renderingu wolumetrycznego.
+export function makeSunGlowTexture(){
+  const size = 512;
+  const canvas = document.createElement("canvas");
+  canvas.width = size; canvas.height = size;
+  const ctx2d = canvas.getContext("2d");
+  const cx = size/2, cy = size/2;
+
+  const glow = ctx2d.createRadialGradient(cx,cy,0, cx,cy,size*0.5);
+  glow.addColorStop(0,    "rgba(255,250,230,0.95)");
+  glow.addColorStop(0.18, "rgba(255,225,160,0.55)");
+  glow.addColorStop(0.45, "rgba(255,170,90,0.22)");
+  glow.addColorStop(1,    "rgba(255,140,60,0)");
+  ctx2d.fillStyle = glow;
+  ctx2d.fillRect(0,0,size,size);
+
+  const rayCount = 14;
+  ctx2d.globalCompositeOperation = "lighter";
+  for(let i=0;i<rayCount;i++){
+    const ang = (i/rayCount)*Math.PI*2 + Math.random()*0.06;
+    const long = i%2===0;
+    const len = size*(long?0.5:0.36) * (0.85+Math.random()*0.3);
+    const halfW = size*((long?0.05:0.035) + Math.random()*0.015);
+
+    const dx = Math.cos(ang), dy = Math.sin(ang);
+    const px = -dy, py = dx; // prostopadle do promienia - szerokosc klina
+    const xTip = cx + dx*len, yTip = cy + dy*len;
+
+    const grad = ctx2d.createLinearGradient(cx, cy, xTip, yTip);
+    grad.addColorStop(0,   "rgba(255,245,220,0.55)");
+    grad.addColorStop(0.6, "rgba(255,200,130,0.18)");
+    grad.addColorStop(1,   "rgba(255,180,100,0)");
+
+    ctx2d.beginPath();
+    ctx2d.moveTo(cx + px*halfW*0.3, cy + py*halfW*0.3);
+    ctx2d.lineTo(xTip + px*halfW*0.05, yTip + py*halfW*0.05);
+    ctx2d.lineTo(xTip - px*halfW*0.05, yTip - py*halfW*0.05);
+    ctx2d.lineTo(cx - px*halfW*0.3, cy - py*halfW*0.3);
+    ctx2d.closePath();
+    ctx2d.fillStyle = grad;
+    ctx2d.fill();
+  }
+  ctx2d.globalCompositeOperation = "source-over";
+
+  return new THREE.CanvasTexture(canvas);
+}
+
 export function generateDustTexture(){
   const size = 128;
   const canvas = document.createElement("canvas");
