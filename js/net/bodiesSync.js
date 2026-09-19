@@ -35,12 +35,17 @@ export function onBodyUpdated(row){
   }
 }
 
+// UWAGA: Supabase Realtime dla DELETE potrafi przesłać w `oldRow` tylko klucz
+// główny (id) — bez REPLICA IDENTITY FULL reszta kolumn (health, kind...) jest
+// nieobecna, nie `null`. Dlatego celowo NIE polegamy tu na `oldRow` poza `id` —
+// czy to była "czarna dziura" i czy miała zdrowie <= 0 sprawdzamy z lokalnie
+// już znanego obiektu (`obj`), który jest zawsze kompletny i aktualny.
 export function onBodyDeleted(oldRow){
   const obj = ctx.netBodies[oldRow.id];
   if(!obj) return;
   delete ctx.netBodies[oldRow.id];
-  if(oldRow.kind === "blackhole"){
-    if(ctx.blackholes.indexOf(obj) === -1) return;
+
+  if(ctx.blackholes.indexOf(obj) !== -1){
     ctx.scene.remove(obj.group);
     obj.core.geometry.dispose(); obj.core.material.dispose();
     obj.horizon.geometry.dispose(); obj.horizon.material.dispose();
@@ -49,8 +54,10 @@ export function onBodyDeleted(oldRow){
     ctx.blackholes.splice(ctx.blackholes.indexOf(obj), 1);
     return;
   }
+
   if(ctx.planets.indexOf(obj) === -1) return;
-  if(oldRow.health != null && oldRow.health <= 0 && !obj.dying){
+  const wasEaten = obj.maxHealth != null && obj.health <= 0;
+  if(wasEaten && !obj.dying){
     // zjedzona przez kogos - wspolny wybuch dla wszystkich; punkty przyznaje
     // wylacznie klient ktory dostal killed:true z bite_body (patrz flushDamage)
     triggerBreakup(obj);
