@@ -14,17 +14,20 @@ cienki szkielet (DOM + CSS), cała logika jest w natywnych modułach ES pod
 css/style.css        style gry (HUD, drzewko ulepszeń, banner startowy)
 js/
   config.js          stałe dostrajające rozgrywkę (drzewko ulepszeń, promienie, interwały sieciowe)
+  i18n.js            teksty UI (domyślnie EN, przełącznik na PL — patrz banner startowy)
   env.js             adres i klucz Supabase (anon key — bezpieczny do commitowania, patrz niżej)
   supabaseClient.js  singleton klienta Supabase
   core/              współdzielony stan gry (scena/kolekcje bytów, punkty gracza) + drobne narzędzia
   scene/             kamera, renderer, sterowanie myszką/zaznaczanie
-  world/             planety/komety/słońca/meteoryty, czarne dziury, tekstury proceduralne
+  world/             logika ciał niebieskich (mesh/tekstury/animacja) — dane per-typ w js/bodies/
+  bodies/            7 typów ciał, każdy w osobnym pliku (sun.js, icePlanet.js, neutralPlanet.js,
+                     volcanicPlanet.js, comet.js, meteoroid.js, blackhole.js) — patrz "Edytor obiektów" niżej
+  content.js         zbiera pliki z js/bodies/ w jedno miejsce, z którego czyta gra i edytor
   fx/                cząsteczki, odłamki, fala uderzeniowa, pył — efekty rozpadu planety
   ships/             rój statków gracza (ruch, zjadanie, promień-piorun)
   ui/                HUD (telemetria, licznik graczy) i dok z drzewkiem ulepszeń
   net/               multiplayer: tożsamość, wybór "stewarda", synchronizacja świata, transmisja statków
   main.js            punkt wejścia — spina moduły i uruchamia pętlę gry
-js/content.js        parametry generowania ciał (promienie, HP, wygląd promieni/warkoczy/szumu terenu) — patrz "Edytor obiektów" niżej
 supabase/schema.sql  schemat bazy (tabele, RLS, funkcje RPC) do wklejenia w Supabase SQL Editor
 ```
 
@@ -36,13 +39,14 @@ bez dotykania reszty.
 
 [`editor.html`](editor.html) to osobne narzędzie deweloperskie (nie link z
 poziomu gry) do dostrajania wyglądu proceduralnie generowanych ciał —
-suwak na każdy parametr w [`js/content.js`](js/content.js), z podglądem 3D
-na żywo. Podgląd korzysta z tych samych funkcji co gra, więc to co widać
-w edytorze wygląda identycznie w rozgrywce.
+osobna zakładka i suwak na każdy parametr dla każdego z 7 typów w
+[`js/bodies/`](js/bodies), z podglądem 3D na żywo. Podgląd korzysta z tych
+samych funkcji co gra, więc to co widać w edytorze wygląda identycznie w
+rozgrywce.
 
-Ponieważ strona nie ma backendu, przycisk "Pobierz content.js" ściąga
-zmieniony plik do Pobranych — trzeba go ręcznie podmienić w miejsce
-`js/content.js` w repo, żeby zmiany trafiły do gry.
+Ponieważ strona nie ma backendu, przycisk "Download" ściąga plik tekstowy
+z gotowymi do wklejenia blokami `export const ... = {...}` — po jednym na
+każdy plik w `js/bodies/`, które trzeba ręcznie podmienić w repo.
 
 ## Multiplayer / Supabase setup
 
