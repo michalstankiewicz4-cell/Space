@@ -87,43 +87,32 @@ export function applyHealthVisual(obj){
   obj.crackMesh.material.opacity = Math.min(1, (1-healthFrac)*1.2);
 }
 
-// Poświata słońca z prawdziwym gradientem na geometrii 3D (efekt Fresnela:
-// jasno na "limbusie" - brzegu widocznej tarczy, ciemno na wprost kamery) —
-// w przeciwieństwie do jednolitego koloru z pulsującą przezroczystością,
-// który wygląda jak płaska, jednolita powłoka bez gradientu. Renderowana od
-// wewnątrz (BackSide) nieco większej sfery niż słońce, więc poświata "wypływa"
-// miękko poza widoczną krawędź.
-const CORONA_VERTEX_SHADER = `
-  varying vec3 vNormal;
-  void main(){
-    vNormal = normalize(normalMatrix * normal);
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-const CORONA_FRAGMENT_SHADER = `
-  uniform vec3 glowColor;
-  uniform float uPulse;
-  varying vec3 vNormal;
-  void main(){
-    float rim = 1.0 - max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0);
-    float alpha = pow(rim, 2.2) * uPulse;
-    gl_FragColor = vec4(glowColor, alpha);
-  }
-`;
+// Poświata słońca jako prawdziwy gradient odległości od powierzchni: kilka
+// współśrodkowych powłok o rosnącym promieniu i malejącej nieprzezroczystości
+// — blisko słońca widoczna wyraźnie, im dalej od niego tym bardziej znika,
+// aż do pełnej przezroczystości na zewnętrznej powłoce. Prostsze i pewniejsze
+// niż shader zależny od kąta patrzenia (fresnel dawał odwrotny efekt: jasno
+// na brzegu, ciemno przy słońcu — nie o to chodziło).
+const CORONA_LAYERS = [
+  { scale: 1.12, opacity: 0.55 },
+  { scale: 1.34, opacity: 0.30 },
+  { scale: 1.62, opacity: 0.14 },
+  { scale: 2.00, opacity: 0.05 }
+];
 
 function buildCoronaMesh(radius){
-  const geo = new THREE.SphereGeometry(radius*1.5, 24, 16);
-  const mat = new THREE.ShaderMaterial({
-    uniforms: {
-      glowColor: { value: new THREE.Color(0xffcf7a) },
-      uPulse: { value: 0.9 }
-    },
-    vertexShader: CORONA_VERTEX_SHADER,
-    fragmentShader: CORONA_FRAGMENT_SHADER,
-    transparent: true, depthWrite: false,
-    blending: THREE.AdditiveBlending, side: THREE.BackSide
+  const group = new THREE.Group();
+  CORONA_LAYERS.forEach(function(layer){
+    const geo = new THREE.SphereGeometry(radius*layer.scale, 20, 14);
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0xffcf7a, transparent: true, opacity: layer.opacity,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    const shell = new THREE.Mesh(geo, mat);
+    shell.userData.baseOpacity = layer.opacity;
+    group.add(shell);
   });
-  return new THREE.Mesh(geo, mat);
+  return group;
 }
 
 // Prawdziwe promienie 3D słońca: cienkie płaszczyzny (nie sprite/billboard)
@@ -363,7 +352,10 @@ export function updateBodies(dt){
 
     if(p.corona){
       p.coronaPhase += dt*2.2;
-      p.corona.material.uniforms.uPulse.value = 0.75 + 0.35*Math.abs(Math.sin(p.coronaPhase));
+      const pulseFactor = 0.85 + 0.3*Math.abs(Math.sin(p.coronaPhase));
+      p.corona.children.forEach(function(shell){
+        shell.material.opacity = shell.userData.baseOpacity * pulseFactor;
+      });
       const cs = 1 + 0.05*Math.abs(Math.sin(p.coronaPhase*0.7));
       p.corona.scale.setScalar(cs);
     }
