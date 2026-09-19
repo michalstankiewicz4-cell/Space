@@ -2,8 +2,10 @@ import { ctx } from "../core/context.js";
 import { showToast } from "../ui/hud.js";
 import { setShipSelected } from "../ships/swarm.js";
 import { t } from "../i18n.js";
+import { settings } from "../settings.js";
 
-// Kamera: PRAWY przycisk = obrót, scroll = zoom.
+// Kamera: PRAWY przycisk = obrót, scroll = zoom (chyba że gracz zamienił
+// przyciski w Setup — patrz rotateButton()/selectButton() niżej).
 export const camState = { az: 0.6, pol: 1.05, radius: 46, autoSpin: true };
 let camDragging = false, camLastX = 0, camLastY = 0;
 function clampPol(p){ return Math.max(0.35, Math.min(Math.PI-0.35, p)); }
@@ -20,7 +22,11 @@ export function updateCamera(dt){
 }
 
 const raycaster = new THREE.Raycaster();
-const LEFT = 0, RIGHT = 2;
+const MOUSE_LEFT = 0, MOUSE_RIGHT = 2;
+// Logical roles, resolved live from settings so toggling "swap" in Setup
+// takes effect immediately without needing to reload.
+function rotateButton(){ return settings.swapMouseButtons ? MOUSE_LEFT : MOUSE_RIGHT; }
+function selectButton(){ return settings.swapMouseButtons ? MOUSE_RIGHT : MOUSE_LEFT; }
 const DRAG_THRESHOLD = 6;
 let leftDown = false, leftStartX = 0, leftStartY = 0, leftIsDrag = false;
 
@@ -97,9 +103,9 @@ export function initControls(){
   }, { passive:false });
 
   dom.addEventListener("pointerdown", function(e){
-    if(e.button === RIGHT){
+    if(e.button === rotateButton()){
       camDragging = true; camState.autoSpin = false; camLastX=e.clientX; camLastY=e.clientY;
-    } else if(e.button === LEFT){
+    } else if(e.button === selectButton()){
       leftDown = true; leftIsDrag = false; leftStartX=e.clientX; leftStartY=e.clientY;
     }
   });
@@ -108,8 +114,10 @@ export function initControls(){
     if(camDragging){
       const dx = e.clientX-camLastX, dy = e.clientY-camLastY;
       camLastX=e.clientX; camLastY=e.clientY;
-      camState.az += dx*0.0045;
-      camState.pol = clampPol(camState.pol - dy*0.0045);
+      const xSign = settings.invertX ? -1 : 1;
+      const ySign = settings.invertY ? -1 : 1;
+      camState.az += dx*0.0045*xSign;
+      camState.pol = clampPol(camState.pol - dy*0.0045*ySign);
       return;
     }
     if(leftDown){
@@ -131,8 +139,8 @@ export function initControls(){
   });
 
   window.addEventListener("pointerup", function(e){
-    if(e.button === RIGHT){ camDragging = false; return; }
-    if(e.button !== LEFT || !leftDown) return;
+    if(e.button === rotateButton()){ camDragging = false; return; }
+    if(e.button !== selectButton() || !leftDown) return;
     leftDown = false;
 
     if(leftIsDrag){

@@ -25,12 +25,32 @@
       <button id="startBtn" disabled>ENTER ORBIT</button>
       <button id="setupBtn" type="button">⚙ Setup</button>
     </div>
-    <div id="setupPanel" class="hidden">
+  </div>
+</div>
+
+<div id="setupModal" class="hidden">
+  <div id="setupModalBox">
+    <div id="setupModalHeader">
+      <span id="setupModalTitle">Setup</span>
+      <button id="setupCloseBtn" type="button">✕</button>
+    </div>
+    <div id="setupTabs">
+      <button type="button" data-tab="language" class="active">Language</button>
+      <button type="button" data-tab="mouse">Mouse</button>
+    </div>
+
+    <div id="setupTabLanguage" class="setupTabPanel">
       <div id="setupLangLabel">Language</div>
       <div id="setupLangButtons">
         <button type="button" data-lang="en">English</button>
         <button type="button" data-lang="pl">Polski</button>
       </div>
+    </div>
+
+    <div id="setupTabMouse" class="setupTabPanel hidden">
+      <label class="setupCheckRow"><input type="checkbox" id="invertXCheck"><span id="invertXLabel">Invert X (right-drag)</span></label>
+      <label class="setupCheckRow"><input type="checkbox" id="invertYCheck"><span id="invertYLabel">Invert Y (right-drag)</span></label>
+      <label class="setupCheckRow"><input type="checkbox" id="swapButtonsCheck"><span id="swapButtonsLabel">Swap left/right mouse button</span></label>
     </div>
   </div>
 </div>

@@ -9,6 +9,13 @@ export function applyStaticText(){
   document.getElementById("setupBtn").textContent = t("banner.setup");
   document.getElementById("setupLangLabel").textContent = t("banner.language");
 
+  document.getElementById("setupModalTitle").textContent = t("setup.title");
+  document.querySelector('#setupTabs button[data-tab="language"]').textContent = t("setup.tabLanguage");
+  document.querySelector('#setupTabs button[data-tab="mouse"]').textContent = t("setup.tabMouse");
+  document.getElementById("invertXLabel").textContent = t("setup.invertX");
+  document.getElementById("invertYLabel").textContent = t("setup.invertY");
+  document.getElementById("swapButtonsLabel").textContent = t("setup.swapButtons");
+
   document.getElementById("telemetryTitle").textContent = t("telemetry.title");
   document.getElementById("labelPoints").textContent = t("telemetry.points");
   document.getElementById("labelShips").textContent = t("telemetry.ships");

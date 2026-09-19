@@ -5,6 +5,7 @@
 import { ctx } from "../core/context.js";
 import { removeItem } from "../core/utils.js";
 import { CONTENT } from "../content.js";
+import { settings } from "../settings.js";
 import { initScene } from "../scene/setup.js";
 import { camState, updateCamera } from "../scene/controls.js";
 import { initParticles, updateParticles } from "../fx/particles.js";
@@ -231,8 +232,8 @@ function initEditorControls(){
     if(!dragging) return;
     const dx = e.clientX - lastX, dy = e.clientY - lastY;
     lastX = e.clientX; lastY = e.clientY;
-    camState.az += dx*0.006;
-    camState.pol = Math.max(0.2, Math.min(Math.PI-0.2, camState.pol - dy*0.006));
+    camState.az += dx*0.006*(settings.invertX ? -1 : 1);
+    camState.pol = Math.max(0.2, Math.min(Math.PI-0.2, camState.pol - dy*0.006*(settings.invertY ? -1 : 1)));
   });
   window.addEventListener("pointerup", function(){ dragging = false; });
   dom.addEventListener("wheel", function(e){

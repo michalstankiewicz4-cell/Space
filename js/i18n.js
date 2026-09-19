@@ -12,6 +12,14 @@ const STRINGS = {
       setup: "⚙ Setup",
       language: "Language"
     },
+    setup: {
+      title: "Setup",
+      tabLanguage: "Language",
+      tabMouse: "Mouse",
+      invertX: "Invert X (right-drag)",
+      invertY: "Invert Y (right-drag)",
+      swapButtons: "Swap left/right mouse button"
+    },
     telemetry: {
       title: "ROJ // TELEMETRY",
       points: "Evolution points",
@@ -51,6 +59,14 @@ const STRINGS = {
       start: "WEJDŹ NA ORBITĘ",
       setup: "⚙ Ustawienia",
       language: "Język"
+    },
+    setup: {
+      title: "Ustawienia",
+      tabLanguage: "Język",
+      tabMouse: "Mysz",
+      invertX: "Odwróć X (obrót PPM)",
+      invertY: "Odwróć Y (obrót PPM)",
+      swapButtons: "Zamień lewy/prawy przycisk myszy"
     },
     telemetry: {
       title: "ROJ // TELEMETRIA",

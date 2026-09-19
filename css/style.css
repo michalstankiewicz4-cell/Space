@@ -224,27 +224,69 @@ canvas{ display:block; touch-action:none; cursor: grab; }
 }
 #setupBtn:hover{ color: var(--ink); filter:none; }
 
-#setupPanel{
-  margin-top: 16px; padding: 14px 16px;
-  background: rgba(255,255,255,0.03); border: 1px solid var(--panel-edge);
-  clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+/* Setup: modal window centered on screen, independent of the banner box */
+#setupModal{
+  position:fixed; inset:0; z-index:10; display:flex;
+  align-items:center; justify-content:center;
+  background: rgba(2,4,8,0.65);
 }
-#setupPanel.hidden{ display:none; }
+#setupModal.hidden{ display:none; }
+#setupModalBox{
+  width: 360px; max-width: 92vw;
+  background: #0c1220; border: 1px solid var(--panel-edge);
+  padding: 18px 20px 22px;
+  clip-path: polygon(0 10px, 10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+  text-align:left;
+}
+#setupModalHeader{
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom: 16px;
+}
+#setupModalTitle{
+  font-family: var(--font-head); font-weight:700; font-size: 15px;
+  letter-spacing: 0.04em; color: var(--ink);
+}
+#setupCloseBtn{
+  background:none !important; border:none !important; color: var(--ink-dim) !important;
+  font-size: 16px !important; padding: 0 4px !important; cursor:pointer;
+}
+#setupCloseBtn:hover{ color: var(--ink) !important; filter:none !important; }
+
+#setupTabs{ display:flex; gap:6px; margin-bottom: 18px; }
+#setupTabs button{
+  font-family: var(--font-mono); font-size: 11px; letter-spacing:0.03em;
+  background: rgba(255,255,255,0.05) !important; color: var(--ink-dim) !important;
+  border: 1px solid var(--panel-edge) !important; padding: 7px 12px !important;
+  clip-path: none;
+}
+#setupTabs button.active{
+  background: rgba(79,227,198,0.18) !important; color: var(--ink) !important; border-color: var(--teal) !important;
+}
+#setupTabs button:hover{ color: var(--ink) !important; filter:none !important; }
+
+.setupTabPanel.hidden{ display:none; }
 #setupLangLabel{
   font-family: var(--font-mono); font-size: 11px; color: var(--ink-dim);
   text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
 }
-#setupLangButtons{ display:flex; gap:8px; justify-content:center; }
+#setupLangButtons{ display:flex; gap:8px; }
 #setupLangButtons button{
   font-family: var(--font-mono); font-size: 12px; letter-spacing:0.02em;
-  background: rgba(255,255,255,0.05); color: var(--ink-dim);
-  border: 1px solid var(--panel-edge); padding: 7px 14px;
+  background: rgba(255,255,255,0.05) !important; color: var(--ink-dim) !important;
+  border: 1px solid var(--panel-edge) !important; padding: 7px 14px !important;
   clip-path: none;
 }
 #setupLangButtons button.active{
-  background: rgba(79,227,198,0.18); color: var(--ink); border-color: var(--teal);
+  background: rgba(79,227,198,0.18) !important; color: var(--ink) !important; border-color: var(--teal) !important;
 }
-#setupLangButtons button:hover{ color: var(--ink); filter:none; }
+#setupLangButtons button:hover{ color: var(--ink) !important; filter:none !important; }
+
+.setupCheckRow{
+  display:flex; align-items:center; gap:9px; cursor:pointer;
+  font-family: var(--font-mono); font-size: 12.5px; color: var(--ink);
+  margin: 12px 0;
+}
+.setupCheckRow input{ accent-color: var(--teal); width:15px; height:15px; cursor:pointer; }
 
 @media (max-width: 720px){
   #hint{ display:none; }
