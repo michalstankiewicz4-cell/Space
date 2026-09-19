@@ -26,9 +26,6 @@ export function applyStaticText(){
 
   document.getElementById("playersTitle").textContent = t("players.title");
 
-  document.getElementById("ttHealthLabel").textContent = t("tooltip.health");
-  document.getElementById("ttValueLabel").textContent = t("tooltip.value");
-
   document.getElementById("legendIce").textContent = t("legend.ice");
   document.getElementById("legendNeutral").textContent = t("legend.neutral");
   document.getElementById("legendVolcanic").textContent = t("legend.volcanic");

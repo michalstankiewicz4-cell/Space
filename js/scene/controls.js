@@ -69,16 +69,11 @@ function pickPlanetAt(e){
   return null;
 }
 
-let tooltipEl = null, ttTitleEl = null, ttHealthValEl = null, ttValueValEl = null;
+let tooltipEl = null, ttTitleEl = null, ttRow1LabelEl = null, ttRow1ValEl = null, ttRow2LabelEl = null, ttRow2ValEl = null;
 const TOOLTIP_OFFSET = 16;
 
-function showTooltip(p, clientX, clientY){
-  if(!tooltipEl) return;
-  ttTitleEl.textContent = t("body." + bodyVariantKey(p));
-  ttHealthValEl.textContent = Math.max(0, Math.round(p.health)) + " / " + Math.round(p.maxHealth);
-  ttValueValEl.textContent = "~" + bodyValueEstimate(p);
+function positionTooltip(clientX, clientY){
   tooltipEl.classList.remove("hidden");
-
   const rect = tooltipEl.getBoundingClientRect();
   const maxX = window.innerWidth - rect.width - 8;
   const maxY = window.innerHeight - rect.height - 8;
@@ -86,8 +81,39 @@ function showTooltip(p, clientX, clientY){
   tooltipEl.style.top = Math.max(8, Math.min(clientY+TOOLTIP_OFFSET, maxY)) + "px";
 }
 
+function showTooltip(p, clientX, clientY){
+  if(!tooltipEl) return;
+  ttTitleEl.textContent = t("body." + bodyVariantKey(p));
+  ttRow1LabelEl.textContent = t("tooltip.health");
+  ttRow1ValEl.textContent = Math.max(0, Math.round(p.health)) + " / " + Math.round(p.maxHealth);
+  ttRow2LabelEl.textContent = t("tooltip.value");
+  ttRow2ValEl.textContent = "~" + bodyValueEstimate(p);
+  positionTooltip(clientX, clientY);
+}
+
+function showBlackHoleTooltip(bh, clientX, clientY){
+  if(!tooltipEl) return;
+  ttTitleEl.textContent = t("body.blackhole");
+  ttRow1LabelEl.textContent = t("tooltip.timeLeft");
+  ttRow1ValEl.textContent = Math.max(0, Math.round(bh.maxLife-bh.life)) + "s";
+  ttRow2LabelEl.textContent = t("tooltip.hazard");
+  ttRow2ValEl.textContent = t("tooltip.hazardWarning");
+  positionTooltip(clientX, clientY);
+}
+
 function hideTooltip(){
   if(tooltipEl) tooltipEl.classList.add("hidden");
+}
+
+function pickBlackHoleAt(e){
+  const ndc = ndcFromEvent(e);
+  raycaster.setFromCamera(ndc, ctx.camera);
+  for(let i=0;i<ctx.blackholes.length;i++){
+    const bh = ctx.blackholes[i];
+    const hits = raycaster.intersectObjects([bh.core, bh.horizon, bh.disk], false);
+    if(hits.length>0) return bh;
+  }
+  return null;
 }
 
 function clearSelection(){
@@ -119,8 +145,10 @@ export function initControls(){
 
   tooltipEl = document.getElementById("bodyTooltip");
   ttTitleEl = document.getElementById("ttTitle");
-  ttHealthValEl = document.getElementById("ttHealthVal");
-  ttValueValEl = document.getElementById("ttValueVal");
+  ttRow1LabelEl = document.getElementById("ttRow1Label");
+  ttRow1ValEl = document.getElementById("ttRow1Val");
+  ttRow2LabelEl = document.getElementById("ttRow2Label");
+  ttRow2ValEl = document.getElementById("ttRow2Val");
 
   dom.addEventListener("contextmenu", function(e){ e.preventDefault(); });
   dom.addEventListener("pointerleave", hideTooltip);
@@ -164,8 +192,10 @@ export function initControls(){
     // hover cursor feedback (nie podczas przeciagania)
     const overShip = pickShipAt(e);
     const overPlanet = overShip ? null : pickPlanetAt(e);
-    dom.style.cursor = overShip ? "pointer" : (overPlanet ? "crosshair" : "grab");
+    const overBlackHole = (overShip || overPlanet) ? null : pickBlackHoleAt(e);
+    dom.style.cursor = overShip ? "pointer" : ((overPlanet || overBlackHole) ? "crosshair" : "grab");
     if(overPlanet) showTooltip(overPlanet, e.clientX, e.clientY);
+    else if(overBlackHole) showBlackHoleTooltip(overBlackHole, e.clientX, e.clientY);
     else hideTooltip();
   });
 

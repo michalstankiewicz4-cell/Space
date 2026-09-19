@@ -36,9 +36,13 @@ const STRINGS = {
     players: { title: "PLAYERS", you: " (You)", defaultName: "Player" },
     body: {
       ice: "Ice planet", neutral: "Neutral planet", volcanic: "Volcanic planet",
-      sun: "Sun", comet: "Comet", meteoroid: "Meteoroid"
+      sun: "Sun", comet: "Comet", meteoroid: "Meteoroid", blackhole: "Black hole"
     },
-    tooltip: { health: "Health", value: "Value" },
+    tooltip: {
+      health: "Health", value: "Value",
+      timeLeft: "Time left", hazard: "Hazard",
+      hazardWarning: "Avoid — consumes ships!"
+    },
     upgrades: {
       speed: "Speed", power: "Bite power", heat: "Heat resistance+",
       cold: "Cold resistance-", fleet: "Swarm size",
@@ -90,9 +94,13 @@ const STRINGS = {
     players: { title: "GRACZE", you: " (Ty)", defaultName: "Gracz" },
     body: {
       ice: "Planeta lodowa", neutral: "Planeta neutralna", volcanic: "Planeta wulkaniczna",
-      sun: "Słońce", comet: "Kometa", meteoroid: "Meteoryt"
+      sun: "Słońce", comet: "Kometa", meteoroid: "Meteoryt", blackhole: "Czarna dziura"
     },
-    tooltip: { health: "Zdrowie", value: "Wartość" },
+    tooltip: {
+      health: "Zdrowie", value: "Wartość",
+      timeLeft: "Pozostały czas", hazard: "Zagrożenie",
+      hazardWarning: "Unikaj — pochłania statki!"
+    },
     upgrades: {
       speed: "Prędkość", power: "Siła żucia", heat: "Odporność+ (gorąco)",
       cold: "Odporność- (zimno)", fleet: "Wielkość roju",
