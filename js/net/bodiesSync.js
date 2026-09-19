@@ -4,7 +4,8 @@ import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
 import {
   materializePlanet, requestSpawnPlanet, spawnPlanetLocalOnly,
-  despawnLocalOnly, applyHealthVisual, destroyPlanet, pendingSpawnCount
+  despawnLocalOnly, applyHealthVisual, destroyPlanet, pendingSpawnCount,
+  bodyValueEstimate
 } from "../world/bodies.js";
 import { materializeBlackHole } from "../world/blackholes.js";
 import { refreshDock } from "../ui/dock.js";
@@ -79,7 +80,7 @@ export function flushDamage(){
         const row = res.data && res.data[0];
         if(!row) return;
         if(row.killed){
-          const gained = Math.round(p.radius*14 + Math.abs(p.temp)*8 + (p.valueBonus||0));
+          const gained = bodyValueEstimate(p);
           state.points += gained;
           state.eaten += 1;
           showToast(t("toast.eaten")(gained));

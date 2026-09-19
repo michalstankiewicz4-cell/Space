@@ -2,7 +2,7 @@ import { ctx } from "../core/context.js";
 import { ORBIT_RADIUS } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { state, swarmStats, save } from "../core/gameState.js";
-import { paintScorch, destroyPlanet } from "../world/bodies.js";
+import { paintScorch, destroyPlanet, bodyValueEstimate } from "../world/bodies.js";
 import { spawnBiteParticles } from "../fx/particles.js";
 import { triggerBreakup } from "../fx/breakup.js";
 import { showToast } from "../ui/hud.js";
@@ -253,7 +253,7 @@ export function updateShips(dt){
         if(!NET_ENABLED && !sh.target.dying){
           // tryb offline: brak serwera do rozstrzygania "kto zadał ostatni cios",
           // więc zjedzenie rozstrzyga się od razu lokalnie, jak dawniej
-          const gained = Math.round(sh.target.radius*14 + Math.abs(sh.target.temp)*8 + (sh.target.valueBonus||0));
+          const gained = bodyValueEstimate(sh.target);
           state.points += gained;
           state.eaten += 1;
           showToast(t("toast.eaten")(gained));

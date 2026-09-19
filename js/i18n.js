@@ -34,6 +34,11 @@ const STRINGS = {
       sun: "☀ Suns", comet: "☄ Comets", meteoroid: "🪨 Meteoroids", blackhole: "🌀 Black holes (hazard!)"
     },
     players: { title: "PLAYERS", you: " (You)", defaultName: "Player" },
+    body: {
+      ice: "Ice planet", neutral: "Neutral planet", volcanic: "Volcanic planet",
+      sun: "Sun", comet: "Comet", meteoroid: "Meteoroid"
+    },
+    tooltip: { health: "Health", value: "Value" },
     upgrades: {
       speed: "Speed", power: "Bite power", heat: "Heat resistance+",
       cold: "Cold resistance-", fleet: "Swarm size",
@@ -83,6 +88,11 @@ const STRINGS = {
       sun: "☀ Słońca", comet: "☄ Komety", meteoroid: "🪨 Meteoryty", blackhole: "🌀 Czarne dziury (hazard!)"
     },
     players: { title: "GRACZE", you: " (Ty)", defaultName: "Gracz" },
+    body: {
+      ice: "Planeta lodowa", neutral: "Planeta neutralna", volcanic: "Planeta wulkaniczna",
+      sun: "Słońce", comet: "Kometa", meteoroid: "Meteoryt"
+    },
+    tooltip: { health: "Zdrowie", value: "Wartość" },
     upgrades: {
       speed: "Prędkość", power: "Siła żucia", heat: "Odporność+ (gorąco)",
       cold: "Odporność- (zimno)", fleet: "Wielkość roju",

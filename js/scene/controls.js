@@ -1,6 +1,7 @@
 import { ctx } from "../core/context.js";
 import { showToast } from "../ui/hud.js";
 import { setShipSelected } from "../ships/swarm.js";
+import { bodyVariantKey, bodyValueEstimate } from "../world/bodies.js";
 import { t } from "../i18n.js";
 import { settings } from "../settings.js";
 
@@ -68,6 +69,27 @@ function pickPlanetAt(e){
   return null;
 }
 
+let tooltipEl = null, ttTitleEl = null, ttHealthValEl = null, ttValueValEl = null;
+const TOOLTIP_OFFSET = 16;
+
+function showTooltip(p, clientX, clientY){
+  if(!tooltipEl) return;
+  ttTitleEl.textContent = t("body." + bodyVariantKey(p));
+  ttHealthValEl.textContent = Math.max(0, Math.round(p.health)) + " / " + Math.round(p.maxHealth);
+  ttValueValEl.textContent = "~" + bodyValueEstimate(p);
+  tooltipEl.classList.remove("hidden");
+
+  const rect = tooltipEl.getBoundingClientRect();
+  const maxX = window.innerWidth - rect.width - 8;
+  const maxY = window.innerHeight - rect.height - 8;
+  tooltipEl.style.left = Math.max(8, Math.min(clientX+TOOLTIP_OFFSET, maxX)) + "px";
+  tooltipEl.style.top = Math.max(8, Math.min(clientY+TOOLTIP_OFFSET, maxY)) + "px";
+}
+
+function hideTooltip(){
+  if(tooltipEl) tooltipEl.classList.add("hidden");
+}
+
 function clearSelection(){
   ctx.ships.forEach(function(sh){ setShipSelected(sh, false); });
 }
@@ -95,7 +117,13 @@ export function initControls(){
   const cmdFlashEl = document.getElementById("cmdFlash");
   const dom = ctx.renderer.domElement;
 
+  tooltipEl = document.getElementById("bodyTooltip");
+  ttTitleEl = document.getElementById("ttTitle");
+  ttHealthValEl = document.getElementById("ttHealthVal");
+  ttValueValEl = document.getElementById("ttValueVal");
+
   dom.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+  dom.addEventListener("pointerleave", hideTooltip);
 
   dom.addEventListener("wheel", function(e){
     e.preventDefault();
@@ -103,6 +131,7 @@ export function initControls(){
   }, { passive:false });
 
   dom.addEventListener("pointerdown", function(e){
+    hideTooltip();
     if(e.button === rotateButton()){
       camDragging = true; camState.autoSpin = false; camLastX=e.clientX; camLastY=e.clientY;
     } else if(e.button === selectButton()){
@@ -136,6 +165,8 @@ export function initControls(){
     const overShip = pickShipAt(e);
     const overPlanet = overShip ? null : pickPlanetAt(e);
     dom.style.cursor = overShip ? "pointer" : (overPlanet ? "crosshair" : "grab");
+    if(overPlanet) showTooltip(overPlanet, e.clientX, e.clientY);
+    else hideTooltip();
   });
 
   window.addEventListener("pointerup", function(e){

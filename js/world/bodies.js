@@ -43,6 +43,23 @@ export function bodyParams(kind, temp){
   return variantForTemp(temp!=null ? temp : 0);
 }
 
+// i18n key (see js/i18n.js "body" section) identifying which of the 7 body
+// types a live planet object is, re-deriving the planet variant from temp
+// the same way bodyParams()/variantForTemp() do.
+export function bodyVariantKey(p){
+  if(p.kind === "sun" || p.kind === "comet" || p.kind === "meteoroid") return p.kind;
+  const params = variantForTemp(p.temp);
+  if(params === CONTENT.icePlanet) return "ice";
+  if(params === CONTENT.volcanicPlanet) return "volcanic";
+  return "neutral";
+}
+
+// Same formula used when a body is fully devoured (see ships/swarm.js) —
+// shared so the hover tooltip's estimate never drifts from the real payout.
+export function bodyValueEstimate(p){
+  return Math.round(p.radius*14 + Math.abs(p.temp)*8 + (p.valueBonus||0));
+}
+
 export function tempColor(t){
   // t ranges -1 (ice) .. 1 (lava)
   if(t < -0.15){
