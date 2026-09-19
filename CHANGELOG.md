@@ -4,6 +4,15 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.2.2]
+
+### Fixed
+- Added cache-busting (`?v=1.2.2`) to `css/style.css` and `js/main.js` in
+  `index.html`, so a fresh page load shortly after a deploy is less likely
+  to pick up a stale cached file (GitHub Pages serves everything with only
+  a 10-minute `Cache-Control`). Doesn't help an already-open tab, which
+  never re-fetches anything until reloaded regardless.
+
 ## [1.2.1]
 
 ### Fixed

@@ -2,4 +2,10 @@
 // worth telling apart). Shown next to the title on the start screen and in
 // the browser tab title, so it's easy to tell which build is live —
 // especially useful right after a GitHub Pages deploy, since caches can lag.
-export const VERSION = "1.2.1";
+//
+// Also update the "?v=" cache-busting query param on css/style.css and
+// js/main.js in index.html to this same value (see CLAUDE.md) — GitHub
+// Pages serves files with only a 10-minute Cache-Control, but a returning
+// player loading the page within that window would otherwise still risk
+// getting a stale main.js.
+export const VERSION = "1.2.2";

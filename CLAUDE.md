@@ -25,7 +25,11 @@ local (`localStorage`).
   one deliberate exception, since that's translation data, not a comment.
 - **Versioning**: bump `js/version.js` and add a `CHANGELOG.md` entry for
   every meaningful change (feature, balance change, notable fix) — this
-  is how two GitHub Pages deploys are told apart after a push.
+  is how two GitHub Pages deploys are told apart after a push. Also bump
+  the `?v=` cache-busting query param on `css/style.css` and `js/main.js`
+  in `index.html` to the same value (see the cache-busting gotcha below)
+  — it's a hardcoded literal, not read from `js/version.js`, so it's easy
+  to forget.
 - **Testing before commit**: there's no test suite. Verify changes with a
   local static server (`python -m http.server 8877` from the repo root)
   and a throwaway Playwright script in the scratchpad dir (headless
@@ -124,3 +128,12 @@ local (`localStorage`).
   of equal id-specificity-count but lower total specificity — new
   ghost/secondary buttons inside `#banner` need `#banner button#id` or
   `!important` to not inherit the primary CTA style.
+- GitHub Pages serves every file with `Cache-Control: max-age=600` (10
+  min) and an `ETag`, no build step means no content-hashed filenames, and
+  a page that's already open never re-fetches anything on its own (a
+  deploy doesn't reach an already-loaded tab until it's reloaded). The
+  `?v=` query param on `css/style.css`/`js/main.js` in `index.html` only
+  narrows the "just deployed, browser still has the old file cached"
+  window for *new* page loads — it can't do anything for a tab that's
+  already open, and doesn't reach the files `js/main.js` `import`s (those
+  still resolve to their own plain, unversioned URLs either way).
