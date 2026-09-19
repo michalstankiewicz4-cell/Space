@@ -7,6 +7,10 @@ export function applyStaticText(){
   document.getElementById("nickInput").placeholder = t("banner.nickPlaceholder");
   document.getElementById("startBtn").textContent = t("banner.start");
   document.getElementById("nickError").textContent = t("banner.nickRejected");
+
+  document.getElementById("outdatedTitle").textContent = t("outdated.title");
+  document.getElementById("outdatedText").textContent = t("outdated.text");
+  document.getElementById("outdatedReloadBtn").textContent = t("outdated.reload");
   document.getElementById("setupBtn").textContent = t("banner.setup");
   document.getElementById("setupLangLabel").textContent = t("banner.language");
 

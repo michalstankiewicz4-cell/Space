@@ -4,6 +4,18 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.4.0]
+
+### Added
+- Version check (`js/versionCheck.js`): a page that's already open never
+  re-fetches its own JS, so a long-lived tab keeps running whatever code
+  was live when it loaded regardless of later deploys. The game now
+  periodically re-fetches `js/version.js` itself (bypassing HTTP cache)
+  and, if what's actually deployed is newer than what this tab is
+  running, shows a blocking "please refresh" overlay — not dismissible
+  except by reloading — so a stale client can't keep playing against
+  game/network logic that may have moved on.
+
 ## [1.3.0]
 
 ### Added

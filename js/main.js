@@ -21,6 +21,7 @@ import { renderPlayersList } from "./ui/players.js";
 import { maintainPlanetCount, flushDamage } from "./net/bodiesSync.js";
 import { updateRemoteShips, maybeBroadcastShips } from "./net/shipsBroadcast.js";
 import { initNet } from "./net/connect.js";
+import { initVersionCheck } from "./versionCheck.js";
 
 load();
 
@@ -42,6 +43,7 @@ initBanner();
 initPanels();
 initFleet();
 initShipCam();
+initVersionCheck();
 
 if(NET_ENABLED){
   initNet();

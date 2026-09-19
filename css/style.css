@@ -210,6 +210,36 @@ canvas{ display:block; touch-action:none; cursor: grab; }
   100%{ opacity:0; transform:scale(1.6); }
 }
 
+/* Blocks all interaction, above every other overlay (setup/tech/fleet
+   modals included) — deliberately not dismissible except by reloading. */
+#outdatedOverlay{
+  position:fixed; inset:0; z-index:100; display:flex;
+  align-items:center; justify-content:center;
+  background: rgba(2,4,8,0.9);
+}
+#outdatedOverlay.hidden{ display:none; }
+#outdatedBox{
+  max-width: 360px; text-align:center;
+  background: #0c1220; border: 1px solid var(--danger);
+  padding: 26px 24px;
+  clip-path: polygon(0 10px, 10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+}
+#outdatedTitle{
+  font-family: var(--font-head); font-weight:700; font-size: 17px;
+  color: var(--danger); margin-bottom: 12px;
+}
+#outdatedText{
+  font-family: var(--font-mono); font-size: 13px; color: var(--ink-dim);
+  line-height:1.6; margin: 0 0 20px;
+}
+#outdatedReloadBtn{
+  font-family: var(--font-head); font-weight:600; font-size: 14px;
+  background: var(--danger); color: #240613; border:none;
+  padding: 12px 28px; cursor:pointer;
+  clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+}
+#outdatedReloadBtn:hover{ filter: brightness(1.1); }
+
 #banner{
   position:fixed; z-index:9; inset:0; display:flex; align-items:center; justify-content:center;
   background: radial-gradient(circle at 50% 40%, rgba(79,227,198,0.08), var(--void) 70%);

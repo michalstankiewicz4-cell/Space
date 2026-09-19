@@ -13,6 +13,11 @@ const STRINGS = {
       language: "Language",
       nickRejected: "Please choose a different nickname."
     },
+    outdated: {
+      title: "⚠ Update available",
+      text: "A new version of the game is available. Please refresh the page to continue.",
+      reload: "Refresh now"
+    },
     setup: {
       title: "Setup",
       tabLanguage: "Language",
@@ -77,6 +82,11 @@ const STRINGS = {
       setup: "⚙ Ustawienia",
       language: "Język",
       nickRejected: "Wybierz inny nick."
+    },
+    outdated: {
+      title: "⚠ Dostępna aktualizacja",
+      text: "Dostępna jest nowa wersja gry. Odśwież stronę, aby kontynuować.",
+      reload: "Odśwież teraz"
     },
     setup: {
       title: "Ustawienia",
