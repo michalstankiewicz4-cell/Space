@@ -12,6 +12,7 @@ import { triggerBreakup } from "../fx/breakup.js";
 import { state, save } from "../core/gameState.js";
 import { showToast } from "../ui/hud.js";
 import { isSteward } from "./presence.js";
+import { t } from "../i18n.js";
 
 // Buduje lokalny obiekt (planeta/kometa/... lub czarna dziura) z wiersza `bodies`.
 export function materializeBody(row){
@@ -81,7 +82,7 @@ export function flushDamage(){
           const gained = Math.round(p.radius*14 + Math.abs(p.temp)*8 + (p.valueBonus||0));
           state.points += gained;
           state.eaten += 1;
-          showToast("+"+gained+" pkt // planeta pochłonięta");
+          showToast(t("toast.eaten")(gained));
           save();
         } else {
           p.health = Math.min(p.health, row.health);

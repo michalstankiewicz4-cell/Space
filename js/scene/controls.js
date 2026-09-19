@@ -1,6 +1,7 @@
 import { ctx } from "../core/context.js";
 import { showToast } from "../ui/hud.js";
 import { setShipSelected } from "../ships/swarm.js";
+import { t } from "../i18n.js";
 
 // Kamera: PRAWY przycisk = obrót, scroll = zoom.
 export const camState = { az: 0.6, pol: 1.05, radius: 46, autoSpin: true };
@@ -78,7 +79,7 @@ function commandTo(planet, list, cmdFlashEl){
   cmdFlashEl.classList.remove("fire");
   void cmdFlashEl.offsetWidth;
   cmdFlashEl.classList.add("fire");
-  showToast(list.length===ctx.ships.length ? "Rozkaz: cały rój na kurs" : "Rozkaz: "+list.length+" jednostek na kurs");
+  showToast(list.length===ctx.ships.length ? t("toast.orderAll") : t("toast.orderSome")(list.length));
 }
 
 // Podpina obsługę myszki (kamera, zaznaczanie statków, rozkazy kursu).
@@ -145,7 +146,7 @@ export function initControls(){
       if(within.length>0){
         if(!e.shiftKey) clearSelection();
         within.forEach(function(sh){ setShipSelected(sh, true); });
-        showToast("Zaznaczono: "+selectedShips().length+" / "+ctx.ships.length);
+        showToast(t("toast.selected")(selectedShips().length, ctx.ships.length));
       } else if(!e.shiftKey){
         clearSelection();
       }

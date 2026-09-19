@@ -5,30 +5,31 @@ export const MAX_PLANETS = 14;
 export const ORBIT_RADIUS = 3.6; // stała odległość orbity zjadania, niezależna od rozmiaru planety
 export const MAX_PARTICLES = 420;
 
-// Drzewko rozwoju roju
+// Swarm upgrade tree. Display names come from i18n (t("upgrades."+key)),
+// not from here, so the tree works in any language.
 export const TREE = {
   speed: {
-    icon: "⚡", name: "Prędkość", key: "speed",
+    icon: "⚡", key: "speed",
     base: 40, growth: 1.55, maxLvl: 12,
     effect: function(lvl){ return 1 + lvl * 0.16; } // multiplier
   },
   power: {
-    icon: "💥", name: "Siła żucia", key: "power",
+    icon: "💥", key: "power",
     base: 55, growth: 1.55, maxLvl: 12,
     effect: function(lvl){ return 1 + lvl * 0.22; }
   },
   heat: {
-    icon: "🔥", name: "Odporność+ (gorąco)", key: "heat",
+    icon: "🔥", key: "heat",
     base: 50, growth: 1.5, maxLvl: 10,
     effect: function(lvl){ return lvl * 0.11; } // 0..1.1 threshold
   },
   cold: {
-    icon: "❄️", name: "Odporność- (zimno)", key: "cold",
+    icon: "❄️", key: "cold",
     base: 50, growth: 1.5, maxLvl: 10,
     effect: function(lvl){ return lvl * 0.11; }
   },
   fleet: {
-    icon: "🚀", name: "Wielkość roju", key: "fleet",
+    icon: "🚀", key: "fleet",
     base: 90, growth: 1.7, maxLvl: 20,
     effect: function(lvl){ return 3 + lvl; } // ship count
   }
@@ -50,6 +51,13 @@ export const NET_MAX_REMOTE_SHIPS = 40;
 export const NET_MAX_REMOTE_PLAYERS = 60;
 export const NET_MAX_NICK_LENGTH = 24;
 
-// Generator losowej tożsamości gracza (bez logowania)
-export const IDENTITY_ADJECTIVES = ["Cichy","Zwinny","Dziki","Mroczny","Lodowy","Płomienny","Zjadliwy","Szybki","Głodny","Czujny"];
-export const IDENTITY_NOUNS = ["Rój","Kondor","Meteor","Kraken","Komar","Szerszeń","Wilk","Sokół","Wir","Pył"];
+// Random player identity generator (no login) — English, ~20 of each so
+// there's plenty of variety before names repeat.
+export const IDENTITY_ADJECTIVES = [
+  "Silent","Swift","Wild","Dark","Icy","Blazing","Ravenous","Fast","Hungry","Watchful",
+  "Crimson","Shadow","Golden","Feral","Cosmic","Rogue","Solar","Lunar","Void","Stellar"
+];
+export const IDENTITY_NOUNS = [
+  "Swarm","Condor","Meteor","Kraken","Wasp","Hornet","Wolf","Falcon","Vortex","Dust",
+  "Comet","Nebula","Reaper","Phantom","Drifter","Nomad","Raider","Specter","Titan","Orbit"
+];

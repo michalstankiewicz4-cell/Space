@@ -12,6 +12,7 @@ import { disposeShip, reconcileFleetSize } from "../ships/swarm.js";
 import { refreshDock } from "../ui/dock.js";
 import { save } from "../core/gameState.js";
 import { isSteward } from "../net/presence.js";
+import { t } from "../i18n.js";
 
 let blackHoleTimer = CONTENT.blackhole.firstSpawnMinS + Math.random()*CONTENT.blackhole.firstSpawnRangeS;
 
@@ -82,7 +83,7 @@ export function materializeBlackHole(row, pos){
     flowSpeed: 0.05+Math.random()*0.06
   };
   ctx.blackholes.push(bh);
-  showToast("Wykryto czarną dziurę w sektorze");
+  showToast(t("toast.blackholeDetected"));
   if(NET_ENABLED) ctx.netBodies[row.id] = bh;
   return bh;
 }
@@ -184,7 +185,7 @@ export function updateBlackHoles(dt){
     spawnShockwave({ mesh:{ position: sh.pos, material:{ color:new THREE.Color(0x6a3fb0) } }, radius: 0.7 });
     disposeShip(sh);
     removeItem(ctx.ships, sh);
-    showToast("Statek wciągnięty w czarną dziurę!");
+    showToast(t("toast.shipConsumed"));
   });
   if(toConsume.length>0){ reconcileFleetSize(); refreshDock(); save(); }
 }

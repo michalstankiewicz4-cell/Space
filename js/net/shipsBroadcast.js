@@ -7,6 +7,7 @@ import { clientId, myIdentity } from "./identity.js";
 import { state } from "../core/gameState.js";
 import { updatePlayersHud } from "../ui/hud.js";
 import { roomChannel } from "./connect.js";
+import { t } from "../i18n.js";
 
 function makeGhostShipMesh(colorHex){
   const geo = new THREE.ConeGeometry(0.28, 0.9, 8);
@@ -41,7 +42,7 @@ export function handleRemoteShips(payload){
     rp = ctx.remotePlayers[payload.id] = {
       meshes: [],
       color: isValidHexColor(payload.color) ? payload.color : "#ff7a45",
-      nick: "Gracz"
+      nick: t("players.defaultName")
     };
     updatePlayersHud();
   }

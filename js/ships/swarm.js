@@ -7,6 +7,7 @@ import { spawnBiteParticles } from "../fx/particles.js";
 import { triggerBreakup } from "../fx/breakup.js";
 import { showToast } from "../ui/hud.js";
 import { refreshDock } from "../ui/dock.js";
+import { t } from "../i18n.js";
 
 function makeShipMesh(){
   const group = new THREE.Group();
@@ -255,7 +256,7 @@ export function updateShips(dt){
           const gained = Math.round(sh.target.radius*14 + Math.abs(sh.target.temp)*8 + (sh.target.valueBonus||0));
           state.points += gained;
           state.eaten += 1;
-          showToast("+"+gained+" pkt // planeta pochłonięta");
+          showToast(t("toast.eaten")(gained));
           const deadPlanet = sh.target;
           triggerBreakup(deadPlanet);
           destroyPlanet(deadPlanet);

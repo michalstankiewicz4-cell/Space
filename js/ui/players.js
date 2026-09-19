@@ -1,6 +1,7 @@
 import { ctx } from "../core/context.js";
 import { state } from "../core/gameState.js";
 import { myIdentity } from "../net/identity.js";
+import { t } from "../i18n.js";
 
 // Buduje listę wyłącznie przez DOM API (textContent/style.background), nigdy
 // przez innerHTML — nick i kolor innego gracza to dane od niezaufanego
@@ -29,7 +30,7 @@ export function renderPlayersList(){
 
     const nameEl = document.createElement("span");
     nameEl.className = "name";
-    nameEl.textContent = r.nick + (r.isMe ? " (Ty)" : "");
+    nameEl.textContent = r.nick + (r.isMe ? t("players.you") : "");
     li.appendChild(nameEl);
 
     const ptsEl = document.createElement("b");

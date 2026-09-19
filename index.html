@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -16,39 +16,49 @@
 <div id="banner">
   <div class="box">
     <h1>ROJ <span>// SWARM PROTOCOL</span></h1>
-    <p>Twój rój okrętów-sadów żywi się planetami, słońcami, kometami i meteorytami rozsianymi w przestrzeni — a w pobliżu czasem pojawia się czarna dziura, której lepiej unikać. Każda pochłonięta planeta daje punkty ewolucji — inwestuj je w prędkość, moc i odporność termiczną roju, albo powołuj nowe jednostki.</p>
-    <input id="nickInput" type="text" maxlength="24" autocomplete="off" placeholder="Ksywka dowódcy roju">
-    <button id="startBtn" disabled>WEJDŹ NA ORBITĘ</button>
+    <p id="bannerDesc">Your swarm of ships feeds on planets, suns, comets and meteoroids scattered through space — and sometimes a black hole appears nearby, best avoided. Every planet devoured grants evolution points — invest them in speed, power and thermal resistance, or raise new units.</p>
+    <input id="nickInput" type="text" maxlength="24" autocomplete="off" placeholder="Swarm commander's nickname">
+    <div id="bannerButtons">
+      <button id="startBtn" disabled>ENTER ORBIT</button>
+      <button id="setupBtn" type="button">⚙ Setup</button>
+    </div>
+    <div id="setupPanel" class="hidden">
+      <div id="setupLangLabel">Language</div>
+      <div id="setupLangButtons">
+        <button type="button" data-lang="en">English</button>
+        <button type="button" data-lang="pl">Polski</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <div class="hud panel" id="telemetry">
-  <div class="title">ROJ // TELEMETRIA</div>
-  <div class="row"><span>Punkty ewolucji</span><b id="statPoints">0</b></div>
-  <div class="row"><span>Jednostki</span><b id="statShips">0</b></div>
-  <div class="row"><span>Planety pochłonięte</span><b id="statEaten">0</b></div>
-  <div class="row"><span>Gracze online</span><b id="statPlayers">1</b></div>
+  <div class="title" id="telemetryTitle">ROJ // TELEMETRY</div>
+  <div class="row"><span id="labelPoints">Evolution points</span><b id="statPoints">0</b></div>
+  <div class="row"><span id="labelShips">Units</span><b id="statShips">0</b></div>
+  <div class="row"><span id="labelEaten">Planets devoured</span><b id="statEaten">0</b></div>
+  <div class="row"><span id="labelPlayers">Players online</span><b id="statPlayers">1</b></div>
 </div>
 
 <div class="hud" id="hint">
-  Prawy przycisk + przeciąg = obrót kamery · scroll = zoom<br>
-  Lewy klik / zaznaczenie ramką = wybór statków<br>
-  Klik na planetę = rozkaz kursu dla wybranych (lub całego roju)
+  Right button + drag = rotate camera · scroll = zoom<br>
+  Left click / box select = select ships<br>
+  Click a planet = course order for selected (or whole swarm)
 </div>
 
 <div class="hud panel" id="playersPanel">
-  <div class="title">GRACZE</div>
+  <div class="title" id="playersTitle">PLAYERS</div>
   <ul id="playersListEl"></ul>
 </div>
 
 <div id="legend">
-  <div class="lg"><span class="dot" style="background:#4fa8ff"></span>Planety lodowe</div>
-  <div class="lg"><span class="dot" style="background:#8fd88f"></span>Planety neutralne</div>
-  <div class="lg"><span class="dot" style="background:#ff7a45"></span>Planety wulkaniczne</div>
-  <div class="lg" style="margin-top:4px;">☀ Słońca</div>
-  <div class="lg">☄ Komety</div>
-  <div class="lg">🪨 Meteoryty</div>
-  <div class="lg">🌀 Czarne dziury (hazard!)</div>
+  <div class="lg"><span class="dot" style="background:#4fa8ff"></span><span id="legendIce">Ice planets</span></div>
+  <div class="lg"><span class="dot" style="background:#8fd88f"></span><span id="legendNeutral">Neutral planets</span></div>
+  <div class="lg"><span class="dot" style="background:#ff7a45"></span><span id="legendVolcanic">Volcanic planets</span></div>
+  <div class="lg" style="margin-top:4px;" id="legendSun">☀ Suns</div>
+  <div class="lg" id="legendComet">☄ Comets</div>
+  <div class="lg" id="legendMeteoroid">🪨 Meteoroids</div>
+  <div class="lg" id="legendBlackhole">🌀 Black holes (hazard!)</div>
 </div>
 
 <div id="toast"></div>

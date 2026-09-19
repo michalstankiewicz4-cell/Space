@@ -2,6 +2,7 @@ import { TREE } from "../config.js";
 import { state, cost, save } from "../core/gameState.js";
 import { reconcileFleetSize } from "../ships/swarm.js";
 import { showToast, updateTelemetry } from "./hud.js";
+import { t } from "../i18n.js";
 
 function totalSpentOn(node, level){
   if(level<=0) return 0;
@@ -9,7 +10,7 @@ function totalSpentOn(node, level){
 }
 
 function resetUpgrades(){
-  if(!window.confirm("Zresetować wszystkie ulepszenia roju? Wydane punkty zostaną zwrócone.")) return;
+  if(!window.confirm(t("upgrades.resetConfirm"))) return;
   let refund = 0;
   Object.keys(TREE).forEach(function(k){
     refund += totalSpentOn(TREE[k], state.levels[k]);
@@ -19,7 +20,7 @@ function resetUpgrades(){
   reconcileFleetSize();
   refreshDock();
   save();
-  showToast("Ulepszenia zresetowane · +"+refund+" pkt zwrocone");
+  showToast(t("upgrades.resetToast")(refund));
 }
 
 function renderNode(node){
@@ -30,10 +31,10 @@ function renderNode(node){
   const pct = Math.min(100, Math.round((lvl/node.maxLvl)*100));
   div.innerHTML =
     '<div class="icon">'+node.icon+'</div>'+
-    '<div class="name">'+node.name+'</div>'+
-    '<div class="lvl">poziom '+lvl+' / '+node.maxLvl+'</div>'+
+    '<div class="name">'+t("upgrades."+node.key)+'</div>'+
+    '<div class="lvl">'+t("upgrades.level")(lvl, node.maxLvl)+'</div>'+
     '<div class="bar"><i style="width:'+pct+'%"></i></div>'+
-    '<div class="cost">'+(c===null ? "MAX" : c+" pkt")+'</div>';
+    '<div class="cost">'+(c===null ? t("upgrades.max") : c+" "+t("upgrades.pts"))+'</div>';
   div.addEventListener("click", function(){
     const c2 = cost(node);
     if(c2===null || state.points < c2) return;
@@ -51,8 +52,8 @@ function renderResetButton(){
   div.className = "node node-reset";
   div.innerHTML =
     '<div class="icon">↺</div>'+
-    '<div class="name">Reset ulepszeń</div>'+
-    '<div class="lvl">zwraca wydane pkt</div>';
+    '<div class="name">'+t("upgrades.resetName")+'</div>'+
+    '<div class="lvl">'+t("upgrades.resetDesc")+'</div>';
   div.addEventListener("click", resetUpgrades);
   return div;
 }
