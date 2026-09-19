@@ -3,7 +3,10 @@ import { removeItem } from "../core/utils.js";
 import { FIELD_RADIUS, MAX_PLANETS } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
-import { generateCrackTexture, makeRockGeometry, makeSunHaloTexture, makeSunRayTexture, makeCometTailTexture } from "./textures.js";
+import {
+  generateCrackTexture, makeRockGeometry, makeSunHaloTexture, makeSunRayTexture,
+  makeCometTailTexture, makePlanetSurfaceTexture
+} from "./textures.js";
 import { spawnTailParticle } from "../fx/particles.js";
 import { hideBolt } from "../ships/swarm.js";
 
@@ -163,10 +166,18 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     : kind==="comet" ? new THREE.Color(0xffffff)
     : tempColor(temp);
   const geo = (kind==="meteoroid" || kind==="comet") ? makeRockGeometry(radius) : new THREE.SphereGeometry(radius, 22, 16);
-  const mat = new THREE.MeshStandardMaterial({
-    color: color, emissive: color, emissiveIntensity: params.emissive,
-    roughness: 0.65, metalness: 0.15
-  });
+  // planeta neutralna (ani wulkaniczna, ani lodowa) dostaje realistyczna mape
+  // powierzchni (ocean/kontynenty/czapy polarne/pustynia rownikowa) zamiast
+  // plaskiego koloru - i bez emisji, zeby nie "swiecila" jak lawa/lod
+  const isNeutralPlanet = kind === "planet" && Math.abs(temp) <= 0.15;
+  const mat = isNeutralPlanet
+    ? new THREE.MeshStandardMaterial({
+        map: makePlanetSurfaceTexture(), roughness: 0.8, metalness: 0.05
+      })
+    : new THREE.MeshStandardMaterial({
+        color: color, emissive: color, emissiveIntensity: params.emissive,
+        roughness: 0.65, metalness: 0.15
+      });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.position.copy(pos);
   ctx.scene.add(mesh);

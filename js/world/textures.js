@@ -1,5 +1,101 @@
 // Proceduralne tekstury/geometrie używane przez ciała niebieskie.
 
+// Mapa powierzchni "neutralnej" planety (ocean/kontynenty/czapy polarne/
+// pustynia równikowa) — mapowanie równoleżnikowe (equirectangular), zgodne
+// z domyślnym UV sfery w three.js (u = długość geogr., v = szerokość geogr.,
+// v=0.5 to równik), więc na obracającej się kuli wygląda realnie, a nie jak
+// naklejka na płask. Kontynenty są rysowane też "zawinięte" na krawędziach
+// (u blisko 0/1), żeby przy obrocie nie było widać szwu.
+function paintLandBlob(c, w, h, u, v, rx, ry, color){
+  function ellipse(cx){
+    c.save();
+    c.translate(cx, v);
+    c.scale(rx, ry);
+    const grad = c.createRadialGradient(0, 0, 0, 0, 0, 1);
+    grad.addColorStop(0, color);
+    grad.addColorStop(0.8, color);
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    c.fillStyle = grad;
+    c.beginPath();
+    c.arc(0, 0, 1, 0, Math.PI*2);
+    c.fill();
+    c.restore();
+  }
+  ellipse(u);
+  if(u - rx < 0) ellipse(u + w);
+  if(u + rx > w) ellipse(u - w);
+}
+
+export function makePlanetSurfaceTexture(){
+  const w = 512, h = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const c = canvas.getContext("2d");
+
+  // ocean
+  c.fillStyle = "#1f6fae";
+  c.fillRect(0, 0, w, h);
+
+  // kontynenty: kilka duzych plam + satelickie "wyspy", kolor zalezny od
+  // odleglosci od rownika (biom) - pustynia blisko rownika, step/zielen w
+  // srodkowych szerokosciach, jasniej/bielej blisko biegunow
+  const continentCount = 6 + Math.floor(Math.random()*4);
+  for(let i=0;i<continentCount;i++){
+    const v = h*(0.12 + Math.random()*0.76);
+    const u = Math.random()*w;
+    const size = 28 + Math.random()*64;
+    const distFromEquator = Math.abs(v - h/2) / (h/2); // 0 = rownik, 1 = biegun
+
+    let landColor;
+    if(distFromEquator < 0.2){
+      landColor = "#cdb46c"; // pustynia rownikowa
+    } else if(distFromEquator > 0.72){
+      landColor = "#e8f0f2"; // bliskie biegunom - sniezne/tundra
+    } else {
+      landColor = Math.random() < 0.5 ? "#4f8f4a" : "#6f7a3d"; // las/step
+    }
+
+    paintLandBlob(c, w, h, u, v, size*(0.6+Math.random()*0.6), size*(0.32+Math.random()*0.38), landColor);
+    const satellites = 1 + Math.floor(Math.random()*2);
+    for(let k=0;k<satellites;k++){
+      paintLandBlob(
+        c, w, h,
+        u + (Math.random()-0.5)*size*1.6, v + (Math.random()-0.5)*size*0.9,
+        size*(0.18+Math.random()*0.14), size*(0.12+Math.random()*0.1),
+        landColor
+      );
+    }
+  }
+
+  // delikatne "szumy" - drobne cetki dla wrazenia faktury terenu, nie plaska plama
+  for(let i=0;i<260;i++){
+    const x = Math.random()*w, y = Math.random()*h;
+    const r = 1+Math.random()*2.5;
+    c.fillStyle = "rgba(255,255,255,"+(0.02+Math.random()*0.05)+")";
+    c.beginPath();
+    c.arc(x,y,r,0,Math.PI*2);
+    c.fill();
+  }
+
+  // czapy polarne
+  const capH = h*0.15;
+  const topCap = c.createLinearGradient(0,0,0,capH);
+  topCap.addColorStop(0, "rgba(255,255,255,0.95)");
+  topCap.addColorStop(1, "rgba(255,255,255,0)");
+  c.fillStyle = topCap;
+  c.fillRect(0,0,w,capH);
+
+  const bottomCap = c.createLinearGradient(0,h,0,h-capH);
+  bottomCap.addColorStop(0, "rgba(255,255,255,0.95)");
+  bottomCap.addColorStop(1, "rgba(255,255,255,0)");
+  c.fillStyle = bottomCap;
+  c.fillRect(0,h-capH,w,capH);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  return tex;
+}
+
 export function generateCrackTexture(){
   const size = 256;
   const canvas = document.createElement("canvas");
