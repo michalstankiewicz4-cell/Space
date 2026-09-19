@@ -2,6 +2,7 @@ import { ctx } from "./core/context.js";
 import { load } from "./core/gameState.js";
 import { NET_ENABLED } from "./env.js";
 import { NET_DAMAGE_FLUSH_MS } from "./config.js";
+import { VERSION } from "./version.js";
 
 import { initScene } from "./scene/setup.js";
 import { initControls, updateCamera } from "./scene/controls.js";
@@ -19,6 +20,9 @@ import { updateRemoteShips, maybeBroadcastShips } from "./net/shipsBroadcast.js"
 import { initNet } from "./net/connect.js";
 
 load();
+
+document.getElementById("versionTag").textContent = "v" + VERSION;
+document.title = document.title + " — v" + VERSION;
 
 initScene();
 initControls();
