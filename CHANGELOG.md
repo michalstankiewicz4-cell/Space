@@ -4,6 +4,25 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.6.2]
+
+### Changed
+- Ships no longer auto-target the nearest planet when idle — they only
+  ever move on an explicit order (select ships, then click a planet).
+  Clicking a planet with nothing selected now does nothing (a toast says
+  to select ships first) instead of silently sending the whole swarm.
+
+### Fixed
+- The drone's live 3D thumbnail looked permanently hazy/blurred. Cause:
+  `.panel`'s `backdrop-filter: blur(6px)` (a shared frosted-glass HUD
+  style) was also blurring the thumbnail, since it's not a separate
+  image but the same WebGL canvas rendered a second time into a small
+  viewport behind `#droneThumbWrap`. Confirmed by ruling out lighting/fog
+  first (changing either had zero visual effect) before finding the CSS
+  filter was the actual cause. Disabled `backdrop-filter` specifically on
+  `#dronePanel`; its background is already opaque enough (82%) to stay
+  readable without it.
+
 ## [1.6.1]
 
 ### Fixed

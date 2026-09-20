@@ -67,17 +67,6 @@ export function spawnShip(){
   ctx.ships.push(ship);
 }
 
-function nearestPlanet(fromPos){
-  let best=null, bestD=Infinity;
-  for(let i=0;i<ctx.planets.length;i++){
-    const p = ctx.planets[i];
-    if(p.dying) continue;
-    const d = fromPos.distanceTo(p.mesh.position);
-    if(d<bestD){ bestD=d; best=p; }
-  }
-  return best;
-}
-
 function eatEfficiency(stats, planet){
   if(planet.temp > 0.15){
     const need = planet.temp;
@@ -170,16 +159,12 @@ export function updateShips(dt){
   for(let i=0;i<ctx.ships.length;i++){
     const sh = ctx.ships[i];
 
-    if(sh.commandedTarget){
-      if(sh.commandedTarget.dying || ctx.planets.indexOf(sh.commandedTarget)===-1){
-        sh.commandedTarget = null;
-      } else {
-        sh.target = sh.commandedTarget;
-      }
+    // Ships only ever move on an explicit player order (commandTo() in
+    // scene/controls.js) — no automatic nearest-planet targeting.
+    if(sh.commandedTarget && (sh.commandedTarget.dying || ctx.planets.indexOf(sh.commandedTarget)===-1)){
+      sh.commandedTarget = null;
     }
-    if(!sh.target || sh.target.dying || ctx.planets.indexOf(sh.target)===-1){
-      sh.target = sh.commandedTarget ? null : nearestPlanet(sh.pos);
-    }
+    sh.target = sh.commandedTarget;
     if(!sh.target){ hideBolt(sh); continue; }
 
     const toTarget = new THREE.Vector3().subVectors(sh.target.mesh.position, sh.pos);

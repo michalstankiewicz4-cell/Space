@@ -258,7 +258,8 @@ export function initControls(){
         const hitPlanet = pickPlanetAt(e);
         if(hitPlanet){
           const sel = selectedShips();
-          commandTo(hitPlanet, sel.length>0 ? sel : ctx.ships, cmdFlashEl);
+          if(sel.length>0) commandTo(hitPlanet, sel, cmdFlashEl);
+          else showToast(t("toast.noSelection"));
         } else if(!e.shiftKey){
           clearSelection();
         }

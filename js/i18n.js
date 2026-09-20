@@ -69,6 +69,7 @@ const STRINGS = {
       orderAll: "Order: whole swarm on course",
       orderSome: function(n){ return "Order: " + n + " units on course"; },
       selected: function(n, total){ return "Selected: " + n + " / " + total; },
+      noSelection: "Select ships first",
       blackholeDetected: "Black hole detected in sector",
       shipConsumed: "Ship pulled into a black hole!",
       droneSurvived: "Drone survived the black hole — barely!"
@@ -173,6 +174,7 @@ const STRINGS = {
       orderAll: "Rozkaz: cały rój na kurs",
       orderSome: function(n){ return "Rozkaz: " + n + " jednostek na kurs"; },
       selected: function(n, total){ return "Zaznaczono: " + n + " / " + total; },
+      noSelection: "Najpierw zaznacz statki",
       blackholeDetected: "Wykryto czarną dziurę w sektorze",
       droneSurvived: "Dron przetrwał czarną dziurę — o mały włos!",
       shipConsumed: "Statek wciągnięty w czarną dziurę!"
