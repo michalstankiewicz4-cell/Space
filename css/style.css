@@ -104,6 +104,11 @@ canvas{ display:block; touch-action:none; cursor: grab; }
      already opaque enough (82%) to stay readable without it. */
   backdrop-filter: none;
 }
+/* Bigger, more forgiving hit target than the shared .collapseBtn's 26px box
+   (confirmed via testing: the plain box has a hard, zero-tolerance edge —
+   a click landing even 1px outside it silently does nothing) — this is the
+   only close control for the drone panel, so it's worth the extra size. */
+#droneCloseBtn{ width: 34px; height: 34px; font-size: 20px; }
 #dronePanel .row{
   display:flex; justify-content:space-between; align-items:baseline;
   font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.03em;

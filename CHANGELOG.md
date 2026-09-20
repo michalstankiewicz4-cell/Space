@@ -4,6 +4,16 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.6.3]
+
+### Fixed
+- The drone panel's close button (`#droneCloseBtn`) had a hard 26×26px hit
+  box with zero tolerance — measured directly: a click landing even 1px
+  outside its CSS box did nothing, no forgiveness margin at all. Enlarged
+  it to 34×34px. This was reported as "the panel won't close" even after
+  the drag-select fix in 1.6.1, which only addressed *selecting* the
+  drone, not this separate, precise close button.
+
 ## [1.6.2]
 
 ### Changed
