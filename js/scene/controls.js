@@ -224,10 +224,21 @@ export function initControls(){
         const sp = screenPos(sh.pos);
         return !sp.behind && sp.x>=x1 && sp.x<=x2 && sp.y>=y1 && sp.y<=y2;
       });
-      if(within.length>0){
+      // A real click on the drone can jitter a pixel or two and land here
+      // instead of the plain-click branch below (DRAG_THRESHOLD is only
+      // 6px) — without this, that tiny jitter would silently fail to
+      // select the drone at all (unlike ships, which this same box always
+      // catches), making it feel unresponsive/unselectable.
+      let droneHit = false;
+      if(ctx.drone){
+        const sp = screenPos(ctx.drone.pos);
+        droneHit = !sp.behind && sp.x>=x1 && sp.x<=x2 && sp.y>=y1 && sp.y<=y2;
+      }
+      if(within.length>0 || droneHit){
         if(!e.shiftKey) clearSelection();
         within.forEach(function(sh){ setShipSelected(sh, true); });
-        showToast(t("toast.selected")(selectedShips().length, ctx.ships.length));
+        if(droneHit){ setDroneSelected(ctx.drone, true); openDronePanel(); }
+        if(within.length>0) showToast(t("toast.selected")(selectedShips().length, ctx.ships.length));
       } else if(!e.shiftKey){
         clearSelection();
       }

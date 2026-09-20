@@ -4,6 +4,23 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.6.1]
+
+### Fixed
+- The drone couldn't be reliably selected (and its side panel felt like it
+  wouldn't close): ships have two selection paths — a direct click, and a
+  drag/box-select rectangle that also catches a plain click if the mouse
+  jitters past the 6px drag threshold between mousedown and mouseup, which
+  real clicks routinely do. The drone only had the first path, so a
+  perfectly normal, slightly-jittery click on it would silently select
+  nothing — making both "select the drone" and "close its panel" feel
+  broken, since the panel's open state just tracks selection. Added the
+  drone to the drag-select rectangle check in `scene/controls.js`,
+  mirroring the existing ship logic. Verified with a Playwright test that
+  simulates real mouse jitter (mousedown → small move → mouseup, not a
+  pixel-perfect click) rather than the idealized clicks used in earlier
+  testing, which had missed this gap.
+
 ## [1.6.0]
 
 ### Added
