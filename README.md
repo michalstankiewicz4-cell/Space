@@ -1,6 +1,6 @@
 # Space Swarm — ROJ
 
-3D space game built with Three.js. Swarm of ships eats planets, suns, comets, meteoroids for points; avoid black holes.
+3D space game built with Three.js. Swarm of ships eats planets, suns, comets, meteoroids for points (select ships, then click a target to send them — they never move on their own); avoid black holes.
 
 Play: https://michalstankiewicz4-cell.github.io/Space/
 
@@ -63,11 +63,13 @@ with ready-to-paste `export const ... = {...}` blocks — one per file in
 
 ## Programmable drone
 
-Every player also has one drone (a distinct gold octahedron) that never
-moves on its own — select it and open its Script button to write a small
-program for it (`if`/`while`/variables, plus `move()`, `turn()`, `wait()`,
-`attack()`, `fuel()`, `nearPlanet()`, `print()` — the in-game `[?]` button
-lists all of them with examples). It's not JavaScript: `js/drone/dsl.js`
+Every player also has one drone (a distinct gold octahedron, spawned well
+away from the ship swarm) that never moves on its own — select it and open
+its Script button to write a small program for it (`if`/`while`/variables,
+plus `move()`, `turn()`, `wait()`, `attack()`, `fuel()`, `nearPlanet()`,
+`print()` — the in-game `[?]` button lists all of them with examples). Its
+side panel also has Run/Stop shortcuts to restart or stop the last saved
+script without reopening the editor. It's not JavaScript: `js/drone/dsl.js`
 parses this tiny language into an AST, and `js/drone/interpreter.js` walks
 it as a generator, so a script's `move()`/`wait()` calls can pause
 execution for real time without blocking the game loop or the browser tab.

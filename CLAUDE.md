@@ -35,7 +35,13 @@ local (`localStorage`).
   and a throwaway Playwright script in the scratchpad dir (headless
   Chromium, screenshot-based checks, console/pageerror listeners). This
   hits the **live** Supabase backend (see gotcha below), so keep test
-  traffic light.
+  traffic light. When testing whether a panel/overlay is actually
+  *hidden*, assert on `getComputedStyle(el).display` (or a screenshot),
+  never just `classList.contains("hidden")` — a class can be applied
+  perfectly correctly by JS and still visually do nothing if no CSS rule
+  maps it to `display:none` (this exact gap let the drone panel's close
+  button go "fixed" several times over while never actually working —
+  see the drone bullets in Architecture notes).
 - **Git**: create new commits (don't amend, except right after a hook
   failure on a commit that never happened, or before anything's been
   pushed). Every commit/PR ends with the `Co-Authored-By: Claude Sonnet 5
@@ -49,6 +55,15 @@ local (`localStorage`).
   object in its own file under `js/bodies/`, aggregated by `js/content.js`.
   A "planet" DB row only stores `kind`+`temp`, not which of the 3 planet
   variants generated it — `variantForTemp()` re-derives it deterministically.
+- **Ships only ever move on an explicit order.** `ships/swarm.js`'s
+  `updateShips()` sets a ship's `target` straight from `commandedTarget`
+  (set by `commandTo()` in `scene/controls.js`, when ships are selected
+  and a planet is clicked) — there is no automatic nearest-planet
+  fallback. There used to be one (`nearestPlanet()`, removed): it made
+  idle ships drift toward whatever was closest with zero player input,
+  and clicking a planet with nothing selected silently sent the *entire*
+  swarm. Clicking a planet with no selection now just shows a "select
+  ships first" toast (`toast.noSelection`) instead of doing anything.
 - **Object editor** (`editor.html`, not linked from the game) reuses the
   game's own `materializePlanet`/`materializeBlackHole` functions for its
   live preview, so it can never visually drift from actual gameplay. It
@@ -150,6 +165,52 @@ local (`localStorage`).
     survival roll instead of `ships`' unconditional consumption), and its
     picking/selection lives in `scene/controls.js` alongside — but
     separate from — `pickShipAt()`.
+  - **`spawnDrone()` deliberately spawns it ~6 units out from the origin,
+    not inside the ships' own +-2 spawn cube** (`ships/swarm.js`'s
+    `spawnShip()`), and its pick sphere is smaller than a ship's (0.5 vs
+    0.55). This was a real, reported bug, not a style choice: the drone
+    is picked *before* ships/planets on every click (`scene/controls.js`),
+    so when it overlapped the swarm's spawn area, an ordinary click meant
+    to command ships onto a planet could silently reselect the drone
+    instead — which, since selecting it reopens its side panel, was
+    reported and investigated for several rounds as "the close button
+    doesn't work" (it did; a subsequent normal gameplay click was just
+    reselecting the drone and reopening the panel a moment later). If the
+    drone ever needs to move/spawn near the swarm again, revisit the
+    click-priority order or give ships priority over the drone instead.
+  - **The side panel's `#droneCloseBtn`/`#droneScriptBtn`/`#droneRunBtn`/
+    `#droneStopBtn` all need an explicit `pointer-events:auto` override**
+    in `style.css` — `#dronePanel` itself is `pointer-events:none` (same
+    trick as `#shipCam`: the panel body shouldn't catch stray clicks, only
+    its actual controls should), so a new interactive element added
+    inside it and left off that override list is invisible to clicks even
+    though it renders and looks completely normal (confirmed via
+    `document.elementFromPoint()` — clicks were landing on the canvas
+    behind it). This bit twice: once for the close button itself, then
+    again for the Run/Stop shortcuts added right after.
+  - **The close button listens for `pointerdown`, not `click`** — measured
+    directly, not assumed: a plain `click` requires mousedown and mouseup
+    to land on "compatible" targets, and an ordinary hand's few-px drift
+    between press and release is enough to silently drop it, even with
+    `#shipCam`'s exact pointer-events recipe copied verbatim (reproduced
+    the same failure on a faithful copy of it — `#shipCamCloseBtn` almost
+    certainly has this same latent bug, just not yet hit/reported there).
+    `pointerdown` reacts at press time, immune to where the release lands.
+  - **The single actual bug behind every "won't close" report, after all
+    of the above were real-but-insufficient fixes: `#dronePanel.hidden`
+    had no matching `display:none` rule in `style.css`.** Every other
+    panel/overlay (`#shipCam.hidden`, `.modal.hidden`, `#legend.hidden`,
+    ...) has one; this one didn't, so the JS-toggled `hidden` class did
+    nothing visually — the panel rendered at `display:block` 100% of the
+    time regardless of selection state. This slipped through several
+    rounds of testing because those tests checked
+    `classList.contains("hidden")` as a proxy for "is it closed" instead
+    of the actual rendered state — the class *was* being toggled
+    correctly the whole time. **Lesson: when testing whether something is
+    visually hidden, assert on `getComputedStyle(el).display` (or a
+    screenshot), never just the presence of a CSS class name** — a class
+    can be applied perfectly correctly and still do nothing if the rule
+    for it doesn't exist.
 
 ## Security model (Supabase)
 
