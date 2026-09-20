@@ -81,6 +81,13 @@ export function initDronePanel(){
   document.getElementById("droneScriptBtn").addEventListener("click", openDroneScriptModal);
   document.getElementById("droneScriptCloseBtn").addEventListener("click", closeDroneScriptModal);
 
+  // Save on every keystroke, not just on Run - closing the editor (or
+  // using the side panel's Run/Stop shortcuts right after) used to lose
+  // whatever was typed since the last Run.
+  document.getElementById("droneScriptInput").addEventListener("input", function(e){
+    if(ctx.drone) setDroneScript(ctx.drone, e.target.value);
+  });
+
   document.getElementById("droneScriptHelpBtn").addEventListener("click", function(){
     const help = document.getElementById("droneScriptHelp");
     const nowOpen = help.classList.toggle("hidden") === false;
@@ -95,7 +102,6 @@ export function initDronePanel(){
   document.getElementById("droneScriptRunBtn").addEventListener("click", function(){
     const drone = ctx.drone;
     if(!drone) return;
-    setDroneScript(drone, document.getElementById("droneScriptInput").value);
     runDroneScript(drone);
     updateScriptStatus(drone);
   });

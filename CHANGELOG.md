@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.7.1]
+
+### Fixed
+- The drone script editor only saved to the drone on **Run** — closing
+  the editor after typing (or using the side panel's Run/Stop shortcuts
+  added in 1.7.0) without ever pressing Run lost whatever was typed.
+  Now saves on every keystroke (`droneScriptInput`'s `input` event).
+
 ## [1.7.0]
 
 ### Added
