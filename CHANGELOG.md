@@ -4,6 +4,21 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.7.0]
+
+### Added
+- Run/Stop shortcut buttons directly in the drone's side panel, next to
+  the Script button — re-runs or stops the last saved script without
+  opening the script editor. Shares styling with the editor's own Run/
+  Stop via a common `.droneRunBtn`/`.droneStopBtn` class instead of
+  duplicating it.
+
+Caught during testing: the new buttons were unclickable at first (clicks
+fell through to the 3D canvas underneath) — `#dronePanel`'s `pointer-
+events:none` (from 1.6.4) only had `#droneCloseBtn`/`#droneScriptBtn`
+punched back to `auto`, and the new buttons were never added to that
+list. Fixed before shipping.
+
 ## [1.6.6]
 
 ### Fixed

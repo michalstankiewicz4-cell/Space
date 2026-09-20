@@ -111,7 +111,7 @@ canvas{ display:block; touch-action:none; cursor: grab; }
      already opaque enough (82%) to stay readable without it. */
   backdrop-filter: none;
 }
-#droneCloseBtn, #droneScriptBtn{ pointer-events:auto; }
+#droneCloseBtn, #droneScriptBtn, #droneRunBtn, #droneStopBtn{ pointer-events:auto; }
 /* This was the actual bug behind every "won't close" report: JS has
    always correctly toggled this class (openDronePanel/closeDronePanel in
    ui/dronePanel.js), but no rule ever mapped it to display:none, unlike
@@ -188,16 +188,20 @@ canvas{ display:block; touch-action:none; cursor: grab; }
   font-family: var(--font-mono); font-size: 12.5px; line-height:1.5;
   padding: 10px; box-sizing:border-box;
 }
-#droneScriptButtons{ display:flex; gap:8px; margin: 10px 0; }
-#droneScriptButtons button{
+/* Shared by the script modal's own Run/Stop and the side panel's shortcut
+   pair (#droneRunButtons) - the side panel's are a plain, always-visible
+   way to start/stop the last-saved script without opening the editor. */
+#droneScriptButtons, #droneRunButtons{ display:flex; gap:8px; margin: 10px 0; }
+#droneScriptButtons button, #droneRunButtons button{
+  flex:1;
   font-family: var(--font-head); font-weight:600; font-size: 13px;
-  padding: 9px 20px; cursor:pointer; border:none;
+  padding: 9px 0; cursor:pointer; border:none;
   clip-path: polygon(0 6px, 6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
 }
-#droneScriptRunBtn{ background: var(--teal); color: #04211c; }
-#droneScriptRunBtn:hover{ filter: brightness(1.08); }
-#droneScriptStopBtn{ background: rgba(255,79,129,0.18); color: var(--danger); border: 1px solid rgba(255,79,129,0.4) !important; }
-#droneScriptStopBtn:hover{ background: rgba(255,79,129,0.28); }
+.droneRunBtn{ background: var(--teal); color: #04211c; }
+.droneRunBtn:hover{ filter: brightness(1.08); }
+.droneStopBtn{ background: rgba(255,79,129,0.18); color: var(--danger); border: 1px solid rgba(255,79,129,0.4) !important; }
+.droneStopBtn:hover{ background: rgba(255,79,129,0.28); }
 #droneScriptError{
   font-family: var(--font-mono); font-size: 12px; color: var(--danger);
   background: rgba(255,79,129,0.1); border: 1px solid rgba(255,79,129,0.3);

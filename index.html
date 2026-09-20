@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=1.6.6">
+<link rel="stylesheet" href="css/style.css?v=1.7.0">
 </head>
 <body>
 
@@ -153,6 +153,10 @@
   <div class="row"><span id="droneFuelLabel">Fuel</span><b id="droneFuelVal">100 / 100</b></div>
   <div class="row"><span id="droneAttackLabel">Attack</span><b id="droneAttackVal">6</b></div>
   <div class="row"><span id="droneDefenseLabel">Defense</span><b id="droneDefenseVal">1</b></div>
+  <div id="droneRunButtons">
+    <button id="droneRunBtn" class="droneRunBtn" type="button">▶ Run</button>
+    <button id="droneStopBtn" class="droneStopBtn" type="button">■ Stop</button>
+  </div>
   <button id="droneScriptBtn" type="button">📜 Script</button>
 </div>
 
@@ -196,8 +200,8 @@
 
     <textarea id="droneScriptInput" spellcheck="false"></textarea>
     <div id="droneScriptButtons">
-      <button id="droneScriptRunBtn" type="button">▶ Run</button>
-      <button id="droneScriptStopBtn" type="button">■ Stop</button>
+      <button id="droneScriptRunBtn" class="droneRunBtn" type="button">▶ Run</button>
+      <button id="droneScriptStopBtn" class="droneStopBtn" type="button">■ Stop</button>
     </div>
     <div id="droneScriptError" class="hidden"></div>
     <div id="droneScriptLog"></div>
@@ -211,6 +215,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script type="module" src="js/main.js?v=1.6.6"></script>
+<script type="module" src="js/main.js?v=1.7.0"></script>
 </body>
 </html>

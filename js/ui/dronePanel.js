@@ -106,4 +106,22 @@ export function initDronePanel(){
     stopDroneScript(drone);
     updateScriptStatus(drone);
   });
+
+  // Side-panel shortcuts: re-run/stop the last saved script without
+  // opening the editor. Reuse the drone's already-stored .script (set the
+  // last time it was edited+run from the modal) — nothing to read from a
+  // textarea here.
+  document.getElementById("droneRunBtn").addEventListener("click", function(){
+    const drone = ctx.drone;
+    if(!drone) return;
+    runDroneScript(drone);
+    if(isDroneScriptModalOpen()) updateScriptStatus(drone);
+  });
+
+  document.getElementById("droneStopBtn").addEventListener("click", function(){
+    const drone = ctx.drone;
+    if(!drone) return;
+    stopDroneScript(drone);
+    if(isDroneScriptModalOpen()) updateScriptStatus(drone);
+  });
 }
