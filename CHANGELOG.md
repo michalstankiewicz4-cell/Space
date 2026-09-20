@@ -4,6 +4,24 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.6.6]
+
+### Fixed
+- The actual root cause of every "drone panel won't close" report since
+  1.6.1: `ui/dronePanel.js` always correctly toggled a `hidden` class on
+  `#dronePanel`, but — unlike every other panel/overlay in the game
+  (`#shipCam.hidden`, `.modal.hidden`, `#legend.hidden`, ...) — no CSS
+  rule ever mapped `#dronePanel.hidden` to `display:none`. The panel was
+  rendered at 100% opacity and `display:block` at all times regardless
+  of selection state; only its selection *ring* ever visually reacted.
+  Every fix from 1.6.1 through 1.6.5 (selection reliability, the close
+  button's event binding, spawn separation from the swarm) was a real,
+  verified improvement, but none of them could have closed this gap,
+  since hiding the panel was never wired up to begin with. Confirmed via
+  `getComputedStyle` before and after (`display: block` -> `display:
+  none`) rather than just checking for the class name, which is what let
+  this slip through every earlier round of testing.
+
 ## [1.6.5]
 
 ### Fixed
