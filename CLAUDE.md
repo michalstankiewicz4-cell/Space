@@ -136,11 +136,26 @@ local (`localStorage`).
   anon-authenticated client can insert or delete rows directly (steward
   election is a client-side courtesy for spawning, not a security
   boundary; DELETE is idempotent so it's safe for any client to call).
-  Residual risk: someone could grief the shared world by inserting junk up
-  to the 40-row cap (bounded/plausible-looking by the CHECK constraints, so
-  not rendering-breaking) or mass-deleting real bodies — both are
-  low-severity and self-healing (top-up logic and normal play repopulate
-  the world). Not currently worth the complexity of fixing further.
+  What keeps this safe is entirely the CHECK constraints — and a shared
+  radius/value_bonus range across every kind was NOT actually
+  "plausible-looking" per kind, it just looked that way: a script was
+  caught live inserting a fake "sun" (radius ~6, value_bonus=90,
+  health≈0.37 — worth ~4x a real sun for one trivial bite) that the old
+  shared 0-6/0-100 range happily allowed. `bodies_radius_check` and
+  `bodies_value_bonus_check` are now checked **per kind**, matching each
+  kind's actual `js/bodies/*.js` ranges with headroom — if those ranges
+  change meaningfully, revisit the constraints too, or this gap reopens.
+  Residual risk: someone could still grief the world by inserting
+  plausible-looking junk up to the 40-row cap, or mass-deleting real
+  bodies — both stay low-severity and self-healing.
+- **`bite_body` is rate-limited per actor (20 calls/second)**, via the
+  `bite_rate_limit` table (RLS enabled, zero policies — reachable only
+  from inside the `SECURITY DEFINER` function, never directly by a
+  client). A real client only sends one call per damaged body per ~150ms
+  (`NET_DAMAGE_FLUSH_MS`), so legitimate play never gets close; this
+  exists because a script hitting the RPC directly in a tight loop could
+  one-shot every body the instant it spawned — verified live, 40
+  concurrent calls against one body applied exactly 20 and dropped 20.
 - **Anonymous-auth spam**: the live project has
   `rate_limit_anonymous_users = 30` (Supabase's own per-IP throttle — this
   is what produces the 429s during heavy testing, see gotcha below) and

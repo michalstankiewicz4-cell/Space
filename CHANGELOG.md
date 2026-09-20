@@ -4,6 +4,30 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.5.2]
+
+### Fixed
+- Caught a live, actively-running exploit: a script was inserting
+  fabricated "sun" bodies directly via REST (radius ~6, `value_bonus=90`,
+  `health≈0.37`) — a shared `radius`/`value_bonus` range across all body
+  kinds let a body disguised as a cheap-looking kind claim wildly inflated
+  size/value, worth ~4x a real sun for one trivial hit. Found and removed
+  21 fabricated copies live in the shared world.
+- `bodies_radius_check` and `bodies_value_bonus_check` are now checked
+  **per kind**, with generous headroom above each kind's actual
+  `radiusMin`/`radiusMax`/`valueBonus` in `js/bodies/*.js`, instead of one
+  shared range for every kind.
+- Added per-actor rate limiting to `bite_body` (max 20 calls/second) — a
+  script hitting the RPC directly in a tight loop could one-shot every
+  body the instant it spawned, far faster than any real client (which
+  only sends one call per damaged body per ~150ms), starving the shared
+  world faster than it could ever be replenished.
+
+Verified live: the exact fabricated-sun payload and a giant fake
+meteoroid are both now rejected; a legitimate-looking insert of each kind
+still succeeds; 40 concurrent `bite_body` calls against one body correctly
+applied 20 and dropped 20; normal gameplay (spawn/eat/points) unaffected.
+
 ## [1.5.1]
 
 ### Fixed

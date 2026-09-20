@@ -62,8 +62,25 @@ drop policy if exists "world_meta writable by authed" on world_meta;
 -- constraints, anyone who knows the anon key (public by design) could insert
 -- e.g. radius=1e9 or a negative health and break rendering for every player.
 -- Ranges chosen with headroom above what the game itself generates (js/world/*).
+--
+-- radius is checked PER KIND (not one shared 0-6 range) because a single
+-- wide bound let someone insert a "meteoroid" (legitimately 0.32-0.68) with
+-- radius up near 6 — the game itself never generates that combination, but
+-- nothing stopped a direct insert from claiming it, and radius feeds
+-- straight into the points formula (radius*14 + ...), so an oversized fake
+-- "meteoroid" was worth ~15x a real one for one bite. Ranges below have
+-- generous headroom above js/bodies/*.js's actual radiusMin/radiusMax per
+-- kind — if those ranges change meaningfully, revisit this too.
 alter table bodies drop constraint if exists bodies_radius_check;
-alter table bodies add constraint bodies_radius_check check (radius > 0 and radius <= 6);
+alter table bodies add constraint bodies_radius_check check (
+  radius > 0 and (
+    (kind = 'meteoroid' and radius <= 1.2) or
+    (kind = 'comet' and radius <= 1.2) or
+    (kind = 'planet' and radius <= 4.5) or
+    (kind = 'sun' and radius <= 6) or
+    (kind = 'blackhole' and radius <= 3)
+  )
+);
 
 alter table bodies drop constraint if exists bodies_temp_check;
 alter table bodies add constraint bodies_temp_check check (temp >= -1 and temp <= 1);
@@ -74,8 +91,18 @@ alter table bodies add constraint bodies_health_check check (health is null or (
 alter table bodies drop constraint if exists bodies_max_health_check;
 alter table bodies add constraint bodies_max_health_check check (max_health is null or (max_health > 0 and max_health <= 200));
 
+-- Same per-kind reasoning as radius above: only suns (40) and comets (25)
+-- legitimately carry a value_bonus at all (see js/bodies/*.js) — a shared
+-- 0-100 range let a disguised "meteoroid"/"planet" insert claim a large
+-- bonus on top of an already-inflated radius.
 alter table bodies drop constraint if exists bodies_value_bonus_check;
-alter table bodies add constraint bodies_value_bonus_check check (value_bonus >= 0 and value_bonus <= 100);
+alter table bodies add constraint bodies_value_bonus_check check (
+  value_bonus >= 0 and (
+    (kind = 'sun' and value_bonus <= 60) or
+    (kind = 'comet' and value_bonus <= 40) or
+    (kind in ('planet', 'meteoroid', 'blackhole') and value_bonus <= 10)
+  )
+);
 
 alter table bodies drop constraint if exists bodies_pos_check;
 alter table bodies add constraint bodies_pos_check check (
@@ -123,6 +150,22 @@ begin
   end if;
 end $$;
 
+-- Per-actor call counter for bite_body, in a fixed 1-second window. Not
+-- readable/writable by clients at all (RLS enabled, zero policies) — only
+-- touched from inside the SECURITY DEFINER function below, which bypasses
+-- RLS as the function owner. A real player's client only ever sends one
+-- bite_body call per damaged body per ~150ms (NET_DAMAGE_FLUSH_MS), so even
+-- a maxed-out swarm biting several bodies at once stays well under the
+-- limit below — this exists to stop a script calling the RPC directly in a
+-- tight loop, which could otherwise one-shot every body the instant it
+-- spawns, far faster than any real client, and starve the shared world.
+create table if not exists bite_rate_limit (
+  actor uuid primary key,
+  window_start timestamptz not null default now(),
+  count int not null default 0
+);
+alter table bite_rate_limit enable row level security;
+
 -- Atomic "bite" of a body. Returns its health after the hit and whether
 -- this caller landed the final blow (killed = true => only they get points).
 -- When health drops to zero, the row is deleted immediately (DELETE), which
@@ -145,7 +188,26 @@ as $$
 declare
   v_health float;
   v_amount float := least(greatest(p_amount, 0), 300);
+  v_actor uuid := auth.uid();
+  v_count int;
 begin
+  if v_actor is null then
+    return;
+  end if;
+
+  insert into bite_rate_limit (actor, window_start, count)
+  values (v_actor, now(), 1)
+  on conflict (actor) do update
+    set count = case when bite_rate_limit.window_start <= now() - interval '1 second'
+                      then 1 else bite_rate_limit.count + 1 end,
+        window_start = case when bite_rate_limit.window_start <= now() - interval '1 second'
+                             then now() else bite_rate_limit.window_start end
+    returning count into v_count;
+
+  if v_count is not null and v_count > 20 then
+    return; -- rate limited: silently drop this bite, no error, no effect
+  end if;
+
   update bodies set health = greatest(0, bodies.health - v_amount), updated_at = now()
     where bodies.id = p_body_id and bodies.health is not null
     returning bodies.health into v_health;
