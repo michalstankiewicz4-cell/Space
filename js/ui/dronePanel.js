@@ -64,7 +64,20 @@ export function refreshDronePanel(){
 }
 
 export function initDronePanel(){
-  document.getElementById("droneCloseBtn").addEventListener("click", closeDronePanel);
+  // Confirmed by direct A/B testing, not a guess: matching shipCam's exact
+  // recipe (plain "click" + pointer-events:none on the container, kept in
+  // style.css) still fails the same way — press on the button, release a
+  // few px outside it, and "click" silently never fires, because it
+  // requires mouseup to land back on a target compatible with mousedown.
+  // shipCam's close button almost certainly has this same latent bug; it
+  // just hasn't been hit/reported there. pointerdown reacts at press time
+  // instead, on whatever's actually under the cursor, so release drift
+  // can't affect it — verified this survives the exact drift that broke
+  // the "click" version.
+  document.getElementById("droneCloseBtn").addEventListener("pointerdown", function(e){
+    e.stopPropagation();
+    closeDronePanel();
+  });
   document.getElementById("droneScriptBtn").addEventListener("click", openDroneScriptModal);
   document.getElementById("droneScriptCloseBtn").addEventListener("click", closeDroneScriptModal);
 

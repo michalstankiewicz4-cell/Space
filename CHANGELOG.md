@@ -4,6 +4,22 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.6.4]
+
+### Fixed
+- The drone panel's close button still didn't reliably close on a real
+  click, even after 1.6.3's bigger hit box. Root cause, confirmed by
+  direct testing: it listened for a plain "click" event, which only
+  fires if mousedown and mouseup land on compatible targets — a normal
+  hand's mousedown-then-drift-then-mouseup (a few px, entirely typical)
+  landing just outside the button between press and release silently
+  drops the event. Reproduced this exact failure on a faithful copy of
+  shipCam's own close-button recipe too (pointer-events:none container +
+  plain click), so shipCam most likely has the same latent bug, just
+  not yet hit there. Switched to a "pointerdown" listener instead, which
+  reacts at press time — verified this survives the same drift that
+  broke "click" — and kept the pointer-events:none container structure.
+
 ## [1.6.3]
 
 ### Fixed
