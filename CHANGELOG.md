@@ -4,6 +4,18 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.7.2]
+
+### Fixed
+- Other players' drones were never visible — `net/shipsBroadcast.js`'s
+  broadcast payload only ever included `ctx.ships`, since the drone was
+  added later and isn't part of that array (see the "drone isn't in
+  ctx.ships" note in CLAUDE.md). Added the drone's position/heading to
+  the broadcast and a ghost octahedron (tinted by owner color, like
+  ghost ships) on the receiving end. Verified live with two clients: a
+  second client's ghost drone position matches the first client's real
+  one within one broadcast interval.
+
 ## [1.7.1]
 
 ### Fixed

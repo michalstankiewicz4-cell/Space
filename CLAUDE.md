@@ -162,9 +162,17 @@ local (`localStorage`).
   - The drone isn't in `ctx.ships`, so it's handled as its own case
     everywhere ship-like logic exists: `world/blackholes.js` has a
     separate gravity/kill-radius block for it (with a `defense`-based
-    survival roll instead of `ships`' unconditional consumption), and its
+    survival roll instead of `ships`' unconditional consumption), its
     picking/selection lives in `scene/controls.js` alongside — but
-    separate from — `pickShipAt()`.
+    separate from — `pickShipAt()`, and `net/shipsBroadcast.js` sends its
+    `[x,y,z,heading]` as its own `drone` field on the broadcast payload,
+    separate from the `ships` array (this was missed when the drone
+    shipped — other players simply never saw it until fixed). A remote
+    drone renders as a ghost octahedron (`makeGhostDroneMesh`) tinted by
+    owner color, tracked as `remotePlayers[id].droneMesh` — a single
+    mesh, not an array like `.meshes` — since there's only ever one drone
+    per player; disposed on both `payload.drone === null` and the same
+    `NET_REMOTE_PLAYER_TIMEOUT_MS` staleness cleanup as ghost ships.
   - **`spawnDrone()` deliberately spawns it ~6 units out from the origin,
     not inside the ships' own +-2 spawn cube** (`ships/swarm.js`'s
     `spawnShip()`), and its pick sphere is smaller than a ship's (0.5 vs

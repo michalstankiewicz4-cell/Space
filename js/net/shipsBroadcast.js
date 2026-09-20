@@ -22,6 +22,29 @@ function makeGhostShipMesh(colorHex){
   return mesh;
 }
 
+// Same ghost treatment as a remote ship, but shaped like the drone
+// (see drone/drone.js's makeDroneMesh) so another player's drone reads as
+// a drone, tinted by owner color like their ships instead of drone gold —
+// consistent with how every other remote unit is told apart.
+function makeGhostDroneMesh(colorHex){
+  const geo = new THREE.OctahedronGeometry(0.42, 0);
+  const mat = new THREE.MeshStandardMaterial({
+    color: colorHex, emissive: colorHex, emissiveIntensity:0.6,
+    roughness:0.5, metalness:0.3, transparent:true, opacity:0.75
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  ctx.scene.add(mesh);
+  return mesh;
+}
+
+function removeGhostDrone(rp){
+  if(!rp.droneMesh) return;
+  ctx.scene.remove(rp.droneMesh);
+  rp.droneMesh.geometry.dispose();
+  rp.droneMesh.material.dispose();
+  rp.droneMesh = null;
+}
+
 function isValidHexColor(c){
   return typeof c === "string" && /^#[0-9a-fA-F]{6}$/.test(c);
 }
@@ -67,6 +90,21 @@ export function handleRemoteShips(payload){
     ctx.scene.remove(mOld);
     mOld.geometry.dispose(); mOld.material.dispose();
   }
+  const d = Array.isArray(payload.drone) ? payload.drone : null;
+  if(d){
+    if(!rp.droneMesh) rp.droneMesh = makeGhostDroneMesh(rp.color);
+    const mesh = rp.droneMesh;
+    if(!mesh.userData.target) mesh.userData.target = new THREE.Vector3();
+    mesh.userData.target.set(safeCoord(d[0]), safeCoord(d[1]), safeCoord(d[2]));
+    mesh.rotation.y = Number.isFinite(Number(d[3])) ? Number(d[3]) : mesh.rotation.y;
+    if(!mesh.userData.inited){
+      mesh.position.copy(mesh.userData.target);
+      mesh.userData.inited = true;
+    }
+  } else {
+    removeGhostDrone(rp);
+  }
+
   for(let i=0;i<list.length;i++){
     const mesh = rp.meshes[i];
     if(!mesh.userData.target) mesh.userData.target = new THREE.Vector3();
@@ -85,6 +123,7 @@ export function updateRemoteShips(dt){
     const rp = ctx.remotePlayers[id];
     if(now - rp.lastSeen > NET_REMOTE_PLAYER_TIMEOUT_MS){
       rp.meshes.forEach(function(m){ ctx.scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+      removeGhostDrone(rp);
       delete ctx.remotePlayers[id];
       updatePlayersHud();
       return;
@@ -92,6 +131,9 @@ export function updateRemoteShips(dt){
     rp.meshes.forEach(function(m){
       if(m.userData.target) m.position.lerp(m.userData.target, Math.min(1, dt*NET_GHOST_LERP_SPEED));
     });
+    if(rp.droneMesh && rp.droneMesh.userData.target){
+      rp.droneMesh.position.lerp(rp.droneMesh.userData.target, Math.min(1, dt*NET_GHOST_LERP_SPEED));
+    }
   });
 }
 
@@ -104,7 +146,8 @@ export function maybeBroadcastShips(nowMs){
     payload: {
       id: clientId, nick: myIdentity.nick, color: myIdentity.color,
       points: state.points, eaten: state.eaten,
-      ships: ctx.ships.map(function(sh){ return [sh.pos.x, sh.pos.y, sh.pos.z]; })
+      ships: ctx.ships.map(function(sh){ return [sh.pos.x, sh.pos.y, sh.pos.z]; }),
+      drone: ctx.drone ? [ctx.drone.pos.x, ctx.drone.pos.y, ctx.drone.pos.z, ctx.drone.heading] : null
     }
   });
 }
