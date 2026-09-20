@@ -4,6 +4,24 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.6.5]
+
+### Fixed
+- Found the actual cause of "the drone panel won't close", after 1.6.1-
+  1.6.4 fixed real but secondary issues: the drone spawned inside the
+  exact same cube as the player's own ships (identical spawn code), with
+  an even bigger pick radius (0.75 vs a ship's 0.55), and it's checked
+  for a hit *before* ships/planets on every click. An ordinary click near
+  the swarm to command ships onto a planet could silently hit the drone
+  instead, reselecting it and reopening its panel — which looked exactly
+  like the close button failing, since it *was* closing, just getting
+  reopened by the very next normal gameplay click. Moved the drone's
+  spawn out to a ring 6 units from the origin (clear of the ships' +-2
+  spawn cube) and shrank its pick sphere to 0.5. Verified: 15 random
+  clicks inside the old shared spawn area now select the drone 0 times
+  (previously reliably triggered it), and the panel stays closed through
+  20 simulated normal-gameplay clicks after being closed once.
+
 ## [1.6.4]
 
 ### Fixed

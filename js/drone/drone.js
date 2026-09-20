@@ -39,8 +39,11 @@ function makeDroneMesh(){
   ring.visible = false;
   mesh.add(ring);
 
-  // invisible sphere for raycasting - same trick as ships/swarm.js
-  const pickGeo = new THREE.SphereGeometry(0.75, 8, 8);
+  // invisible sphere for raycasting - same trick as ships/swarm.js, but
+  // smaller than a ship's (0.55): the drone sits apart from the swarm (see
+  // spawnDrone()) specifically so an oversized hitbox can't "steal" clicks
+  // meant for nearby ships/planets during normal fleet-commanding.
+  const pickGeo = new THREE.SphereGeometry(0.5, 8, 8);
   const pickMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 });
   const pickMesh = new THREE.Mesh(pickGeo, pickMat);
   mesh.add(pickMesh);
@@ -59,7 +62,16 @@ export function setDroneSelected(drone, val){
 
 export function spawnDrone(){
   const built = makeDroneMesh();
-  const pos = new THREE.Vector3((Math.random()-0.5)*4, (Math.random()-0.5)*4, (Math.random()-0.5)*4);
+  // Deliberately spawned away from the ships' spawn cube (+-2 on each axis,
+  // see spawnShip()), not inside it: picking the drone is checked before
+  // ships/planets on every click (see scene/controls.js), so overlapping
+  // the busy fleet-commanding area meant an ordinary click near the swarm
+  // could silently hijack a planet/ship order into re-selecting the drone
+  // instead - which, since selecting it reopens its panel, looked exactly
+  // like "closing the panel doesn't work" (it closed fine; a later normal
+  // click just reselected the drone and reopened it).
+  const angle = Math.random() * Math.PI * 2;
+  const pos = new THREE.Vector3(Math.cos(angle) * 6, (Math.random() - 0.5) * 2, Math.sin(angle) * 6);
   built.mesh.position.copy(pos);
   ctx.scene.add(built.mesh);
 
