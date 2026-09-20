@@ -117,6 +117,39 @@ local (`localStorage`).
   (verified empirically, not yet root-caused) — the ship cam camera
   corrects for this with a 180°-about-Y flip before copying the mesh's
   quaternion, since a camera always looks down its own -Z.
+- **Programmable drone** (`js/drone/*.js`, Colobot-inspired): a single
+  extra ship per player that only moves by running a player-written
+  script — never auto-targets anything like the swarm's ships do.
+  - `dsl.js` (hand-rolled lexer + recursive-descent parser, not eval/
+    Function — the DSL is intentionally not JavaScript) produces an AST;
+    `interpreter.js` walks it as a **generator**, where every builtin call
+    is a `yield` and `drone.js`'s `driveGenerator()` decides whether to
+    resolve it instantly (`fuel()`, `attack()`, ...) or spread it over
+    several frames by holding off on the next `.next()` call (`move()`/
+    `turn()`/`wait()`, tracked in `drone.pending`).
+  - **A `while` loop yields an unconditional checkpoint every iteration**
+    (see the `"__tick__"` builtin), even though nothing in the language
+    needs its value. This was a real bug, not defensive paranoia: a loop
+    body with no function calls at all (`while(true){ x = 1 }`) never hit
+    a single `yield`, so `.next()` spun forever inside one native JS call
+    and froze the tab outright — `driveGenerator()`'s per-frame step
+    counter can only catch a runaway script if the generator actually
+    yields control back to it. Don't remove this checkpoint when touching
+    the interpreter, and re-verify with a no-op `while(true)` script
+    (ideally in isolated Node against `dsl.js`/`interpreter.js` directly,
+    not a live browser tab, if you don't fully trust a change here).
+  - Selection is purely visual (a ring, like ships) and drives the side
+    panel's open/closed state (`ui/dronePanel.js`) — it never touches
+    `camState`/`ctx.camera`. Keep it that way; RTS-style "select a unit,
+    camera stays put" was an explicit requirement.
+  - Fuel only refills by proximity-docking near a planet/sun (no passive
+    regen) — see `DRONE_DOCK_RANGE_MULT`/`DRONE_REFUEL_RATE` in config.js.
+  - The drone isn't in `ctx.ships`, so it's handled as its own case
+    everywhere ship-like logic exists: `world/blackholes.js` has a
+    separate gravity/kill-radius block for it (with a `defense`-based
+    survival roll instead of `ships`' unconditional consumption), and its
+    picking/selection lives in `scene/controls.js` alongside — but
+    separate from — `pickShipAt()`.
 
 ## Security model (Supabase)
 

@@ -44,4 +44,29 @@ export function applyStaticText(){
   document.getElementById("legendComet").textContent = t("legend.comet");
   document.getElementById("legendMeteoroid").textContent = t("legend.meteoroid");
   document.getElementById("legendBlackhole").textContent = t("legend.blackhole");
+
+  document.getElementById("dronePanelTitle").textContent = t("drone.title");
+  document.getElementById("droneStatusLabel").textContent = t("drone.status");
+  document.getElementById("droneFuelLabel").textContent = t("drone.fuel");
+  document.getElementById("droneAttackLabel").textContent = t("drone.attack");
+  document.getElementById("droneDefenseLabel").textContent = t("drone.defense");
+  document.getElementById("droneScriptBtn").textContent = t("drone.scriptBtn");
+  document.getElementById("droneScriptModalTitle").textContent = t("drone.scriptTitle");
+  document.getElementById("droneScriptRunBtn").textContent = t("drone.run");
+  document.getElementById("droneScriptStopBtn").textContent = t("drone.stop");
+  document.getElementById("droneScriptInput").placeholder = t("drone.placeholder");
+
+  document.getElementById("droneHelpMovementTitle").textContent = t("drone.help.movementTitle");
+  document.getElementById("droneHelpMoveDesc").textContent = t("drone.help.move");
+  document.getElementById("droneHelpTurnDesc").textContent = t("drone.help.turn");
+  document.getElementById("droneHelpWaitDesc").textContent = t("drone.help.wait");
+  document.getElementById("droneHelpSensorsTitle").textContent = t("drone.help.sensorsTitle");
+  document.getElementById("droneHelpFuelDesc").textContent = t("drone.help.fuel");
+  document.getElementById("droneHelpMaxFuelDesc").textContent = t("drone.help.maxFuelFn");
+  document.getElementById("droneHelpNearDesc").textContent = t("drone.help.near");
+  document.getElementById("droneHelpAttackDesc").textContent = t("drone.help.attackFn");
+  document.getElementById("droneHelpPrintDesc").textContent = t("drone.help.print");
+  document.getElementById("droneHelpSyntaxTitle").textContent = t("drone.help.syntaxTitle");
+  document.getElementById("droneHelpSyntaxDesc").textContent = t("drone.help.syntax");
+  document.getElementById("droneHelpExampleTitle").textContent = t("drone.help.exampleTitle");
 }

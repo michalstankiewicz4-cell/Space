@@ -70,10 +70,41 @@ const STRINGS = {
       orderSome: function(n){ return "Order: " + n + " units on course"; },
       selected: function(n, total){ return "Selected: " + n + " / " + total; },
       blackholeDetected: "Black hole detected in sector",
-      shipConsumed: "Ship pulled into a black hole!"
+      shipConsumed: "Ship pulled into a black hole!",
+      droneSurvived: "Drone survived the black hole — barely!"
     },
     connection: {
       reconnecting: "⚠ Reconnecting to server…"
+    },
+    drone: {
+      title: "DRONE",
+      status: "Status",
+      fuel: "Fuel",
+      attack: "Attack",
+      defense: "Defense",
+      scriptBtn: "📜 Script",
+      idle: "Idle",
+      running: "Running",
+      error: "Error",
+      scriptTitle: "Drone Script",
+      run: "▶ Run",
+      stop: "■ Stop",
+      placeholder: "while (fuel() > 10) {\n  move(5)\n  if (nearPlanet()) {\n    attack()\n  }\n}",
+      help: {
+        movementTitle: "Movement",
+        move: "Move forward n units in a straight line (costs 1 fuel per unit)",
+        turn: "Rotate by deg degrees (positive = one way, negative = the other)",
+        wait: "Pause the script for s seconds",
+        sensorsTitle: "Sensors & actions",
+        fuel: "Current fuel, 0 to maxFuel()",
+        maxFuelFn: "Fuel tank capacity",
+        near: "1 if a planet/sun is close enough to attack() or refuel, else 0",
+        attackFn: "Bite the nearest body in range for this drone's Attack stat",
+        print: "Write x to the log below the buttons — handy for debugging",
+        syntaxTitle: "Syntax",
+        syntax: "if (…) { … } else { … } · while (…) { … } · x = 5 · + - * / < > <= >= == != && || !",
+        exampleTitle: "Example"
+      }
     }
   },
   pl: {
@@ -143,10 +174,41 @@ const STRINGS = {
       orderSome: function(n){ return "Rozkaz: " + n + " jednostek na kurs"; },
       selected: function(n, total){ return "Zaznaczono: " + n + " / " + total; },
       blackholeDetected: "Wykryto czarną dziurę w sektorze",
+      droneSurvived: "Dron przetrwał czarną dziurę — o mały włos!",
       shipConsumed: "Statek wciągnięty w czarną dziurę!"
     },
     connection: {
       reconnecting: "⚠ Ponowne łączenie z serwerem…"
+    },
+    drone: {
+      title: "DRON",
+      status: "Status",
+      fuel: "Paliwo",
+      attack: "Atak",
+      defense: "Obrona",
+      scriptBtn: "📜 Skrypt",
+      idle: "Bezczynny",
+      running: "Działa",
+      error: "Błąd",
+      scriptTitle: "Skrypt drona",
+      run: "▶ Uruchom",
+      stop: "■ Stop",
+      placeholder: "while (fuel() > 10) {\n  move(5)\n  if (nearPlanet()) {\n    attack()\n  }\n}",
+      help: {
+        movementTitle: "Ruch",
+        move: "Leci prosto do przodu o n jednostek (koszt: 1 paliwo za jednostkę)",
+        turn: "Obraca się o deg stopni (dodatnie = w jedną stronę, ujemne = w drugą)",
+        wait: "Wstrzymuje skrypt na s sekund",
+        sensorsTitle: "Czujniki i akcje",
+        fuel: "Aktualne paliwo, od 0 do maxFuel()",
+        maxFuelFn: "Pojemność zbiornika paliwa",
+        near: "1 jeśli planeta/słońce jest wystarczająco blisko, by zaatakować lub zatankować, inaczej 0",
+        attackFn: "Gryzie najbliższe ciało w zasięgu, siłą równą statystyce Atak drona",
+        print: "Wypisuje x w logu pod przyciskami — przydatne do debugowania",
+        syntaxTitle: "Składnia",
+        syntax: "if (…) { … } else { … } · while (…) { … } · x = 5 · + - * / < > <= >= == != && || !",
+        exampleTitle: "Przykład"
+      }
     }
   }
 };

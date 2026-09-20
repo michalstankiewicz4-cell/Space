@@ -35,6 +35,19 @@ export const TREE = {
   }
 };
 
+// Programmable drone (see js/drone/*.js) — a single extra ship per player,
+// Colobot-style: doesn't fly on its own, only moves/attacks by running a
+// script the player writes. Kept separate from the swarm's own TREE/
+// upgrade stats since the drone isn't part of that economy.
+export const DRONE_MAX_FUEL = 100;
+export const DRONE_FUEL_PER_MOVE_UNIT = 1; // fuel spent per unit of move() distance
+export const DRONE_MOVE_SPEED = 4; // units/second while a move() is in progress
+export const DRONE_TURN_SPEED = 120; // degrees/second while a turn() is in progress
+export const DRONE_BASE_ATTACK = 6; // bite power per attack() call
+export const DRONE_BASE_DEFENSE = 1; // survival odds multiplier vs. a black hole's pull (see world/blackholes.js)
+export const DRONE_DOCK_RANGE_MULT = 3.2; // x radius of the nearest body = "close enough to refuel/attack"
+export const DRONE_REFUEL_RATE = 18; // fuel/second while docked at a planet/sun
+
 // Multiplayer: intervals and time limits
 export const NET_SHIP_BROADCAST_MS = 120;
 export const NET_DAMAGE_FLUSH_MS = 150;

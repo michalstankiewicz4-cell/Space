@@ -4,6 +4,35 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.6.0]
+
+### Added
+- Programmable drone (`js/drone/*.js`), Colobot-inspired: a second, distinct
+  ship (gold octahedron) that never flies on its own — it only moves by
+  running a script the player writes and selects/deselects like any other
+  unit (selection ring, RTS-style — the camera never reacts to it).
+  - Own small scripting language with `if`/`else`, `while`, variables and
+    the usual operators, executed by a generator-based interpreter so
+    `move()`/`turn()`/`wait()` can pause the script for real time without
+    blocking the game loop.
+  - Builtins: `move(n)`, `turn(deg)`, `wait(s)`, `attack()`, `fuel()`,
+    `maxFuel()`, `nearPlanet()`, `print(x)`.
+  - Attack power bites planets like the swarm's ships; a Defense stat
+    gives it a chance to survive a black hole's kill radius (knocked back
+    out) instead of being destroyed outright.
+  - Fuel drains with `move()` and only refills by flying close to a
+    planet/sun (no passive regeneration) — scripts have to actually
+    navigate, not just sit and wait.
+  - Side panel (live 3D thumbnail, status, fuel/attack/defense) opens on
+    selection; its Script button opens an editor with Run/Stop, an error/
+    log readout, and a `[?]` reference button listing every function with
+    a description and a runnable example.
+  - Safety guard: a script step limit stops a runaway loop (e.g. missing
+    a `wait()`) after 2000 resumptions instead of hanging the tab — this
+    was a real bug found while testing (a loop with no function calls at
+    all didn't yield even once, freezing the browser outright) and fixed
+    by making every `while` iteration yield a checkpoint unconditionally.
+
 ## [1.5.2]
 
 ### Fixed

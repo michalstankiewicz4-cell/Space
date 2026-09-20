@@ -33,8 +33,11 @@ js/
   content.js         aggregates js/bodies/ into one place the game and the editor both read from
   fx/                particles, debris, shockwaves, dust — planet-breakup effects
   ships/             player's ship swarm (movement, eating, bite-beam)
+  drone/             the programmable drone — its own DSL (dsl.js), a generator-based
+                     interpreter (interpreter.js), the entity/script driver (drone.js), and
+                     its live thumbnail camera (droneThumb.js) — see "Programmable drone" below
   ui/                HUD (telemetry, players list, collapsible panels, Wiki/Tech/Fleet buttons and modals,
-                     legend, upgrade dock) and the Setup modal (banner.js)
+                     legend, upgrade dock, drone panel) and the Setup modal (banner.js)
   net/               multiplayer: identity, "steward" election, world sync, ship broadcast,
                      Realtime reconnect handling
   main.js            entry point — wires the modules together and runs the game loop
@@ -57,6 +60,17 @@ identical in actual play.
 Since the site has no backend, the "Download" button produces a text file
 with ready-to-paste `export const ... = {...}` blocks — one per file in
 `js/bodies/` — which you then manually swap into the repo.
+
+## Programmable drone
+
+Every player also has one drone (a distinct gold octahedron) that never
+moves on its own — select it and open its Script button to write a small
+program for it (`if`/`while`/variables, plus `move()`, `turn()`, `wait()`,
+`attack()`, `fuel()`, `nearPlanet()`, `print()` — the in-game `[?]` button
+lists all of them with examples). It's not JavaScript: `js/drone/dsl.js`
+parses this tiny language into an AST, and `js/drone/interpreter.js` walks
+it as a generator, so a script's `move()`/`wait()` calls can pause
+execution for real time without blocking the game loop or the browser tab.
 
 ## Multiplayer / Supabase setup
 

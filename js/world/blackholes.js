@@ -12,6 +12,7 @@ import { disposeShip, reconcileFleetSize } from "../ships/swarm.js";
 import { refreshDock } from "../ui/dock.js";
 import { save } from "../core/gameState.js";
 import { isSteward } from "../net/presence.js";
+import { stopDroneScript } from "../drone/drone.js";
 import { t } from "../i18n.js";
 
 let blackHoleTimer = CONTENT.blackhole.firstSpawnMinS + Math.random()*CONTENT.blackhole.firstSpawnRangeS;
@@ -189,4 +190,44 @@ export function updateBlackHoles(dt){
     showToast(t("toast.shipConsumed"));
   });
   if(toConsume.length>0){ reconcileFleetSize(); refreshDock(); save(); }
+
+  // The drone isn't in ctx.ships (it never auto-moves, so it isn't part of
+  // the swarm loop above) — handled separately here, with its `defense`
+  // stat giving it a chance to survive a kill-radius encounter instead of
+  // being destroyed outright like a normal ship.
+  if(ctx.drone){
+    const drone = ctx.drone;
+    for(let b=0; b<ctx.blackholes.length; b++){
+      const hole = ctx.blackholes[b];
+      const toHole = new THREE.Vector3().subVectors(hole.group.position, drone.pos);
+      const d = toHole.length();
+      if(d < hole.killRadius){
+        const survivalChance = Math.min(0.9, drone.defense * 0.18);
+        if(Math.random() < survivalChance){
+          const pushDir = drone.pos.clone().sub(hole.group.position);
+          if(pushDir.lengthSq() < 0.0001) pushDir.set(1,0,0);
+          pushDir.normalize();
+          drone.pos.copy(hole.group.position).addScaledVector(pushDir, hole.killRadius*1.4);
+          drone.fuel = Math.max(0, drone.fuel - 15);
+          showToast(t("toast.droneSurvived"));
+        } else {
+          spawnExplosionParticles(drone.pos, new THREE.Color(0xb98cff), 26);
+          spawnShockwave({ mesh:{ position: drone.pos, material:{ color:new THREE.Color(0x6a3fb0) } }, radius: 0.7 });
+          stopDroneScript(drone);
+          ctx.scene.remove(drone.mesh);
+          drone.mesh.traverse(function(obj){
+            if(obj.geometry) obj.geometry.dispose();
+            if(obj.material) obj.material.dispose();
+          });
+          ctx.drone = null;
+          showToast(t("toast.shipConsumed"));
+        }
+        break;
+      }
+      if(d < hole.gravityRadius && d > 0.001){
+        const pull = Math.min(0.9, (hole.gravityRadius-d)/hole.gravityRadius) * 6.5 / Math.max(0.3, drone.defense);
+        drone.pos.addScaledVector(toHole.normalize(), pull*dt);
+      }
+    }
+  }
 }

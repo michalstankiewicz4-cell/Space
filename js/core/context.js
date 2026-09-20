@@ -11,6 +11,7 @@ export const ctx = {
   ships: [],
   planets: [],       // planets, suns, comets, meteoroids — everything "edible"
   blackholes: [],
+  drone: null,       // the player's single programmable ship — see js/drone/*.js
   fragments: [],
   shockwaves: [],
   dustParticles: [],

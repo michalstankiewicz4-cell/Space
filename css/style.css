@@ -93,6 +93,96 @@ canvas{ display:block; touch-action:none; cursor: grab; }
 #playersPanel li b{ color: var(--teal); font-weight:600; }
 #playersPanel li.me .name{ color: var(--ink); font-weight:600; }
 
+#dronePanel{
+  top: 50%; right: 18px; transform: translateY(-50%);
+  padding: 12px 16px 14px;
+  width: 200px;
+  pointer-events:auto;
+}
+#dronePanel .row{
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.03em;
+  color: var(--ink-dim); margin: 5px 0; gap: 12px;
+}
+#dronePanel .row b{ color: var(--teal); font-weight:600; }
+#droneThumbWrap{
+  width: 100%; height: 110px; margin-bottom: 10px;
+  background: rgba(0,0,0,0.4); border: 1px solid var(--panel-edge);
+}
+#droneScriptBtn{
+  width:100%; margin-top: 10px; padding: 9px 0 !important;
+  font-family: var(--font-mono); font-size: 12px !important; letter-spacing:0.03em;
+  background: rgba(255,255,255,0.06) !important; color: var(--ink) !important;
+  border: 1px solid var(--panel-edge) !important; cursor:pointer;
+  clip-path: polygon(0 6px, 6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+}
+#droneScriptBtn:hover{ border-color: var(--teal) !important; filter:none !important; }
+
+#droneScriptModalBox{ width: 480px; max-height: 82vh; overflow:auto; }
+#droneScriptHeaderBtns{ display:flex; align-items:center; gap: 6px; }
+#droneScriptHelpBtn{
+  background: rgba(255,255,255,0.06) !important; color: var(--ink-dim) !important;
+  border: 1px solid var(--panel-edge) !important; cursor:pointer;
+  width: 24px; height: 24px; padding:0 !important; font-size: 13px !important;
+  font-family: var(--font-head); font-weight:700; border-radius: 3px;
+}
+#droneScriptHelpBtn:hover{ color: var(--ink) !important; border-color: var(--teal) !important; filter:none !important; }
+#droneScriptHelpBtn.active{ color: var(--teal) !important; border-color: var(--teal) !important; }
+
+#droneScriptHelp{
+  background: rgba(255,255,255,0.03); border: 1px solid var(--panel-edge);
+  padding: 10px 12px; margin-bottom: 12px;
+  max-height: 260px; overflow:auto;
+}
+#droneScriptHelp.hidden{ display:none; }
+.droneHelpTitle{
+  font-family: var(--font-head); font-weight:700; font-size: 11px;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--teal);
+  margin: 10px 0 5px;
+}
+.droneHelpTitle:first-child{ margin-top:0; }
+.droneHelpTable{ width:100%; border-collapse: collapse; }
+.droneHelpTable td{
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-dim);
+  padding: 2px 0; vertical-align: top;
+}
+.droneHelpTable td:first-child{ color: var(--ink); white-space:nowrap; padding-right: 10px; }
+.droneHelpText{
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-dim); line-height:1.6;
+}
+#droneHelpExample{
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--ink);
+  background: rgba(0,0,0,0.35); padding: 8px 10px; margin: 4px 0 0;
+  white-space: pre-wrap; overflow-x:auto;
+}
+#droneScriptInput{
+  width: 100%; height: 220px; resize: vertical;
+  background: rgba(0,0,0,0.4); border: 1px solid var(--panel-edge); color: var(--ink);
+  font-family: var(--font-mono); font-size: 12.5px; line-height:1.5;
+  padding: 10px; box-sizing:border-box;
+}
+#droneScriptButtons{ display:flex; gap:8px; margin: 10px 0; }
+#droneScriptButtons button{
+  font-family: var(--font-head); font-weight:600; font-size: 13px;
+  padding: 9px 20px; cursor:pointer; border:none;
+  clip-path: polygon(0 6px, 6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+}
+#droneScriptRunBtn{ background: var(--teal); color: #04211c; }
+#droneScriptRunBtn:hover{ filter: brightness(1.08); }
+#droneScriptStopBtn{ background: rgba(255,79,129,0.18); color: var(--danger); border: 1px solid rgba(255,79,129,0.4) !important; }
+#droneScriptStopBtn:hover{ background: rgba(255,79,129,0.28); }
+#droneScriptError{
+  font-family: var(--font-mono); font-size: 12px; color: var(--danger);
+  background: rgba(255,79,129,0.1); border: 1px solid rgba(255,79,129,0.3);
+  padding: 8px 10px; margin-bottom: 8px;
+}
+#droneScriptError.hidden{ display:none; }
+#droneScriptLog{
+  font-family: var(--font-mono); font-size: 11px; color: var(--ink-dim);
+  max-height: 90px; overflow:auto; white-space:pre-wrap;
+  border-top: 1px solid rgba(79,227,198,0.15); padding-top: 6px;
+}
+
 #dock{
   display:flex; flex-wrap:wrap; gap:12px; justify-content:center;
   max-width: 560px;
@@ -421,4 +511,5 @@ canvas{ display:block; touch-action:none; cursor: grab; }
   #legend{ display:none; }
   #hudButtonsRow{ display:none; }
   #shipCam{ display:none; }
+  #dronePanel{ display:none; }
 }

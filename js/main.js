@@ -22,6 +22,9 @@ import { maintainPlanetCount, flushDamage } from "./net/bodiesSync.js";
 import { updateRemoteShips, maybeBroadcastShips } from "./net/shipsBroadcast.js";
 import { initNet } from "./net/connect.js";
 import { initVersionCheck } from "./versionCheck.js";
+import { spawnDrone, updateDrone } from "./drone/drone.js";
+import { initDroneThumb, renderDroneThumb } from "./drone/droneThumb.js";
+import { initDronePanel, refreshDronePanel } from "./ui/dronePanel.js";
 
 load();
 
@@ -44,6 +47,9 @@ initPanels();
 initFleet();
 initShipCam();
 initVersionCheck();
+spawnDrone();
+initDroneThumb();
+initDronePanel();
 
 if(NET_ENABLED){
   initNet();
@@ -66,6 +72,7 @@ function tick(){
   updateBodies(dt);
   updateBlackHoles(dt);
   updateDust(dt);
+  updateDrone(dt);
   maintainPlanetCount(dt);
   if(NET_ENABLED){
     updateRemoteShips(dt);
@@ -77,6 +84,7 @@ function tick(){
     uiTimer = 0;
     updateTelemetry();
     renderPlayersList();
+    refreshDronePanel();
   }
 
   // Reset to full-canvas before the main render, in case last frame's ship
@@ -87,6 +95,7 @@ function tick(){
 
   updateShipCam();
   renderShipCamPIP();
+  renderDroneThumb();
 
   requestAnimationFrame(tick);
 }

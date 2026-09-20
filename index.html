@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=1.5.2">
+<link rel="stylesheet" href="css/style.css?v=1.6.0">
 </head>
 <body>
 
@@ -143,6 +143,67 @@
 
 <div id="connectionStatus" class="hidden">⚠ Reconnecting to server…</div>
 
+<div id="dronePanel" class="hud panel hidden">
+  <div class="panelTitleBar">
+    <div class="title" id="dronePanelTitle">DRONE</div>
+    <button class="collapseBtn" id="droneCloseBtn" type="button">✕</button>
+  </div>
+  <div id="droneThumbWrap"></div>
+  <div class="row"><span id="droneStatusLabel">Status</span><b id="droneStatusVal">Idle</b></div>
+  <div class="row"><span id="droneFuelLabel">Fuel</span><b id="droneFuelVal">100 / 100</b></div>
+  <div class="row"><span id="droneAttackLabel">Attack</span><b id="droneAttackVal">6</b></div>
+  <div class="row"><span id="droneDefenseLabel">Defense</span><b id="droneDefenseVal">1</b></div>
+  <button id="droneScriptBtn" type="button">📜 Script</button>
+</div>
+
+<div id="droneScriptModal" class="modal hidden">
+  <div id="droneScriptModalBox" class="modalBox">
+    <div class="modalHeader">
+      <span class="modalTitle" id="droneScriptModalTitle">Drone Script</span>
+      <div id="droneScriptHeaderBtns">
+        <button id="droneScriptHelpBtn" type="button" title="Functions &amp; examples">?</button>
+        <button class="modalCloseBtn" id="droneScriptCloseBtn" type="button">✕</button>
+      </div>
+    </div>
+
+    <div id="droneScriptHelp" class="hidden">
+      <div class="droneHelpTitle" id="droneHelpMovementTitle">Movement</div>
+      <table class="droneHelpTable">
+        <tr><td><code>move(n)</code></td><td id="droneHelpMoveDesc"></td></tr>
+        <tr><td><code>turn(deg)</code></td><td id="droneHelpTurnDesc"></td></tr>
+        <tr><td><code>wait(s)</code></td><td id="droneHelpWaitDesc"></td></tr>
+      </table>
+      <div class="droneHelpTitle" id="droneHelpSensorsTitle">Sensors &amp; actions</div>
+      <table class="droneHelpTable">
+        <tr><td><code>fuel()</code></td><td id="droneHelpFuelDesc"></td></tr>
+        <tr><td><code>maxFuel()</code></td><td id="droneHelpMaxFuelDesc"></td></tr>
+        <tr><td><code>nearPlanet()</code></td><td id="droneHelpNearDesc"></td></tr>
+        <tr><td><code>attack()</code></td><td id="droneHelpAttackDesc"></td></tr>
+        <tr><td><code>print(x)</code></td><td id="droneHelpPrintDesc"></td></tr>
+      </table>
+      <div class="droneHelpTitle" id="droneHelpSyntaxTitle">Syntax</div>
+      <div id="droneHelpSyntaxDesc" class="droneHelpText"></div>
+      <div class="droneHelpTitle" id="droneHelpExampleTitle">Example</div>
+      <pre id="droneHelpExample">while (fuel() > 10) {
+  move(5)
+  if (nearPlanet()) {
+    attack()
+  } else {
+    turn(30)
+  }
+}</pre>
+    </div>
+
+    <textarea id="droneScriptInput" spellcheck="false"></textarea>
+    <div id="droneScriptButtons">
+      <button id="droneScriptRunBtn" type="button">▶ Run</button>
+      <button id="droneScriptStopBtn" type="button">■ Stop</button>
+    </div>
+    <div id="droneScriptError" class="hidden"></div>
+    <div id="droneScriptLog"></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <div id="selectBox"></div>
@@ -150,6 +211,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script type="module" src="js/main.js?v=1.5.2"></script>
+<script type="module" src="js/main.js?v=1.6.0"></script>
 </body>
 </html>
