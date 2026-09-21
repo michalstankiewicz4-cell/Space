@@ -4,6 +4,16 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.7]
+
+### Added
+- Multi-level column sorting in the admin panel's "Recent entries" table —
+  click When/IP/Actor to add it as a sort key (ascending → descending →
+  off), without discarding whichever other columns are already active.
+  Click order sets priority (first-clicked is primary, later clicks are
+  tiebreakers), shown as a small ▲/▼ + number on each active header. IP
+  sorts numerically (dotted-quad order), not as plain text.
+
 ## [1.10.6]
 
 ### Fixed

@@ -157,6 +157,100 @@ function renderSummary(rows){
   document.getElementById("summarySection").classList.toggle("hidden", list.length === 0);
 }
 
+// Multi-level column sort for #logTable — click a sortable header to add/
+// toggle it, without discarding whichever other columns are already
+// active. `sortKeys` is ordered by priority (index 0 = primary key,
+// index 1 = tiebreaker, ...) so "click When, then click IP" sorts by IP
+// only among rows that tie on When, not the other way around.
+let sortKeys = []; // { col: "when"|"ip"|"actor", dir: "asc"|"desc" }[]
+let lastRows = []; // the last data actually loaded from admin_activity_log, so re-sorting doesn't need a fresh request
+
+// IPv4 dotted-quad -> a single comparable number, so "9.x" sorts before
+// "185.x" (numeric column order) instead of the lexicographic string
+// order a plain `<` would give ("1" < "8" by character, which happens to
+// put "185.x" before "9.x" — wrong for what a human scanning IPs expects).
+// Returns null for anything that isn't a clean IPv4 (missing, IPv6, or a
+// malformed header value) so it can be sorted to the end explicitly.
+function ipToNumber(ip){
+  if(!ip) return null;
+  const parts = ip.split(".");
+  if(parts.length !== 4) return null;
+  let n = 0;
+  for(let i=0;i<4;i++){
+    const part = Number(parts[i]);
+    if(!Number.isInteger(part) || part < 0 || part > 255) return null;
+    n = n*256 + part;
+  }
+  return n;
+}
+
+const SORT_VALUE_GETTERS = {
+  when: function(r){ return new Date(r.created_at).getTime(); },
+  ip: function(r){ return ipToNumber(r.detail ? r.detail.ip : null); },
+  actor: function(r){ return r.actor || null; }
+};
+const SORT_LABELS = { when: "When", ip: "IP", actor: "Actor" };
+
+// null/undefined (missing IP, etc.) always sorts to the end, regardless
+// of ascending/descending — flipping "unknown" to the top on a descending
+// sort would be more confusing than useful for an admin scanning the list.
+function compareValues(va, vb, dir){
+  if(va === null && vb === null) return 0;
+  if(va === null) return 1;
+  if(vb === null) return -1;
+  const cmp = typeof va === "number" && typeof vb === "number" ? va - vb : (va < vb ? -1 : (va > vb ? 1 : 0));
+  return dir === "desc" ? -cmp : cmp;
+}
+
+function compareRows(a, b){
+  for(let i=0; i<sortKeys.length; i++){
+    const key = sortKeys[i];
+    const cmp = compareValues(SORT_VALUE_GETTERS[key.col](a), SORT_VALUE_GETTERS[key.col](b), key.dir);
+    if(cmp !== 0) return cmp;
+  }
+  return 0;
+}
+
+// Cycle: not sorted -> ascending -> descending -> not sorted (removed from
+// sortKeys). A column already active keeps its priority position when
+// toggling asc<->desc; only a genuinely new column gets appended as the
+// new lowest-priority tiebreaker — existing keys are never reordered or
+// discarded by clicking a different header.
+function toggleSort(col){
+  const idx = sortKeys.findIndex(function(k){ return k.col === col; });
+  if(idx === -1){
+    sortKeys.push({ col: col, dir: "asc" });
+  } else if(sortKeys[idx].dir === "asc"){
+    sortKeys[idx].dir = "desc";
+  } else {
+    sortKeys.splice(idx, 1);
+  }
+  applySortAndRenderLog();
+}
+
+function updateSortIndicators(){
+  Object.keys(SORT_LABELS).forEach(function(col){
+    const th = document.getElementById("logSort" + col.charAt(0).toUpperCase() + col.slice(1));
+    if(!th) return;
+    const idx = sortKeys.findIndex(function(k){ return k.col === col; });
+    if(idx === -1){
+      th.textContent = SORT_LABELS[col];
+      return;
+    }
+    const arrow = sortKeys[idx].dir === "asc" ? "▲" : "▼";
+    // Only show a priority number once more than one key is active — with
+    // just one, "which is primary" isn't an interesting question yet.
+    const priority = sortKeys.length > 1 ? String(idx + 1) : "";
+    th.textContent = SORT_LABELS[col] + " " + arrow + priority;
+  });
+}
+
+function applySortAndRenderLog(){
+  const sorted = sortKeys.length > 0 ? lastRows.slice().sort(compareRows) : lastRows;
+  renderLog(sorted);
+  updateSortIndicators();
+}
+
 function renderLog(rows){
   const tbody = document.querySelector("#logTable tbody");
   tbody.innerHTML = "";
@@ -206,9 +300,13 @@ async function load(){
     return;
   }
   setStatus(data.length + " rows loaded.");
+  lastRows = data;
   renderAnomalyStat(data);
   renderSummary(data);
-  renderLog(data);
+  // Not a plain renderLog(data) — this re-applies whatever multi-level
+  // sort was already active (see toggleSort()), so a Refresh doesn't
+  // silently drop the admin's current sort back to insertion order.
+  applySortAndRenderLog();
   document.getElementById("refreshBtn").classList.remove("hidden");
 }
 
@@ -218,3 +316,6 @@ document.getElementById("refreshBtn").addEventListener("click", load);
 document.getElementById("secretInput").addEventListener("keydown", function(e){
   if(e.key === "Enter") load();
 });
+document.getElementById("logSortWhen").addEventListener("click", function(){ toggleSort("when"); });
+document.getElementById("logSortIp").addEventListener("click", function(){ toggleSort("ip"); });
+document.getElementById("logSortActor").addEventListener("click", function(){ toggleSort("actor"); });
