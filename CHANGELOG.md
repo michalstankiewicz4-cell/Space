@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.9]
+
+### Added
+- A grayed-out Google sign-in button next to the nickname field, mirroring
+  the random-nickname button on the field's other side — not wired up yet
+  (disabled), just staking out the spot for when Google login lands.
+
 ## [1.10.8]
 
 ### Fixed

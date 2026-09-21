@@ -479,6 +479,15 @@ canvas{ display:block; touch-action:none; cursor: grab; }
   border: 1px solid var(--panel-edge) !important;
 }
 #nickRandomBtn:hover{ border-color: var(--teal) !important; filter:none !important; }
+/* Not wired up yet — Google sign-in is a future addition, grayed out
+   like every other not-yet-available control (#modeSingle/#modeFriends). */
+#nickGoogleBtn{
+  flex: none; padding: 0 14px !important;
+  display:flex; align-items:center; justify-content:center;
+  background: rgba(255,255,255,0.04) !important; color: var(--ink-dim) !important;
+  border: 1px solid var(--panel-edge) !important; opacity: 0.55; cursor: not-allowed;
+}
+#nickGoogleBtn svg{ width:16px; height:16px; filter: grayscale(1); opacity:0.75; }
 #nickError{
   color: var(--danger); font-family: var(--font-mono); font-size: 12px;
   margin: -8px 0 14px;
