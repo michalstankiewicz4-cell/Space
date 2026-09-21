@@ -4,6 +4,24 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.9.6]
+
+### Fixed
+- The admin panel (`admin.html`) content was silently clipped whenever it
+  grew taller than the window — it inherits the game's shared
+  `css/style.css`, whose `html,body{overflow:hidden}` (needed so the game
+  canvas itself never scrolls) also suppressed the admin panel's page
+  scroll, with no substitute scroll container to compensate. Fixed by
+  giving `admin.html` its own `overflow-y:auto` in `css/admin.css`.
+
+### Changed
+- Restyled the scrollbar (both `::-webkit-scrollbar` for Chromium/Safari
+  and `scrollbar-color`/`scrollbar-width` for Firefox) to a thin teal
+  thumb on a dark track matching the game's palette, applied globally so
+  every scrollable element (Setup/Tech/Fleet modals, the drone script
+  editor/log, the admin panel) looks consistent instead of using the
+  browser's default scrollbar.
+
 ## [1.9.5]
 
 ### Added
