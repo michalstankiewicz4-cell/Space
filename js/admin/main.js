@@ -122,6 +122,66 @@ function copyCell(getText){
   return cell;
 }
 
+// Date-range filter shared by both tables — a single control filters the
+// same underlying rows that feed the "By actor" aggregation and the
+// "Recent entries" list, so they never show inconsistent time windows.
+let dateFromMs = null; // inclusive, local start-of-day, or null = no lower bound
+let dateToMs = null;   // inclusive, local end-of-day, or null = no upper bound
+
+// Parsed from the plain "YYYY-MM-DD" <input type="date"> value as local
+// time (no timezone suffix), not UTC — matches what the "When" column
+// itself already shows via toLocaleString(), so picking "today" here
+// actually means the admin's own calendar day, not a UTC one that could
+// be off by several hours depending on where they are.
+function parseDateBoundary(inputId, endOfDay){
+  const value = document.getElementById(inputId).value;
+  if(!value) return null;
+  const d = new Date(value + (endOfDay ? "T23:59:59.999" : "T00:00:00"));
+  return isNaN(d.getTime()) ? null : d.getTime();
+}
+
+function getFilteredRows(){
+  if(dateFromMs === null && dateToMs === null) return lastRows;
+  return lastRows.filter(function(r){
+    const t = new Date(r.created_at).getTime();
+    if(dateFromMs !== null && t < dateFromMs) return false;
+    if(dateToMs !== null && t > dateToMs) return false;
+    return true;
+  });
+}
+
+function updateDateFilterCount(filteredCount){
+  const el = document.getElementById("dateFilterCount");
+  const active = dateFromMs !== null || dateToMs !== null;
+  el.textContent = active ? (filteredCount + " of " + lastRows.length + " rows in range") : "";
+}
+
+function applyDateFilter(){
+  dateFromMs = parseDateBoundary("dateFromInput", false);
+  dateToMs = parseDateBoundary("dateToInput", true);
+  applyFiltersAndRender();
+}
+
+function clearDateFilter(){
+  document.getElementById("dateFromInput").value = "";
+  document.getElementById("dateToInput").value = "";
+  dateFromMs = null;
+  dateToMs = null;
+  applyFiltersAndRender();
+}
+
+// The one place that actually re-renders both tables from lastRows —
+// load(), the date filter, and (indirectly, via applySortAndRenderLog())
+// the log's own column sort all funnel through here, so the two tables
+// can never end up showing different date ranges from each other.
+function applyFiltersAndRender(){
+  const rows = getFilteredRows();
+  renderAnomalyStat(rows);
+  renderSummary(rows);
+  applySortAndRenderLog(rows);
+  updateDateFilterCount(rows.length);
+}
+
 function renderAnomalyStat(rows){
   const el = document.getElementById("anomalyStat");
   const actors = new Set(rows.map(function(r){ return r.actor; }));
@@ -225,7 +285,7 @@ function toggleSort(col){
   } else {
     sortKeys.splice(idx, 1);
   }
-  applySortAndRenderLog();
+  applyFiltersAndRender();
 }
 
 function updateSortIndicators(){
@@ -245,8 +305,8 @@ function updateSortIndicators(){
   });
 }
 
-function applySortAndRenderLog(){
-  const sorted = sortKeys.length > 0 ? lastRows.slice().sort(compareRows) : lastRows;
+function applySortAndRenderLog(rows){
+  const sorted = sortKeys.length > 0 ? rows.slice().sort(compareRows) : rows;
   renderLog(sorted);
   updateSortIndicators();
 }
@@ -295,18 +355,18 @@ async function load(){
   if(!data || data.length === 0){
     setStatus("No rows — either the secret is wrong, or there's genuinely nothing logged yet.");
     document.getElementById("anomalyStat").classList.add("hidden");
+    document.getElementById("dateFilterRow").classList.add("hidden");
     document.getElementById("summarySection").classList.add("hidden");
     document.getElementById("logSection").classList.add("hidden");
     return;
   }
   setStatus(data.length + " rows loaded.");
   lastRows = data;
-  renderAnomalyStat(data);
-  renderSummary(data);
-  // Not a plain renderLog(data) — this re-applies whatever multi-level
-  // sort was already active (see toggleSort()), so a Refresh doesn't
-  // silently drop the admin's current sort back to insertion order.
-  applySortAndRenderLog();
+  // Re-applies whatever date filter + multi-level sort were already
+  // active (see applyDateFilter()/toggleSort()), so a Refresh doesn't
+  // silently reset either one back to "show everything, insertion order".
+  applyFiltersAndRender();
+  document.getElementById("dateFilterRow").classList.remove("hidden");
   document.getElementById("refreshBtn").classList.remove("hidden");
 }
 
@@ -319,3 +379,6 @@ document.getElementById("secretInput").addEventListener("keydown", function(e){
 document.getElementById("logSortWhen").addEventListener("click", function(){ toggleSort("when"); });
 document.getElementById("logSortIp").addEventListener("click", function(){ toggleSort("ip"); });
 document.getElementById("logSortActor").addEventListener("click", function(){ toggleSort("actor"); });
+document.getElementById("dateFromInput").addEventListener("change", applyDateFilter);
+document.getElementById("dateToInput").addEventListener("change", applyDateFilter);
+document.getElementById("dateFilterClearBtn").addEventListener("click", clearDateFilter);

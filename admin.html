@@ -32,6 +32,15 @@
   <div id="statusMsg"></div>
   <div id="anomalyStat" class="hidden"></div>
 
+  <div id="dateFilterRow" class="hidden">
+    <label for="dateFromInput">From</label>
+    <input id="dateFromInput" type="date">
+    <label for="dateToInput">To</label>
+    <input id="dateToInput" type="date">
+    <button id="dateFilterClearBtn" type="button">✕ Clear</button>
+    <span id="dateFilterCount"></span>
+  </div>
+
   <div id="summarySection" class="hidden">
     <h2>By actor</h2>
     <table id="summaryTable">

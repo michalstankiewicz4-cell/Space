@@ -24,12 +24,22 @@ local (`localStorage`).
   schema) are in **English** — the `pl` dictionary in `js/i18n.js` is the
   one deliberate exception, since that's translation data, not a comment.
 - **Versioning**: bump `js/version.js` and add a `CHANGELOG.md` entry for
-  every meaningful change (feature, balance change, notable fix) — this
-  is how two GitHub Pages deploys are told apart after a push. Also bump
-  the `?v=` cache-busting query param on `css/style.css` and `js/main.js`
-  in `index.html` to the same value (see the cache-busting gotcha below)
-  — it's a hardcoded literal, not read from `js/version.js`, so it's easy
-  to forget.
+  every meaningful change (feature, balance change, notable fix) **to the
+  game itself or `supabase/schema.sql`** — this is how two GitHub Pages
+  deploys of the actual game are told apart after a push. Also bump the
+  `?v=` cache-busting query param on `css/style.css` and `js/main.js` in
+  `index.html` to the same value (see the cache-busting gotcha below) —
+  it's a hardcoded literal, not read from `js/version.js`, so it's easy to
+  forget. **Explicitly excluded**: `admin.html`/`editor.html` and their
+  own `js/admin/`, `js/editor/`, `css/admin.css`, `css/editor.css` — an
+  explicit user call, not an oversight. They're standalone dev tools with
+  no version-check mechanism of their own (`js/versionCheck.js` only ever
+  watches the *game's* `js/version.js`), so a version bump for them
+  wouldn't actually tell two deploys apart the way it does for the game —
+  just noise in `js/version.js`'s history. `CHANGELOG.md` follows the same
+  split, since its own header frames it as "changes to the game, version
+  by version" — an admin/editor-only change has no version number to file
+  itself under, so it's just a plain git commit, not a changelog entry.
 - **Testing before commit**: there's no test suite. Verify changes with a
   local static server (`python -m http.server 8877` from the repo root)
   and a throwaway Playwright script in the scratchpad dir (headless
