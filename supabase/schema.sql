@@ -166,6 +166,126 @@ create table if not exists bite_rate_limit (
 );
 alter table bite_rate_limit enable row level security;
 
+-- Passive network-behavior audit trail — observation only, nothing here
+-- ever blocks or bans a player. Same "RLS enabled, zero policies" pattern
+-- as bite_rate_limit above: unreachable directly by any client, only
+-- written from inside SECURITY DEFINER functions/triggers, so it can't be
+-- read, spoofed or cleared by a modified client either. There's no UI for
+-- it in the game — review it via the Supabase SQL Editor or the
+-- Management API (see the gitignored `pass` file / CLAUDE.md), e.g.:
+--   select actor, event_type, count(*), max(created_at)
+--   from activity_log group by actor, event_type order by 3 desc;
+create table if not exists activity_log (
+  id bigint generated always as identity primary key,
+  actor uuid not null,
+  event_type text not null,
+  detail jsonb,
+  created_at timestamptz not null default now()
+);
+alter table activity_log enable row level security;
+
+-- Bounded-size sliding-window counter, one row per (actor, action) —
+-- reused by both burst-detection triggers below instead of duplicating
+-- the same upsert-with-window-reset logic bite_rate_limit already has
+-- inline. Stays small regardless of how much activity happens: rows are
+-- overwritten in place, not appended.
+create table if not exists activity_rate (
+  actor uuid not null,
+  action text not null,
+  window_start timestamptz not null default now(),
+  count int not null default 0,
+  primary key (actor, action)
+);
+alter table activity_rate enable row level security;
+
+create or replace function bump_activity_rate(p_actor uuid, p_action text, p_window interval)
+returns int
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_count int;
+begin
+  insert into activity_rate (actor, action, window_start, count)
+  values (p_actor, p_action, now(), 1)
+  on conflict (actor, action) do update
+    set count = case when activity_rate.window_start <= now() - p_window
+                      then 1 else activity_rate.count + 1 end,
+        window_start = case when activity_rate.window_start <= now() - p_window
+                             then now() else activity_rate.window_start end
+    returning count into v_count;
+  return v_count;
+end;
+$$;
+
+-- Direct INSERT/DELETE on `bodies` stay permissive by design (see the
+-- Security model notes in CLAUDE.md) — these triggers don't change that,
+-- they only *notice* when one actor does it far more than legitimate play
+-- ever would and write a record, nothing more. Threshold picked with
+-- headroom above the one legitimate burst that exists: the steward's
+-- one-time initial world seed (up to MAX_PLANETS=14 inserts in quick
+-- succession) — 15 is deliberately still very tight above that, since
+-- catching a scripted flood matters more here than avoiding an occasional
+-- log entry from a legitimate steward (this is passive observation, not
+-- an enforcement action, so a false positive costs nothing).
+create or replace function log_body_insert_if_bursty()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_count int;
+begin
+  if v_actor is null then
+    return new;
+  end if;
+  v_count := bump_activity_rate(v_actor, 'body_insert', interval '10 seconds');
+  if v_count > 15 then
+    insert into activity_log (actor, event_type, detail)
+    values (v_actor, 'body_insert_burst', jsonb_build_object(
+      'count_in_window', v_count, 'kind', new.kind, 'radius', new.radius, 'value_bonus', new.value_bonus
+    ));
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_log_body_insert on bodies;
+create trigger trg_log_body_insert after insert on bodies
+  for each row execute function log_body_insert_if_bursty();
+
+-- Same idea for DELETE. Legitimate deletes are rarer still than inserts
+-- (only a body actually dying, or a comet self-despawning locally), so
+-- this threshold has even more headroom above normal play in practice.
+create or replace function log_body_delete_if_bursty()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_count int;
+begin
+  if v_actor is null then
+    return old;
+  end if;
+  v_count := bump_activity_rate(v_actor, 'body_delete', interval '10 seconds');
+  if v_count > 15 then
+    insert into activity_log (actor, event_type, detail)
+    values (v_actor, 'body_delete_burst', jsonb_build_object('count_in_window', v_count, 'kind', old.kind, 'id', old.id));
+  end if;
+  return old;
+end;
+$$;
+
+drop trigger if exists trg_log_body_delete on bodies;
+create trigger trg_log_body_delete after delete on bodies
+  for each row execute function log_body_delete_if_bursty();
+
 -- Atomic "bite" of a body. Returns its health after the hit and whether
 -- this caller landed the final blow (killed = true => only they get points).
 -- When health drops to zero, the row is deleted immediately (DELETE), which
@@ -205,6 +325,11 @@ begin
     returning count into v_count;
 
   if v_count is not null and v_count > 20 then
+    -- A real client physically cannot get here (see NET_DAMAGE_FLUSH_MS),
+    -- so this is already an unambiguous signal on its own — logged for
+    -- later review, see activity_log below.
+    insert into activity_log (actor, event_type, detail)
+    values (v_actor, 'bite_rate_exceeded', jsonb_build_object('count_in_window', v_count, 'body_id', p_body_id));
     return; -- rate limited: silently drop this bite, no error, no effect
   end if;
 

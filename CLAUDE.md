@@ -298,7 +298,33 @@ local (`localStorage`).
   change meaningfully, revisit the constraints too, or this gap reopens.
   Residual risk: someone could still grief the world by inserting
   plausible-looking junk up to the 40-row cap, or mass-deleting real
-  bodies — both stay low-severity and self-healing.
+  bodies — both stay low-severity and self-healing, and both are now
+  at least *noticed* (see the activity_log bullet below).
+- **`activity_log` is a passive audit trail, not an enforcement
+  mechanism — nothing in it ever blocks, bans, or rejects anything.**
+  Same "RLS enabled, zero policies" shape as `bite_rate_limit`: no client,
+  modified or not, can read, write, or clear it — only `SECURITY DEFINER`
+  functions/triggers touch it. Two sources feed it: `bite_body`'s existing
+  rate limiter now also logs when it trips (that alone is an unambiguous
+  signal — a real client physically cannot exceed it), and new
+  `AFTER INSERT`/`AFTER DELETE` triggers on `bodies`
+  (`log_body_insert_if_bursty()`/`log_body_delete_if_bursty()`) that only
+  write a row once a single actor's rate — tracked via a small reusable
+  sliding-window counter, `bump_activity_rate()`/`activity_rate` — crosses
+  15 in a 10-second window. That threshold deliberately sits just above
+  the one legitimate burst that exists (the steward's one-time ~14-body
+  world-seed insert), not tuned to avoid *all* false positives — a stray
+  log entry costs nothing since nothing acts on it automatically. Applying
+  every insert/delete unconditionally (no threshold at all) was
+  considered and rejected: at any real play volume it would have
+  outgrown the free-tier 500MB database limit in days: `activity_rate`
+  stays small regardless (one row per active actor per action, upserted
+  in place), but an unconditional `activity_log` would grow without
+  bound. No UI for this in the game — it's meant to be queried by hand
+  (Supabase SQL Editor, or the Management API via the `pass` file) when
+  something looks worth investigating, e.g.:
+  `select actor, event_type, count(*), max(created_at) from activity_log
+  group by actor, event_type order by 3 desc;`
 - **`bite_body` is rate-limited per actor (20 calls/second)**, via the
   `bite_rate_limit` table (RLS enabled, zero policies — reachable only
   from inside the `SECURITY DEFINER` function, never directly by a
@@ -307,6 +333,8 @@ local (`localStorage`).
   exists because a script hitting the RPC directly in a tight loop could
   one-shot every body the instant it spawned — verified live, 40
   concurrent calls against one body applied exactly 20 and dropped 20.
+  Tripping it now also writes to `activity_log` (see below) — still just
+  dropped silently as far as the caller can tell, nothing changed there.
 - **Anonymous-auth spam**: the live project has
   `rate_limit_anonymous_users = 30` (Supabase's own per-IP throttle — this
   is what produces the 429s during heavy testing, see gotcha below) and

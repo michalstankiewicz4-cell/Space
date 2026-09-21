@@ -4,6 +4,22 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.8.5]
+
+### Added
+- Passive network-behavior audit trail (`supabase/schema.sql`): a new
+  `activity_log` table, unreachable by any client (RLS enabled, zero
+  policies, same pattern as `bite_rate_limit`) and only ever written by
+  `SECURITY DEFINER` functions/triggers — observation only, nothing here
+  blocks or bans a player. Logs `bite_body` rate-limit trips (already an
+  unambiguous signal — a real client physically can't hit it) and bursts
+  of `bodies` inserts/deletes far above what legitimate play ever
+  produces (>15 in 10s per actor, with headroom above the steward's
+  one-time ~14-body world-seed burst). No UI in the game for this;
+  review it via the Supabase SQL Editor or the Management API. Verified
+  live: an 18-insert burst logged exactly 3 entries (the ones past the
+  threshold), and the matching 18-delete cleanup logged 3 more.
+
 ## [1.8.4]
 
 ### Fixed
