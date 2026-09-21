@@ -53,6 +53,16 @@ td.detail{ font-size: 11px; color: var(--ink-dim); white-space: pre-wrap; word-b
 tr.eventSpam td.event, tr.eventBruteforce td.event{ color: var(--danger); }
 tr.eventBurst td.event{ color: var(--ember); }
 
+td.copyCell{ padding: 4px 6px; text-align: center; width: 1%; white-space: nowrap; }
+.copyRowBtn{
+  font-family: var(--font-mono); font-size: 13px; line-height: 1;
+  background: rgba(255,255,255,0.06); color: var(--teal);
+  border: 1px solid var(--panel-edge); border-radius: 4px;
+  padding: 4px 7px; cursor: pointer;
+}
+.copyRowBtn:hover{ background: rgba(79,227,198,0.15); }
+.copyRowBtn.copied{ color: var(--ink); border-color: var(--teal); background: rgba(79,227,198,0.3); }
+
 #anomalyStat{
   font-family: var(--font-mono); font-size: 12px; color: var(--ink);
   background: rgba(255,79,129,0.08); border: 1px solid rgba(255,79,129,0.3);

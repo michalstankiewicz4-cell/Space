@@ -4,6 +4,15 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.9.7]
+
+### Added
+- A "copy row" button (⧉) at the end of every row in both the admin
+  panel's "By actor" and "Recent entries" tables — copies that row's
+  full values, semicolon-separated, to the clipboard (matches the usual
+  Polish/European CSV delimiter, so it pastes straight into a
+  spreadsheet). Flashes a ✓ briefly for feedback.
+
 ## [1.9.6]
 
 ### Fixed

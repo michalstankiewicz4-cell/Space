@@ -78,6 +78,50 @@ function detailWithoutRequestMeta(detail){
   return rest;
 }
 
+// Semicolon-joined, not tab-joined — pastes straight into a spreadsheet
+// with the usual Polish/European CSV delimiter, which is the whole point
+// of a "copy row" button here (quick handoff to someone auditing in Excel).
+function copyToClipboard(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).catch(function(){ legacyCopy(text); });
+  }else{
+    legacyCopy(text);
+  }
+}
+
+// Fallback for contexts where the async Clipboard API is unavailable
+// (e.g. non-secure context) — same trick used nowhere else in this repo,
+// but a plain execCommand("copy") via a throwaway textarea is the only
+// other portable option.
+function legacyCopy(text){
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try{ document.execCommand("copy"); }catch(e){ /* ignore */ }
+  document.body.removeChild(ta);
+}
+
+function copyCell(getText){
+  const cell = document.createElement("td");
+  cell.className = "copyCell";
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "copyRowBtn";
+  btn.textContent = "⧉";
+  btn.title = "Copy row";
+  btn.addEventListener("click", function(){
+    copyToClipboard(getText());
+    btn.textContent = "✓";
+    btn.classList.add("copied");
+    setTimeout(function(){ btn.textContent = "⧉"; btn.classList.remove("copied"); }, 1200);
+  });
+  cell.appendChild(btn);
+  return cell;
+}
+
 function renderAnomalyStat(rows){
   const el = document.getElementById("anomalyStat");
   const actors = new Set(rows.map(function(r){ return r.actor; }));
@@ -105,6 +149,9 @@ function renderSummary(rows){
     tr.appendChild(td(row.eventType, "event"));
     tr.appendChild(td(row.count));
     tr.appendChild(td(new Date(row.lastSeen).toLocaleString()));
+    tr.appendChild(copyCell(function(){
+      return [row.nick || "—", row.actor, row.eventType, row.count, new Date(row.lastSeen).toLocaleString()].join(";");
+    }));
     tbody.appendChild(tr);
   });
   document.getElementById("summarySection").classList.toggle("hidden", list.length === 0);
@@ -123,6 +170,17 @@ function renderLog(rows){
     tr.appendChild(td(r.detail ? r.detail.ip : "", "actor"));
     tr.appendChild(td(shortBrowser(r.detail ? r.detail.user_agent : ""), "actor"));
     tr.appendChild(td(JSON.stringify(detailWithoutRequestMeta(r.detail)), "detail"));
+    tr.appendChild(copyCell(function(){
+      return [
+        new Date(r.created_at).toLocaleString(),
+        r.nick || "—",
+        r.actor,
+        r.event_type,
+        r.detail ? r.detail.ip : "",
+        r.detail ? r.detail.user_agent : "",
+        JSON.stringify(detailWithoutRequestMeta(r.detail)),
+      ].join(";");
+    }));
     tbody.appendChild(tr);
   });
   document.getElementById("logSection").classList.toggle("hidden", rows.length === 0);
