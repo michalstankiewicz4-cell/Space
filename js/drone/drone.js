@@ -7,6 +7,7 @@ import { triggerBreakup } from "../fx/breakup.js";
 import { spawnBiteParticles } from "../fx/particles.js";
 import { applyHealthVisual, destroyPlanet, paintScorch, bodyValueEstimate } from "../world/bodies.js";
 import { t } from "../i18n.js";
+import { containsProfanity } from "../moderation.js";
 import { parseDroneScript } from "./dsl.js";
 import { runProgram } from "./interpreter.js";
 import { spawnPrintEffect } from "./dronePrintFx.js";
@@ -111,6 +112,15 @@ function log(drone, msg){
 // entry above.
 function triggerPrintFx(drone, msg){
   const text = String(msg).slice(0, DRONE_PRINT_MAX_LEN);
+  // A courtesy check, same spirit as confirmNick()'s own-nick check: the
+  // real defense is handleRemoteDronePrint() re-checking on the receiving
+  // end, since a modified client could broadcast anything regardless of
+  // what this one blocks. This one exists so the player who typed it
+  // knows *why* nothing showed up, instead of silently doing nothing.
+  if(containsProfanity(text)){
+    log(drone, t("drone.printBlocked"));
+    return;
+  }
   spawnPrintEffect(drone.pos, drone.heading, text, drone.mesh.material.color.getHex());
   if(NET_ENABLED) broadcastDronePrint(drone.pos, drone.heading, text);
 }

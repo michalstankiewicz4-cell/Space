@@ -1,5 +1,8 @@
-import { IDENTITY_ADJECTIVES, IDENTITY_NOUNS } from "../config.js";
+import { IDENTITY_ADJECTIVES, IDENTITY_NOUNS, NET_MAX_NICK_LENGTH } from "../config.js";
 import { containsProfanity } from "../moderation.js";
+
+// Letters (any script - \p{L} isn't just a-z), digits, and spaces only.
+const NICK_PATTERN = /^[\p{L}\p{N} ]+$/u;
 
 // Anonymous client identifier (persisted in this browser) — used to elect
 // the world's "steward" and to tell other players' ships apart.
@@ -32,8 +35,8 @@ export function hasConfirmedNick(){
 }
 
 export function confirmNick(nick){
-  const trimmed = (nick||"").trim().slice(0, 24);
-  if(!trimmed || containsProfanity(trimmed)) return null;
+  const trimmed = (nick||"").trim().slice(0, NET_MAX_NICK_LENGTH);
+  if(!trimmed || !NICK_PATTERN.test(trimmed) || containsProfanity(trimmed)) return null;
   myIdentity.nick = trimmed;
   writeStored("roj-nick", trimmed);
   return trimmed;

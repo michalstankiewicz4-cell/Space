@@ -4,6 +4,19 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.8.3]
+
+### Added
+- Nicknames are now restricted to letters, digits and spaces, max 20
+  characters (was: any characters, max 24) — rejected with the existing
+  "choose a different nick" message, same as profanity.
+- `print()` now runs its message through the same profanity filter as
+  nicknames before releasing the gas+laser effect (or broadcasting it to
+  other players) — blocked content still gets logged below the Run/Stop
+  buttons as usual, immediately followed by a message explaining why the
+  in-world effect didn't show up, instead of silently doing nothing.
+  Also lowered the effect's own max length from 40 to 32 characters.
+
 ## [1.8.2]
 
 ### Added

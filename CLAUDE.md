@@ -120,7 +120,18 @@ local (`localStorage`).
   (`net/shipsBroadcast.js`, swapped for the generic fallback name if
   flagged) — the second check is the real defense, since a modified client
   can broadcast anything straight over the WebSocket regardless of what
-  its own UI would allow.
+  its own UI would allow. `print()`'s gas+laser effect (see the drone
+  bullets below) follows the same two-check shape: the courtesy check in
+  `drone.js`'s `triggerPrintFx()` logs *why* nothing showed up (this one
+  has a player right there to explain it to, unlike a nickname box), and
+  `net/shipsBroadcast.js`'s `handleRemoteDronePrint()` re-checks on
+  arrival and just silently drops it if flagged — same reasoning, same
+  split.
+  - Nicknames are further restricted to `/^[\p{L}\p{N} ]+$/u` (letters of
+    any script, digits, spaces — note `\p{L}` isn't just `a-zA-Z`) and
+    `NET_MAX_NICK_LENGTH` (20) in `confirmNick()` — one shared constant
+    for both the own-nick length cap and the remote-payload safety clamp
+    in `shipsBroadcast.js`, not two numbers that can drift apart.
 - **Ship cam** (`js/scene/shipcam.js`): a picture-in-picture "cockpit" view
   rendered as a *second* render pass into a small corner rectangle of the
   same canvas/renderer (`setViewport`/`setScissor`, right after the main

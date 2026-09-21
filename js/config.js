@@ -47,7 +47,7 @@ export const DRONE_BASE_ATTACK = 6; // bite power per attack() call
 export const DRONE_BASE_DEFENSE = 1; // survival odds multiplier vs. a black hole's pull (see world/blackholes.js)
 export const DRONE_DOCK_RANGE_MULT = 3.2; // x radius of the nearest body = "close enough to refuel/attack"
 export const DRONE_REFUEL_RATE = 18; // fuel/second while docked at a planet/sun
-export const DRONE_PRINT_MAX_LEN = 40; // print()'s in-world gas+laser message, clamped (see drone/dronePrintFx.js)
+export const DRONE_PRINT_MAX_LEN = 32; // print()'s in-world gas+laser message, clamped (see drone/dronePrintFx.js)
 
 // Multiplayer: intervals and time limits
 export const NET_SHIP_BROADCAST_MS = 120;
@@ -63,7 +63,9 @@ export const NET_GHOST_LERP_SPEED = 6;
 // player's browser.
 export const NET_MAX_REMOTE_SHIPS = 40;
 export const NET_MAX_REMOTE_PLAYERS = 60;
-export const NET_MAX_NICK_LENGTH = 24;
+// Also the actual max length enforced on a player's own nick (see
+// net/identity.js#confirmNick) — one shared limit, not two.
+export const NET_MAX_NICK_LENGTH = 20;
 
 // Random player identity generator (no login) — English, ~20 of each so
 // there's plenty of variety before names repeat.
