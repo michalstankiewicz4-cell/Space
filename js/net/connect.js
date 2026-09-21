@@ -84,9 +84,25 @@ function connectRoom(){
   });
 }
 
+// Reuses an already-stored session instead of always minting a fresh
+// anonymous user — confirmed live (see CLAUDE.md's "Anonymous-auth spam"
+// bullet) that calling signInAnonymously() unconditionally on every page
+// load was creating a brand new Supabase user on every single reload, even
+// in the exact same browser: auth.users grew by exactly one per reload,
+// with a different user.id stored each time. getSession() reads (and
+// silently refreshes, if needed) whatever's already in localStorage —
+// nothing to do with the player's current IP, which the token doesn't
+// care about at all — so a returning tab keeps its identity instead of
+// counting as a fresh "user" every time.
 export function initNet(){
-  supabase.auth.signInAnonymously().then(function(res){
-    if(res.error){ console.warn("Supabase anonymous sign-in failed", res.error); }
-    connectRoom();
+  supabase.auth.getSession().then(function(res){
+    if(res.data && res.data.session){
+      connectRoom();
+      return;
+    }
+    supabase.auth.signInAnonymously().then(function(signInRes){
+      if(signInRes.error){ console.warn("Supabase anonymous sign-in failed", signInRes.error); }
+      connectRoom();
+    });
   });
 }

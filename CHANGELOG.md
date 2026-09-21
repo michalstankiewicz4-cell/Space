@@ -4,6 +4,18 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.6]
+
+### Fixed
+- Every page load/refresh was creating a brand new anonymous Supabase
+  user, even in the exact same browser — confirmed live: 2 reloads of
+  one tab produced 2 separate accounts. `initNet()` now checks for an
+  already-stored session first and only signs in fresh when there
+  isn't one, so a returning tab keeps its identity instead of counting
+  as a new user every time. No effect on gameplay, nickname/color
+  persistence, or reconnecting after an IP change — all already worked
+  the way they should independent of this.
+
 ## [1.10.5]
 
 ### Changed

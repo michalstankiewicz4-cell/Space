@@ -565,22 +565,34 @@ local (`localStorage`).
   this, at the cost of extra setup (an hCaptcha account) — not done, since
   it hasn't been asked for and trades against the "no login screen"
   friction-free design.
-  - **This doesn't need an attacker at all — confirmed live, not assumed.**
-    `net/connect.js#initNet()` calls `supabase.auth.signInAnonymously()`
-    unconditionally on every page load, with no check for an already-valid
-    stored session first (the usual guard, e.g. `getSession()` returning
-    non-null, is simply absent). Verified by reloading the exact same
-    browser tab (same `localStorage`, same computer, same IP) twice and
-    diffing `auth.users`: the row count went up by exactly one **per
-    reload**, with a completely different `user.id` stored in
-    `localStorage` each time — so today, the anonymous-user count is
-    effectively **page loads**, not unique browsers/devices/IPs. A single
-    player who refreshes 10 times in a session already accounts for 10
-    separate "MAU." A real fix (not yet done, since it wasn't asked for)
-    would be to check `supabase.auth.getSession()` first and only call
-    `signInAnonymously()` when it comes back empty, so a returning session
-    is reused instead of minting a fresh identity every load — the same
-    pattern Supabase's own docs use for anonymous auth.
+  - **This didn't even need an attacker — confirmed live, not assumed, and
+    since fixed.** `net/connect.js#initNet()` used to call
+    `supabase.auth.signInAnonymously()` unconditionally on every page load,
+    with no check for an already-valid stored session first. Verified by
+    reloading the exact same browser tab (same `localStorage`, same
+    computer, same IP) twice and diffing `auth.users`: the row count went
+    up by exactly one **per reload**, with a completely different
+    `user.id` stored each time — so the anonymous-user count was
+    effectively **page loads**, not unique browsers/devices/IPs; one
+    player refreshing 10 times in a session accounted for 10 separate
+    "MAU," no malicious intent required. **Fixed**: `initNet()` now calls
+    `supabase.auth.getSession()` first and only falls through to
+    `signInAnonymously()` when that comes back with no session — the same
+    pattern Supabase's own docs use. Re-verified the same way: 3 loads of
+    the same tab now produce exactly 1 new `auth.users` row (not 3), a
+    genuinely new browser context still gets its own distinct identity as
+    expected, and the game's own multiplayer connection (`isConnected()`)
+    still comes up fine either way — this only changes which identity
+    `connectRoom()` runs under, nothing about the connection itself.
+    Doesn't (and can't) change anything about IP — the token this checks
+    has nothing to do with network origin, so a player's IP changing
+    mid-session was never actually relevant here. Also doesn't touch
+    nickname/color/`clientId` persistence at all — those already live in
+    their own separate `localStorage` keys (`net/identity.js`), unrelated
+    to the Supabase auth session. The only way to still get a fresh anon
+    identity going forward: clearing this browser's site data, a different
+    browser/profile, incognito, or a different device — a different stored
+    `localStorage` is the actual boundary, not IP or "the same person."
 - The Management API token in the gitignored `pass` file can run arbitrary
   SQL against the live project (`POST /v1/projects/{ref}/database/query`)
   — useful for inspecting live state (row counts, auth user counts, current
