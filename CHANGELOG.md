@@ -4,6 +4,16 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.8.1]
+
+### Changed
+- `print()`'s gas cloud now visibly sprays outward from the drone's nose
+  to the text's own size over ~1.5s (eased, not a snap into place)
+  instead of puffing up in place near the nose. The laser's tip now
+  sweeps rapidly left-to-right across the text, CRT-scanline style,
+  snapping back to the left edge each pass, for as long as the beam is
+  visible — instead of pointing at one fixed spot.
+
 ## [1.8.0]
 
 ### Added

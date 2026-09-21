@@ -200,7 +200,21 @@ local (`localStorage`).
     (called from `main.js`'s `tick()`, same pattern as `updateDrone(dt)`).
     It's a fire-and-forget snapshot of `drone.pos`/`drone.heading` at the
     moment `print()` ran, not a live reference to the drone — the gas/
-    laser/text don't follow it around afterward. Triggered from both
+    laser/text don't follow it around afterward. Each gas puff sprite
+    lerps from a tight jitter around the drone's nose to a spread sized
+    to the text sprite's own `scale.x`/`scale.y` (a `THREE.Sprite`'s scale
+    *is* its world size, no separate size bookkeeping needed) over
+    `GAS_GROW_END` seconds, eased with `easeOutCubic` — don't snap it
+    straight to full size, that was the first version and looked wrong.
+    The laser is a **unit-length cylinder re-aimed every frame**
+    (`aimBeam()`: reposition + rescale + re-quaternion, not rebuilt) so
+    its tip can sweep left-to-right across the text on a fast repeating
+    `SWEEP_PERIOD`-second sawtooth — the sweep axis is read from
+    `ctx.camera.matrixWorld`'s column 0 (world-space "right"), not a
+    fixed world axis, because the text is a billboarded `Sprite` whose
+    apparent left/right edges rotate with the camera as it orbits; a
+    fixed axis would drift out of alignment with the text as the camera
+    moves. Triggered from both
     `drone.js`'s `print` builtin case (locally) and
     `net/shipsBroadcast.js`'s `handleRemoteDronePrint` (for other
     players' effects) — it's a **one-shot broadcast event**
