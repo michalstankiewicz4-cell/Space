@@ -380,9 +380,23 @@
   }
 
   // One combined raycast against every placed block AND every STILL-EMPTY
-  // cell's collider, taking the single closest hit overall — a solid
-  // block in front of the ray correctly wins over any collider further
-  // behind it, so you can never place "through" an already-built block.
+  // cell's collider. A real block hit ANYWHERE along the ray always wins
+  // over an empty-cell hit, even one that's geometrically closer to the
+  // camera — empty cells' colliders are fully invisible (opacity 0), so
+  // there's nothing on screen for the player to have aimed at there; the
+  // only thing they can actually SEE and click on is a block's own solid
+  // face. Without this, a block that isn't on the near-facing outer shell
+  // (e.g. a single block on the grid's top layer, viewed from underneath
+  // through the otherwise-empty column below it) was unreachable by face
+  // detection: the ray's closest hit was always the nearest empty cell's
+  // invisible collider, resolving to "empty space" instead of the visible
+  // block the player was actually pointing at (reported live: hovering the
+  // underside of a lone top-layer block did nothing, since every empty
+  // cell below it silently absorbed the ray first). A block still
+  // correctly wins over another block behind it (closest-block-first,
+  // same as before — `hits` is already distance-sorted), and an empty
+  // cell only wins when NO block lies anywhere along the ray, so this
+  // can't make you "place through" a block that's actually in front.
   //
   // Occupied cells' own colliders are deliberately excluded here, not just
   // left in and expected to lose the distance comparison: a cell's
@@ -404,13 +418,14 @@
     const ndc = ndcFromEvent(e);
     raycaster.setFromCamera(ndc, camera);
     const blockMeshes = Array.from(blocks.values()).map(function(b){ return b.mesh; });
+    const blockMeshSet = new Set(blockMeshes);
     const emptyColliders = cellColliders.filter(function(c){
       const p = c.userData.cell;
       return !blocks.has(cellKey(p.x, p.y, p.z));
     });
     const hits = raycaster.intersectObjects(blockMeshes.concat(emptyColliders), false);
     if(hits.length === 0) return null;
-    const hit = hits[0];
+    const hit = hits.find(function(h){ return blockMeshSet.has(h.object); }) || hits[0];
     const blockEntry = Array.from(blocks.entries()).find(function(e2){ return e2[1].mesh === hit.object; });
     if(blockEntry){
       const c = keyToCell(blockEntry[0]);
