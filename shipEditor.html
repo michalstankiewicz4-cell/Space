@@ -93,8 +93,11 @@
 <div id="sidebar">
   <h1>SHIP <span>EDITOR</span></h1>
   <p class="hint">
-    <b>Left click</b> empty cell = place &middot; <b>Shift+left click</b> block = remove
-    &middot; <b>right-drag</b> = orbit camera &middot; <b>scroll</b> = zoom &middot; <b>R</b> = rotate pending block
+    <b>Left click</b> = place (or extend from a block's face) &middot;
+    <b>Ctrl+click</b> = remove &middot;
+    <b>Shift+drag</b> = place a row &middot;
+    <b>Ctrl+Shift+drag</b> = remove a row &middot;
+    <b>right-drag</b> = orbit camera &middot; <b>scroll</b> = zoom &middot; <b>R</b> = rotate pending block
   </p>
 
   <h2>Category</h2>
@@ -318,15 +321,37 @@
     }
   }
 
-  // Ghost/hover preview — a thin wireframe cube shown at whichever empty
-  // cell the pointer is currently over, so depth/placement is legible in
-  // a grid this dense.
-  const ghost = new THREE.LineSegments(
-    new THREE.EdgesGeometry(new THREE.BoxGeometry(0.98, 0.98, 0.98)),
-    new THREE.LineBasicMaterial({ color: 0x4fe3c6 })
-  );
-  ghost.visible = false;
-  scene.add(ghost);
+  // Ghost/hover preview — a pool of thin wireframe cubes (reused, not
+  // recreated every frame) showing every cell the current action would
+  // touch: just one under the cursor normally, or the whole line during a
+  // Shift-drag. Teal = would place, red = would remove (Ctrl held) — see
+  // updateGhosts() below. Sized generously above the longest possible line
+  // in a 10-cell grid (a full space-diagonal is sqrt(300)~=17.3 cells).
+  const GHOST_POOL_SIZE = 20;
+  const ghostPlaceMat = new THREE.LineBasicMaterial({ color: 0x4fe3c6 });
+  const ghostRemoveMat = new THREE.LineBasicMaterial({ color: 0xff4f81 });
+  const ghostGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(0.98, 0.98, 0.98));
+  const ghostPool = [];
+  for(let i=0;i<GHOST_POOL_SIZE;i++){
+    const g = new THREE.LineSegments(ghostGeo, ghostPlaceMat);
+    g.visible = false;
+    scene.add(g);
+    ghostPool.push(g);
+  }
+  function updateGhosts(cells, removing){
+    const mat = removing ? ghostRemoveMat : ghostPlaceMat;
+    for(let i=0;i<ghostPool.length;i++){
+      const g = ghostPool[i];
+      if(i < cells.length){
+        g.visible = true;
+        g.material = mat;
+        g.position.copy(cellCenterWorld(cells[i].x, cells[i].y, cells[i].z));
+      } else {
+        g.visible = false;
+      }
+    }
+  }
+  function hideGhosts(){ ghostPool.forEach(function(g){ g.visible = false; }); }
 
   // ---------- raycasting / interaction ----------
 
@@ -337,6 +362,21 @@
       x: ((e.clientX-rect.left)/rect.width)*2 - 1,
       y: -((e.clientY-rect.top)/rect.height)*2 + 1
     };
+  }
+
+  // Snaps a world-space direction to the single nearest cardinal axis
+  // ({x,y,z}, exactly one component is +-1) — used to turn a raycast
+  // hit's face normal into "which of the 6 neighboring cells is this
+  // face pointing at". Works cleanly for axis-aligned faces (cube, and
+  // most of wedge/round's faces); for a genuinely angled face (the wedge's
+  // slope, the round block's curve) it's an approximation — picks
+  // whichever cardinal direction the normal leans closest to — good
+  // enough for "extend roughly this way" rather than needing to be exact.
+  function snapToAxis(v){
+    const ax = Math.abs(v.x), ay = Math.abs(v.y), az = Math.abs(v.z);
+    if(ax >= ay && ax >= az) return { x: v.x > 0 ? 1 : -1, y: 0, z: 0 };
+    if(ay >= ax && ay >= az) return { x: 0, y: v.y > 0 ? 1 : -1, z: 0 };
+    return { x: 0, y: 0, z: v.z > 0 ? 1 : -1 };
   }
 
   // One combined raycast against every placed block AND every STILL-EMPTY
@@ -351,10 +391,16 @@
   // with both left in the ray could hit the invisible collider's surface
   // a hair before the actual block's smaller geometry — reporting the
   // click as landing on an "empty" cell even though a block sits right
-  // there, silently swallowing shift-click removal. Found by testing an
-  // isolated single block (place, then immediately shift-click the same
-  // spot) rather than assuming the distance-sort alone was enough.
-  function pickClosest(e){
+  // there, silently swallowing removal. Found by testing an isolated
+  // single block (place, then immediately click-remove the same spot)
+  // rather than assuming the distance-sort alone was enough.
+  //
+  // Returns { kind:"empty", cell } or { kind:"block", cell, adjacentCell }
+  // — `cell` is the hit block's own cell (what Ctrl-click removes),
+  // `adjacentCell` is the neighbor in the direction of the hit FACE (what
+  // a plain click extends into, Minecraft-style — face detection per the
+  // user's own request), or null if that neighbor is out of grid bounds.
+  function resolveHit(e){
     const ndc = ndcFromEvent(e);
     raycaster.setFromCamera(ndc, camera);
     const blockMeshes = Array.from(blocks.values()).map(function(b){ return b.mesh; });
@@ -364,10 +410,78 @@
     });
     const hits = raycaster.intersectObjects(blockMeshes.concat(emptyColliders), false);
     if(hits.length === 0) return null;
-    const hit = hits[0].object;
-    const blockEntry = Array.from(blocks.entries()).find(function(e2){ return e2[1].mesh === hit; });
-    if(blockEntry) return { kind: "block", key: blockEntry[0] };
-    return { kind: "empty", cell: hit.userData.cell };
+    const hit = hits[0];
+    const blockEntry = Array.from(blocks.entries()).find(function(e2){ return e2[1].mesh === hit.object; });
+    if(blockEntry){
+      const c = keyToCell(blockEntry[0]);
+      let adjacentCell = null;
+      if(hit.face){
+        const normal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
+        const axis = snapToAxis(normal);
+        const adj = { x: c.x+axis.x, y: c.y+axis.y, z: c.z+axis.z };
+        if(inBounds(adj.x, adj.y, adj.z)) adjacentCell = adj;
+      }
+      return { kind: "block", cell: c, adjacentCell: adjacentCell };
+    }
+    return { kind: "empty", cell: hit.object.userData.cell };
+  }
+
+  // Resolves a raycast hit down to the one cell the CURRENT action (place
+  // vs. remove, from Ctrl) actually targets — placing always means "the
+  // empty cell itself, or the neighbor next to whichever block's face was
+  // hit"; removing always means "the block that was actually hit", never
+  // its neighbor. Returns null if that action has no valid target here
+  // (e.g. Ctrl-clicking empty space, or a face whose neighbor is already
+  // occupied or off-grid).
+  function targetCellFor(hit, removing){
+    if(!hit) return null;
+    if(hit.kind === "empty") return removing ? null : hit.cell;
+    if(removing) return hit.cell;
+    if(!hit.adjacentCell) return null;
+    return blocks.has(cellKey(hit.adjacentCell.x, hit.adjacentCell.y, hit.adjacentCell.z)) ? null : hit.adjacentCell;
+  }
+
+  function keyToCell(key){
+    const parts = key.split(",").map(Number);
+    return { x: parts[0], y: parts[1], z: parts[2] };
+  }
+
+  // Standard 3D Bresenham line, inclusive of both endpoints, clipped to
+  // the grid — walks along whichever axis has the largest span, stepping
+  // the other two only when their accumulated error crosses zero. Handles
+  // a plain single-axis row (the common case) as a natural special case
+  // of the same algorithm, not a separate code path.
+  function lineCells(a, b){
+    const cells = [];
+    let x=a.x, y=a.y, z=a.z;
+    const dx=Math.abs(b.x-a.x), dy=Math.abs(b.y-a.y), dz=Math.abs(b.z-a.z);
+    const sx=a.x<b.x?1:-1, sy=a.y<b.y?1:-1, sz=a.z<b.z?1:-1;
+    if(dx>=dy && dx>=dz){
+      let p1=2*dy-dx, p2=2*dz-dx;
+      for(let i=0;i<=dx;i++){
+        cells.push({x,y,z});
+        if(p1>=0){ y+=sy; p1-=2*dx; }
+        if(p2>=0){ z+=sz; p2-=2*dx; }
+        p1+=2*dy; p2+=2*dz; x+=sx;
+      }
+    } else if(dy>=dx && dy>=dz){
+      let p1=2*dx-dy, p2=2*dz-dy;
+      for(let i=0;i<=dy;i++){
+        cells.push({x,y,z});
+        if(p1>=0){ x+=sx; p1-=2*dy; }
+        if(p2>=0){ z+=sz; p2-=2*dy; }
+        p1+=2*dx; p2+=2*dz; y+=sy;
+      }
+    } else {
+      let p1=2*dy-dz, p2=2*dx-dz;
+      for(let i=0;i<=dz;i++){
+        cells.push({x,y,z});
+        if(p1>=0){ y+=sy; p1-=2*dz; }
+        if(p2>=0){ x+=sx; p2-=2*dz; }
+        p1+=2*dy; p2+=2*dx; z+=sz;
+      }
+    }
+    return cells.filter(function(c){ return inBounds(c.x,c.y,c.z); });
   }
 
   function placeAt(x, y, z){
@@ -390,41 +504,45 @@
     updateStatusLine();
   }
 
-  let leftDown = false, leftStartX = 0, leftStartY = 0, leftIsDrag = false;
-  const DRAG_THRESHOLD = 6;
+  // Ctrl = remove mode, Shift = row mode (place or remove a whole line
+  // instead of one cell) — the two combine freely (Ctrl+Shift = remove a
+  // row), so there's one interaction model instead of four separate ones.
+  let leftDown = false, dragAnchorCell = null;
 
   renderer.domElement.addEventListener("contextmenu", function(e){ e.preventDefault(); });
 
   renderer.domElement.addEventListener("pointerdown", function(e){
     if(e.button !== 0) return; // left only — right is the camera (OrbitControls)
-    leftDown = true; leftIsDrag = false; leftStartX = e.clientX; leftStartY = e.clientY;
+    leftDown = true;
+    const hit = resolveHit(e);
+    dragAnchorCell = targetCellFor(hit, e.ctrlKey);
   });
 
   window.addEventListener("pointermove", function(e){
-    if(leftDown){
-      const dx = e.clientX-leftStartX, dy = e.clientY-leftStartY;
-      if(Math.sqrt(dx*dx+dy*dy) > DRAG_THRESHOLD) leftIsDrag = true;
-    }
-    const hit = pickClosest(e);
-    if(hit && hit.kind === "empty"){
-      ghost.visible = true;
-      ghost.position.copy(cellCenterWorld(hit.cell.x, hit.cell.y, hit.cell.z));
+    const hit = resolveHit(e);
+    const removing = e.ctrlKey;
+    const current = targetCellFor(hit, removing);
+    if(!current){ hideGhosts(); return; }
+    if(leftDown && e.shiftKey && dragAnchorCell){
+      updateGhosts(lineCells(dragAnchorCell, current), removing);
     } else {
-      ghost.visible = false;
+      updateGhosts([current], removing);
     }
   });
 
   window.addEventListener("pointerup", function(e){
     if(e.button !== 0 || !leftDown) return;
     leftDown = false;
-    if(leftIsDrag) return; // a drag was just camera-adjacent noise, not a click
-    const hit = pickClosest(e);
-    if(!hit) return;
-    if(e.shiftKey){
-      if(hit.kind === "block") removeAt(hit.key);
-    } else {
-      if(hit.kind === "empty") placeAt(hit.cell.x, hit.cell.y, hit.cell.z);
-    }
+    const hit = resolveHit(e);
+    const removing = e.ctrlKey;
+    const current = targetCellFor(hit, removing);
+    if(!current){ dragAnchorCell = null; return; }
+    const path = (e.shiftKey && dragAnchorCell) ? lineCells(dragAnchorCell, current) : [current];
+    path.forEach(function(cell){
+      if(removing) removeAt(cellKey(cell.x, cell.y, cell.z));
+      else placeAt(cell.x, cell.y, cell.z);
+    });
+    dragAnchorCell = null;
   });
 
   window.addEventListener("keydown", function(e){
