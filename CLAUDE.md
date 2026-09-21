@@ -565,6 +565,22 @@ local (`localStorage`).
   this, at the cost of extra setup (an hCaptcha account) — not done, since
   it hasn't been asked for and trades against the "no login screen"
   friction-free design.
+  - **This doesn't need an attacker at all — confirmed live, not assumed.**
+    `net/connect.js#initNet()` calls `supabase.auth.signInAnonymously()`
+    unconditionally on every page load, with no check for an already-valid
+    stored session first (the usual guard, e.g. `getSession()` returning
+    non-null, is simply absent). Verified by reloading the exact same
+    browser tab (same `localStorage`, same computer, same IP) twice and
+    diffing `auth.users`: the row count went up by exactly one **per
+    reload**, with a completely different `user.id` stored in
+    `localStorage` each time — so today, the anonymous-user count is
+    effectively **page loads**, not unique browsers/devices/IPs. A single
+    player who refreshes 10 times in a session already accounts for 10
+    separate "MAU." A real fix (not yet done, since it wasn't asked for)
+    would be to check `supabase.auth.getSession()` first and only call
+    `signInAnonymously()` when it comes back empty, so a returning session
+    is reused instead of minting a fresh identity every load — the same
+    pattern Supabase's own docs use for anonymous auth.
 - The Management API token in the gitignored `pass` file can run arbitrary
   SQL against the live project (`POST /v1/projects/{ref}/database/query`)
   — useful for inspecting live state (row counts, auth user counts, current
