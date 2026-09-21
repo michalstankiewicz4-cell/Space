@@ -441,6 +441,36 @@
     return { kind: "empty", cell: hit.object.userData.cell };
   }
 
+  // Like resolveHit(), but ignores face-extend semantics entirely and just
+  // reports the raw cell (a block's own, or an empty one) closest to the
+  // camera — used for the drag-path endpoint during Shift-drag row
+  // placement/removal, never for a plain hover/click.
+  //
+  // A drag sweep is about tracing a line across grid CELLS, not aiming at
+  // one specific face, so resolveHit()'s "a real block anywhere along the
+  // ray wins over any empty cell" rule is the wrong tool here: it made the
+  // drag's current cell violently jump to (or lose entirely, when that
+  // face's neighbor was out of bounds) whichever existing block the sweep
+  // happened to cross, instead of continuing smoothly through/past it —
+  // reported live as dragging "not working" near an already-built
+  // structure. placeAt()/removeAt() already silently no-op on a cell
+  // where the action doesn't apply (occupied for place, empty for
+  // remove), so it's safe for a line to pass straight over either kind.
+  function rawCellUnderRay(e){
+    const ndc = ndcFromEvent(e);
+    raycaster.setFromCamera(ndc, camera);
+    const blockMeshes = Array.from(blocks.values()).map(function(b){ return b.mesh; });
+    const emptyColliders = cellColliders.filter(function(c){
+      const p = c.userData.cell;
+      return !blocks.has(cellKey(p.x, p.y, p.z));
+    });
+    const hits = raycaster.intersectObjects(blockMeshes.concat(emptyColliders), false);
+    if(hits.length === 0) return null;
+    const hit = hits[0];
+    const blockEntry = Array.from(blocks.entries()).find(function(e2){ return e2[1].mesh === hit.object; });
+    return blockEntry ? keyToCell(blockEntry[0]) : hit.object.userData.cell;
+  }
+
   // Resolves a raycast hit down to the one cell the CURRENT action (place
   // vs. remove, from Ctrl) actually targets — placing always means "the
   // empty cell itself, or the neighbor next to whichever block's face was
@@ -534,11 +564,11 @@
   });
 
   window.addEventListener("pointermove", function(e){
-    const hit = resolveHit(e);
     const removing = e.ctrlKey;
-    const current = targetCellFor(hit, removing);
+    const dragging = leftDown && e.shiftKey && dragAnchorCell;
+    const current = dragging ? rawCellUnderRay(e) : targetCellFor(resolveHit(e), removing);
     if(!current){ hideGhosts(); return; }
-    if(leftDown && e.shiftKey && dragAnchorCell){
+    if(dragging){
       updateGhosts(lineCells(dragAnchorCell, current), removing);
     } else {
       updateGhosts([current], removing);
@@ -548,11 +578,11 @@
   window.addEventListener("pointerup", function(e){
     if(e.button !== 0 || !leftDown) return;
     leftDown = false;
-    const hit = resolveHit(e);
     const removing = e.ctrlKey;
-    const current = targetCellFor(hit, removing);
+    const dragging = e.shiftKey && dragAnchorCell;
+    const current = dragging ? rawCellUnderRay(e) : targetCellFor(resolveHit(e), removing);
     if(!current){ dragAnchorCell = null; return; }
-    const path = (e.shiftKey && dragAnchorCell) ? lineCells(dragAnchorCell, current) : [current];
+    const path = dragging ? lineCells(dragAnchorCell, current) : [current];
     path.forEach(function(cell){
       if(removing) removeAt(cellKey(cell.x, cell.y, cell.z));
       else placeAt(cell.x, cell.y, cell.z);
