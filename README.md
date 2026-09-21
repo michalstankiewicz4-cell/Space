@@ -47,7 +47,8 @@ supabase/schema.sql  database schema (tables, RLS, RPC functions) to paste into 
 
 `admin.html`/`css/admin.css`/`js/admin/` and `editor.html`/`css/editor.css`/`js/editor/`
 are separate developer-tool entry points, not part of the game's own module
-graph above — see "Object editor" and "Admin panel" below.
+graph above — see "Object editor" and "Admin panel" below. `blog/` isn't
+part of the game at all — see "Devlog" below.
 
 Adding a new mechanic (e.g. another upgrade type, a new kind of celestial
 body) usually means editing a single file in the right folder, without
@@ -106,6 +107,23 @@ script written in the drone's own DSL, not a fully custom client.
 `activity_log` itself has no client-facing read access at
 all — view it via the [Admin panel](#admin-panel) above, the Supabase SQL
 Editor, or the Management API.
+
+## Devlog
+
+There's a companion devlog at
+[swarmprotocol.blogspot.com](https://swarmprotocol.blogspot.com/) (Polish),
+hosted on Blogger — separate from this repo's own docs, for
+announcement/behind-the-scenes style posts rather than technical
+reference. `blog/` in this repo holds each post's hero image (AI-generated,
+one per post) — the Blogger API has no endpoint to upload post images
+directly, so images are hosted here instead and pulled into the post's
+HTML by URL via GitHub Pages, the same way the game itself is served.
+Every AI-generated image gets a small caption disclosing that and stating
+it isn't (and won't become) an actual in-game asset.
+
+Publishing goes through the Blogger API (OAuth credentials in the
+gitignored `pass` file, same pattern as the Supabase Management API
+token) rather than the Blogger web UI.
 
 ## Programmable drone
 
