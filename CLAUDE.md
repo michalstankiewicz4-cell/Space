@@ -122,7 +122,22 @@ local (`localStorage`).
   channel's own reported status, not a "haven't heard anything in a while"
   timer — a healthy-but-quiet room (nobody else currently playing) would
   otherwise be indistinguishable from a dead connection and trigger
-  constant false alarms.
+  constant false alarms. **`js/world/blackholes.js#updateBlackHoles()` had
+  this exact gap unfixed for a long time** — no `isConnected()` guard on
+  its own steward-gated spawn, *and* no staleness fallback at all (unlike
+  `maintainPlanetCount`'s), so a steward whose tab was merely backgrounded
+  (not disconnected — Presence re-election needs an actual socket drop,
+  not just a throttled `requestAnimationFrame`) meant black holes could
+  stop appearing for the whole session with nothing to self-correct it.
+  Reported live as "black holes stopped appearing" and fixed the same way
+  `maintainPlanetCount` was: `isConnected()` before spawning, plus a
+  `lastBlackHoleActivityAt`/`BLACKHOLE_STALE_MS` (90-120s, jittered)
+  fallback letting any other connected client step in once it's been far
+  longer than the normal 34-58s cadence since one last appeared. Verified
+  live with two clients: the non-steward correctly didn't spawn while not
+  stale, then correctly did once `Date.now()` was patched far enough
+  ahead to cross the threshold — and the result synced to both clients via
+  Realtime, same as a steward-spawned one would.
 - **DELETE on `bodies` always means "eaten" except for comets.** A
   planet/sun/meteoroid has no other legitimate way to leave the database;
   only comets can also self-despawn locally for flying out of the field.

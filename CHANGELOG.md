@@ -4,6 +4,19 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.8]
+
+### Fixed
+- Black holes could stop appearing entirely for the whole session if the
+  steward's tab was backgrounded (throttled, not disconnected, so nothing
+  re-elects a new steward) — there was no fallback letting another client
+  spawn one instead, unlike the equivalent mechanism for planets. Any
+  connected client can now step in once it's been far longer than the
+  normal cadence since a black hole last appeared. Also adds the same
+  dead-socket guard planet top-up already had, so a steward with a silently
+  dropped Realtime connection can't insert duplicate black holes it can no
+  longer see are already there.
+
 ## [1.10.7]
 
 ### Added

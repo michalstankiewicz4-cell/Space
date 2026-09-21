@@ -12,10 +12,33 @@ import { disposeShip, reconcileFleetSize } from "../ships/swarm.js";
 import { refreshDock } from "../ui/dock.js";
 import { save } from "../core/gameState.js";
 import { isSteward } from "../net/presence.js";
+import { isConnected } from "../net/connect.js";
 import { stopDroneScript } from "../drone/drone.js";
 import { t } from "../i18n.js";
 
 let blackHoleTimer = CONTENT.blackhole.firstSpawnMinS + Math.random()*CONTENT.blackhole.firstSpawnRangeS;
+
+// Same class of bug bodiesSync.js#maintainPlanetCount() already had fixed
+// once (see CLAUDE.md's "Realtime channel health has no free lunch"): a
+// steward whose Realtime socket has silently died (while plain REST still
+// works fine) sees its own ctx.blackholes as perpetually empty even when a
+// black hole genuinely exists, and — unlike maintainPlanetCount() — nothing
+// here was checking isConnected() before spawning, so a desynced steward
+// could keep inserting duplicate black holes nobody asked for. Worse: with
+// no fallback at all, a steward whose tab is merely backgrounded (not
+// disconnected — Presence re-election never fires for that, only for an
+// actual socket drop) has requestAnimationFrame throttled to a crawl by the
+// browser, so its own blackHoleTimer barely advances in real time — black
+// holes could stop appearing for the whole session with nothing to correct
+// it. `lastBlackHoleActivityAt` (bumped in materializeBlackHole() below,
+// which every client's own spawn *and* every remote one they observe both
+// go through) tracks the last confirmed non-stuck moment; BLACKHOLE_STALE_MS
+// sits comfortably above the longest legitimate gap between two black holes
+// (respawnMinS..respawnMinS+respawnRangeS, 34-58s) so it never fires during
+// normal play, jittered per client so idle clients don't all fire the
+// fallback in the same instant.
+let lastBlackHoleActivityAt = Date.now();
+const BLACKHOLE_STALE_MS = 90000 + Math.random()*30000;
 
 export function randomBlackHoleSpawnData(){
   const bh = CONTENT.blackhole;
@@ -84,6 +107,7 @@ export function materializeBlackHole(row, pos){
     flowSpeed: 0.05+Math.random()*0.06
   };
   ctx.blackholes.push(bh);
+  lastBlackHoleActivityAt = Date.now();
   showToast(t("toast.blackholeDetected"));
   if(NET_ENABLED) ctx.netBodies[row.id] = bh;
   return bh;
@@ -111,7 +135,18 @@ export function requestSpawnBlackHole(){
 export function updateBlackHoles(dt){
   blackHoleTimer -= dt;
   if(blackHoleTimer <= 0 && ctx.blackholes.length === 0){
-    if(NET_ENABLED){ if(isSteward) requestSpawnBlackHole(); }
+    if(NET_ENABLED){
+      // isConnected() guard: same reasoning as maintainPlanetCount() — a
+      // steward with a dead Realtime socket must not insert blindly via
+      // plain REST, since it can no longer see whether one already exists.
+      // The staleness half of the condition is the actual fix for "black
+      // holes stopped appearing": any other connected client can step in
+      // once it's been far longer than the normal cadence since one last
+      // appeared, instead of waiting forever for a steward stuck on a
+      // backgrounded tab.
+      const stale = Date.now() - lastBlackHoleActivityAt > BLACKHOLE_STALE_MS;
+      if(isConnected() && (isSteward || stale)) requestSpawnBlackHole();
+    }
     else { spawnBlackHoleLocalOnly(); }
     blackHoleTimer = CONTENT.blackhole.respawnMinS + Math.random()*CONTENT.blackhole.respawnRangeS;
   }
