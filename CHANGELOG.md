@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.9.5]
+
+### Added
+- A gently swaying "DEV Blog.PL" badge in the top-right corner of the
+  start screen, linking out to the new devlog
+  ([swarmprotocol.blogspot.com](https://swarmprotocol.blogspot.com/)).
+
 ## [1.9.4]
 
 ### Added
