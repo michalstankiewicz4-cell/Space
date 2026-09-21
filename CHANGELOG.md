@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.4]
+
+### Changed
+- The nebula skybox's color clouds are more visible — fewer, bigger
+  blobs with roughly double the opacity, so distinct colors are
+  actually distinguishable at a glance instead of reading as one faint
+  haze.
+
 ## [1.10.3]
 
 ### Added
