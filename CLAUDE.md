@@ -30,16 +30,29 @@ local (`localStorage`).
   `?v=` cache-busting query param on `css/style.css` and `js/main.js` in
   `index.html` to the same value (see the cache-busting gotcha below) —
   it's a hardcoded literal, not read from `js/version.js`, so it's easy to
-  forget. **Explicitly excluded**: `admin.html`/`editor.html` and their
-  own `js/admin/`, `js/editor/`, `css/admin.css`, `css/editor.css` — an
-  explicit user call, not an oversight. They're standalone dev tools with
-  no version-check mechanism of their own (`js/versionCheck.js` only ever
-  watches the *game's* `js/version.js`), so a version bump for them
-  wouldn't actually tell two deploys apart the way it does for the game —
-  just noise in `js/version.js`'s history. `CHANGELOG.md` follows the same
-  split, since its own header frames it as "changes to the game, version
-  by version" — an admin/editor-only change has no version number to file
-  itself under, so it's just a plain git commit, not a changelog entry.
+  forget. **Explicitly excluded** (all explicit user calls, not
+  oversights — the common thread is "doesn't change what a player's
+  browser actually loads/runs"):
+  - `admin.html`/`editor.html` and their own `js/admin/`, `js/editor/`,
+    `css/admin.css`, `css/editor.css` — standalone dev tools with no
+    version-check mechanism of their own (`js/versionCheck.js` only ever
+    watches the *game's* `js/version.js`), so a version bump for them
+    wouldn't actually tell two deploys apart the way it does for the
+    game — just noise in `js/version.js`'s history.
+  - The devlog (`blog/` folder, and publishing a post via the Blogger
+    API — see "Devlog (Blogger)" below) — a completely separate site on
+    a separate host (Blogger), not part of what GitHub Pages serves for
+    the game at all.
+  - **Pure documentation edits** — a change touching only `.md` files
+    (`README.md`, this file, `IDEAS.md`, or a `CHANGELOG.md` edit *not*
+    accompanying an actual game/schema change) — nothing about the
+    deployed game bundle changed, so there's nothing for a version bump
+    to distinguish.
+
+  `CHANGELOG.md` follows the same split, since its own header frames it
+  as "changes to the game, version by version" — none of the above have
+  a version number to file themselves under, so they're just a plain git
+  commit, not a changelog entry.
 - **Testing before commit**: there's no test suite. Verify changes with a
   local static server (`python -m http.server 8877` from the repo root)
   and a throwaway Playwright script in the scratchpad dir (headless
