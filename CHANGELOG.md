@@ -4,6 +4,21 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.3]
+
+### Added
+- A procedural nebula skybox — a huge sphere with a canvas-generated
+  gradient and soft color-cloud blobs in the game's own accent palette,
+  no external image assets (same approach as every planet texture).
+
+### Fixed
+- The starfield was almost invisible at its own distance — the scene's
+  distance fog was blending it nearly entirely into the background color
+  well before it could fade from distance alone. Both the new skybox and
+  the starfield now opt out of fog, and the starfield also got a touch of
+  per-star color variation (cool blue-white, warm white, faint teal)
+  instead of one flat color.
+
 ## [1.10.2]
 
 ### Fixed

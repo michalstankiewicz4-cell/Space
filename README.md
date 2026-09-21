@@ -26,7 +26,8 @@ js/
   env.js             Supabase URL/key (anon key — safe to commit, see below)
   supabaseClient.js  Supabase client singleton
   core/              shared game state (scene/entity collections, player points) + small utilities
-  scene/             camera, renderer, mouse controls/selection, hover tooltip, ship cam (picture-in-picture cockpit view)
+  scene/             camera, renderer, mouse controls/selection, hover tooltip, ship cam (picture-in-picture cockpit view),
+                     nebula skybox (skybox.js)
   world/             celestial body logic (mesh/textures/animation) — per-type data lives in js/bodies/
   bodies/            7 body types, one file each (sun.js, icePlanet.js, neutralPlanet.js,
                      volcanicPlanet.js, comet.js, meteoroid.js, blackhole.js) — see "Object editor" below

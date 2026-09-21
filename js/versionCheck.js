@@ -38,6 +38,7 @@ const MODULE_FILES = [
   "js/moderation.js", "js/net/bodiesSync.js", "js/net/connect.js",
   "js/net/identity.js", "js/net/presence.js", "js/net/shipsBroadcast.js",
   "js/scene/controls.js", "js/scene/setup.js", "js/scene/shipcam.js",
+  "js/scene/skybox.js",
   "js/settings.js", "js/ships/swarm.js", "js/station/station.js",
   "js/station/stationModel.js", "js/supabaseClient.js",
   "js/ui/banner.js", "js/ui/dock.js", "js/ui/dronePanel.js", "js/ui/fleet.js",

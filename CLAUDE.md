@@ -143,6 +143,23 @@ local (`localStorage`).
   (verified empirically, not yet root-caused) — the ship cam camera
   corrects for this with a 180°-about-Y flip before copying the mesh's
   quaternion, since a camera always looks down its own -Z.
+- **Nebula skybox** (`js/scene/skybox.js#addSkybox()`): a huge (radius 900)
+  inverted sphere with a canvas-generated equirectangular texture (a dark
+  gradient + additive-blended soft color-cloud blobs in the game's own
+  accent palette, same "no external image assets" approach as every
+  celestial-body texture in `world/textures.js`) — added once in
+  `scene/setup.js#initScene()`, right before the existing `THREE.Points`
+  starfield. **Both the skybox material and the starfield's own
+  `PointsMaterial` need `fog: false`** — easy to miss since neither one
+  errors or looks obviously *wrong* without it, just washed-out: the
+  scene's `FogExp2` (density 0.0065) blends anything this far from camera
+  almost entirely into the fog color, verified by the difference a single
+  screenshot before/after adding `fog:false` to the starfield made (stars
+  went from a faint handful of pixels to an actually-populated sky) — the
+  math backs it up too (`1 - exp(-(density*distance)^2)` is already
+  ~94% at the starfield's own *nearest* radius, 260). A fixed backdrop
+  shouldn't dim with camera-relative fog the way foreground objects
+  legitimately should.
 - **Programmable drone** (`js/drone/*.js`, Colobot-inspired): a single
   extra ship per player that only moves by running a player-written
   script — never auto-targets anything like the swarm's ships do.
