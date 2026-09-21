@@ -235,6 +235,20 @@ local (`localStorage`).
     untrusted-payload-clamping treatment as ship positions (`safeCoord()`,
     plus `containsProfanity()` on the text — same defense-in-depth
     pattern as remote nicknames).
+  - **`print()` has a `DRONE_PRINT_COOLDOWN_S` (1.5s) client-side cooldown
+    (`drone.lastPrintAt`, checked in `triggerPrintFx()`) — the only lever
+    against print-spam that exists, and a limited one.** Broadcast
+    messages never touch the database at all, so there's nothing there to
+    rate-limit against the way `bite_body`/`bodies` inserts are (1.9.2) —
+    this cooldown lives in plain JS the DSL interpreter can't reach
+    around, so it does stop a `while(true){ print(...) }` script with no
+    `wait()` (which would otherwise fire as fast as the interpreter's own
+    runaway-script step limit allows, up to ~2000 broadcasts in one
+    frame) — but a fully custom/modified client bypassing this file
+    entirely could still flood the channel directly. Same residual risk
+    broadcast traffic already has everywhere else in this project (see
+    "Realtime channel health has no free lunch" above) — accepted, not a
+    gap introduced by this feature specifically.
   - **The side panel's `#droneCloseBtn`/`#droneScriptBtn`/`#droneRunBtn`/
     `#droneStopBtn` all need an explicit `pointer-events:auto` override**
     in `style.css` — `#dronePanel` itself is `pointer-events:none` (same
@@ -283,11 +297,15 @@ local (`localStorage`).
   `bite_body` to instantly "kill" it and collect its full point value. This
   was found and fixed once already (see `supabase/schema.sql` and
   `CHANGELOG.md`) — don't reintroduce it when adding new mutable columns.
-- **INSERT/DELETE on `bodies` stay permissive on purpose.** Any
-  anon-authenticated client can insert or delete rows directly (steward
-  election is a client-side courtesy for spawning, not a security
-  boundary; DELETE is idempotent so it's safe for any client to call).
-  What keeps this safe is entirely the CHECK constraints — and a shared
+- **INSERT/DELETE on `bodies` stay permissive on purpose — up to a rate
+  (1.9.2).** Any anon-authenticated client can still insert or delete
+  rows directly (steward election is a client-side courtesy for
+  spawning, not a security boundary; DELETE is idempotent so it's safe
+  for any client to call) as long as they're not doing it faster than
+  any legitimate play ever would — see the `BEFORE INSERT`/
+  `BEFORE DELETE` triggers in the `activity_log` bullet below, which now
+  actually reject a burst past 15-in-10s, not just log it. Below that
+  rate, what keeps it safe is entirely the CHECK constraints — and a shared
   radius/value_bonus range across every kind was NOT actually
   "plausible-looking" per kind, it just looked that way: a script was
   caught live inserting a fake "sun" (radius ~6, value_bonus=90,
@@ -298,29 +316,45 @@ local (`localStorage`).
   change meaningfully, revisit the constraints too, or this gap reopens.
   Residual risk: someone could still grief the world by inserting
   plausible-looking junk up to the 40-row cap, or mass-deleting real
-  bodies — both stay low-severity and self-healing, and both are now
-  at least *noticed* (see the activity_log bullet below).
-- **`activity_log` is a passive audit trail, not an enforcement
-  mechanism — nothing in it ever blocks, bans, or rejects anything.**
-  Same "RLS enabled, zero policies" shape as `bite_rate_limit`: no client,
-  modified or not, can read, write, or clear it — only `SECURITY DEFINER`
-  functions/triggers touch it. Two sources feed it: `bite_body`'s existing
-  rate limiter now also logs when it trips (that alone is an unambiguous
-  signal — a real client physically cannot exceed it), and new
-  `AFTER INSERT`/`AFTER DELETE` triggers on `bodies`
-  (`log_body_insert_if_bursty()`/`log_body_delete_if_bursty()`) that only
-  write a row once a single actor's rate — tracked via a small reusable
-  sliding-window counter, `bump_activity_rate()`/`activity_rate` — crosses
-  15 in a 10-second window. That threshold deliberately sits just above
-  the one legitimate burst that exists (the steward's one-time ~14-body
-  world-seed insert), not tuned to avoid *all* false positives — a stray
-  log entry costs nothing since nothing acts on it automatically. Applying
-  every insert/delete unconditionally (no threshold at all) was
-  considered and rejected: at any real play volume it would have
-  outgrown the free-tier 500MB database limit in days: `activity_rate`
-  stays small regardless (one row per active actor per action, upserted
-  in place), but an unconditional `activity_log` would grow without
-  bound. No UI for this **in the game** — `admin.html` (separate entry
+  bodies, as long as they pace it under the burst-rejection threshold —
+  both stay low-severity and self-healing, and both are now at least
+  *noticed* even when paced that carefully (see the activity_log bullet
+  below).
+- **`activity_log` itself is a passive audit trail — nothing reads it and
+  auto-bans anyone.** Same "RLS enabled, zero policies" shape as
+  `bite_rate_limit`: no client, modified or not, can read, write, or
+  clear it — only `SECURITY DEFINER` functions/triggers touch it. But
+  several of the write-path guards that feed it have since grown real
+  enforcement alongside the logging (1.9.2) — don't assume "it's in
+  activity_log" means "and otherwise nothing happened":
+  - `bite_body`'s existing rate limiter logs when it trips (that alone is
+    an unambiguous signal — a real client physically cannot exceed it)
+    *and* has always silently dropped the call, no error, no effect.
+  - `BEFORE INSERT`/`BEFORE DELETE` triggers on `bodies`
+    (`log_body_insert_if_bursty()`/`log_body_delete_if_bursty()`) log
+    *and* `RAISE EXCEPTION` — actually rejecting the row, not just
+    observing it — once a single actor's rate, tracked via a small
+    reusable sliding-window counter (`bump_activity_rate()`/
+    `activity_rate`), crosses 15 in a 10-second window. Originally
+    `AFTER` triggers that only logged; moved to `BEFORE` specifically so
+    they could cancel the row instead of just noticing it after the fact
+    (verified live: the 16th body insert within the window fails with
+    "Too many body inserts too fast", the first 15 all still succeed).
+  - `set_my_nick()` (see the nick bullet below) silently drops over 5
+    calls per 30s per actor, same "no error" shape as `bite_body`.
+
+  15-in-10s deliberately sits just above the one legitimate burst that
+  exists (the steward's one-time ~14-body world-seed insert) — a false
+  positive there costs a retried top-up at worst (another client's
+  staleness fallback or its own next cycle covers it), which is cheap
+  enough that the threshold didn't need tuning to avoid every possible
+  false positive. Applying every insert/delete unconditionally (no
+  threshold at all) was considered and rejected for the *logging* half
+  specifically: at any real play volume it would have outgrown the
+  free-tier 500MB database limit in days — `activity_rate` stays small
+  regardless (one row per active actor per action, upserted in place),
+  but an unconditional `activity_log` would grow without bound. No UI
+  for this **in the game** — `admin.html` (separate entry
   point, not linked from the game, same treatment as `editor.html`) is a
   read-only viewer for it, or query by hand (Supabase SQL Editor, or the
   Management API via the `pass` file) when something looks worth
@@ -371,14 +405,24 @@ local (`localStorage`).
     never reaches Postgres at all** — nicknames only ever travel over
     ephemeral Realtime Broadcast/Presence (see the "Settings vs.
     identity vs. i18n" bullet above), invisible to any HTTP-header trick.
-    `actor_nicks` (`actor uuid primary key default auth.uid()`, RLS: read
-    by anyone, write only your own row) exists so the client can
-    self-report it once per connection (`net/connect.js`, right after the
-    existing `roomChannel.track()` call) — **explicitly not verified
-    identity, unlike everything else on this page**: a modified client
-    could claim any nick at all, including someone else's, since nothing
-    checks it against what that actor actually broadcasts elsewhere.
-    Treat it as a hint for the honest-majority case, never as proof.
+    `actor_nicks` (`actor uuid primary key default auth.uid()`) exists so
+    the client can self-report it once per connection (`net/connect.js`,
+    right after the existing `roomChannel.track()` call, via
+    `set_my_nick(p_nick)`) — **explicitly not verified identity, unlike
+    everything else on this page**: a modified client could claim any
+    nick at all, including someone else's, since nothing checks it
+    against what that actor actually broadcasts elsewhere. Treat it as a
+    hint for the honest-majority case, never as proof. `actor_nicks` has
+    RLS enabled with **zero policies**, same as everywhere else in this
+    file — it used to have direct insert/update-your-own-row policies,
+    which meant a script could hammer `.upsert()` with no throttle at
+    all; `set_my_nick()` is now the only door in, rate-limited to 5
+    calls/30s the same `bump_activity_rate` way as everything else
+    (verified live: the *5th* of 8 rapid calls is what ends up stored,
+    not the 8th — the rest silently drop and log as `set_nick_spam`),
+    and clamps the nick to 20 chars server-side (`NET_MAX_NICK_LENGTH`)
+    so this self-reported field can't be used to stash an arbitrarily
+    long string.
   - **Found (and fixed before ever shipping) a stored-XSS hole from
     exactly that self-reported nick, plus the also-client-controlled
     IP/user-agent**: `admin.html`'s first draft built table rows via

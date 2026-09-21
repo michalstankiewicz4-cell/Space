@@ -206,8 +206,12 @@ alter table activity_rate enable row level security;
 -- nick, including someone else's — treat it as a hint for the common/
 -- honest case, never as proof of who did something. `actor` defaults to
 -- auth.uid() so the client never has to know/send its own Supabase user
--- id; RLS still only lets a caller write their own row regardless of
--- what `actor` value (if any) they try to send explicitly.
+-- id.
+-- RLS enabled, zero policies — same "unreachable directly" shape as
+-- bite_rate_limit/activity_log/activity_rate. A real client calls
+-- set_my_nick() (below) exactly once per connection; direct table access
+-- would have let a script hammer .upsert() as fast as the network
+-- allows with no throttle at all, which the RPC's own rate limit closes.
 create table if not exists actor_nicks (
   actor uuid primary key default auth.uid(),
   nick text not null,
@@ -216,15 +220,45 @@ create table if not exists actor_nicks (
 alter table actor_nicks enable row level security;
 
 drop policy if exists "actor_nicks readable by anyone" on actor_nicks;
-create policy "actor_nicks readable by anyone" on actor_nicks for select using (true);
-
 drop policy if exists "actor_nicks writable for own row" on actor_nicks;
-create policy "actor_nicks writable for own row" on actor_nicks
-  for insert to authenticated with check (actor = auth.uid());
-
 drop policy if exists "actor_nicks updatable for own row" on actor_nicks;
-create policy "actor_nicks updatable for own row" on actor_nicks
-  for update to authenticated using (actor = auth.uid()) with check (actor = auth.uid());
+
+-- Rate-limited the same way as everything else here (bump_activity_rate)
+-- — a real client calls this once per connection, so even a generous
+-- 5-per-30s cap has huge headroom while stopping a script that tries to
+-- hammer it in a tight loop. Length-capped to match NET_MAX_NICK_LENGTH
+-- (js/config.js) purely so this self-reported field can't be used to
+-- stash an arbitrarily large string — deliberately NOT re-validating
+-- character set/profanity here the way confirmNick() does client-side:
+-- this field is already documented as unverified, and an admin reviewing
+-- it is better served seeing exactly what was sent, not a filtered
+-- version of it.
+create or replace function set_my_nick(p_nick text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_count int;
+begin
+  if v_actor is null then
+    return;
+  end if;
+
+  v_count := bump_activity_rate(v_actor, 'set_nick', interval '30 seconds');
+  if v_count > 5 then
+    insert into activity_log (actor, event_type, detail)
+    values (v_actor, 'set_nick_spam', jsonb_build_object('count_in_window', v_count) || request_meta());
+    return;
+  end if;
+
+  insert into actor_nicks (actor, nick, updated_at)
+  values (v_actor, left(coalesce(p_nick, ''), 20), now())
+  on conflict (actor) do update set nick = excluded.nick, updated_at = excluded.updated_at;
+end;
+$$;
 
 -- Best-effort request metadata (IP, browser, country) for whoever's
 -- calling right now — pulled from the HTTP request PostgREST exposes to
@@ -282,15 +316,19 @@ end;
 $$;
 
 -- Direct INSERT/DELETE on `bodies` stay permissive by design (see the
--- Security model notes in CLAUDE.md) — these triggers don't change that,
--- they only *notice* when one actor does it far more than legitimate play
--- ever would and write a record, nothing more. Threshold picked with
--- headroom above the one legitimate burst that exists: the steward's
--- one-time initial world seed (up to MAX_PLANETS=14 inserts in quick
--- succession) — 15 is deliberately still very tight above that, since
--- catching a scripted flood matters more here than avoiding an occasional
--- log entry from a legitimate steward (this is passive observation, not
--- an enforcement action, so a false positive costs nothing).
+-- Security model notes in CLAUDE.md) — legitimate play never comes close
+-- to this threshold, so these BEFORE triggers reject (not just log) once
+-- one actor's rate clearly leaves legitimate play behind, same spirit as
+-- bite_body's own rate limit just below. Threshold picked with headroom
+-- above the one legitimate burst that exists: the steward's one-time
+-- initial world seed (up to MAX_PLANETS=14 inserts in quick succession)
+-- — 15 is deliberately still tight above that, since catching a scripted
+-- flood matters more than the vanishingly rare false positive (and even
+-- that costs a legitimate steward nothing but one retried top-up, since
+-- another client's staleness fallback or its own next cycle covers it —
+-- see maintainPlanetCount() in js/net/bodiesSync.js). BEFORE (not AFTER)
+-- specifically so it can actually cancel the row via RAISE EXCEPTION,
+-- not just observe it after the fact.
 create or replace function log_body_insert_if_bursty()
 returns trigger
 language plpgsql
@@ -310,13 +348,14 @@ begin
     values (v_actor, 'body_insert_burst', jsonb_build_object(
       'count_in_window', v_count, 'kind', new.kind, 'radius', new.radius, 'value_bonus', new.value_bonus
     ) || request_meta());
+    raise exception 'Too many body inserts too fast';
   end if;
   return new;
 end;
 $$;
 
 drop trigger if exists trg_log_body_insert on bodies;
-create trigger trg_log_body_insert after insert on bodies
+create trigger trg_log_body_insert before insert on bodies
   for each row execute function log_body_insert_if_bursty();
 
 -- Same idea for DELETE. Legitimate deletes are rarer still than inserts
@@ -339,13 +378,14 @@ begin
   if v_count > 15 then
     insert into activity_log (actor, event_type, detail)
     values (v_actor, 'body_delete_burst', jsonb_build_object('count_in_window', v_count, 'kind', old.kind, 'id', old.id) || request_meta());
+    raise exception 'Too many body deletes too fast';
   end if;
   return old;
 end;
 $$;
 
 drop trigger if exists trg_log_body_delete on bodies;
-create trigger trg_log_body_delete after delete on bodies
+create trigger trg_log_body_delete before delete on bodies
   for each row execute function log_body_delete_if_bursty();
 
 -- Atomic "bite" of a body. Returns its health after the hit and whether

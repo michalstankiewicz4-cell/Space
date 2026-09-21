@@ -48,6 +48,7 @@ export const DRONE_BASE_DEFENSE = 1; // survival odds multiplier vs. a black hol
 export const DRONE_DOCK_RANGE_MULT = 3.2; // x radius of the nearest body = "close enough to refuel/attack"
 export const DRONE_REFUEL_RATE = 18; // fuel/second while docked at a planet/sun
 export const DRONE_PRINT_MAX_LEN = 32; // print()'s in-world gas+laser message, clamped (see drone/dronePrintFx.js)
+export const DRONE_PRINT_COOLDOWN_S = 1.5; // min seconds between print() calls (see drone.js#triggerPrintFx) — a while(true){print(...)} loop with no wait() would otherwise flood the broadcast channel as fast as the interpreter's step limit allows
 
 // Multiplayer: intervals and time limits
 export const NET_SHIP_BROADCAST_MS = 120;

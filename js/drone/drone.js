@@ -15,7 +15,7 @@ import { broadcastDronePrint } from "../net/shipsBroadcast.js";
 import {
   DRONE_MAX_FUEL, DRONE_FUEL_PER_MOVE_UNIT, DRONE_MOVE_SPEED, DRONE_TURN_SPEED,
   DRONE_BASE_ATTACK, DRONE_BASE_DEFENSE, DRONE_DOCK_RANGE_MULT, DRONE_REFUEL_RATE,
-  DRONE_PRINT_MAX_LEN
+  DRONE_PRINT_MAX_LEN, DRONE_PRINT_COOLDOWN_S
 } from "../config.js";
 
 // Runaway-script guard: a script with no move()/turn()/wait() in a while
@@ -94,7 +94,8 @@ export function spawnDrone(){
     error: null,
     logs: [],
     gen: null,
-    pending: null
+    pending: null,
+    lastPrintAt: -Infinity
   };
   built.pickMesh.userData.drone = drone;
   ctx.drone = drone;
@@ -111,6 +112,23 @@ function log(drone, msg){
 // players over Realtime broadcast so they see it too, not just the log
 // entry above.
 function triggerPrintFx(drone, msg){
+  // A while(true){ print("x") } script with no wait() would otherwise
+  // fire this as fast as the interpreter's own runaway-script step limit
+  // allows (MAX_INSTANT_STEPS_PER_FRAME) — up to ~2000 broadcast messages
+  // in a single frame. This cooldown lives outside the DSL sandbox in
+  // plain JS the script can't touch, so no amount of script cleverness
+  // gets around it — unlike the profanity check below, it doesn't need a
+  // server-side backstop for *this* specific purpose, since broadcast
+  // messages never touch the database at all (nothing there to rate-limit
+  // against); a fully custom/modified client bypassing this file entirely
+  // could still flood the channel directly, same residual risk broadcast
+  // spam already has everywhere else (see net/shipsBroadcast.js).
+  const now = performance.now();
+  if(now - drone.lastPrintAt < DRONE_PRINT_COOLDOWN_S * 1000){
+    log(drone, t("drone.printCooldown"));
+    return;
+  }
+
   const text = String(msg).slice(0, DRONE_PRINT_MAX_LEN);
   // A courtesy check, same spirit as confirmNick()'s own-nick check: the
   // real defense is handleRemoteDronePrint() re-checking on the receiving
@@ -121,6 +139,7 @@ function triggerPrintFx(drone, msg){
     log(drone, t("drone.printBlocked"));
     return;
   }
+  drone.lastPrintAt = now;
   spawnPrintEffect(drone.pos, drone.heading, text, drone.mesh.material.color.getHex());
   if(NET_ENABLED) broadcastDronePrint(drone.pos, drone.heading, text);
 }

@@ -84,19 +84,25 @@ the game itself treats broadcast data.
 
 ## Network-behavior observation
 
-`activity_log` (`supabase/schema.sql`) is a passive audit trail —
-observation only, nothing in the schema ever blocks or bans a player.
-Two sources feed it, both server-side and unspoofable by a client: the
-existing `bite_body` rate limiter now also logs when it trips (a real
-client can never hit that limit, so it's already an unambiguous signal),
-and triggers on `bodies` that log a burst only once a single actor's
-insert/delete rate clearly exceeds what legitimate play (including the
-steward's one-time world-seed insert) ever produces. Every entry also
-carries IP/browser/country automatically (pulled from the HTTP request
-itself — nothing the client sends explicitly, nothing it can suppress)
-and a best-effort **self-reported** nickname (`actor_nicks`, upserted
-once per connection — explicitly not verified, a modified client could
-claim any nick). The table itself has no client-facing read access at
+`activity_log` (`supabase/schema.sql`) is a passive audit trail — nothing
+reads it and auto-bans anyone. Three sources feed it, all server-side and
+unspoofable by a client, and all of them now also actually throttle the
+behavior they log, not just record it: the existing `bite_body` rate
+limiter (a real client can never hit that limit, so it's already an
+unambiguous signal), triggers on `bodies` that reject a burst once a
+single actor's insert/delete rate clearly exceeds what legitimate play
+(including the steward's one-time world-seed insert) ever produces, and
+`set_my_nick()` (5 calls/30s per actor — a real client only calls it once
+per connection). Every entry also carries IP/browser/country
+automatically (pulled from the HTTP request itself — nothing the client
+sends explicitly, nothing it can suppress) and a best-effort
+**self-reported** nickname (`actor_nicks`, upserted once per connection —
+explicitly not verified, a modified client could claim any nick).
+`print()`'s in-world effect has its own, more limited protection: a 1.5s
+client-side cooldown, since broadcast messages never touch the database
+at all (nothing there to rate-limit against) — this stops a runaway
+script written in the drone's own DSL, not a fully custom client.
+`activity_log` itself has no client-facing read access at
 all — view it via the [Admin panel](#admin-panel) above, the Supabase SQL
 Editor, or the Management API.
 

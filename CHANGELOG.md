@@ -4,6 +4,39 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.9.2]
+
+### Added
+- Actual anti-spam blocking (not just logging) for three script-friendly
+  targets, extending the pattern `bite_body`'s existing rate limit
+  already set:
+  - **Nick changes**: `actor_nicks` writes now go through a new
+    `set_my_nick()` RPC (the table itself has no client-writable policy
+    at all anymore) — rate-limited to 5 per 30s per actor, matching how
+    a real client only ever calls this once per connection. Over the
+    limit, the write is silently dropped (same "no error, no effect" as
+    `bite_body`) and logged as `set_nick_spam`.
+  - **`bodies` insert/delete bursts**: upgraded from logging-only to
+    actually rejecting once an actor's rate crosses the existing
+    15-in-10s threshold — the triggers moved from `AFTER` to `BEFORE` so
+    they can `RAISE EXCEPTION` and cancel the row, not just observe it
+    after the fact.
+  - **`print()` spam**: a 1.5s client-side cooldown
+    (`DRONE_PRINT_COOLDOWN_S`) between calls, enforced in plain JS the
+    drone DSL can't reach around — a `while(true){ print(...) }` script
+    with no `wait()` would otherwise flood the broadcast channel as fast
+    as the interpreter's runaway-script step limit allows. This one has
+    no server-side backstop: broadcast messages never touch the database
+    at all, so there's nothing there to rate-limit against — a fully
+    custom/modified client bypassing this file entirely could still
+    flood it directly, the same residual risk broadcast traffic already
+    has everywhere else in this project.
+
+  Verified live: 20 rapid-fire body inserts succeeded exactly 15 times
+  then failed with "Too many body inserts too fast" on the rest; 8 rapid
+  `set_my_nick()` calls left the *5th* value actually stored (not the
+  8th), with the remaining 3 logged as `set_nick_spam`.
+
 ## [1.9.1]
 
 ### Added
