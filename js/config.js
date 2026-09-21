@@ -50,6 +50,15 @@ export const DRONE_REFUEL_RATE = 18; // fuel/second while docked at a planet/sun
 export const DRONE_PRINT_MAX_LEN = 32; // print()'s in-world gas+laser message, clamped (see drone/dronePrintFx.js)
 export const DRONE_PRINT_COOLDOWN_S = 1.5; // min seconds between print() calls (see drone.js#triggerPrintFx) — a while(true){print(...)} loop with no wait() would otherwise flood the broadcast channel as fast as the interpreter's step limit allows
 
+// Player space station (see js/station/*.js) — one static landmark per
+// player, procedurally built (js/station/stationModel.js, shared by the
+// local station and every remote player's ghost station so they can
+// never visually drift apart). Purely a docking-panel overview for now
+// (fleet count, points, upgrade levels) — no new resource economy, just a
+// window onto the existing one.
+export const STATION_SPAWN_RADIUS = 16; // world units from origin (random angle) — outside both the ships' +-2 spawn cube and the drone's own radius-6 spawn circle
+export const STATION_MODEL_SCALE = 0.16; // shrinks stationModel.js's native proportions (ring radius 23) down to roughly sun-sized in actual gameplay
+
 // Multiplayer: intervals and time limits
 export const NET_SHIP_BROADCAST_MS = 120;
 export const NET_DAMAGE_FLUSH_MS = 150;

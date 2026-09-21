@@ -12,6 +12,7 @@ export const ctx = {
   planets: [],       // planets, suns, comets, meteoroids — everything "edible"
   blackholes: [],
   drone: null,       // the player's single programmable ship — see js/drone/*.js
+  station: null,     // the player's single space station — see js/station/*.js
   fragments: [],
   shockwaves: [],
   dustParticles: [],

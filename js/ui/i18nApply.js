@@ -75,4 +75,11 @@ export function applyStaticText(){
   document.getElementById("droneHelpSyntaxTitle").textContent = t("drone.help.syntaxTitle");
   document.getElementById("droneHelpSyntaxDesc").textContent = t("drone.help.syntax");
   document.getElementById("droneHelpExampleTitle").textContent = t("drone.help.exampleTitle");
+
+  document.getElementById("stationPanelTitle").textContent = t("station.title");
+  document.getElementById("stationFleetLabel").textContent = t("station.fleet");
+  document.getElementById("stationPointsLabel").textContent = t("telemetry.points");
+  document.getElementById("stationUpgradesLabel").textContent = t("station.upgrades");
+  document.getElementById("stationTechBtn").textContent = t("station.techBtn");
+  document.getElementById("stationFleetBtn").textContent = t("station.fleetBtn");
 }

@@ -26,6 +26,8 @@ import { spawnDrone, updateDrone } from "./drone/drone.js";
 import { updateDronePrintFx } from "./drone/dronePrintFx.js";
 import { initDroneThumb, renderDroneThumb } from "./drone/droneThumb.js";
 import { initDronePanel, refreshDronePanel } from "./ui/dronePanel.js";
+import { spawnStation } from "./station/station.js";
+import { initStationPanel, refreshStationPanel } from "./ui/stationPanel.js";
 
 load();
 
@@ -51,6 +53,8 @@ initVersionCheck();
 spawnDrone();
 initDroneThumb();
 initDronePanel();
+spawnStation();
+initStationPanel();
 
 if(NET_ENABLED){
   initNet();
@@ -87,6 +91,7 @@ function tick(){
     updateTelemetry();
     renderPlayersList();
     refreshDronePanel();
+    refreshStationPanel();
   }
 
   // Reset to full-canvas before the main render, in case last frame's ship

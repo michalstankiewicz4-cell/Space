@@ -10,6 +10,8 @@ import { roomChannel } from "./connect.js";
 import { containsProfanity } from "../moderation.js";
 import { t } from "../i18n.js";
 import { spawnPrintEffect } from "../drone/dronePrintFx.js";
+import { buildStationMesh, disposeStationMesh } from "../station/stationModel.js";
+import { STATION_MODEL_SCALE } from "../config.js";
 
 function makeGhostShipMesh(colorHex){
   const geo = new THREE.ConeGeometry(0.28, 0.9, 8);
@@ -44,6 +46,27 @@ function removeGhostDrone(rp){
   rp.droneMesh.geometry.dispose();
   rp.droneMesh.material.dispose();
   rp.droneMesh = null;
+}
+
+// Unlike the ghost ship/drone (flat-recolored to the owner's color, simple
+// enough for that to read fine on a cone/octahedron), the station keeps its
+// grey hull materials and only tints the window glow + accent stripe via
+// buildStationMesh()'s own windowColor/opacity options — recoloring this
+// much greebled detail to one solid color would just read as a blob. Same
+// source of truth as the local station (station/station.js), so a ghost
+// can never visually diverge from what a real station looks like.
+function makeGhostStationMesh(colorHex){
+  const mesh = buildStationMesh({ windowColor: colorHex, opacity: 0.8 });
+  mesh.scale.setScalar(STATION_MODEL_SCALE);
+  ctx.scene.add(mesh);
+  return mesh;
+}
+
+function removeGhostStation(rp){
+  if(!rp.stationMesh) return;
+  ctx.scene.remove(rp.stationMesh);
+  disposeStationMesh(rp.stationMesh);
+  rp.stationMesh = null;
 }
 
 function isValidHexColor(c){
@@ -106,6 +129,21 @@ export function handleRemoteShips(payload){
     removeGhostDrone(rp);
   }
 
+  const st = Array.isArray(payload.station) ? payload.station : null;
+  if(st){
+    if(!rp.stationMesh) rp.stationMesh = makeGhostStationMesh(rp.color);
+    const mesh = rp.stationMesh;
+    if(!mesh.userData.target) mesh.userData.target = new THREE.Vector3();
+    mesh.userData.target.set(safeCoord(st[0]), safeCoord(st[1]), safeCoord(st[2]));
+    mesh.rotation.y = Number.isFinite(Number(st[3])) ? Number(st[3]) : mesh.rotation.y;
+    if(!mesh.userData.inited){
+      mesh.position.copy(mesh.userData.target);
+      mesh.userData.inited = true;
+    }
+  } else {
+    removeGhostStation(rp);
+  }
+
   for(let i=0;i<list.length;i++){
     const mesh = rp.meshes[i];
     if(!mesh.userData.target) mesh.userData.target = new THREE.Vector3();
@@ -125,6 +163,7 @@ export function updateRemoteShips(dt){
     if(now - rp.lastSeen > NET_REMOTE_PLAYER_TIMEOUT_MS){
       rp.meshes.forEach(function(m){ ctx.scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
       removeGhostDrone(rp);
+      removeGhostStation(rp);
       delete ctx.remotePlayers[id];
       updatePlayersHud();
       return;
@@ -134,6 +173,9 @@ export function updateRemoteShips(dt){
     });
     if(rp.droneMesh && rp.droneMesh.userData.target){
       rp.droneMesh.position.lerp(rp.droneMesh.userData.target, Math.min(1, dt*NET_GHOST_LERP_SPEED));
+    }
+    if(rp.stationMesh && rp.stationMesh.userData.target){
+      rp.stationMesh.position.lerp(rp.stationMesh.userData.target, Math.min(1, dt*NET_GHOST_LERP_SPEED));
     }
   });
 }
@@ -148,7 +190,8 @@ export function maybeBroadcastShips(nowMs){
       id: clientId, nick: myIdentity.nick, color: myIdentity.color,
       points: state.points, eaten: state.eaten,
       ships: ctx.ships.map(function(sh){ return [sh.pos.x, sh.pos.y, sh.pos.z]; }),
-      drone: ctx.drone ? [ctx.drone.pos.x, ctx.drone.pos.y, ctx.drone.pos.z, ctx.drone.heading] : null
+      drone: ctx.drone ? [ctx.drone.pos.x, ctx.drone.pos.y, ctx.drone.pos.z, ctx.drone.heading] : null,
+      station: ctx.station ? [ctx.station.pos.x, ctx.station.pos.y, ctx.station.pos.z, ctx.station.heading] : null
     }
   });
 }

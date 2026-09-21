@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=1.9.7">
+<link rel="stylesheet" href="css/style.css?v=1.10.0">
 </head>
 <body>
 
@@ -167,6 +167,20 @@
   <button id="droneScriptBtn" type="button">📜 Script</button>
 </div>
 
+<div id="stationPanel" class="hud panel hidden">
+  <div class="panelTitleBar">
+    <div class="title" id="stationPanelTitle">STATION</div>
+    <button class="collapseBtn" id="stationCloseBtn" type="button">✕</button>
+  </div>
+  <div class="row"><span id="stationFleetLabel">Fleet</span><b id="stationFleetVal">0</b></div>
+  <div class="row"><span id="stationPointsLabel">Evolution points</span><b id="stationPointsVal">0</b></div>
+  <div class="row"><span id="stationUpgradesLabel">Upgrades</span><b id="stationUpgradesVal">—</b></div>
+  <div id="stationPanelButtons">
+    <button id="stationTechBtn" type="button">🛠 Tech</button>
+    <button id="stationFleetBtn" type="button">🚀 Fleet</button>
+  </div>
+</div>
+
 <div id="droneScriptModal" class="modal hidden">
   <div id="droneScriptModalBox" class="modalBox">
     <div class="modalHeader">
@@ -223,6 +237,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script type="module" src="js/main.js?v=1.9.7"></script>
+<script type="module" src="js/main.js?v=1.10.0"></script>
 </body>
 </html>

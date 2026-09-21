@@ -16,6 +16,10 @@ export function isTechModalOpen(){
   return !document.getElementById("techModal").classList.contains("hidden");
 }
 
+export function openTechModal(){
+  document.getElementById("techModal").classList.remove("hidden");
+}
+
 export function closeTechModal(){
   document.getElementById("techModal").classList.add("hidden");
 }
@@ -35,9 +39,7 @@ export function initPanels(){
   const techBtn = document.getElementById("techBtn");
   const techModal = document.getElementById("techModal");
   const techCloseBtn = document.getElementById("techCloseBtn");
-  techBtn.addEventListener("click", function(){
-    techModal.classList.remove("hidden");
-  });
+  techBtn.addEventListener("click", openTechModal);
   techCloseBtn.addEventListener("click", closeTechModal);
   techModal.addEventListener("click", function(e){
     if(e.target === techModal) closeTechModal();

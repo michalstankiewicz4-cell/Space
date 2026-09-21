@@ -4,6 +4,8 @@ import { setShipSelected } from "../ships/swarm.js";
 import { bodyVariantKey, bodyValueEstimate } from "../world/bodies.js";
 import { openDronePanel, closeDronePanel } from "../ui/dronePanel.js";
 import { setDroneSelected } from "../drone/drone.js";
+import { openStationPanel, closeStationPanel } from "../ui/stationPanel.js";
+import { setStationSelected } from "../station/station.js";
 import { t } from "../i18n.js";
 import { settings } from "../settings.js";
 
@@ -68,6 +70,14 @@ function pickDroneAt(e){
   return hits.length > 0 ? ctx.drone : null;
 }
 
+function pickStationAt(e){
+  if(!ctx.station) return null;
+  const ndc = ndcFromEvent(e);
+  raycaster.setFromCamera(ndc, ctx.camera);
+  const hits = raycaster.intersectObject(ctx.station.pickMesh, false);
+  return hits.length > 0 ? ctx.station : null;
+}
+
 function pickPlanetAt(e){
   const ndc = ndcFromEvent(e);
   raycaster.setFromCamera(ndc, ctx.camera);
@@ -129,6 +139,7 @@ function pickBlackHoleAt(e){
 function clearSelection(){
   ctx.ships.forEach(function(sh){ setShipSelected(sh, false); });
   if(ctx.drone && ctx.drone.selected) closeDronePanel();
+  if(ctx.station && ctx.station.selected) closeStationPanel();
 }
 
 function selectedShips(){
@@ -203,9 +214,10 @@ export function initControls(){
     // hover cursor feedback (not while dragging)
     const overShip = pickShipAt(e);
     const overDrone = overShip ? null : pickDroneAt(e);
-    const overPlanet = (overShip || overDrone) ? null : pickPlanetAt(e);
-    const overBlackHole = (overShip || overDrone || overPlanet) ? null : pickBlackHoleAt(e);
-    dom.style.cursor = (overShip || overDrone) ? "pointer" : ((overPlanet || overBlackHole) ? "crosshair" : "grab");
+    const overStation = (overShip || overDrone) ? null : pickStationAt(e);
+    const overPlanet = (overShip || overDrone || overStation) ? null : pickPlanetAt(e);
+    const overBlackHole = (overShip || overDrone || overStation || overPlanet) ? null : pickBlackHoleAt(e);
+    dom.style.cursor = (overShip || overDrone || overStation) ? "pointer" : ((overPlanet || overBlackHole) ? "crosshair" : "grab");
     if(overPlanet) showTooltip(overPlanet, e.clientX, e.clientY);
     else if(overBlackHole) showBlackHoleTooltip(overBlackHole, e.clientX, e.clientY);
     else hideTooltip();
@@ -234,10 +246,16 @@ export function initControls(){
         const sp = screenPos(ctx.drone.pos);
         droneHit = !sp.behind && sp.x>=x1 && sp.x<=x2 && sp.y>=y1 && sp.y<=y2;
       }
-      if(within.length>0 || droneHit){
+      let stationHit = false;
+      if(ctx.station){
+        const sp = screenPos(ctx.station.pos);
+        stationHit = !sp.behind && sp.x>=x1 && sp.x<=x2 && sp.y>=y1 && sp.y<=y2;
+      }
+      if(within.length>0 || droneHit || stationHit){
         if(!e.shiftKey) clearSelection();
         within.forEach(function(sh){ setShipSelected(sh, true); });
         if(droneHit){ setDroneSelected(ctx.drone, true); openDronePanel(); }
+        if(stationHit){ setStationSelected(ctx.station, true); openStationPanel(); }
         if(within.length>0) showToast(t("toast.selected")(selectedShips().length, ctx.ships.length));
       } else if(!e.shiftKey){
         clearSelection();
@@ -248,6 +266,13 @@ export function initControls(){
         if(!e.shiftKey) clearSelection();
         setDroneSelected(hitDrone, true);
         openDronePanel();
+        return;
+      }
+      const hitStation = pickStationAt(e);
+      if(hitStation){
+        if(!e.shiftKey) clearSelection();
+        setStationSelected(hitStation, true);
+        openStationPanel();
         return;
       }
       const hitShip = pickShipAt(e);

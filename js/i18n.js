@@ -113,6 +113,13 @@ const STRINGS = {
         syntax: "if (…) { … } else { … } · while (…) { … } · x = 5 · \"text\" (print() only) · + - * / < > <= >= == != && || !",
         exampleTitle: "Example"
       }
+    },
+    station: {
+      title: "STATION",
+      fleet: "Fleet",
+      upgrades: "Upgrades",
+      techBtn: "🛠 Tech",
+      fleetBtn: "🚀 Fleet"
     }
   },
   pl: {
@@ -225,6 +232,13 @@ const STRINGS = {
         syntax: "if (…) { … } else { … } · while (…) { … } · x = 5 · \"tekst\" (tylko print()) · + - * / < > <= >= == != && || !",
         exampleTitle: "Przykład"
       }
+    },
+    station: {
+      title: "STACJA",
+      fleet: "Flota",
+      upgrades: "Ulepszenia",
+      techBtn: "🛠 Rozwój",
+      fleetBtn: "🚀 Flota"
     }
   }
 };

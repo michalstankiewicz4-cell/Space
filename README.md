@@ -37,6 +37,9 @@ js/
                      interpreter (interpreter.js), the entity/script driver (drone.js),
                      its live thumbnail camera (droneThumb.js), and the print() gas+laser
                      effect (dronePrintFx.js) — see "Programmable drone" below
+  station/           each player's static space station — the procedural mesh
+                     (stationModel.js) and the game-side entity (station.js) —
+                     see "Space station" below
   ui/                HUD (telemetry, players list, collapsible panels, Wiki/Tech/Fleet buttons and modals,
                      legend, upgrade dock, drone panel) and the Setup modal (banner.js)
   net/               multiplayer: identity, "steward" election, world sync, ship broadcast,
@@ -141,10 +144,20 @@ parses this tiny language into an AST, and `js/drone/interpreter.js` walks
 it as a generator, so a script's `move()`/`wait()` calls can pause
 execution for real time without blocking the game loop or the browser tab.
 
+## Space station
+
+Every player also has one static space station (a DS9-style ring-and-hub
+structure, built entirely from primitive geometry — no model files) that
+spawns once and never moves. Select it to open its docking panel: a
+read-only overview (fleet size, evolution points, upgrade levels) with
+shortcuts into the existing Tech/Fleet modals — no separate resource
+economy, just a window onto the same points/upgrades everything else
+already uses.
+
 ## Multiplayer / Supabase setup
 
 The world (planets, comets, suns, meteoroids, black holes) and other
-players' ships **and drones** are shared live via
+players' ships, drones **and stations** are shared live via
 [Supabase](https://supabase.com), with no login at all (an invisible
 anonymous session) — just a nickname (letters, digits and spaces only,
 max 20 characters). Points and upgrade levels stay local to the browser

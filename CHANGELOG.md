@@ -4,6 +4,20 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.0]
+
+### Added
+- A space station for every player: a procedurally built DS9-style
+  ring-and-hub structure (no model files — pure Three.js primitives),
+  spawned once near the swarm's starting area and never moving. Select it
+  to open a docking panel showing fleet size, evolution points and a
+  compact upgrade-level summary, with shortcuts into the existing Tech and
+  Fleet modals — no new resource economy, just an overview of the one
+  that already exists.
+- The station is synced to other players the same way the drone is (a
+  tiny `[x,y,z,heading]` broadcast, not the 3D model itself) — other
+  players see a "ghost" version of it tinted in your player color.
+
 ## [1.9.7]
 
 ### Added

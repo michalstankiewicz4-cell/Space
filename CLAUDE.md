@@ -282,6 +282,61 @@ local (`localStorage`).
     screenshot), never just the presence of a CSS class name** — a class
     can be applied perfectly correctly and still do nothing if the rule
     for it doesn't exist.
+- **Space station** (`js/station/*.js`): one static per-player landmark,
+  same "singleton on `ctx`, not an array" shape as the drone (`ctx.station`,
+  not `ctx.ships`) — but unlike the drone it never moves once spawned (no
+  fuel/commands, `spawnStation()` picks one random point on a
+  `STATION_SPAWN_RADIUS` circle and that's it forever). Selecting it (same
+  drone-style pick-priority-before-ships/planets treatment in
+  `scene/controls.js`, checked right after the drone) opens a docking panel
+  (`ui/stationPanel.js`, `#stationPanel`) that's read-only for now — fleet
+  count, evolution points, a compact icon+level upgrade summary reusing
+  `TREE`'s own icons — plus shortcuts into the *existing* Tech/Fleet
+  modals. No new resource economy was introduced; "manage resources" here
+  just means a window onto `state.points`/`state.levels`, not a second
+  currency.
+  - **The procedural mesh (`js/station/stationModel.js#buildStationMesh()`)
+    lives in its own file, separate from the game entity (`station.js`),
+    because it genuinely has two callers**: the local player's own station
+    (`station.js#spawnStation()`) and every remote player's ghost station
+    (`net/shipsBroadcast.js#makeGhostStationMesh()`) — same function,
+    different `opts` (see below), so a ghost can never visually diverge
+    from what a real station looks like. (An earlier standalone preview,
+    `station.html`, used this same function too — built first to settle
+    the design before it shipped in-game, then deleted once it did, since
+    the actual game became the fastest way to look at it.) The model's
+    native proportions (ring radius 23, etc.) are its own arbitrary scale —
+    the game shrinks the whole group down via `STATION_MODEL_SCALE`
+    (config.js) rather than the model file's own numbers changing.
+  - **The pick sphere and selection ring are sized from the model's own
+    exported `STATION_SILHOUETTE_RADIUS` constant, not a separate
+    `config.js` number** — they're added as children of the (later-scaled)
+    mesh group *before* `STATION_MODEL_SCALE` is applied, so the scale
+    shrinks hull + hitbox + ring together automatically. Sizing them
+    independently in already-scaled world units would have silently
+    double-applied the scale to just the hitbox/ring, a real trap given how
+    this file was written (scale-the-group-at-the-end came after the
+    hitbox already existed once, during development).
+  - **Multiplayer sync rides the same periodic `"ships"` broadcast payload
+    as the drone** (a `station: [x,y,z,heading]` field,
+    `net/shipsBroadcast.js`) — cheap even though the model is visually
+    complex, since only that 4-number array ever crosses the network; every
+    client builds the identical mesh locally from `buildStationMesh()`,
+    confirmed live via two concurrent sessions (one client's real station
+    position matched the other client's ghost `stationMesh` position
+    exactly). **Ghost stations are recolored differently from ghost
+    ships/the ghost drone**: those flatten their entire simple shape (cone/
+    octahedron) to one solid owner color, which reads fine on something
+    that small, but doing the same to this model's ~150+ greebled
+    sub-meshes would just read as a flat blob and lose the whole point of
+    the detail. Instead `buildStationMesh({ windowColor, opacity })` only
+    retints the window glow + accent stripe to the owner's color and keeps
+    every hull material as-is, so a remote station still reads as *a
+    station*, just tinted — `disposeStationMesh()` (also in
+    `stationModel.js`) exists because disposing a many-material group needs
+    to walk it and dedupe shared materials, unlike the single
+    geometry+material `.dispose()` calls `removeGhostDrone()` gets away
+    with.
 
 ## Security model (Supabase)
 
