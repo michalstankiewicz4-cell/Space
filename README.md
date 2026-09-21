@@ -19,7 +19,7 @@ css/style.css        game styling (HUD, upgrade dock, start banner, Setup/Tech/F
 js/
   version.js         current version number (shown next to the title) — bump on every meaningful release
   versionCheck.js    periodically checks for a newer deploy; blocks play with a "please refresh" overlay if this tab is stale
-  moderation.js      nickname profanity filter (own nick at input time, remote nicks before display)
+  moderation.js      profanity filter, shared by nickname confirmation and the drone's print() effect
   settings.js         local player prefs (mouse invert/swap), persisted in localStorage
   config.js          gameplay tuning constants (upgrade tree, radii, network intervals)
   i18n.js            UI text (English by default, Polish toggle — see the start screen)
@@ -34,8 +34,9 @@ js/
   fx/                particles, debris, shockwaves, dust — planet-breakup effects
   ships/             player's ship swarm (movement, eating, bite-beam)
   drone/             the programmable drone — its own DSL (dsl.js), a generator-based
-                     interpreter (interpreter.js), the entity/script driver (drone.js), and
-                     its live thumbnail camera (droneThumb.js) — see "Programmable drone" below
+                     interpreter (interpreter.js), the entity/script driver (drone.js),
+                     its live thumbnail camera (droneThumb.js), and the print() gas+laser
+                     effect (dronePrintFx.js) — see "Programmable drone" below
   ui/                HUD (telemetry, players list, collapsible panels, Wiki/Tech/Fleet buttons and modals,
                      legend, upgrade dock, drone panel) and the Setup modal (banner.js)
   net/               multiplayer: identity, "steward" election, world sync, ship broadcast,
@@ -80,9 +81,11 @@ execution for real time without blocking the game loop or the browser tab.
 ## Multiplayer / Supabase setup
 
 The world (planets, comets, suns, meteoroids, black holes) and other
-players' ships are shared live via [Supabase](https://supabase.com), with
-no login at all (an invisible anonymous session). Points and upgrade
-levels stay local to the browser (`localStorage`), as before.
+players' ships **and drones** are shared live via
+[Supabase](https://supabase.com), with no login at all (an invisible
+anonymous session) — just a nickname (letters, digits and spaces only,
+max 20 characters). Points and upgrade levels stay local to the browser
+(`localStorage`), as before.
 
 To run your own instance:
 
@@ -114,4 +117,8 @@ value — it's a hardcoded literal (not read from `js/version.js`), so it's
 easy to forget. A tab left open across a deploy won't pick either up on
 its own regardless; [`js/versionCheck.js`](js/versionCheck.js) handles
 that case by blocking play with a "please refresh" prompt once it detects
-a newer version is live.
+a newer version is live. Its "Refresh now" button force-refreshes every
+JS/CSS file's browser cache entry before navigating (a hand-maintained
+list in that file — needs updating when a new file is added to `js/`),
+plus an "or Ctrl+Shift+R" hint underneath either way, since a static
+site with no build step can't guarantee a clean cache bypass on its own.
