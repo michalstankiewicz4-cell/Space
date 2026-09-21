@@ -1,5 +1,7 @@
 import { ctx } from "../core/context.js";
 import { setShipCamTarget } from "../scene/shipcam.js";
+import { setDroneSelected } from "../drone/drone.js";
+import { openDronePanel } from "./dronePanel.js";
 import { t } from "../i18n.js";
 
 function renderFleetList(){
@@ -14,6 +16,19 @@ function renderFleetList(){
     });
     el.appendChild(li);
   });
+  // The drone isn't in ctx.ships (see CLAUDE.md) and has no ship-cam view
+  // of its own - clicking it selects it and opens its side panel instead,
+  // the same as clicking it directly in the world.
+  if(ctx.drone){
+    const li = document.createElement("li");
+    li.textContent = "🛰 " + t("drone.title");
+    li.addEventListener("click", function(){
+      setDroneSelected(ctx.drone, true);
+      openDronePanel();
+      closeFleetModal();
+    });
+    el.appendChild(li);
+  }
 }
 
 export function isFleetModalOpen(){

@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.8.2]
+
+### Added
+- The Fleet list now includes the drone alongside the ships — clicking
+  it selects the drone and opens its side panel (it has no ship-cam view
+  of its own, so it doesn't try to open one, unlike clicking a ship).
+
 ## [1.8.1]
 
 ### Changed
