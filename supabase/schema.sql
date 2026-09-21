@@ -198,6 +198,68 @@ create table if not exists activity_rate (
 );
 alter table activity_rate enable row level security;
 
+-- Best-effort, SELF-REPORTED display name for admin.html to show next to
+-- activity_log's actor UUIDs — nicknames otherwise never touch the
+-- database at all (they only ever travel over ephemeral Realtime
+-- Broadcast/Presence, see net/identity.js). This is NOT a verified
+-- identity, unlike `actor` itself: a modified client could claim any
+-- nick, including someone else's — treat it as a hint for the common/
+-- honest case, never as proof of who did something. `actor` defaults to
+-- auth.uid() so the client never has to know/send its own Supabase user
+-- id; RLS still only lets a caller write their own row regardless of
+-- what `actor` value (if any) they try to send explicitly.
+create table if not exists actor_nicks (
+  actor uuid primary key default auth.uid(),
+  nick text not null,
+  updated_at timestamptz not null default now()
+);
+alter table actor_nicks enable row level security;
+
+drop policy if exists "actor_nicks readable by anyone" on actor_nicks;
+create policy "actor_nicks readable by anyone" on actor_nicks for select using (true);
+
+drop policy if exists "actor_nicks writable for own row" on actor_nicks;
+create policy "actor_nicks writable for own row" on actor_nicks
+  for insert to authenticated with check (actor = auth.uid());
+
+drop policy if exists "actor_nicks updatable for own row" on actor_nicks;
+create policy "actor_nicks updatable for own row" on actor_nicks
+  for update to authenticated using (actor = auth.uid()) with check (actor = auth.uid());
+
+-- Best-effort request metadata (IP, browser, country) for whoever's
+-- calling right now — pulled from the HTTP request PostgREST exposes to
+-- every function/trigger invocation as a session GUC, nothing the client
+-- sends explicitly and nothing it can suppress either (unlike the nick
+-- above, this can't be spoofed from inside the request body/params —
+-- only by actually originating the request from a different IP/UA,
+-- which is a real if imperfect barrier, e.g. VPNs). Only meaningful when
+-- called through the ordinary REST/RPC gateway by a real client — has
+-- nothing to read (and fails closed to nulls) when this schema itself is
+-- applied via the Management API's own SQL execution, which has no HTTP
+-- request to expose.
+create or replace function request_meta()
+returns jsonb
+language plpgsql
+as $$
+declare
+  v_headers jsonb;
+begin
+  begin
+    v_headers := current_setting('request.headers', true)::jsonb;
+  exception when others then
+    v_headers := null;
+  end;
+  if v_headers is null then
+    return jsonb_build_object('ip', null, 'user_agent', null, 'country', null);
+  end if;
+  return jsonb_build_object(
+    'ip', coalesce(v_headers->>'cf-connecting-ip', v_headers->>'x-forwarded-for'),
+    'user_agent', v_headers->>'user-agent',
+    'country', v_headers->>'cf-ipcountry'
+  );
+end;
+$$;
+
 create or replace function bump_activity_rate(p_actor uuid, p_action text, p_window interval)
 returns int
 language plpgsql
@@ -247,7 +309,7 @@ begin
     insert into activity_log (actor, event_type, detail)
     values (v_actor, 'body_insert_burst', jsonb_build_object(
       'count_in_window', v_count, 'kind', new.kind, 'radius', new.radius, 'value_bonus', new.value_bonus
-    ));
+    ) || request_meta());
   end if;
   return new;
 end;
@@ -276,7 +338,7 @@ begin
   v_count := bump_activity_rate(v_actor, 'body_delete', interval '10 seconds');
   if v_count > 15 then
     insert into activity_log (actor, event_type, detail)
-    values (v_actor, 'body_delete_burst', jsonb_build_object('count_in_window', v_count, 'kind', old.kind, 'id', old.id));
+    values (v_actor, 'body_delete_burst', jsonb_build_object('count_in_window', v_count, 'kind', old.kind, 'id', old.id) || request_meta());
   end if;
   return old;
 end;
@@ -329,7 +391,7 @@ begin
     -- so this is already an unambiguous signal on its own — logged for
     -- later review, see activity_log below.
     insert into activity_log (actor, event_type, detail)
-    values (v_actor, 'bite_rate_exceeded', jsonb_build_object('count_in_window', v_count, 'body_id', p_body_id));
+    values (v_actor, 'bite_rate_exceeded', jsonb_build_object('count_in_window', v_count, 'body_id', p_body_id) || request_meta());
     return; -- rate limited: silently drop this bite, no error, no effect
   end if;
 
@@ -379,8 +441,13 @@ $$;
 -- everything else here (bump_activity_rate) — 5 guesses per 60s per
 -- (anonymous) caller; a caller has to have a valid anon session to call
 -- this at all, so guesses are always attributable to *some* actor id.
+-- Left-joins actor_nicks so admin.html can show a display name next to
+-- each actor UUID — self-reported, see that table's own comment.
+-- CREATE OR REPLACE can't change a `returns table(...)` function's
+-- column list, hence the DROP before it (adding the `nick` column).
+drop function if exists admin_activity_log(text, int);
 create or replace function admin_activity_log(p_secret text, p_limit int default 200)
-returns table(id bigint, actor uuid, event_type text, detail jsonb, created_at timestamptz)
+returns table(id bigint, actor uuid, nick text, event_type text, detail jsonb, created_at timestamptz)
 language plpgsql
 security definer
 set search_path = public
@@ -396,7 +463,7 @@ begin
   v_attempts := bump_activity_rate(v_actor, 'admin_secret_attempt', interval '60 seconds');
   if v_attempts > 5 then
     insert into activity_log (actor, event_type, detail)
-    values (v_actor, 'admin_secret_bruteforce', jsonb_build_object('attempts_in_window', v_attempts));
+    values (v_actor, 'admin_secret_bruteforce', jsonb_build_object('attempts_in_window', v_attempts) || request_meta());
     return;
   end if;
 
@@ -408,8 +475,9 @@ begin
   end if;
 
   return query
-    select l.id, l.actor, l.event_type, l.detail, l.created_at
+    select l.id, l.actor, n.nick, l.event_type, l.detail, l.created_at
     from activity_log l
+    left join actor_nicks n on n.actor = l.actor
     order by l.created_at desc
     limit least(greatest(p_limit, 1), 500);
 end;

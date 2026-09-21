@@ -18,7 +18,9 @@
     not a ban list. Nothing here takes any action on its own; it's meant
     for a human to skim. Gated by a secret (never stored in this file or
     the repo) checked server-side — see <code>supabase/schema.sql</code>'s
-    <code>admin_activity_log()</code>.
+    <code>admin_activity_log()</code>. Nick/IP/browser are self-reported
+    or ordinary HTTP headers, not verified identity — a distinguishing
+    hint for the common case, never proof of who did something.
   </p>
 
   <div id="secretRow">
@@ -31,7 +33,7 @@
   <div id="summarySection" class="hidden">
     <h2>By actor</h2>
     <table id="summaryTable">
-      <thead><tr><th>Actor</th><th>Event type</th><th>Count</th><th>Last seen</th></tr></thead>
+      <thead><tr><th>Nick</th><th>Actor</th><th>Event type</th><th>Count</th><th>Last seen</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
@@ -39,7 +41,7 @@
   <div id="logSection" class="hidden">
     <h2>Recent entries</h2>
     <table id="logTable">
-      <thead><tr><th>When</th><th>Actor</th><th>Event</th><th>Detail</th></tr></thead>
+      <thead><tr><th>When</th><th>Nick</th><th>Actor</th><th>Event</th><th>IP</th><th>Browser</th><th>Detail</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>

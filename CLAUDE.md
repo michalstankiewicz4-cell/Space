@@ -353,6 +353,45 @@ local (`localStorage`).
     regenerating it, hashing it, and re-running
     `create or replace function admin_activity_log(...)` with the new
     hash — there's no other copy to update.
+  - **IP/browser/country are captured automatically, no client change
+    needed, and can't be suppressed by a client** — `request_meta()`
+    reads `current_setting('request.headers', true)::jsonb`, a session
+    GUC PostgREST populates from the actual incoming HTTP request on
+    every function/trigger call (confirmed live: a throwaway debug
+    function that just returned this setting showed the real caller IP
+    under both `cf-connecting-ip` and `x-forwarded-for`, the full
+    `user-agent`, and `cf-ipcountry` — Supabase's edge sits behind
+    Cloudflare). Merged into each logging call's `detail` via
+    `jsonb_build_object(...) || request_meta()`. Only has anything to
+    read when called through the real REST/RPC gateway — applying
+    `schema.sql` itself via the Management API's own SQL execution has
+    no HTTP request to expose, so don't expect this to populate from
+    that path.
+  - **Nickname is a different story: NOT capturable this way, since it
+    never reaches Postgres at all** — nicknames only ever travel over
+    ephemeral Realtime Broadcast/Presence (see the "Settings vs.
+    identity vs. i18n" bullet above), invisible to any HTTP-header trick.
+    `actor_nicks` (`actor uuid primary key default auth.uid()`, RLS: read
+    by anyone, write only your own row) exists so the client can
+    self-report it once per connection (`net/connect.js`, right after the
+    existing `roomChannel.track()` call) — **explicitly not verified
+    identity, unlike everything else on this page**: a modified client
+    could claim any nick at all, including someone else's, since nothing
+    checks it against what that actor actually broadcasts elsewhere.
+    Treat it as a hint for the honest-majority case, never as proof.
+  - **Found (and fixed before ever shipping) a stored-XSS hole from
+    exactly that self-reported nick, plus the also-client-controlled
+    IP/user-agent**: `admin.html`'s first draft built table rows via
+    `innerHTML` string concatenation, so a nick like
+    `<img src=x onerror="...">` — trivial to plant, since `actor_nicks`
+    has no format check at the DB level, only the *game's own*
+    `confirmNick()` restricts what a normal player can pick — would have
+    executed as script in `admin.html`'s own origin, which is exactly
+    where the admin secret lives (`localStorage`). Rewrote every cell to
+    build with `textContent`, never `innerHTML` — verified by planting
+    that exact payload via a raw REST call (bypassing `confirmNick()`
+    entirely, like a real attacker would) and confirming it renders as
+    plain visible text with no `alert()` firing.
 - **`bite_body` is rate-limited per actor (20 calls/second)**, via the
   `bite_rate_limit` table (RLS enabled, zero policies — reachable only
   from inside the `SECURITY DEFINER` function, never directly by a

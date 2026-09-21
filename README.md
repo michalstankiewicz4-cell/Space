@@ -70,13 +70,17 @@ with ready-to-paste `export const ... = {...}` blocks — one per file in
 
 [`admin.html`](admin.html) is another developer tool, not linked from the
 game — a read-only view of `activity_log` (see "Network-behavior
-observation" below): recent entries and a per-actor/event-type summary.
-It's gated by a secret, entered into the page itself (remembered in that
-browser's `localStorage` after the first time, never written to this
-repo) and checked **server-side** against a SHA-256 hash in
-`admin_activity_log()` (`supabase/schema.sql`) — without it the RPC just
-returns nothing, so the page is safe to leave deployed alongside the game
-even though it isn't linked anywhere.
+observation" below): recent entries (with nick, IP, browser and the rest
+of each entry's detail) and a per-actor/event-type summary. It's gated by
+a secret, entered into the page itself (remembered in that browser's
+`localStorage` after the first time, never written to this repo) and
+checked **server-side** against a SHA-256 hash in `admin_activity_log()`
+(`supabase/schema.sql`) — without it the RPC just returns nothing, so the
+page is safe to leave deployed alongside the game even though it isn't
+linked anywhere. Every cell is rendered with `textContent`, never
+`innerHTML` — nick/IP/browser all ultimately come from something a
+client controls, so this page treats all of it as untrusted the same way
+the game itself treats broadcast data.
 
 ## Network-behavior observation
 
@@ -85,12 +89,16 @@ observation only, nothing in the schema ever blocks or bans a player.
 Two sources feed it, both server-side and unspoofable by a client: the
 existing `bite_body` rate limiter now also logs when it trips (a real
 client can never hit that limit, so it's already an unambiguous signal),
-and new triggers on `bodies` log a burst only once a single actor's
+and triggers on `bodies` that log a burst only once a single actor's
 insert/delete rate clearly exceeds what legitimate play (including the
-steward's one-time world-seed insert) ever produces. The table itself has
-no client-facing read access at all — view it via the
-[Admin panel](#admin-panel) above, the Supabase SQL Editor, or the
-Management API.
+steward's one-time world-seed insert) ever produces. Every entry also
+carries IP/browser/country automatically (pulled from the HTTP request
+itself — nothing the client sends explicitly, nothing it can suppress)
+and a best-effort **self-reported** nickname (`actor_nicks`, upserted
+once per connection — explicitly not verified, a modified client could
+claim any nick). The table itself has no client-facing read access at
+all — view it via the [Admin panel](#admin-panel) above, the Supabase SQL
+Editor, or the Management API.
 
 ## Programmable drone
 

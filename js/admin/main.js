@@ -40,11 +40,45 @@ function shortActor(actor){
   return actor.slice(0, 8) + "…";
 }
 
+// nick, ip and user_agent all ultimately come from something a client
+// controls (nick is self-reported with no format check at the DB level;
+// ip/user_agent are HTTP headers, which a script can set to anything) —
+// unlike event_type/actor/created_at, which only ever come from this
+// schema's own trigger/function code. Every cell below is built with
+// textContent, never innerHTML, specifically so a malicious value in any
+// of those fields can't run as script in this page — which, since this
+// page's own admin secret lives in this same origin's localStorage,
+// would otherwise be a way to steal it.
+function td(text, className){
+  const cell = document.createElement("td");
+  if(className) cell.className = className;
+  cell.textContent = text === null || text === undefined ? "" : String(text);
+  return cell;
+}
+
+// Full user-agent strings are long; this is just for a scannable table
+// cell, not a real parser — good enough to tell "Chrome" from "curl" from
+// "python-requests" at a glance, which is the whole point of showing it.
+function shortBrowser(ua){
+  if(!ua) return "";
+  const m = ua.match(/(Firefox|Edg|OPR|Chrome|Safari|curl|python-requests|node-fetch|PostmanRuntime)\/?([\d.]*)/);
+  return m ? (m[1] + (m[2] ? " " + m[2] : "")) : ua.slice(0, 24);
+}
+
+function detailWithoutRequestMeta(detail){
+  if(!detail) return {};
+  const rest = {};
+  Object.keys(detail).forEach(function(k){
+    if(k !== "ip" && k !== "user_agent" && k !== "country") rest[k] = detail[k];
+  });
+  return rest;
+}
+
 function renderSummary(rows){
-  const counts = {}; // key: actor|event_type -> { count, lastSeen }
+  const counts = {}; // key: actor|event_type -> { nick, count, lastSeen }
   rows.forEach(function(r){
     const key = r.actor + "|" + r.event_type;
-    if(!counts[key]) counts[key] = { actor: r.actor, eventType: r.event_type, count: 0, lastSeen: r.created_at };
+    if(!counts[key]) counts[key] = { actor: r.actor, nick: r.nick, eventType: r.event_type, count: 0, lastSeen: r.created_at };
     counts[key].count++;
     if(r.created_at > counts[key].lastSeen) counts[key].lastSeen = r.created_at;
   });
@@ -55,11 +89,11 @@ function renderSummary(rows){
   list.forEach(function(row){
     const tr = document.createElement("tr");
     tr.className = eventRowClass(row.eventType);
-    tr.innerHTML =
-      '<td class="actor">' + shortActor(row.actor) + "</td>" +
-      '<td class="event">' + row.eventType + "</td>" +
-      "<td>" + row.count + "</td>" +
-      "<td>" + new Date(row.lastSeen).toLocaleString() + "</td>";
+    tr.appendChild(td(row.nick || "—"));
+    tr.appendChild(td(shortActor(row.actor), "actor"));
+    tr.appendChild(td(row.eventType, "event"));
+    tr.appendChild(td(row.count));
+    tr.appendChild(td(new Date(row.lastSeen).toLocaleString()));
     tbody.appendChild(tr);
   });
   document.getElementById("summarySection").classList.toggle("hidden", list.length === 0);
@@ -71,11 +105,13 @@ function renderLog(rows){
   rows.forEach(function(r){
     const tr = document.createElement("tr");
     tr.className = eventRowClass(r.event_type);
-    tr.innerHTML =
-      "<td>" + new Date(r.created_at).toLocaleString() + "</td>" +
-      '<td class="actor">' + shortActor(r.actor) + "</td>" +
-      '<td class="event">' + r.event_type + "</td>" +
-      '<td class="detail">' + JSON.stringify(r.detail) + "</td>";
+    tr.appendChild(td(new Date(r.created_at).toLocaleString()));
+    tr.appendChild(td(r.nick || "—"));
+    tr.appendChild(td(shortActor(r.actor), "actor"));
+    tr.appendChild(td(r.event_type, "event"));
+    tr.appendChild(td(r.detail ? r.detail.ip : "", "actor"));
+    tr.appendChild(td(shortBrowser(r.detail ? r.detail.user_agent : ""), "actor"));
+    tr.appendChild(td(JSON.stringify(detailWithoutRequestMeta(r.detail)), "detail"));
     tbody.appendChild(tr);
   });
   document.getElementById("logSection").classList.toggle("hidden", rows.length === 0);

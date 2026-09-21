@@ -58,6 +58,16 @@ function connectRoom(){
       reconnectAttempt = 0;
       setConnectionStatus(true);
       roomChannel.track({ client_id: clientId, joined_at: joinedAt, nick: myIdentity.nick, color: myIdentity.color });
+      // Self-reported only (see actor_nicks' own comment in schema.sql) —
+      // this is purely so admin.html can show a display name next to an
+      // activity_log actor UUID for the common/honest case; `actor`
+      // defaults to auth.uid() server-side, this client never needs to
+      // know its own Supabase user id. Not awaited: nothing here depends
+      // on it landing before anything else, and it's fine if it silently
+      // fails offline/rate-limited — it just means one row in one table
+      // won't be as friendly to read later, nothing gameplay-visible.
+      supabase.from("actor_nicks").upsert({ nick: myIdentity.nick, updated_at: new Date().toISOString() })
+        .then(function(res){ if(res.error) console.warn("actor_nicks upsert failed", res.error); });
       // Re-fetches current world state and reconciles it against what this
       // client already has locally (see bootstrapWorld) — on a first
       // connect that's just the initial seed; on a reconnect it also

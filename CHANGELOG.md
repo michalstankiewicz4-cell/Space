@@ -4,6 +4,34 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.9.1]
+
+### Added
+- `activity_log` entries now include IP, browser and country automatically
+  — pulled from the HTTP request PostgREST already exposes to every
+  function/trigger call (`request_meta()`, `supabase/schema.sql`), no
+  client change needed for this part, can't be suppressed by a client.
+- A best-effort, **self-reported** nickname next to each `activity_log`
+  actor: a new `actor_nicks` table the client upserts into once per
+  connection (`net/connect.js`). Explicitly not a verified identity —
+  a modified client could claim any nick, including someone else's —
+  it's a hint for the common/honest case, never proof.
+- `admin.html` now shows nick/IP/browser columns.
+
+### Fixed
+- Found and closed a stored-XSS hole in `admin.html` before it shipped:
+  nick/IP/browser all ultimately come from something a client controls
+  (nick has no format check at the DB level; IP/UA are ordinary HTTP
+  headers a script can set to anything), and the page was building table
+  rows with `innerHTML` string concatenation — an attacker-chosen nick
+  like `<img src=x onerror="...">` would have run as script in the same
+  origin that stores the admin secret in `localStorage`, handing it
+  straight to whoever planted it. Rewrote rendering to build cells with
+  `textContent`, never `innerHTML`. Verified live: planted that exact
+  payload as a nick via a raw REST call (bypassing the game's own nick
+  validation, like a malicious client would), confirmed it renders as
+  inert visible text in the table with no `alert()` firing.
+
 ## [1.9.0]
 
 ### Added
