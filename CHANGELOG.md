@@ -4,6 +4,16 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.2]
+
+### Fixed
+- Clicking a ship in the Fleet list now selects it too, not just its
+  camera preview — matches clicking it directly in the world (and
+  matches how the drone's own entry in that same list already selects
+  it). Also now clears any previous selection first, so it exclusively
+  selects that one ship rather than adding to whatever was already
+  selected.
+
 ## [1.10.1]
 
 ### Fixed

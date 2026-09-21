@@ -1,5 +1,7 @@
 import { ctx } from "../core/context.js";
 import { setShipCamTarget } from "../scene/shipcam.js";
+import { setShipSelected } from "../ships/swarm.js";
+import { clearSelection } from "../scene/controls.js";
 import { setDroneSelected } from "../drone/drone.js";
 import { openDronePanel } from "./dronePanel.js";
 import { t } from "../i18n.js";
@@ -11,6 +13,12 @@ function renderFleetList(){
     const li = document.createElement("li");
     li.textContent = "🚀 " + t("fleet.ship")(i + 1);
     li.addEventListener("click", function(){
+      // Same effect as clicking this ship directly in the world (see
+      // scene/controls.js): clears any existing selection first, so it
+      // exclusively selects this one ship, not just adds to whatever was
+      // already selected.
+      clearSelection();
+      setShipSelected(sh, true);
       setShipCamTarget(sh);
       closeFleetModal();
     });

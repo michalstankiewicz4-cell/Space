@@ -136,7 +136,10 @@ function pickBlackHoleAt(e){
   return null;
 }
 
-function clearSelection(){
+// Exported so other selection entry points (e.g. ui/fleet.js's ship-list
+// clicks) can match exactly what a plain click in the world does, instead
+// of duplicating this clear-everything-first logic.
+export function clearSelection(){
   ctx.ships.forEach(function(sh){ setShipSelected(sh, false); });
   if(ctx.drone && ctx.drone.selected) closeDronePanel();
   if(ctx.station && ctx.station.selected) closeStationPanel();

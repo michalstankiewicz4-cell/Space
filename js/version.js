@@ -8,4 +8,4 @@
 // Pages serves files with only a 10-minute Cache-Control, but a returning
 // player loading the page within that window would otherwise still risk
 // getting a stale main.js.
-export const VERSION = "1.10.1";
+export const VERSION = "1.10.2";
