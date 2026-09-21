@@ -33,9 +33,10 @@ local (`localStorage`).
   forget. **Explicitly excluded** (all explicit user calls, not
   oversights — the common thread is "doesn't change what a player's
   browser actually loads/runs"):
-  - `admin.html`/`editor.html` and their own `js/admin/`, `js/editor/`,
-    `css/admin.css`, `css/editor.css` — standalone dev tools with no
-    version-check mechanism of their own (`js/versionCheck.js` only ever
+  - `admin.html`/`planetEditor.html`/`shipEditor.html` and their own
+    `js/admin/`, `js/editor/`, `css/admin.css`, `css/editor.css` —
+    standalone dev tools with no version-check mechanism of their own
+    (`js/versionCheck.js` only ever
     watches the *game's* `js/version.js`), so a version bump for them
     wouldn't actually tell two deploys apart the way it does for the
     game — just noise in `js/version.js`'s history.
@@ -87,7 +88,7 @@ local (`localStorage`).
   and clicking a planet with nothing selected silently sent the *entire*
   swarm. Clicking a planet with no selection now just shows a "select
   ships first" toast (`toast.noSelection`) instead of doing anything.
-- **Object editor** (`editor.html`, not linked from the game) reuses the
+- **Object editor** (`planetEditor.html`, not linked from the game) reuses the
   game's own `materializePlanet`/`materializeBlackHole` functions for its
   live preview, so it can never visually drift from actual gameplay. It
   has no backend, so "Download" just produces copy-pasteable
@@ -492,7 +493,7 @@ local (`localStorage`).
   regardless (one row per active actor per action, upserted in place),
   but an unconditional `activity_log` would grow without bound. No UI
   for this **in the game** — `admin.html` (separate entry
-  point, not linked from the game, same treatment as `editor.html`) is a
+  point, not linked from the game, same treatment as `planetEditor.html`) is a
   read-only viewer for it, or query by hand (Supabase SQL Editor, or the
   Management API via the `pass` file) when something looks worth
   investigating, e.g.:

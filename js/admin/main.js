@@ -1,6 +1,6 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../env.js";
 
-// Not linked from the game (same treatment as editor.html) and safe to
+// Not linked from the game (same treatment as planetEditor.html) and safe to
 // ship publicly on GitHub Pages despite calling a privileged-looking RPC:
 // the anon key here is the same public one already committed in env.js,
 // and admin_activity_log() (supabase/schema.sql) refuses to return

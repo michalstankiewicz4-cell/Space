@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ship Editor // Swarm Protocol</title>
+<!-- Standalone prototype, not linked from the game (same treatment as
+     planetEditor.html/admin.html). First pass at a Space-Engineers-style block
+     ship builder: a 10x10x10 grid, a category+shape+color picker on the
+     right, left-click to place, shift+left-click to remove. No hidden-face
+     culling or any other draw-call optimization yet — explicitly deferred,
+     see the note above buildBlockMesh() below. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void: #05060a;
+    --panel: rgba(12,18,32,0.88);
+    --panel-edge: rgba(79,227,198,0.35);
+    --teal: #4fe3c6;
+    --ink: #e8ecf3;
+    --ink-dim: #8a93a8;
+    --danger: #ff4f81;
+    --font-head: 'Space Grotesk', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; width:100%; height:100%; overflow:hidden; background: var(--void); font-family: var(--font-mono); color: var(--ink); }
+  canvas{ display:block; touch-action:none; cursor: crosshair; }
+
+  #sidebar{
+    position:fixed; top:0; right:0; bottom:0; width:270px;
+    background: var(--panel); border-left: 1px solid var(--panel-edge);
+    padding: 18px 16px 16px; overflow-y:auto;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  #sidebar h1{ font-family: var(--font-head); font-size:16px; margin:0 0 2px; color: var(--ink); }
+  #sidebar h1 span{ color: var(--teal); }
+  .hint{ font-size:11px; color: var(--ink-dim); line-height:1.6; margin: 0 0 14px; }
+  .hint b{ color: var(--ink); }
+  h2{
+    font-family: var(--font-head); font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+    color: var(--teal); margin: 14px 0 6px;
+  }
+  .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .pickBtn{
+    display:flex; align-items:center; gap:7px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--panel-edge);
+    color: var(--ink); font-family: var(--font-mono); font-size:11.5px;
+    padding: 7px 8px; cursor:pointer; text-align:left;
+  }
+  .pickBtn:hover{ border-color: var(--teal); }
+  .pickBtn.active{ background: rgba(79,227,198,0.16); border-color: var(--teal); color: var(--teal); }
+  .swatch{ width:11px; height:11px; flex:none; border-radius:2px; border:1px solid rgba(255,255,255,0.3); }
+
+  #colorRow{ display:flex; align-items:center; gap:8px; margin: 4px 0; }
+  #colorPicker{ width:40px; height:30px; padding:0; border:1px solid var(--panel-edge); background:none; cursor:pointer; }
+  #colorResetBtn{
+    flex:1; background: rgba(255,255,255,0.05); border: 1px solid var(--panel-edge);
+    color: var(--ink-dim); font-family: var(--font-mono); font-size: 11px; padding: 8px 6px; cursor:pointer;
+  }
+  #colorResetBtn:hover{ color: var(--ink); border-color: var(--teal); }
+
+  #rotateBtn{
+    margin-top: 10px; width:100%;
+    font-family: var(--font-head); font-weight:600; font-size:13px;
+    background: rgba(255,255,255,0.06); color: var(--ink); border: 1px solid var(--panel-edge);
+    padding: 9px 0; cursor:pointer;
+  }
+  #rotateBtn:hover{ border-color: var(--teal); color: var(--teal); }
+
+  #statusLine{
+    margin-top: 14px; font-size:11.5px; color: var(--ink-dim); line-height:1.7;
+    border-top: 1px solid rgba(79,227,198,0.2); padding-top: 10px;
+  }
+  #statusLine b{ color: var(--teal); }
+
+  #bottomButtons{ margin-top: auto; display:flex; flex-direction:column; gap:8px; padding-top: 14px; }
+  #bottomButtons button{
+    font-family: var(--font-mono); font-size:12px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--panel-edge);
+    color: var(--ink); padding: 9px 0; cursor:pointer;
+  }
+  #bottomButtons button:hover{ border-color: var(--teal); color: var(--teal); }
+  #clearBtn:hover{ border-color: var(--danger); color: var(--danger); }
+</style>
+</head>
+<body>
+
+<div id="stage"></div>
+
+<div id="sidebar">
+  <h1>SHIP <span>EDITOR</span></h1>
+  <p class="hint">
+    <b>Left click</b> empty cell = place &middot; <b>Shift+left click</b> block = remove
+    &middot; <b>right-drag</b> = orbit camera &middot; <b>scroll</b> = zoom &middot; <b>R</b> = rotate pending block
+  </p>
+
+  <h2>Category</h2>
+  <div id="categoryButtons" class="grid2"></div>
+
+  <h2>Shape</h2>
+  <div id="shapeButtons" class="grid2"></div>
+
+  <h2>Color</h2>
+  <div id="colorRow">
+    <input id="colorPicker" type="color">
+    <button id="colorResetBtn" type="button">Reset to category</button>
+  </div>
+
+  <button id="rotateBtn" type="button">⟳ Rotate pending block</button>
+
+  <div id="statusLine"></div>
+
+  <div id="bottomButtons">
+    <button id="clearBtn" type="button">✕ Clear all blocks</button>
+    <button id="downloadBtn" type="button">⬇ Download ship (JSON)</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---------- grid model ----------
+
+  const GRID_SIZE = 10;
+  const CELL_SIZE = 1;
+  const GRID_OFFSET = (GRID_SIZE - 1) / 2; // centers the whole 10x10x10 volume on the world origin
+
+  function cellKey(x, y, z){ return x + "," + y + "," + z; }
+  function inBounds(x, y, z){ return x>=0 && x<GRID_SIZE && y>=0 && y<GRID_SIZE && z>=0 && z<GRID_SIZE; }
+  function cellCenterWorld(x, y, z){
+    return new THREE.Vector3(
+      (x - GRID_OFFSET) * CELL_SIZE,
+      (y - GRID_OFFSET) * CELL_SIZE,
+      (z - GRID_OFFSET) * CELL_SIZE
+    );
+  }
+
+  // key -> { mesh, category, shape, color (hex string), rotationY (0-3) }
+  const blocks = new Map();
+
+  // ---------- categories / shapes ----------
+
+  const CATEGORIES = [
+    { id: "hull",     label: "Poszycie",   color: "#6b7480" },
+    { id: "habitat",  label: "Mieszkalny", color: "#8fd88f" },
+    { id: "command",  label: "Dowództwo",  color: "#4fa8ff" },
+    { id: "computer", label: "Komputer",   color: "#4fe3c6" },
+    { id: "ai",       label: "AI",         color: "#b98cff" }
+  ];
+  const SHAPES = [
+    { id: "cube",  label: "Zwykły" },
+    { id: "wedge", label: "Skośny" },
+    { id: "round", label: "Zaokrąglony" }
+  ];
+
+  let selectedCategory = CATEGORIES[0];
+  let selectedShape = SHAPES[0];
+  let selectedColor = selectedCategory.color;
+  let pendingRotationY = 0; // 0..3, each step = 90deg around Y
+
+  // ---------- block geometry builders ----------
+  // Every shape is built to fit inside a unit cell centered on its own local
+  // origin (roughly -0.48..0.48 per axis, leaving a thin gap between
+  // neighboring blocks so individual pieces stay visually distinct — same
+  // idea as Minecraft/Space Engineers' own block gap).
+  //
+  // NOT DONE YET, ON PURPOSE (see the user's own "optimize later" framing):
+  // no hidden-face culling / greedy meshing between adjacent solid blocks.
+  // Every block renders all of its own faces regardless of neighbors, which
+  // is fine for a design prototype but would need addressing before this
+  // scales to a real, large, always-rendered ship.
+
+  function makeCubeMesh(mat){
+    return new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.96, 0.96), mat);
+  }
+
+  // A right-triangular prism (ramp): full height at z=+0.48 (the "back"),
+  // tapering to zero height at z=-0.48 (the "front" — where the slope
+  // meets the ground), flat width-wise across x. Hand-built (no built-in
+  // THREE "wedge" primitive) — DoubleSide on the material is a deliberate
+  // safety net for any triangle-winding mistakes below, not just a light-
+  // ing nicety: with it, a backwards face still renders instead of
+  // vanishing outright.
+  function makeWedgeMesh(mat){
+    const s = 0.48;
+    const P0=[-s,-s,-s], P1=[-s,-s, s], P2=[-s, s, s];
+    const P3=[ s,-s,-s], P4=[ s,-s, s], P5=[ s, s, s];
+    const tris = [
+      P0,P3,P4,  P0,P4,P1,      // bottom (y=-s)
+      P1,P4,P5,  P1,P5,P2,      // back (z=+s)
+      P0,P1,P2,                 // left end cap (x=-s)
+      P3,P5,P4,                 // right end cap (x=+s)
+      P0,P5,P3,  P0,P2,P5       // slope (front-bottom -> back-top)
+    ];
+    const positions = new Float32Array(tris.length * 3);
+    for(let i=0;i<tris.length;i++){
+      positions[i*3] = tris[i][0]; positions[i*3+1] = tris[i][1]; positions[i*3+2] = tris[i][2];
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geo.computeVertexNormals();
+    return new THREE.Mesh(geo, mat);
+  }
+
+  // A rounded outer corner — a quarter-circle "pie slice" cross-section
+  // extruded into a solid via THREE.ExtrudeGeometry (which generates both
+  // caps and the side walls correctly on its own, unlike a hand-built
+  // partial CylinderGeometry, which doesn't close its own radial cut
+  // faces). The concave (sharp) corner sits at this cell's -x/-z/-y
+  // corner; the curve bulges out toward +x/+z, so four of these rotated
+  // 0/90/180/270 tile into a full rounded column.
+  function makeRoundMesh(mat){
+    const r = 0.48;
+    const shape = new THREE.Shape();
+    shape.moveTo(0, 0);
+    shape.lineTo(r, 0);
+    shape.absarc(0, 0, r, 0, Math.PI/2, false);
+    shape.lineTo(0, 0);
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.96, bevelEnabled: false, curveSegments: 10 });
+    // Shape lives in the extruder's local XY plane, extruded along +Z.
+    // Re-map that to our cell's (x, z, y) so the extrusion becomes height.
+    geo.rotateX(-Math.PI/2);
+    geo.translate(-r, -0.48, r);
+    return new THREE.Mesh(geo, mat);
+  }
+
+  function buildBlockMesh(shapeId, colorHex){
+    const mat = new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.35, roughness: 0.55, side: THREE.DoubleSide });
+    if(shapeId === "wedge") return makeWedgeMesh(mat);
+    if(shapeId === "round") return makeRoundMesh(mat);
+    return makeCubeMesh(mat);
+  }
+
+  function disposeMesh(mesh){
+    mesh.traverse(function(obj){
+      if(obj.geometry) obj.geometry.dispose();
+      if(obj.material) obj.material.dispose();
+    });
+  }
+
+  // ---------- scene setup ----------
+
+  const stage = document.getElementById("stage");
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(window.innerWidth - 270, window.innerHeight);
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  stage.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x05060a);
+
+  const camera = new THREE.PerspectiveCamera(50, (window.innerWidth-270) / window.innerHeight, 0.1, 500);
+  camera.position.set(14, 11, 14);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 0, 0);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.enablePan = false;
+  controls.minDistance = 4;
+  controls.maxDistance = 40;
+  // Right-drag rotates (matches the game's own camera convention); left
+  // button is deliberately left unmapped here so it's fully free for our
+  // own block placement/removal handler below.
+  controls.mouseButtons = { LEFT: null, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
+
+  scene.add(new THREE.HemisphereLight(0x2a3a55, 0x05050a, 0.6));
+  const sun = new THREE.DirectionalLight(0xfff2e0, 1.2);
+  sun.position.set(20, 25, 15);
+  scene.add(sun);
+  const rim = new THREE.DirectionalLight(0x4fe3c6, 0.3);
+  rim.position.set(-15, -10, -20);
+  scene.add(rim);
+
+  // Bounding-box wireframe + a floor grid, purely for spatial reference —
+  // a 10x10x10 void with no cues is hard to judge depth/position in.
+  const boundsGeo = new THREE.BoxGeometry(GRID_SIZE*CELL_SIZE, GRID_SIZE*CELL_SIZE, GRID_SIZE*CELL_SIZE);
+  const bounds = new THREE.LineSegments(
+    new THREE.EdgesGeometry(boundsGeo),
+    new THREE.LineBasicMaterial({ color: 0x4fe3c6, transparent: true, opacity: 0.35 })
+  );
+  scene.add(bounds);
+  const floorGrid = new THREE.GridHelper(GRID_SIZE*CELL_SIZE, GRID_SIZE, 0x4fe3c6, 0x1c2230);
+  floorGrid.position.y = -GRID_SIZE*CELL_SIZE/2;
+  scene.add(floorGrid);
+
+  window.addEventListener("resize", function(){
+    const w = window.innerWidth - 270, h = window.innerHeight;
+    camera.aspect = w/h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  });
+
+  // ---------- pick colliders (one invisible box per grid cell) ----------
+  // Same "transparent but still visible:true" trick as the game's own ship/
+  // drone pick meshes (see js/ships/swarm.js) — raycasting skips anything
+  // with visible:false, so full transparency (not invisibility) is what
+  // keeps a mesh raycastable while rendering nothing.
+  const pickGeo = new THREE.BoxGeometry(CELL_SIZE, CELL_SIZE, CELL_SIZE);
+  const pickMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 });
+  const cellColliders = [];
+  for(let x=0;x<GRID_SIZE;x++){
+    for(let y=0;y<GRID_SIZE;y++){
+      for(let z=0;z<GRID_SIZE;z++){
+        const collider = new THREE.Mesh(pickGeo, pickMat);
+        collider.position.copy(cellCenterWorld(x,y,z));
+        collider.userData.cell = { x, y, z };
+        scene.add(collider);
+        cellColliders.push(collider);
+      }
+    }
+  }
+
+  // Ghost/hover preview — a thin wireframe cube shown at whichever empty
+  // cell the pointer is currently over, so depth/placement is legible in
+  // a grid this dense.
+  const ghost = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(0.98, 0.98, 0.98)),
+    new THREE.LineBasicMaterial({ color: 0x4fe3c6 })
+  );
+  ghost.visible = false;
+  scene.add(ghost);
+
+  // ---------- raycasting / interaction ----------
+
+  const raycaster = new THREE.Raycaster();
+  function ndcFromEvent(e){
+    const rect = renderer.domElement.getBoundingClientRect();
+    return {
+      x: ((e.clientX-rect.left)/rect.width)*2 - 1,
+      y: -((e.clientY-rect.top)/rect.height)*2 + 1
+    };
+  }
+
+  // One combined raycast against every placed block AND every STILL-EMPTY
+  // cell's collider, taking the single closest hit overall — a solid
+  // block in front of the ray correctly wins over any collider further
+  // behind it, so you can never place "through" an already-built block.
+  //
+  // Occupied cells' own colliders are deliberately excluded here, not just
+  // left in and expected to lose the distance comparison: a cell's
+  // collider (a full 1x1x1 box) is slightly LARGER than most block shapes
+  // (0.96 cubes, and wedge/round shapes cover even less of the cell), so
+  // with both left in the ray could hit the invisible collider's surface
+  // a hair before the actual block's smaller geometry — reporting the
+  // click as landing on an "empty" cell even though a block sits right
+  // there, silently swallowing shift-click removal. Found by testing an
+  // isolated single block (place, then immediately shift-click the same
+  // spot) rather than assuming the distance-sort alone was enough.
+  function pickClosest(e){
+    const ndc = ndcFromEvent(e);
+    raycaster.setFromCamera(ndc, camera);
+    const blockMeshes = Array.from(blocks.values()).map(function(b){ return b.mesh; });
+    const emptyColliders = cellColliders.filter(function(c){
+      const p = c.userData.cell;
+      return !blocks.has(cellKey(p.x, p.y, p.z));
+    });
+    const hits = raycaster.intersectObjects(blockMeshes.concat(emptyColliders), false);
+    if(hits.length === 0) return null;
+    const hit = hits[0].object;
+    const blockEntry = Array.from(blocks.entries()).find(function(e2){ return e2[1].mesh === hit; });
+    if(blockEntry) return { kind: "block", key: blockEntry[0] };
+    return { kind: "empty", cell: hit.userData.cell };
+  }
+
+  function placeAt(x, y, z){
+    const key = cellKey(x,y,z);
+    if(blocks.has(key)) return;
+    const mesh = buildBlockMesh(selectedShape.id, selectedColor);
+    mesh.position.copy(cellCenterWorld(x,y,z));
+    mesh.rotation.y = pendingRotationY * Math.PI/2;
+    scene.add(mesh);
+    blocks.set(key, { mesh: mesh, category: selectedCategory.id, shape: selectedShape.id, color: selectedColor, rotationY: pendingRotationY });
+    updateStatusLine();
+  }
+
+  function removeAt(key){
+    const entry = blocks.get(key);
+    if(!entry) return;
+    scene.remove(entry.mesh);
+    disposeMesh(entry.mesh);
+    blocks.delete(key);
+    updateStatusLine();
+  }
+
+  let leftDown = false, leftStartX = 0, leftStartY = 0, leftIsDrag = false;
+  const DRAG_THRESHOLD = 6;
+
+  renderer.domElement.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+
+  renderer.domElement.addEventListener("pointerdown", function(e){
+    if(e.button !== 0) return; // left only — right is the camera (OrbitControls)
+    leftDown = true; leftIsDrag = false; leftStartX = e.clientX; leftStartY = e.clientY;
+  });
+
+  window.addEventListener("pointermove", function(e){
+    if(leftDown){
+      const dx = e.clientX-leftStartX, dy = e.clientY-leftStartY;
+      if(Math.sqrt(dx*dx+dy*dy) > DRAG_THRESHOLD) leftIsDrag = true;
+    }
+    const hit = pickClosest(e);
+    if(hit && hit.kind === "empty"){
+      ghost.visible = true;
+      ghost.position.copy(cellCenterWorld(hit.cell.x, hit.cell.y, hit.cell.z));
+    } else {
+      ghost.visible = false;
+    }
+  });
+
+  window.addEventListener("pointerup", function(e){
+    if(e.button !== 0 || !leftDown) return;
+    leftDown = false;
+    if(leftIsDrag) return; // a drag was just camera-adjacent noise, not a click
+    const hit = pickClosest(e);
+    if(!hit) return;
+    if(e.shiftKey){
+      if(hit.kind === "block") removeAt(hit.key);
+    } else {
+      if(hit.kind === "empty") placeAt(hit.cell.x, hit.cell.y, hit.cell.z);
+    }
+  });
+
+  window.addEventListener("keydown", function(e){
+    if(e.key === "r" || e.key === "R") rotatePending();
+  });
+
+  function rotatePending(){
+    pendingRotationY = (pendingRotationY + 1) % 4;
+    updateStatusLine();
+  }
+
+  // ---------- sidebar UI ----------
+
+  function buildPickButtons(containerId, items, isActive, onPick, withSwatch){
+    const el = document.getElementById(containerId);
+    el.innerHTML = "";
+    items.forEach(function(item){
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "pickBtn" + (isActive(item) ? " active" : "");
+      if(withSwatch){
+        const sw = document.createElement("span");
+        sw.className = "swatch";
+        sw.style.background = item.color;
+        btn.appendChild(sw);
+      }
+      const label = document.createElement("span");
+      label.textContent = item.label;
+      btn.appendChild(label);
+      btn.addEventListener("click", function(){
+        onPick(item);
+        refreshUI();
+      });
+      el.appendChild(btn);
+    });
+  }
+
+  function refreshUI(){
+    buildPickButtons("categoryButtons", CATEGORIES, function(c){ return c === selectedCategory; }, function(c){
+      selectedCategory = c;
+      selectedColor = c.color;
+      document.getElementById("colorPicker").value = selectedColor;
+    }, true);
+    buildPickButtons("shapeButtons", SHAPES, function(s){ return s === selectedShape; }, function(s){
+      selectedShape = s;
+    }, false);
+    document.getElementById("colorPicker").value = selectedColor;
+    updateStatusLine();
+  }
+
+  function updateStatusLine(){
+    document.getElementById("statusLine").innerHTML =
+      "Selected: <b>" + selectedCategory.label + "</b> / <b>" + selectedShape.label + "</b><br>" +
+      "Rotation: <b>" + (pendingRotationY*90) + "&deg;</b><br>" +
+      "Blocks placed: <b>" + blocks.size + "</b> / " + (GRID_SIZE*GRID_SIZE*GRID_SIZE);
+  }
+
+  document.getElementById("colorPicker").addEventListener("input", function(e){
+    selectedColor = e.target.value;
+  });
+  document.getElementById("colorResetBtn").addEventListener("click", function(){
+    selectedColor = selectedCategory.color;
+    document.getElementById("colorPicker").value = selectedColor;
+  });
+  document.getElementById("rotateBtn").addEventListener("click", rotatePending);
+  document.getElementById("clearBtn").addEventListener("click", function(){
+    if(blocks.size === 0) return;
+    if(!confirm("Remove all " + blocks.size + " placed blocks?")) return;
+    Array.from(blocks.keys()).forEach(removeAt);
+  });
+  document.getElementById("downloadBtn").addEventListener("click", function(){
+    // No backend here either (same as planetEditor.html) — a plain JSON export
+    // of {x,y,z,category,shape,color,rotationY} per block is the entire
+    // "save" mechanism for now.
+    const list = Array.from(blocks.entries()).map(function(entry){
+      const key = entry[0].split(",").map(Number);
+      const b = entry[1];
+      return { x: key[0], y: key[1], z: key[2], category: b.category, shape: b.shape, color: b.color, rotationY: b.rotationY };
+    });
+    const blob = new Blob([JSON.stringify({ gridSize: GRID_SIZE, blocks: list }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "ship.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  refreshUI();
+
+  // ---------- render loop ----------
+
+  function tick(){
+    requestAnimationFrame(tick);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  tick();
+})();
+</script>
+</body>
+</html>

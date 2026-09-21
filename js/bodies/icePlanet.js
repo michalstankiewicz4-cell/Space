@@ -1,4 +1,4 @@
-// Ice planet generation parameters (see js/content.js and editor.html).
+// Ice planet generation parameters (see js/content.js and planetEditor.html).
 export const ICE_PLANET = {
   kind: "planet",
   spawnWeight: 0.28,

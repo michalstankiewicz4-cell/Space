@@ -1,4 +1,4 @@
-// Meteoroid generation parameters (see js/content.js and editor.html).
+// Meteoroid generation parameters (see js/content.js and planetEditor.html).
 export const METEOROID = {
   kind: "meteoroid",
   spawnWeight: 0.19,

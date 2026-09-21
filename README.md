@@ -49,10 +49,11 @@ js/
 supabase/schema.sql  database schema (tables, RLS, RPC functions) to paste into the Supabase SQL Editor
 ```
 
-`admin.html`/`css/admin.css`/`js/admin/` and `editor.html`/`css/editor.css`/`js/editor/`
-are separate developer-tool entry points, not part of the game's own module
-graph above — see "Object editor" and "Admin panel" below. `blog/` isn't
-part of the game at all — see "Devlog" below.
+`admin.html`/`css/admin.css`/`js/admin/`, `planetEditor.html`/`css/editor.css`/`js/editor/`,
+and `shipEditor.html` are separate developer-tool entry points, not part of
+the game's own module graph above — see "Object editor", "Admin panel" and
+"Ship editor" below. `blog/` isn't part of the game at all — see "Devlog"
+below.
 
 Adding a new mechanic (e.g. another upgrade type, a new kind of celestial
 body) usually means editing a single file in the right folder, without
@@ -60,7 +61,7 @@ touching the rest.
 
 ## Object editor
 
-[`editor.html`](editor.html) is a separate developer tool (not linked from
+[`planetEditor.html`](planetEditor.html) is a separate developer tool (not linked from
 the game itself) for tuning the look of the procedurally generated bodies —
 one tab and one slider per parameter for each of the 7 types in
 [`js/bodies/`](js/bodies), with a live 3D preview. The preview reuses the
@@ -70,6 +71,20 @@ identical in actual play.
 Since the site has no backend, the "Download" button produces a text file
 with ready-to-paste `export const ... = {...}` blocks — one per file in
 `js/bodies/` — which you then manually swap into the repo.
+
+## Ship editor
+
+[`shipEditor.html`](shipEditor.html) is an early, standalone prototype
+(not linked from the game, not yet integrated with anything) of a
+Space-Engineers-style modular ship builder: a 10x10x10 grid, block
+category/shape/color pickers, left-click to place and shift+left-click to
+remove. Three shapes per block category (cube/wedge/rounded corner), all
+built from plain Three.js primitives — no model files. "Download" exports
+the current build as JSON (grid position, category, shape, color, rotation
+per block) — there's no backend or persistence yet, so that JSON is the
+only way to keep a design between sessions. No hidden-face culling or any
+other rendering optimization yet either — deliberately deferred until
+there's an actual gameplay use for the format this produces.
 
 ## Admin panel
 

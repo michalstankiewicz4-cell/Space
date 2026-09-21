@@ -1,4 +1,4 @@
-// Black hole generation parameters (see js/content.js and editor.html).
+// Black hole generation parameters (see js/content.js and planetEditor.html).
 // Not part of the weighted random spawn pool (world/bodies.js#pickBodyType) —
 // spawns on its own timer, see world/blackholes.js.
 export const BLACKHOLE = {
