@@ -4,6 +4,15 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.1]
+
+### Fixed
+- The drone's script now survives closing the browser — previously only
+  the in-memory copy was kept, so it reset to blank on every reload.
+  Persisted to `localStorage` separately from swarm progress (fuel,
+  position and running state still reset fresh each session, same as
+  before).
+
 ## [1.10.0]
 
 ### Added

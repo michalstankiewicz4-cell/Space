@@ -25,6 +25,23 @@ import {
 // many resumptions in one frame, it's stopped with an error instead.
 const MAX_INSTANT_STEPS_PER_FRAME = 2000;
 
+// The script itself is the only part of drone state worth surviving a
+// reload — fuel/position/running-state are all meant to reset fresh each
+// session, same as everything else in ctx (see core/context.js). Separate
+// localStorage key, same "roj-" prefix and try/catch-guarded pattern as
+// settings.js/gameState.js, deliberately not folded into either (same
+// "small persisted modules, not merged" reasoning as settings/identity/i18n
+// — see CLAUDE.md).
+const SCRIPT_STORAGE_KEY = "roj-drone-script";
+
+function loadStoredScript(){
+  try{ return localStorage.getItem(SCRIPT_STORAGE_KEY) || ""; }catch(e){ return ""; }
+}
+
+function saveStoredScript(src){
+  try{ localStorage.setItem(SCRIPT_STORAGE_KEY, src); }catch(e){ /* storage unavailable - ignore */ }
+}
+
 function makeDroneMesh(){
   const geo = new THREE.OctahedronGeometry(0.42, 0);
   const mat = new THREE.MeshStandardMaterial({
@@ -89,7 +106,7 @@ export function spawnDrone(){
     fuel: DRONE_MAX_FUEL, maxFuel: DRONE_MAX_FUEL,
     attackPower: DRONE_BASE_ATTACK, defense: DRONE_BASE_DEFENSE,
     docked: false,
-    script: "",
+    script: loadStoredScript(),
     running: false,
     error: null,
     logs: [],
@@ -235,6 +252,7 @@ function advanceBlocking(drone, pending, dt){
 
 export function setDroneScript(drone, src){
   drone.script = src;
+  saveStoredScript(src);
 }
 
 export function stopDroneScript(drone){

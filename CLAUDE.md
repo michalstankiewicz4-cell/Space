@@ -176,6 +176,14 @@ local (`localStorage`).
     camera stays put" was an explicit requirement.
   - Fuel only refills by proximity-docking near a planet/sun (no passive
     regen) — see `DRONE_DOCK_RANGE_MULT`/`DRONE_REFUEL_RATE` in config.js.
+  - **The script text itself is persisted** (`localStorage["roj-drone-script"]`,
+    `drone.js#setDroneScript()`/`spawnDrone()`) — everything else about the
+    drone (fuel, position, running state) resets fresh every session like
+    the rest of `ctx`, but losing a written script on every browser close
+    would be a real loss of player work, unlike those. A separate key, not
+    folded into `gameState.js`'s save — same "small persisted modules, not
+    merged" reasoning as settings/identity/i18n above, since this is a
+    single string with nothing else in common with swarm progress.
   - The drone isn't in `ctx.ships`, so it's handled as its own case
     everywhere ship-like logic exists: `world/blackholes.js` has a
     separate gravity/kill-radius block for it (with a `defense`-based
