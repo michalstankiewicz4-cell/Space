@@ -6,6 +6,10 @@ const STRINGS = {
   en: {
     banner: {
       desc: "Your swarm of ships feeds on planets, suns, comets and meteoroids scattered through space — and sometimes a black hole appears nearby, best avoided. Every planet devoured grants evolution points — invest them in speed, power and thermal resistance, or raise new units.",
+      modeSingle: "Singleplayer",
+      modeMulti: "Multiplayer",
+      modeFriends: "With friends",
+      modeComingSoon: "Coming soon",
       nickPlaceholder: "Swarm commander's nickname",
       nickSuggestionPrefix: "e.g.",
       start: "ENTER ORBIT",
@@ -114,6 +118,10 @@ const STRINGS = {
   pl: {
     banner: {
       desc: "Twój rój okrętów-sadów żywi się planetami, słońcami, kometami i meteorytami rozsianymi w przestrzeni — a w pobliżu czasem pojawia się czarna dziura, której lepiej unikać. Każda pochłonięta planeta daje punkty ewolucji — inwestuj je w prędkość, moc i odporność termiczną roju, albo powołuj nowe jednostki.",
+      modeSingle: "Jeden gracz",
+      modeMulti: "Multiplayer",
+      modeFriends: "Ze znajomymi",
+      modeComingSoon: "Wkrótce",
       nickPlaceholder: "Ksywka dowódcy roju",
       nickSuggestionPrefix: "np.",
       start: "WEJDŹ NA ORBITĘ",

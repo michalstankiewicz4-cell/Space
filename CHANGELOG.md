@@ -4,6 +4,17 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.9.4]
+
+### Added
+- A game-mode row under the title on the start screen: Singleplayer,
+  Multiplayer, With friends. Only Multiplayer is real right now (that's
+  what the game already always does) — all three are non-interactive
+  placeholders (`disabled`), Singleplayer/With friends visibly grayed
+  out with a "Coming soon" tooltip, Multiplayer shown highlighted/active
+  to reflect what's actually happening. No mode-switching logic exists
+  yet; this is purely a preview of what's planned.
+
 ## [1.9.3]
 
 ### Changed
