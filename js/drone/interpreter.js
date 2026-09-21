@@ -60,6 +60,7 @@ function* runStatement(node, env){
 function* evalExpr(node, env){
   switch(node.type){
     case "Number": return node.value;
+    case "String": return node.value;
     case "Bool": return node.value ? 1 : 0;
     case "Ident":
       return Object.prototype.hasOwnProperty.call(env.vars, node.name) ? env.vars[node.name] : 0;

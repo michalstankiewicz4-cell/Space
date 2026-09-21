@@ -101,9 +101,9 @@ const STRINGS = {
         maxFuelFn: "Fuel tank capacity",
         near: "1 if a planet/sun is close enough to attack() or refuel, else 0",
         attackFn: "Bite the nearest body in range for this drone's Attack stat",
-        print: "Write x to the log below the buttons — handy for debugging",
+        print: "Write x to the log below the buttons, and release a gas puff from the nose with a laser writing x into it — visible to other players too",
         syntaxTitle: "Syntax",
-        syntax: "if (…) { … } else { … } · while (…) { … } · x = 5 · + - * / < > <= >= == != && || !",
+        syntax: "if (…) { … } else { … } · while (…) { … } · x = 5 · \"text\" (print() only) · + - * / < > <= >= == != && || !",
         exampleTitle: "Example"
       }
     }
@@ -206,9 +206,9 @@ const STRINGS = {
         maxFuelFn: "Pojemność zbiornika paliwa",
         near: "1 jeśli planeta/słońce jest wystarczająco blisko, by zaatakować lub zatankować, inaczej 0",
         attackFn: "Gryzie najbliższe ciało w zasięgu, siłą równą statystyce Atak drona",
-        print: "Wypisuje x w logu pod przyciskami — przydatne do debugowania",
+        print: "Wypisuje x w logu pod przyciskami i wypuszcza obłok gazu z dzioba, w który laser wpisuje x — widoczne też dla innych graczy",
         syntaxTitle: "Składnia",
-        syntax: "if (…) { … } else { … } · while (…) { … } · x = 5 · + - * / < > <= >= == != && || !",
+        syntax: "if (…) { … } else { … } · while (…) { … } · x = 5 · \"tekst\" (tylko print()) · + - * / < > <= >= == != && || !",
         exampleTitle: "Przykład"
       }
     }

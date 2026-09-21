@@ -23,6 +23,7 @@ import { updateRemoteShips, maybeBroadcastShips } from "./net/shipsBroadcast.js"
 import { initNet } from "./net/connect.js";
 import { initVersionCheck } from "./versionCheck.js";
 import { spawnDrone, updateDrone } from "./drone/drone.js";
+import { updateDronePrintFx } from "./drone/dronePrintFx.js";
 import { initDroneThumb, renderDroneThumb } from "./drone/droneThumb.js";
 import { initDronePanel, refreshDronePanel } from "./ui/dronePanel.js";
 
@@ -73,6 +74,7 @@ function tick(){
   updateBlackHoles(dt);
   updateDust(dt);
   updateDrone(dt);
+  updateDronePrintFx(dt);
   maintainPlanetCount(dt);
   if(NET_ENABLED){
     updateRemoteShips(dt);

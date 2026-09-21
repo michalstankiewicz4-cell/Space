@@ -4,6 +4,22 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.8.0]
+
+### Added
+- `print("text")` now does more than log a line: the drone releases a gas
+  puff from its nose and a laser projects the text onto it — legible only
+  while the gas is there (a real laser needs smoke/fog to show up at
+  all), then the gas disperses and a bare laser beam lingers a moment
+  before fading. Visible to other players too, relayed over Realtime
+  broadcast as a one-shot event (not part of the periodic position
+  snapshot). The log entry below the Run/Stop buttons still happens as
+  before, unchanged.
+- String literals (`"like this"`) in the drone DSL — added specifically
+  so `print()` could take a message. The language is still otherwise
+  entirely numeric (no string operators/comparisons); this makes a
+  string a valid argument value, nothing more.
+
 ## [1.7.2]
 
 ### Fixed

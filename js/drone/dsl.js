@@ -20,8 +20,8 @@
 //   additive  := multiplicative (('+'|'-') multiplicative)*
 //   multiplicative := unary (('*'|'/') unary)*
 //   unary     := ('!'|'-')? primary
-//   primary   := NUMBER | 'true' | 'false' | IDENT '(' args? ')' | IDENT
-//              | '(' expr ')'
+//   primary   := NUMBER | STRING | 'true' | 'false' | IDENT '(' args? ')'
+//              | IDENT | '(' expr ')'
 //   args      := expr (',' expr)*
 
 const KEYWORDS = new Set(["if", "else", "while", "true", "false"]);
@@ -43,6 +43,20 @@ function tokenize(src){
       while(j < n && /[0-9.]/.test(src[j])) j++;
       tokens.push({ type: "number", value: parseFloat(src.slice(i,j)), line });
       i = j;
+      continue;
+    }
+    if(c === '"'){
+      // Only used for print()'s message (see drone/dronePrintFx.js) — the
+      // rest of the language is purely numeric, so a string is otherwise
+      // just an opaque value with nowhere else to go.
+      let j = i+1, out = "";
+      while(j < n && src[j] !== '"'){
+        if(src[j] === "\\" && j+1 < n){ out += src[j+1]; j += 2; }
+        else { out += src[j]; j++; }
+      }
+      if(j >= n) throw new Error("Unterminated string at line " + line);
+      tokens.push({ type: "string", value: out, line });
+      i = j+1;
       continue;
     }
     if(/[a-zA-Z_]/.test(c)){
@@ -188,6 +202,7 @@ function parse(src){
   }
   function parsePrimary(){
     if(at("number")) return { type: "Number", value: advance().value };
+    if(at("string")) return { type: "String", value: advance().value };
     if(at("true")){ advance(); return { type: "Bool", value: true }; }
     if(at("false")){ advance(); return { type: "Bool", value: false }; }
     if(at("(")){ advance(); const e = parseExpr(); expect(")"); return e; }

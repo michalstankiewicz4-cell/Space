@@ -9,9 +9,12 @@ import { applyHealthVisual, destroyPlanet, paintScorch, bodyValueEstimate } from
 import { t } from "../i18n.js";
 import { parseDroneScript } from "./dsl.js";
 import { runProgram } from "./interpreter.js";
+import { spawnPrintEffect } from "./dronePrintFx.js";
+import { broadcastDronePrint } from "../net/shipsBroadcast.js";
 import {
   DRONE_MAX_FUEL, DRONE_FUEL_PER_MOVE_UNIT, DRONE_MOVE_SPEED, DRONE_TURN_SPEED,
-  DRONE_BASE_ATTACK, DRONE_BASE_DEFENSE, DRONE_DOCK_RANGE_MULT, DRONE_REFUEL_RATE
+  DRONE_BASE_ATTACK, DRONE_BASE_DEFENSE, DRONE_DOCK_RANGE_MULT, DRONE_REFUEL_RATE,
+  DRONE_PRINT_MAX_LEN
 } from "../config.js";
 
 // Runaway-script guard: a script with no move()/turn()/wait() in a while
@@ -102,6 +105,16 @@ function log(drone, msg){
   if(drone.logs.length > 50) drone.logs.shift();
 }
 
+// print()'s in-world half: a gas+laser effect at the drone's current
+// position/heading (see drone/dronePrintFx.js), plus relaying it to other
+// players over Realtime broadcast so they see it too, not just the log
+// entry above.
+function triggerPrintFx(drone, msg){
+  const text = String(msg).slice(0, DRONE_PRINT_MAX_LEN);
+  spawnPrintEffect(drone.pos, drone.heading, text, drone.mesh.material.color.getHex());
+  if(NET_ENABLED) broadcastDronePrint(drone.pos, drone.heading, text);
+}
+
 function nearestBody(drone){
   let best = null, bestDist = Infinity;
   for(let i=0; i<ctx.planets.length; i++){
@@ -155,7 +168,7 @@ function startBuiltin(drone, name, args){
     case "maxFuel": return { blocking: false, value: drone.maxFuel };
     case "nearPlanet": return { blocking: false, value: isDocked(drone) ? 1 : 0 };
     case "attack": return { blocking: false, value: applyAttack(drone) };
-    case "print": log(drone, args[0]); return { blocking: false, value: 0 };
+    case "print": log(drone, args[0]); triggerPrintFx(drone, args[0]); return { blocking: false, value: 0 };
     case "move": return { blocking: true, state: { name: "move", total: Math.max(0, args[0]||0), remaining: Math.max(0, args[0]||0) } };
     case "turn": return { blocking: true, state: { name: "turn", total: args[0]||0, remaining: args[0]||0 } };
     case "wait": return { blocking: true, state: { name: "wait", remaining: Math.max(0, args[0]||0) } };

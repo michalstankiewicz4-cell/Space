@@ -67,9 +67,12 @@ Every player also has one drone (a distinct gold octahedron, spawned well
 away from the ship swarm) that never moves on its own — select it and open
 its Script button to write a small program for it (`if`/`while`/variables,
 plus `move()`, `turn()`, `wait()`, `attack()`, `fuel()`, `nearPlanet()`,
-`print()` — the in-game `[?]` button lists all of them with examples). Its
-side panel also has Run/Stop shortcuts to restart or stop the last saved
-script without reopening the editor. It's not JavaScript: `js/drone/dsl.js`
+`print("text")` — the in-game `[?]` button lists all of them with
+examples). `print()` doesn't just log the text — it puffs gas from the
+drone's nose and writes the message into it with a laser, visible to
+other players too, not just you. Its side panel also has Run/Stop
+shortcuts to restart or stop the last saved script without reopening the
+editor. It's not JavaScript: `js/drone/dsl.js`
 parses this tiny language into an AST, and `js/drone/interpreter.js` walks
 it as a generator, so a script's `move()`/`wait()` calls can pause
 execution for real time without blocking the game loop or the browser tab.

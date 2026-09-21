@@ -142,6 +142,12 @@ local (`localStorage`).
     resolve it instantly (`fuel()`, `attack()`, ...) or spread it over
     several frames by holding off on the next `.next()` call (`move()`/
     `turn()`/`wait()`, tracked in `drone.pending`).
+  - **The DSL is otherwise entirely numeric — string literals
+    (`"like this"`) exist solely so `print()` can take a message.** Added
+    for `print()`'s gas+laser effect (see the bullet below); everything
+    else (comparisons, arithmetic, `if`/`while` conditions) still only
+    ever deals in numbers, so a string has nowhere else useful to go —
+    don't expect string concatenation/comparison to work.
   - **A `while` loop yields an unconditional checkpoint every iteration**
     (see the `"__tick__"` builtin), even though nothing in the language
     needs its value. This was a real bug, not defensive paranoia: a loop
@@ -186,6 +192,24 @@ local (`localStorage`).
     reselecting the drone and reopening the panel a moment later). If the
     drone ever needs to move/spawn near the swarm again, revisit the
     click-priority order or give ships priority over the drone instead.
+  - **`print(x)`'s in-world effect** (`js/drone/dronePrintFx.js`) is a gas
+    puff + a laser that projects the text onto it, both spawned as plain
+    scene objects (`THREE.Sprite`s for the gas/text via `CanvasTexture`,
+    a thin `CylinderGeometry` for the beam) tracked in a module-level
+    `activeEffects` list and advanced/disposed by `updateDronePrintFx(dt)`
+    (called from `main.js`'s `tick()`, same pattern as `updateDrone(dt)`).
+    It's a fire-and-forget snapshot of `drone.pos`/`drone.heading` at the
+    moment `print()` ran, not a live reference to the drone — the gas/
+    laser/text don't follow it around afterward. Triggered from both
+    `drone.js`'s `print` builtin case (locally) and
+    `net/shipsBroadcast.js`'s `handleRemoteDronePrint` (for other
+    players' effects) — it's a **one-shot broadcast event**
+    (`"dronePrint"`), not part of the periodic `"ships"` snapshot, since
+    there's nothing ongoing to sync; sent once, immediately, when
+    `print()` runs (`broadcastDronePrint()`), the same
+    untrusted-payload-clamping treatment as ship positions (`safeCoord()`,
+    plus `containsProfanity()` on the text — same defense-in-depth
+    pattern as remote nicknames).
   - **The side panel's `#droneCloseBtn`/`#droneScriptBtn`/`#droneRunBtn`/
     `#droneStopBtn` all need an explicit `pointer-events:auto` override**
     in `style.css` — `#dronePanel` itself is `pointer-events:none` (same

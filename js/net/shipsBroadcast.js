@@ -1,7 +1,7 @@
 import { ctx } from "../core/context.js";
 import {
   NET_SHIP_BROADCAST_MS, NET_REMOTE_PLAYER_TIMEOUT_MS, NET_GHOST_LERP_SPEED,
-  NET_MAX_REMOTE_SHIPS, NET_MAX_REMOTE_PLAYERS, NET_MAX_NICK_LENGTH
+  NET_MAX_REMOTE_SHIPS, NET_MAX_REMOTE_PLAYERS, NET_MAX_NICK_LENGTH, DRONE_PRINT_MAX_LEN
 } from "../config.js";
 import { clientId, myIdentity } from "./identity.js";
 import { state } from "../core/gameState.js";
@@ -9,6 +9,7 @@ import { updatePlayersHud } from "../ui/hud.js";
 import { roomChannel } from "./connect.js";
 import { containsProfanity } from "../moderation.js";
 import { t } from "../i18n.js";
+import { spawnPrintEffect } from "../drone/dronePrintFx.js";
 
 function makeGhostShipMesh(colorHex){
   const geo = new THREE.ConeGeometry(0.28, 0.9, 8);
@@ -150,4 +151,30 @@ export function maybeBroadcastShips(nowMs){
       drone: ctx.drone ? [ctx.drone.pos.x, ctx.drone.pos.y, ctx.drone.pos.z, ctx.drone.heading] : null
     }
   });
+}
+
+// print()'s in-world effect (see drone.js) is a one-shot event, not
+// ongoing state like ship/drone positions, so it gets its own broadcast
+// event instead of riding along on the periodic "ships" snapshot above —
+// sent once immediately when print() runs, not on the NET_SHIP_BROADCAST_MS
+// interval.
+export function broadcastDronePrint(pos, heading, text){
+  if(!roomChannel) return;
+  roomChannel.send({
+    type: "broadcast", event: "dronePrint",
+    payload: { id: clientId, pos: [pos.x, pos.y, pos.z], heading: heading, text: String(text).slice(0, DRONE_PRINT_MAX_LEN) }
+  });
+}
+
+export function handleRemoteDronePrint(payload){
+  if(!payload || typeof payload.id !== "string" || payload.id === clientId) return;
+  const p = Array.isArray(payload.pos) ? payload.pos : null;
+  if(!p) return;
+  const text = typeof payload.text === "string" ? payload.text.trim().slice(0, DRONE_PRINT_MAX_LEN) : "";
+  if(!text || containsProfanity(text)) return;
+  const heading = Number.isFinite(Number(payload.heading)) ? Number(payload.heading) : 0;
+  const pos = new THREE.Vector3(safeCoord(p[0]), safeCoord(p[1]), safeCoord(p[2]));
+  const rp = ctx.remotePlayers[payload.id];
+  const colorHex = rp && isValidHexColor(rp.color) ? parseInt(rp.color.slice(1), 16) : 0xff7a45;
+  spawnPrintEffect(pos, heading, text, colorHex);
 }

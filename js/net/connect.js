@@ -3,7 +3,7 @@ import { clientId, joinedAt, myIdentity } from "./identity.js";
 import { setPresenceState } from "./presence.js";
 import { updatePlayersHud, setConnectionStatus } from "../ui/hud.js";
 import { materializeBody, onBodyUpdated, onBodyDeleted, bootstrapWorld } from "./bodiesSync.js";
-import { handleRemoteShips } from "./shipsBroadcast.js";
+import { handleRemoteShips, handleRemoteDronePrint } from "./shipsBroadcast.js";
 
 export let roomChannel = null;
 
@@ -47,6 +47,7 @@ function connectRoom(){
     updatePlayersHud();
   });
   roomChannel.on("broadcast", { event: "ships" }, function(msg){ handleRemoteShips(msg.payload); });
+  roomChannel.on("broadcast", { event: "dronePrint" }, function(msg){ handleRemoteDronePrint(msg.payload); });
   roomChannel.on("postgres_changes", { event: "INSERT", schema: "public", table: "bodies" }, function(payload){ materializeBody(payload.new); });
   roomChannel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "bodies" }, function(payload){ onBodyUpdated(payload.new); });
   roomChannel.on("postgres_changes", { event: "DELETE", schema: "public", table: "bodies" }, function(payload){ onBodyDeleted(payload.old); });
