@@ -370,6 +370,10 @@ canvas{ display:block; touch-action:none; cursor: grab; }
   clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
 }
 #outdatedReloadBtn:hover{ filter: brightness(1.1); }
+#outdatedHint{
+  font-family: var(--font-mono); font-size: 11px; color: var(--ink-dim);
+  margin-top: 10px;
+}
 
 #banner{
   position:fixed; z-index:9; inset:0; display:flex; align-items:center; justify-content:center;

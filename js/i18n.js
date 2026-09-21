@@ -16,7 +16,8 @@ const STRINGS = {
     outdated: {
       title: "⚠ Update available",
       text: "A new version of the game is available. Please refresh the page to continue.",
-      reload: "Refresh now"
+      reload: "Refresh now",
+      hint: "or Ctrl+Shift+R"
     },
     setup: {
       title: "Setup",
@@ -122,7 +123,8 @@ const STRINGS = {
     outdated: {
       title: "⚠ Dostępna aktualizacja",
       text: "Dostępna jest nowa wersja gry. Odśwież stronę, aby kontynuować.",
-      reload: "Odśwież teraz"
+      reload: "Odśwież teraz",
+      hint: "lub Ctrl+Shift+R"
     },
     setup: {
       title: "Ustawienia",

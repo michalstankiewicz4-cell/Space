@@ -9,6 +9,51 @@ import { VERSION } from "./version.js";
 
 const CHECK_INTERVAL_MS = 3 * 60 * 1000; // deploys are infrequent; no need to poll harder
 
+// Why "Refresh now" could still serve stale code even after this file's
+// own fix (navigating to a `?_=<timestamp>` URL, see below): that trick
+// only forces a fresh fetch of index.html itself, plus js/main.js and
+// css/style.css because *they* carry a `?v=` in index.html. Every file
+// main.js `import`s transitively (all of these) has no cache-busting of
+// its own — a bare `import "./drone/drone.js"` always resolves to that
+// exact unversioned URL, and if the browser's HTTP cache still considers
+// it fresh (GitHub Pages: Cache-Control max-age=600), the native ES
+// module loader serves the stale cached copy with no way for us to
+// intervene (there's no way to pass fetch options to a static `import`).
+// So before navigating, force-refresh the browser's cache entry for
+// every one of them via a plain fetch with cache:"reload" (revalidates
+// and overwrites the cached copy) — then the subsequent navigation's own
+// `import`s hit the freshly-stored entries instead of stale ones.
+// MAINTENANCE: this list has to be kept in sync by hand (no build step
+// to derive it automatically) — add new files here when they're added
+// to js/, or this stops being reliable for exactly the files it can't see.
+const MODULE_FILES = [
+  "css/style.css",
+  "js/bodies/blackhole.js", "js/bodies/comet.js", "js/bodies/icePlanet.js",
+  "js/bodies/meteoroid.js", "js/bodies/neutralPlanet.js", "js/bodies/sun.js",
+  "js/bodies/volcanicPlanet.js", "js/config.js", "js/content.js",
+  "js/core/context.js", "js/core/gameState.js", "js/core/utils.js",
+  "js/drone/drone.js", "js/drone/dronePrintFx.js", "js/drone/droneThumb.js",
+  "js/drone/dsl.js", "js/drone/interpreter.js", "js/env.js",
+  "js/fx/breakup.js", "js/fx/particles.js", "js/i18n.js", "js/main.js",
+  "js/moderation.js", "js/net/bodiesSync.js", "js/net/connect.js",
+  "js/net/identity.js", "js/net/presence.js", "js/net/shipsBroadcast.js",
+  "js/scene/controls.js", "js/scene/setup.js", "js/scene/shipcam.js",
+  "js/settings.js", "js/ships/swarm.js", "js/supabaseClient.js",
+  "js/ui/banner.js", "js/ui/dock.js", "js/ui/dronePanel.js", "js/ui/fleet.js",
+  "js/ui/hud.js", "js/ui/i18nApply.js", "js/ui/panels.js", "js/ui/players.js",
+  "js/version.js", "js/versionCheck.js", "js/world/blackholes.js",
+  "js/world/bodies.js", "js/world/textures.js"
+];
+const REFRESH_TIMEOUT_MS = 3000; // don't leave the player stuck if the network is slow/flaky
+
+function refreshModuleCache(){
+  const fetches = MODULE_FILES.map(function(path){
+    return fetch(path, { cache: "reload" }).catch(function(){ /* best-effort */ });
+  });
+  const timeout = new Promise(function(resolve){ setTimeout(resolve, REFRESH_TIMEOUT_MS); });
+  return Promise.race([Promise.all(fetches), timeout]);
+}
+
 function parseVersion(v){
   return String(v).split(".").map(function(n){ return parseInt(n, 10) || 0; });
 }
@@ -46,7 +91,13 @@ async function checkOnce(){
 
 export function initVersionCheck(){
   const reloadBtn = document.getElementById("outdatedReloadBtn");
-  if(reloadBtn) reloadBtn.addEventListener("click", function(){
+  if(reloadBtn) reloadBtn.addEventListener("click", async function(){
+    reloadBtn.disabled = true;
+    // refreshModuleCache() re-warms the browser's HTTP cache for every
+    // imported module first (see the big comment above) — without it,
+    // navigating below can still leave stale files behind even though it
+    // fetches a genuinely new index.html.
+    await refreshModuleCache();
     // A plain location.reload() is just F5 — it can still serve
     // sub-resources (js/main.js, css/style.css) straight from the HTTP
     // cache if they're within GitHub Pages' 10-minute freshness window,

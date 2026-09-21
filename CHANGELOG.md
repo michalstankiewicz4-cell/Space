@@ -4,6 +4,23 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.8.4]
+
+### Fixed
+- "Refresh now" on the outdated-version overlay could still leave stale
+  code running even after 1.5.1's cache-busted-URL fix: that only forces
+  a fresh `index.html` (plus `js/main.js`/`css/style.css`, since they
+  carry the `?v=` param) — every file `main.js` `import`s transitively
+  has no cache-busting of its own, so a still-fresh (< 10 min old)
+  browser HTTP cache entry for any of them gets served as-is to the
+  native ES module loader regardless. The button now force-refreshes the
+  browser's cache entry for every module file first (`fetch(path,
+  {cache:"reload"})`, capped at 3s so a slow/flaky connection can't leave
+  the player stuck), then navigates as before.
+- Added an "or Ctrl+Shift+R" hint under the button either way, since the
+  above can only narrow the gap, not close it completely without a build
+  step to fingerprint every file automatically.
+
 ## [1.8.3]
 
 ### Added

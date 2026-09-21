@@ -360,3 +360,19 @@ local (`localStorage`).
   URL instead, which forces a genuine fetch since the browser has never
   seen that exact URL. There's no standard cross-browser JS API for a true
   hard reload (Ctrl+Shift+R) — this is the practical workaround.
+  **That cache-busted-URL trick alone still isn't airtight**: it only
+  guarantees a fresh `index.html`, `js/main.js` and `css/style.css` (the
+  three that actually carry the `?v=`/`?_=` params); every file
+  `main.js` transitively `import`s has no cache-busting of its own, and
+  a still-fresh browser HTTP cache entry for any of them gets served
+  as-is to the native ES module loader — there's no way to pass fetch
+  options to a static `import`. `initVersionCheck()`'s click handler now
+  force-refreshes the browser's cache entry for every module file first
+  (`fetch(path, {cache:"reload"})` — revalidates and overwrites the
+  cached copy — capped at 3s so a slow connection can't leave the player
+  stuck) via a hand-maintained `MODULE_FILES` list, *then* navigates. That
+  list has to be updated by hand whenever a file is added to `js/`, same
+  spirit as the `?v=` bump itself — there's no build step to derive it
+  automatically, and forgetting silently makes the fix not cover that one
+  new file. A plain "or Ctrl+Shift+R" hint sits under the button too,
+  since even this can only narrow the gap, never fully close it.
