@@ -1,5 +1,6 @@
 import { ctx } from "../core/context.js";
 import { addSkybox } from "./skybox.js";
+import { addPulsars } from "./pulsars.js";
 
 // Creates the scene/camera/renderer + lighting + starfield background,
 // mounts the canvas in the DOM and wires up resize handling. Call once, on
@@ -26,6 +27,7 @@ export function initScene(){
 
   addSkybox(scene);
   starfield(scene);
+  addPulsars(scene);
 
   window.addEventListener("resize", function(){
     camera.aspect = window.innerWidth/window.innerHeight;
@@ -38,16 +40,27 @@ export function initScene(){
   ctx.renderer = renderer;
 }
 
-// Slight per-star color variation (cool blue-white, warm white, and a rare
-// faint tealtint echoing the nebula skybox's own palette) instead of one
-// flat color — cheap (baked once into a per-vertex color attribute, no
-// per-frame cost) but reads noticeably richer than a uniform starfield.
+// Per-star color variation instead of one flat color — cheap (baked once
+// into a per-vertex color attribute, no per-frame cost) but reads
+// noticeably richer than a uniform starfield. Pushed further from white
+// than a first pass (0.85-1.00 range) ever managed — at a 1.15px point
+// size, tints that close to white were indistinguishable from each other;
+// this leans on real stellar-classification colors (blue-white/white/
+// yellow-white/orange/red, roughly weighted by how common each actually
+// is) precisely because they're more saturated, plus a rare teal echoing
+// the nebula skybox's own accent palette.
 const STAR_TINTS = [
-  [0.85, 0.90, 1.00], // cool blue-white (most common)
-  [0.85, 0.90, 1.00],
-  [0.85, 0.90, 1.00],
-  [1.00, 0.93, 0.82], // warm white
-  [0.75, 0.98, 0.92]  // faint teal, rare
+  [0.82, 0.88, 1.00], // blue-white
+  [0.82, 0.88, 1.00],
+  [0.82, 0.88, 1.00],
+  [1.00, 1.00, 1.00], // white
+  [1.00, 1.00, 1.00],
+  [1.00, 1.00, 1.00],
+  [1.00, 0.88, 0.62], // yellow-white
+  [1.00, 0.88, 0.62],
+  [1.00, 0.68, 0.42], // orange
+  [1.00, 0.48, 0.40], // red, rare
+  [0.60, 0.95, 0.88]  // teal, rare
 ];
 
 function starfield(scene){

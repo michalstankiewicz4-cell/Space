@@ -159,7 +159,26 @@ local (`localStorage`).
   math backs it up too (`1 - exp(-(density*distance)^2)` is already
   ~94% at the starfield's own *nearest* radius, 260). A fixed backdrop
   shouldn't dim with camera-relative fog the way foreground objects
-  legitimately should.
+  legitimately should. The starfield's per-star tints (`STAR_TINTS` in
+  `scene/setup.js`) are deliberately pushed well past a "barely-off-white"
+  range — a first pass in the 0.85-1.00 channel range was indistinguishable
+  star-to-star at the 1.15px point size actually rendered; only once pushed
+  toward real stellar-classification colors (blue-white/white/yellow-white/
+  orange/red) did individual colored stars actually read as colored,
+  confirmed via a cropped, upscaled screenshot, not just eyeballing the
+  full-scene view where single pixels are too small to judge.
+- **Pulsars** (`js/scene/pulsars.js`): a handful (`PULSAR_COUNT`, currently
+  6) of small `THREE.Sprite`s scattered among the starfield's own radius
+  range, each independently brightening/dimming on its own randomized
+  period+phase (`updatePulsars(dt)`, called from `main.js`'s `tick()` like
+  every other per-frame update) — `Math.pow(sin(t), 4)` sharpens the wave
+  into a quick flash-and-fade rather than a smooth breathing glow, closer
+  to how a real pulsar reads. Deliberately driven by accumulated `dt`, not
+  `performance.now()`, to stay tied to the same clamped delta as everything
+  else rather than wall-clock time. Tagged `sprite.userData.pulsar = true`
+  purely so other code (or a test) can tell them apart from the sun-halo/
+  drone-print sprites already sharing the scene, since none of those set
+  that flag.
 - **Programmable drone** (`js/drone/*.js`, Colobot-inspired): a single
   extra ship per player that only moves by running a player-written
   script — never auto-targets anything like the swarm's ships do.

@@ -6,6 +6,7 @@ import { VERSION } from "./version.js";
 
 import { initScene } from "./scene/setup.js";
 import { initControls, updateCamera } from "./scene/controls.js";
+import { updatePulsars } from "./scene/pulsars.js";
 import { initParticles, updateParticles } from "./fx/particles.js";
 import { updateFragments, updateShockwaves, updateDust } from "./fx/breakup.js";
 import { seedLocalWorld, updateBodies } from "./world/bodies.js";
@@ -70,6 +71,7 @@ let uiTimer = 0;
 function tick(){
   const dt = Math.min(0.05, clock.getDelta());
   updateCamera(dt);
+  updatePulsars(dt);
   updateShips(dt);
   updateParticles(dt);
   updateFragments(dt);

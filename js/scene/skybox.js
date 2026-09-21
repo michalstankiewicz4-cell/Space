@@ -26,16 +26,15 @@ function makeNebulaTexture(){
   // as makeAccretionTexture()'s plasma streaks in world/textures.js.
   const palette = ["79,227,198", "79,168,255", "255,122,69", "150,120,255"];
   c.globalCompositeOperation = "lighter";
-  const cloudCount = 7; // fewer, bigger blobs read as distinct patches of color instead of blurring into one uniform haze
+  const cloudCount = 9;
   for(let i=0; i<cloudCount; i++){
     const cx = Math.random()*w;
     const cy = h*0.18 + Math.random()*h*0.64; // stay clear of the poles, where the equirect stretch is worst
-    const r = w*(0.08 + Math.random()*0.12);
+    const r = w*(0.07 + Math.random()*0.11);
     const color = palette[Math.floor(Math.random()*palette.length)];
-    const alpha = 0.12 + Math.random()*0.1; // was 0.05-0.11 — too faint to tell one color from another
+    const alpha = 0.05 + Math.random()*0.06;
     const grad = c.createRadialGradient(cx, cy, 0, cx, cy, r);
     grad.addColorStop(0, "rgba("+color+","+alpha+")");
-    grad.addColorStop(0.55, "rgba("+color+","+(alpha*0.5)+")");
     grad.addColorStop(1, "rgba("+color+",0)");
     c.fillStyle = grad;
     c.fillRect(cx-r, cy-r, r*2, r*2);

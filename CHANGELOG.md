@@ -4,6 +4,20 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.5]
+
+### Changed
+- Starfield colors are more distinguishable — the first pass (subtle
+  blue-white/warm-white/teal tints) was too close to plain white to
+  tell apart at the size stars actually render at. Now leans on real
+  stellar-classification colors (blue-white, white, yellow-white,
+  orange, red) plus a rare teal.
+
+### Added
+- A handful of background pulsars — small stars that sharply
+  brighten/dim on their own irregular rhythm, scattered among the
+  starfield.
+
 ## [1.10.4]
 
 ### Changed
