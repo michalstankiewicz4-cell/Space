@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROJ // Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<div id="adminLayout">
+  <h1>ROJ <span>// ADMIN</span></h1>
+  <p class="hint">
+    Read-only view of <code>activity_log</code> — a passive record of
+    network-behavior anomalies (rate-limit trips, insert/delete bursts),
+    not a ban list. Nothing here takes any action on its own; it's meant
+    for a human to skim. Gated by a secret (never stored in this file or
+    the repo) checked server-side — see <code>supabase/schema.sql</code>'s
+    <code>admin_activity_log()</code>.
+  </p>
+
+  <div id="secretRow">
+    <input id="secretInput" type="password" placeholder="Admin secret" autocomplete="off">
+    <button id="loadBtn" type="button">Load</button>
+    <button id="refreshBtn" type="button" class="hidden">↻ Refresh</button>
+  </div>
+  <div id="statusMsg"></div>
+
+  <div id="summarySection" class="hidden">
+    <h2>By actor</h2>
+    <table id="summaryTable">
+      <thead><tr><th>Actor</th><th>Event type</th><th>Count</th><th>Last seen</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="logSection" class="hidden">
+    <h2>Recent entries</h2>
+    <table id="logTable">
+      <thead><tr><th>When</th><th>Actor</th><th>Event</th><th>Detail</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script type="module" src="js/admin/main.js"></script>
+</body>
+</html>

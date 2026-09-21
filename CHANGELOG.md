@@ -4,6 +4,28 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.9.0]
+
+### Added
+- `admin.html`: a read-only viewer for `activity_log` (1.8.5's
+  network-behavior audit trail) — a per-actor/event-type summary plus the
+  raw recent entries, not linked from the game (same treatment as
+  `editor.html`). Gated by a secret checked **server-side** against a
+  SHA-256 hash in a new `admin_activity_log()` RPC — the plaintext secret
+  is never committed anywhere, only entered into the page itself (kept in
+  that browser's `localStorage` after the first time). Rate-limits wrong
+  guesses (5/60s per anon session) and logs to `activity_log` itself if
+  that's exceeded.
+
+  Confirmed by testing, not assumed, that this couldn't just call the
+  Management API directly from the page: a preflight `OPTIONS` request
+  came back with no `Access-Control-Allow-Origin` header, and an actual
+  browser `fetch()` failed with a CORS error. Embedding that token (full
+  arbitrary-SQL access) in a file on public GitHub Pages would have
+  handed it to anyone who viewed source, anyway. Uses the game's own
+  public anon key and the ordinary project REST API instead, same as the
+  game itself already does.
+
 ## [1.8.5]
 
 ### Added

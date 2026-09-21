@@ -320,11 +320,39 @@ local (`localStorage`).
   outgrown the free-tier 500MB database limit in days: `activity_rate`
   stays small regardless (one row per active actor per action, upserted
   in place), but an unconditional `activity_log` would grow without
-  bound. No UI for this in the game — it's meant to be queried by hand
-  (Supabase SQL Editor, or the Management API via the `pass` file) when
-  something looks worth investigating, e.g.:
+  bound. No UI for this **in the game** — `admin.html` (separate entry
+  point, not linked from the game, same treatment as `editor.html`) is a
+  read-only viewer for it, or query by hand (Supabase SQL Editor, or the
+  Management API via the `pass` file) when something looks worth
+  investigating, e.g.:
   `select actor, event_type, count(*), max(created_at) from activity_log
   group by actor, event_type order by 3 desc;`
+  - **`admin.html` can't call the Management API directly — confirmed by
+    testing, not assumed.** A preflight `OPTIONS` to
+    `api.supabase.com` came back with no `Access-Control-Allow-Origin`
+    header at all, and an actual browser `fetch()` to it failed with
+    `"Failed to fetch"` (the generic error a browser gives for a
+    CORS-blocked request) — that API isn't meant for direct browser use,
+    and even if it were, embedding that token (full arbitrary-SQL access)
+    in a file deployed to public GitHub Pages would hand it to anyone who
+    views source. `admin.html` instead calls the ordinary **project**
+    REST API (same public anon key already in `env.js`, same one the game
+    itself uses, which does support browser CORS) via a new RPC,
+    `admin_activity_log(p_secret text, p_limit int)` — the actual
+    security boundary. It checks `p_secret` server-side against a SHA-256
+    hash (`extensions.digest(p_secret, 'sha256')` — pgcrypto installs
+    into the `extensions` schema on Supabase, *not* `public`, unlike
+    every other function in this file; this broke on first deploy with
+    "function digest(text, unknown) does not exist" until qualified) and
+    returns nothing at all if it doesn't match — the plaintext secret
+    itself is never committed anywhere, only its hash lives in
+    `schema.sql`. Also rate-limits guesses (`bump_activity_rate`, 5 per
+    60s per anon actor — a caller needs *some* anon session to call any
+    RPC at all, so guesses are always attributable), and logs to
+    `activity_log` itself if that's exceeded. Rotating the secret means
+    regenerating it, hashing it, and re-running
+    `create or replace function admin_activity_log(...)` with the new
+    hash — there's no other copy to update.
 - **`bite_body` is rate-limited per actor (20 calls/second)**, via the
   `bite_rate_limit` table (RLS enabled, zero policies — reachable only
   from inside the `SECURITY DEFINER` function, never directly by a

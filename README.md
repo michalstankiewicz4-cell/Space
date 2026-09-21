@@ -45,6 +45,10 @@ js/
 supabase/schema.sql  database schema (tables, RLS, RPC functions) to paste into the Supabase SQL Editor
 ```
 
+`admin.html`/`css/admin.css`/`js/admin/` and `editor.html`/`css/editor.css`/`js/editor/`
+are separate developer-tool entry points, not part of the game's own module
+graph above — see "Object editor" and "Admin panel" below.
+
 Adding a new mechanic (e.g. another upgrade type, a new kind of celestial
 body) usually means editing a single file in the right folder, without
 touching the rest.
@@ -61,6 +65,32 @@ identical in actual play.
 Since the site has no backend, the "Download" button produces a text file
 with ready-to-paste `export const ... = {...}` blocks — one per file in
 `js/bodies/` — which you then manually swap into the repo.
+
+## Admin panel
+
+[`admin.html`](admin.html) is another developer tool, not linked from the
+game — a read-only view of `activity_log` (see "Network-behavior
+observation" below): recent entries and a per-actor/event-type summary.
+It's gated by a secret, entered into the page itself (remembered in that
+browser's `localStorage` after the first time, never written to this
+repo) and checked **server-side** against a SHA-256 hash in
+`admin_activity_log()` (`supabase/schema.sql`) — without it the RPC just
+returns nothing, so the page is safe to leave deployed alongside the game
+even though it isn't linked anywhere.
+
+## Network-behavior observation
+
+`activity_log` (`supabase/schema.sql`) is a passive audit trail —
+observation only, nothing in the schema ever blocks or bans a player.
+Two sources feed it, both server-side and unspoofable by a client: the
+existing `bite_body` rate limiter now also logs when it trips (a real
+client can never hit that limit, so it's already an unambiguous signal),
+and new triggers on `bodies` log a burst only once a single actor's
+insert/delete rate clearly exceeds what legitimate play (including the
+steward's one-time world-seed insert) ever produces. The table itself has
+no client-facing read access at all — view it via the
+[Admin panel](#admin-panel) above, the Supabase SQL Editor, or the
+Management API.
 
 ## Programmable drone
 

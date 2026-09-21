@@ -364,3 +364,53 @@ as $$
   update world_meta set initialized = true where id = 1 and initialized = false
   returning true;
 $$;
+
+-- Read access to activity_log for admin.html (see that file) — the table
+-- itself stays completely unreachable directly (RLS, zero policies, same
+-- as everywhere else in this file); this is the one deliberate, narrow
+-- door into it, gated by a secret whose SHA-256 hash (not the plaintext)
+-- is the only copy of it that exists in this schema/repo. The secret
+-- itself is never committed anywhere — it's generated once, told to
+-- whoever needs it out of band, and only entered at runtime into
+-- admin.html's own input field (which doesn't persist it anywhere but
+-- that browser's localStorage). Rotating it just means re-running this
+-- CREATE OR REPLACE with a new hash.
+-- Brute-force throttle reuses the same sliding-window counter as
+-- everything else here (bump_activity_rate) — 5 guesses per 60s per
+-- (anonymous) caller; a caller has to have a valid anon session to call
+-- this at all, so guesses are always attributable to *some* actor id.
+create or replace function admin_activity_log(p_secret text, p_limit int default 200)
+returns table(id bigint, actor uuid, event_type text, detail jsonb, created_at timestamptz)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_attempts int;
+begin
+  if v_actor is null then
+    return;
+  end if;
+
+  v_attempts := bump_activity_rate(v_actor, 'admin_secret_attempt', interval '60 seconds');
+  if v_attempts > 5 then
+    insert into activity_log (actor, event_type, detail)
+    values (v_actor, 'admin_secret_bruteforce', jsonb_build_object('attempts_in_window', v_attempts));
+    return;
+  end if;
+
+  -- pgcrypto's digest() lives in the `extensions` schema on Supabase (not
+  -- `public`), unlike every other function here — fully-qualified since
+  -- this function's search_path is pinned to `public` only.
+  if encode(extensions.digest(p_secret, 'sha256'), 'hex') <> '5463cb80c213e5cb45a233c4e429e503abd7d0d48c18a29afb56145c4c72e1ee' then
+    return;
+  end if;
+
+  return query
+    select l.id, l.actor, l.event_type, l.detail, l.created_at
+    from activity_log l
+    order by l.created_at desc
+    limit least(greatest(p_limit, 1), 500);
+end;
+$$;
