@@ -29,6 +29,19 @@
   html,body{ margin:0; padding:0; width:100%; height:100%; overflow:hidden; background: var(--void); font-family: var(--font-mono); color: var(--ink); }
   canvas{ display:block; touch-action:none; cursor: crosshair; }
 
+  /* Themed scrollbar, matching css/style.css (game + planetEditor.html/
+     admin.html, which pull it in via that shared stylesheet) — this file
+     has no shared stylesheet of its own, so it's duplicated here. */
+  *{ scrollbar-width: thin; scrollbar-color: rgba(79,227,198,0.55) rgba(255,255,255,0.05); }
+  *::-webkit-scrollbar{ width: 10px; height: 10px; }
+  *::-webkit-scrollbar-track{ background: rgba(255,255,255,0.05); }
+  *::-webkit-scrollbar-thumb{
+    background-color: rgba(79,227,198,0.55); border-radius: 6px;
+    border: 2px solid transparent; background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover{ background-color: rgba(79,227,198,0.85); }
+  *::-webkit-scrollbar-corner{ background: transparent; }
+
   #sidebar{
     position:fixed; top:0; right:0; bottom:0; width:270px;
     background: var(--panel); border-left: 1px solid var(--panel-edge);
@@ -429,14 +442,14 @@
     const blockEntry = Array.from(blocks.entries()).find(function(e2){ return e2[1].mesh === hit.object; });
     if(blockEntry){
       const c = keyToCell(blockEntry[0]);
-      let adjacentCell = null;
+      let adjacentCell = null, faceAxis = null;
       if(hit.face){
         const normal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
-        const axis = snapToAxis(normal);
-        const adj = { x: c.x+axis.x, y: c.y+axis.y, z: c.z+axis.z };
+        faceAxis = snapToAxis(normal);
+        const adj = { x: c.x+faceAxis.x, y: c.y+faceAxis.y, z: c.z+faceAxis.z };
         if(inBounds(adj.x, adj.y, adj.z)) adjacentCell = adj;
       }
-      return { kind: "block", cell: c, adjacentCell: adjacentCell };
+      return { kind: "block", cell: c, adjacentCell: adjacentCell, faceAxis: faceAxis };
     }
     return { kind: "empty", cell: hit.object.userData.cell };
   }
@@ -549,10 +562,51 @@
     updateStatusLine();
   }
 
+  // Projects a world point to page pixel coordinates (same space as
+  // pointer events' clientX/clientY) — used only to measure on-screen
+  // drag distance for axis-locked row extrusion below.
+  function worldToScreen(pos){
+    const v = pos.clone().project(camera);
+    const rect = renderer.domElement.getBoundingClientRect();
+    return { x: rect.left + (v.x+1)/2*rect.width, y: rect.top + (1-v.y)/2*rect.height };
+  }
+
+  // When a Shift-drag's anchor came from extending a block's face (see
+  // resolveHit's faceAxis), the row is locked to that face's normal axis
+  // — its length is driven by how far the mouse has moved on screen,
+  // projected onto that axis's own on-screen direction, not by raw
+  // per-pixel raycasting (rawCellUnderRay). Free-form raycasting works
+  // fine for flat/open building (still used when the anchor is a plain
+  // empty cell), but is inherently unreliable for "extrude straight out
+  // from this face": from anywhere but a near-perfectly axis-aligned
+  // camera angle, a drag meant to sweep deeper along the axis just as
+  // often re-grazes the very block it started from (or a face with no
+  // in-bounds neighbor), snapping the row back to almost nothing instead
+  // of continuing — reported live as a drag from a block's underside
+  // "catching the walls" instead of continuing further down. Locking to
+  // the axis and driving length off screen-space drag distance sidesteps
+  // the ambiguity entirely (the same approach Space Engineers itself uses
+  // for extruding a line of blocks out from a placed one).
+  function axisStepCell(e){
+    if(!dragAxis) return null;
+    const stepLenSq = dragAxisStepVec.x*dragAxisStepVec.x + dragAxisStepVec.y*dragAxisStepVec.y;
+    const mouseVec = { x: e.clientX - dragAxisStartScreen.x, y: e.clientY - dragAxisStartScreen.y };
+    const rawSteps = (mouseVec.x*dragAxisStepVec.x + mouseVec.y*dragAxisStepVec.y) / stepLenSq;
+    const n = Math.max(0, Math.round(rawSteps));
+    let cell = dragAnchorCell;
+    for(let i=0;i<n;i++){
+      const next = { x: cell.x+dragAxis.x, y: cell.y+dragAxis.y, z: cell.z+dragAxis.z };
+      if(!inBounds(next.x, next.y, next.z)) break;
+      cell = next;
+    }
+    return cell;
+  }
+
   // Ctrl = remove mode, Shift = row mode (place or remove a whole line
   // instead of one cell) — the two combine freely (Ctrl+Shift = remove a
   // row), so there's one interaction model instead of four separate ones.
   let leftDown = false, dragAnchorCell = null;
+  let dragAxis = null, dragAxisStartScreen = null, dragAxisStepVec = null;
 
   renderer.domElement.addEventListener("contextmenu", function(e){ e.preventDefault(); });
 
@@ -560,13 +614,32 @@
     if(e.button !== 0) return; // left only — right is the camera (OrbitControls)
     leftDown = true;
     const hit = resolveHit(e);
-    dragAnchorCell = targetCellFor(hit, e.ctrlKey);
+    const removing = e.ctrlKey;
+    dragAnchorCell = targetCellFor(hit, removing);
+    dragAxis = null; dragAxisStartScreen = null; dragAxisStepVec = null;
+    if(!removing && dragAnchorCell && hit && hit.kind === "block" && hit.faceAxis){
+      const anchorScreen = worldToScreen(cellCenterWorld(dragAnchorCell.x, dragAnchorCell.y, dragAnchorCell.z));
+      const nx = dragAnchorCell.x+hit.faceAxis.x, ny = dragAnchorCell.y+hit.faceAxis.y, nz = dragAnchorCell.z+hit.faceAxis.z;
+      const nextScreen = worldToScreen(cellCenterWorld(nx, ny, nz));
+      const stepVec = { x: nextScreen.x-anchorScreen.x, y: nextScreen.y-anchorScreen.y };
+      // Require at least ~2px of on-screen movement per cell step to
+      // measure against — an axis pointing almost straight at/away from
+      // the camera projects to a near-zero step and can't be dragged
+      // reliably, so fall back to the free-form sweep in that case.
+      if(stepVec.x*stepVec.x + stepVec.y*stepVec.y >= 4){
+        dragAxis = hit.faceAxis;
+        dragAxisStartScreen = { x: e.clientX, y: e.clientY };
+        dragAxisStepVec = stepVec;
+      }
+    }
   });
 
   window.addEventListener("pointermove", function(e){
     const removing = e.ctrlKey;
     const dragging = leftDown && e.shiftKey && dragAnchorCell;
-    const current = dragging ? rawCellUnderRay(e) : targetCellFor(resolveHit(e), removing);
+    const current = dragging
+      ? (dragAxis ? axisStepCell(e) : rawCellUnderRay(e))
+      : targetCellFor(resolveHit(e), removing);
     if(!current){ hideGhosts(); return; }
     if(dragging){
       updateGhosts(lineCells(dragAnchorCell, current), removing);
@@ -580,14 +653,16 @@
     leftDown = false;
     const removing = e.ctrlKey;
     const dragging = e.shiftKey && dragAnchorCell;
-    const current = dragging ? rawCellUnderRay(e) : targetCellFor(resolveHit(e), removing);
-    if(!current){ dragAnchorCell = null; return; }
+    const current = dragging
+      ? (dragAxis ? axisStepCell(e) : rawCellUnderRay(e))
+      : targetCellFor(resolveHit(e), removing);
+    if(!current){ dragAnchorCell = null; dragAxis = null; return; }
     const path = dragging ? lineCells(dragAnchorCell, current) : [current];
     path.forEach(function(cell){
       if(removing) removeAt(cellKey(cell.x, cell.y, cell.z));
       else placeAt(cell.x, cell.y, cell.z);
     });
-    dragAnchorCell = null;
+    dragAnchorCell = null; dragAxis = null;
   });
 
   window.addEventListener("keydown", function(e){
