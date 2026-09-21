@@ -585,6 +585,24 @@ Supabase Management API token.
 
 ## Known gotchas
 
+- **GitHub Pages was silently running the legacy Jekyll build pipeline
+  this whole time** (`build_type: legacy` per the repo's Pages API
+  settings) — never caught until `IDEAS.md` (a plain markdown file, no
+  front matter) made it fail outright with a bare "Page build failed."
+  and no further detail, which silently stopped **every** file in the
+  repo from redeploying (not just the new one) from that commit onward —
+  confirmed via `gh api repos/.../pages/builds`, which showed builds
+  succeeding right up through the commit before `IDEAS.md`, then erroring
+  on every commit after. Existing docs (`README.md`/`CLAUDE.md`/
+  `CHANGELOG.md`) happened to never trip Jekyll's Liquid/kramdown
+  processing, which is why this went unnoticed for as long as it did.
+  Fixed with an empty `.nojekyll` file at the repo root — this project
+  was never meant to go through Jekyll at all (no `_config.yml`, explicit
+  "no build step" design) — which makes Pages serve every file completely
+  as-is. **If a deploy ever silently stops updating again** (a file 404s
+  on the live site despite being pushed, while other files still update
+  fine), check `gh api repos/michalstankiewicz4-cell/Space/pages/builds`
+  for an `errored` status before assuming it's just propagation lag.
 - `RingGeometry` has **planar** UV mapping (not polar around the ring).
   Animating `material.map.offset.x` on it slides the texture sideways
   instead of rotating it — rotate the **mesh** instead (see the black
