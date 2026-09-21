@@ -29,7 +29,7 @@ const STRINGS = {
       swapButtons: "Swap left/right mouse button"
     },
     telemetry: {
-      title: "ROJ // TELEMETRY",
+      title: "SWARM PROTOCOL // TELEMETRY",
       points: "Evolution points",
       ships: "Units",
       eaten: "Planets devoured",
@@ -137,7 +137,7 @@ const STRINGS = {
       swapButtons: "Zamień lewy/prawy przycisk myszy"
     },
     telemetry: {
-      title: "ROJ // TELEMETRIA",
+      title: "SWARM PROTOCOL // TELEMETRIA",
       points: "Punkty ewolucji",
       ships: "Jednostki",
       eaten: "Planety pochłonięte",

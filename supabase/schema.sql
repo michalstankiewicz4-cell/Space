@@ -1,4 +1,4 @@
--- ROJ // SWARM PROTOCOL — multiplayer schema (paste into the Supabase SQL Editor)
+-- Swarm Protocol — multiplayer schema (paste into the Supabase SQL Editor)
 -- See README.md, section "Multiplayer / Supabase setup", for the full instructions.
 
 create extension if not exists pgcrypto;

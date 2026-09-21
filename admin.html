@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ROJ // Admin</title>
+<title>Swarm Protocol // Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/admin.css">
@@ -11,12 +11,13 @@
 <body>
 
 <div id="adminLayout">
-  <h1>ROJ <span>// ADMIN</span></h1>
+  <h1>Swarm Protocol <span>// ADMIN</span></h1>
   <p class="hint">
     Read-only view of <code>activity_log</code> — a passive record of
-    network-behavior anomalies (rate-limit trips, insert/delete bursts),
-    not a ban list. Nothing here takes any action on its own; it's meant
-    for a human to skim. Gated by a secret (never stored in this file or
+    network-behavior anomalies (rate-limit trips, insert/delete bursts,
+    nick-change spam, admin-secret brute-force attempts), not a ban list.
+    Nothing here takes any action on its own; it's meant for a human to
+    skim. Gated by a secret (never stored in this file or
     the repo) checked server-side — see <code>supabase/schema.sql</code>'s
     <code>admin_activity_log()</code>. Nick/IP/browser are self-reported
     or ordinary HTTP headers, not verified identity — a distinguishing
@@ -29,6 +30,7 @@
     <button id="refreshBtn" type="button" class="hidden">↻ Refresh</button>
   </div>
   <div id="statusMsg"></div>
+  <div id="anomalyStat" class="hidden"></div>
 
   <div id="summarySection" class="hidden">
     <h2>By actor</h2>

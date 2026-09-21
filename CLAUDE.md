@@ -1,4 +1,4 @@
-# Project brief: Space Swarm — ROJ
+# Project brief: Swarm Protocol
 
 Condensed context for picking this project back up. See [`README.md`](README.md)
 for structure/setup and [`CHANGELOG.md`](CHANGELOG.md) for version history.
@@ -436,6 +436,16 @@ local (`localStorage`).
     that exact payload via a raw REST call (bypassing `confirmNick()`
     entirely, like a real attacker would) and confirming it renders as
     plain visible text with no `alert()` firing.
+  - **`js/admin/main.js`'s `eventRowClass()` colors table rows by matching
+    on event-name convention** (`*_burst` → ember, `*_bruteforce`/
+    `*_spam`/`*_exceeded` → danger), **not an exact-match list** — it
+    started as one, and `set_nick_spam` (added in the same 1.9.2 batch as
+    the function that logs it) silently fell through with no color at
+    all until fixed in 1.9.3, because nobody had added its exact name to
+    the list. If a future rate-limited RPC's event type doesn't fit
+    `_burst`/`_bruteforce`/`_spam`/`_exceeded`, it'll have the same silent
+    gap — rename to fit the convention rather than special-casing another
+    exact string.
 - **`bite_body` is rate-limited per actor (20 calls/second)**, via the
   `bite_rate_limit` table (RLS enabled, zero policies — reachable only
   from inside the `SECURITY DEFINER` function, never directly by a

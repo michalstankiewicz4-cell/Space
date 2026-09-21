@@ -1,4 +1,4 @@
-# Space Swarm — ROJ
+# Swarm Protocol
 
 3D space game built with Three.js. Swarm of ships eats planets, suns, comets, meteoroids for points (select ships, then click a target to send them — they never move on their own); avoid black holes.
 
@@ -70,8 +70,9 @@ with ready-to-paste `export const ... = {...}` blocks — one per file in
 
 [`admin.html`](admin.html) is another developer tool, not linked from the
 game — a read-only view of `activity_log` (see "Network-behavior
-observation" below): recent entries (with nick, IP, browser and the rest
-of each entry's detail) and a per-actor/event-type summary. It's gated by
+observation" below): a total anomaly-count summary, recent entries (with
+nick, IP, browser and the rest of each entry's detail) and a
+per-actor/event-type summary, color-coded by category. It's gated by
 a secret, entered into the page itself (remembered in that browser's
 `localStorage` after the first time, never written to this repo) and
 checked **server-side** against a SHA-256 hash in `admin_activity_log()`

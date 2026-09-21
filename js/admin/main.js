@@ -29,10 +29,14 @@ function setStatus(msg, isError){
   el.classList.toggle("error", !!isError);
 }
 
+// Convention-based, not an exact-match list, so a new rate-limited RPC
+// added later (another "_spam"/"_exceeded" event type) is automatically
+// categorized without this file needing to change too — a gap that bit
+// set_nick_spam (1.9.2) when this only matched two hardcoded names.
 function eventRowClass(eventType){
-  if(eventType === "bite_rate_exceeded") return "eventBiteRateExceeded";
-  if(eventType === "admin_secret_bruteforce") return "eventBruteforce";
   if(eventType.indexOf("burst") !== -1) return "eventBurst";
+  if(eventType.indexOf("bruteforce") !== -1) return "eventBruteforce";
+  if(eventType.indexOf("spam") !== -1 || eventType.indexOf("exceeded") !== -1) return "eventSpam";
   return "";
 }
 
@@ -72,6 +76,13 @@ function detailWithoutRequestMeta(detail){
     if(k !== "ip" && k !== "user_agent" && k !== "country") rest[k] = detail[k];
   });
   return rest;
+}
+
+function renderAnomalyStat(rows){
+  const el = document.getElementById("anomalyStat");
+  const actors = new Set(rows.map(function(r){ return r.actor; }));
+  el.textContent = rows.length + " anomalies logged, across " + actors.size + " distinct actor" + (actors.size === 1 ? "" : "s") + ".";
+  el.classList.remove("hidden");
 }
 
 function renderSummary(rows){
@@ -131,11 +142,13 @@ async function load(){
   }
   if(!data || data.length === 0){
     setStatus("No rows — either the secret is wrong, or there's genuinely nothing logged yet.");
+    document.getElementById("anomalyStat").classList.add("hidden");
     document.getElementById("summarySection").classList.add("hidden");
     document.getElementById("logSection").classList.add("hidden");
     return;
   }
   setStatus(data.length + " rows loaded.");
+  renderAnomalyStat(data);
   renderSummary(data);
   renderLog(data);
   document.getElementById("refreshBtn").classList.remove("hidden");

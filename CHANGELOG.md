@@ -4,6 +4,31 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.9.3]
+
+### Changed
+- Renamed the game from "ROJ // Swarm Protocol" to just **Swarm
+  Protocol** everywhere it's displayed: the browser tab title, the start
+  screen, the telemetry HUD panel, `admin.html`, `editor.html`,
+  `README.md`/`CLAUDE.md`, and the `schema.sql` header comment. The
+  internal `window.ROJ_ENV` override variable (`js/env.js`) and the
+  `roj-*` `localStorage` key names are unaffected on purpose — renaming
+  those wouldn't be visible to a player, and would silently drop a
+  returning player's saved nick/color/settings for no benefit.
+- Also fixed a stale `maxlength="24"` on the nickname input — nicknames
+  have been capped at 20 (`NET_MAX_NICK_LENGTH`) since 1.8.3; the HTML
+  attribute just never caught up.
+
+### Added
+- The admin panel now surfaces a "N anomalies logged, across M distinct
+  actors" summary line, and correctly color-codes `set_nick_spam` (it
+  fell through with no color before — the row-coloring function only
+  matched two hardcoded event names, not the newer nick-spam one).
+  Switched to matching on event-name convention (`*_burst`,
+  `*_bruteforce`, `*_spam`/`*_exceeded`) instead of an exact-match list,
+  so a future rate-limited RPC's event type gets categorized
+  automatically instead of silently falling through uncolored again.
+
 ## [1.9.2]
 
 ### Added
