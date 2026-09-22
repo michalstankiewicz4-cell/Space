@@ -82,4 +82,13 @@ export function applyStaticText(){
   document.getElementById("stationUpgradesLabel").textContent = t("station.upgrades");
   document.getElementById("stationTechBtn").textContent = t("station.techBtn");
   document.getElementById("stationFleetBtn").textContent = t("station.fleetBtn");
+
+  document.getElementById("planetHealthLabel").textContent = t("planet.health");
+  document.getElementById("planetRadiusLabel").textContent = t("planet.radius");
+  document.getElementById("planetSpinLabel").textContent = t("planet.spin");
+  document.getElementById("planetValueLabel").textContent = t("planet.value");
+
+  document.getElementById("devToolsBtn").title = t("devTools.button");
+  document.getElementById("devLightsLabel").textContent = t("devTools.lights");
+  document.getElementById("devDistanceLabel").textContent = t("devTools.distance");
 }

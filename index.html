@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=1.10.10">
+<link rel="stylesheet" href="css/style.css?v=1.10.11">
 </head>
 <body>
 
@@ -184,6 +184,24 @@
   </div>
 </div>
 
+<div id="planetPanel" class="hud panel hidden">
+  <div class="panelTitleBar">
+    <div class="title" id="planetPanelTitle">PLANET</div>
+    <button class="collapseBtn" id="planetCloseBtn" type="button">✕</button>
+  </div>
+  <div id="planetThumbWrap"></div>
+  <div class="row"><span id="planetHealthLabel">Health</span><b id="planetHealthVal">— / —</b></div>
+  <div class="row"><span id="planetRadiusLabel">Radius</span><b id="planetRadiusVal">—</b></div>
+  <div class="row"><span id="planetSpinLabel">Spin</span><b id="planetSpinVal">—</b></div>
+  <div class="row"><span id="planetValueLabel">Value</span><b id="planetValueVal">—</b></div>
+</div>
+
+<button id="devToolsBtn" type="button" title="Dev Tools">🛠</button>
+<div id="devToolsMenu" class="hidden">
+  <label class="setupCheckRow"><input type="checkbox" id="devLightsCheck"><span id="devLightsLabel">Show light sources</span></label>
+  <label class="setupCheckRow"><input type="checkbox" id="devDistanceCheck"><span id="devDistanceLabel">Connect selected planets</span></label>
+</div>
+
 <div id="droneScriptModal" class="modal hidden">
   <div id="droneScriptModalBox" class="modalBox">
     <div class="modalHeader">
@@ -240,6 +258,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script type="module" src="js/main.js?v=1.10.10"></script>
+<script type="module" src="js/main.js?v=1.10.11"></script>
 </body>
 </html>

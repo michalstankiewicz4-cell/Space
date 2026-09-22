@@ -24,6 +24,10 @@ export function initScene(){
   const rim = new THREE.PointLight(0xff7a45, 0.5, 0, 0);
   rim.position.set(-60,-30,-40);
   scene.add(rim);
+  // Exposed for Dev Tools' light-source markers (scene/lightMarkers.js) —
+  // the only two fixed-position lights in the scene (every other light is
+  // a per-object PointLight child, e.g. each sun body's own glow).
+  ctx.sceneLights = { sun: sun, rim: rim };
 
   addSkybox(scene);
   starfield(scene);

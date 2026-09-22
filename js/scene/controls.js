@@ -1,11 +1,13 @@
 import { ctx } from "../core/context.js";
+import { removeItem } from "../core/utils.js";
 import { showToast } from "../ui/hud.js";
 import { setShipSelected } from "../ships/swarm.js";
-import { bodyVariantKey, bodyValueEstimate } from "../world/bodies.js";
+import { bodyVariantKey, bodyValueEstimate, setPlanetSelected } from "../world/bodies.js";
 import { openDronePanel, closeDronePanel } from "../ui/dronePanel.js";
 import { setDroneSelected } from "../drone/drone.js";
 import { openStationPanel, closeStationPanel } from "../ui/stationPanel.js";
 import { setStationSelected } from "../station/station.js";
+import { openPlanetPanel, closePlanetPanel } from "../ui/planetPanel.js";
 import { t } from "../i18n.js";
 import { settings } from "../settings.js";
 
@@ -136,6 +138,32 @@ function pickBlackHoleAt(e){
   return null;
 }
 
+// Planets support multi-select (for Dev Tools' "connect selected planets"
+// line, see scene/planetDistanceLines.js) unlike the ship/drone/station's
+// single-flag pattern — order matters (the line connects them in the order
+// they were clicked), which a plain `.selected` boolean can't reconstruct
+// on its own, so this is the one deliberate exception to this file's
+// otherwise-universal "compute the filtered list on demand" convention
+// (compare selectedShips() below).
+let planetSelectionOrder = [];
+
+// Exported so scene/planetDistanceLines.js can read the current multi-
+// selection (in click order) without duplicating this file's tracking —
+// read-only from the caller's side, only this file ever pushes/splices it.
+export function getSelectedPlanetsOrdered(){
+  for(let i=planetSelectionOrder.length-1;i>=0;i--){
+    if(planetSelectionOrder[i].dying) planetSelectionOrder.splice(i,1);
+  }
+  return planetSelectionOrder;
+}
+
+function deselectAllPlanets(){
+  if(planetSelectionOrder.length === 0) return;
+  planetSelectionOrder.forEach(function(p){ setPlanetSelected(p, false); });
+  planetSelectionOrder = [];
+  closePlanetPanel();
+}
+
 // Exported so other selection entry points (e.g. ui/fleet.js's ship-list
 // clicks) can match exactly what a plain click in the world does, instead
 // of duplicating this clear-everything-first logic.
@@ -143,6 +171,7 @@ export function clearSelection(){
   ctx.ships.forEach(function(sh){ setShipSelected(sh, false); });
   if(ctx.drone && ctx.drone.selected) closeDronePanel();
   if(ctx.station && ctx.station.selected) closeStationPanel();
+  deselectAllPlanets();
 }
 
 function selectedShips(){
@@ -257,8 +286,12 @@ export function initControls(){
       if(within.length>0 || droneHit || stationHit){
         if(!e.shiftKey) clearSelection();
         within.forEach(function(sh){ setShipSelected(sh, true); });
-        if(droneHit){ setDroneSelected(ctx.drone, true); openDronePanel(); }
-        if(stationHit){ setStationSelected(ctx.station, true); openStationPanel(); }
+        // Drone/station and the planet panel share the same right-side HUD
+        // slot (see ui/planetPanel.js) — selecting either one always closes
+        // a still-open planet selection, even with shift held (clearSelection()
+        // above only runs without shift).
+        if(droneHit){ deselectAllPlanets(); setDroneSelected(ctx.drone, true); openDronePanel(); }
+        if(stationHit){ deselectAllPlanets(); setStationSelected(ctx.station, true); openStationPanel(); }
         if(within.length>0) showToast(t("toast.selected")(selectedShips().length, ctx.ships.length));
       } else if(!e.shiftKey){
         clearSelection();
@@ -267,6 +300,7 @@ export function initControls(){
       const hitDrone = pickDroneAt(e);
       if(hitDrone){
         if(!e.shiftKey) clearSelection();
+        deselectAllPlanets();
         setDroneSelected(hitDrone, true);
         openDronePanel();
         return;
@@ -274,6 +308,7 @@ export function initControls(){
       const hitStation = pickStationAt(e);
       if(hitStation){
         if(!e.shiftKey) clearSelection();
+        deselectAllPlanets();
         setStationSelected(hitStation, true);
         openStationPanel();
         return;
@@ -285,9 +320,34 @@ export function initControls(){
       } else {
         const hitPlanet = pickPlanetAt(e);
         if(hitPlanet){
-          const sel = selectedShips();
-          if(sel.length>0) commandTo(hitPlanet, sel, cmdFlashEl);
-          else showToast(t("toast.noSelection"));
+          if(e.shiftKey){
+            // Shift+click a planet always toggles it in/out of the
+            // multi-select (for Dev Tools' distance line) and never
+            // commands the fleet — decoupled from plain-click's
+            // command-if-ships-selected behavior below, so there's no
+            // ambiguity between "order ships here" and "add to selection".
+            if(ctx.drone && ctx.drone.selected) closeDronePanel();
+            if(ctx.station && ctx.station.selected) closeStationPanel();
+            if(hitPlanet.selected){
+              setPlanetSelected(hitPlanet, false);
+              removeItem(planetSelectionOrder, hitPlanet);
+            } else {
+              setPlanetSelected(hitPlanet, true);
+              planetSelectionOrder.push(hitPlanet);
+            }
+            if(planetSelectionOrder.length > 0) openPlanetPanel(planetSelectionOrder[planetSelectionOrder.length-1]);
+            else closePlanetPanel();
+          } else {
+            const sel = selectedShips();
+            if(sel.length>0){
+              commandTo(hitPlanet, sel, cmdFlashEl);
+            } else {
+              clearSelection();
+              setPlanetSelected(hitPlanet, true);
+              planetSelectionOrder.push(hitPlanet);
+              openPlanetPanel(hitPlanet);
+            }
+          }
         } else if(!e.shiftKey){
           clearSelection();
         }

@@ -4,6 +4,25 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.11]
+
+### Added
+- Clicking a planet (with no ships selected) now selects it: a corner-
+  bracket "targeting" frame appears around it, and a side panel opens on
+  the right with a live 3D thumbnail plus health/radius/spin/value stats —
+  mirroring the drone's own selection+panel pattern. Shift+click toggles a
+  planet in/out of a multi-select (order-preserving) without ever
+  commanding the fleet; a plain click still sends selected ships there as
+  before, unchanged. Selecting the drone/station always closes an open
+  planet selection and vice versa, since they share the same right-side
+  HUD slot.
+- A small Dev Tools button (bottom-right, above the ship-cam PIP's own
+  corner) opens a menu with two debug toggles: light-source markers
+  (small wireframe spheres at every `PointLight`'s position — the two
+  fixed scene lights plus each live sun's own glow) and a line connecting
+  the currently multi-selected planets, with a distance label on each
+  segment.
+
 ## [1.10.10]
 
 ### Fixed

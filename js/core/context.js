@@ -7,6 +7,7 @@ export const ctx = {
   scene: null,
   camera: null,
   renderer: null,
+  sceneLights: null, // {sun, rim} — set by scene/setup.js, read by scene/lightMarkers.js
 
   ships: [],
   planets: [],       // planets, suns, comets, meteoroids — everything "edible"

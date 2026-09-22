@@ -120,6 +120,14 @@ const STRINGS = {
       upgrades: "Upgrades",
       techBtn: "🛠 Tech",
       fleetBtn: "🚀 Fleet"
+    },
+    planet: {
+      health: "Health", radius: "Radius", spin: "Spin", value: "Value"
+    },
+    devTools: {
+      button: "Dev Tools",
+      lights: "Show light sources",
+      distance: "Connect selected planets"
     }
   },
   pl: {
@@ -239,6 +247,14 @@ const STRINGS = {
       upgrades: "Ulepszenia",
       techBtn: "🛠 Rozwój",
       fleetBtn: "🚀 Flota"
+    },
+    planet: {
+      health: "Zdrowie", radius: "Promień", spin: "Obrót", value: "Wartość"
+    },
+    devTools: {
+      button: "Dev Tools",
+      lights: "Pokaż źródła światła",
+      distance: "Połącz zaznaczone planety"
     }
   }
 };

@@ -1,6 +1,6 @@
 import { ctx } from "../core/context.js";
 import { removeItem } from "../core/utils.js";
-import { FIELD_RADIUS, MAX_PLANETS } from "../config.js";
+import { FIELD_RADIUS, MAX_PLANETS, PLANET_BRACKET_SCALE } from "../config.js";
 import { CONTENT, BODY_TYPES } from "../content.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
@@ -185,6 +185,55 @@ function buildCometTail(radius, vel){
   return group;
 }
 
+// Selection indicator for a planet: four L-shaped corner marks (a
+// "targeting bracket", not a full ring like ships/drone/station use) —
+// there's no way to draw that with a plain RingGeometry, so it's a
+// canvas-drawn texture on a THREE.Sprite instead, same "canvas texture"
+// approach as the nebula skybox / drone print effect's gas+text sprites.
+// A THREE.Sprite always faces the camera regardless of its parent's own
+// rotation, so adding it as a child of the planet mesh at local (0,0,0)
+// (matching how the ship/drone/station rings ride along as children) is
+// safe even though the mesh itself spins (p.spin) — the sprite doesn't
+// inherit that rotation, only the (unchanging, since it's at the origin)
+// position. Built once and cached — every planet's bracket reuses the
+// same texture, just scaled per-instance by radius.
+let bracketTexture = null;
+function getBracketTexture(){
+  if(bracketTexture) return bracketTexture;
+  const size = 128, margin = 14, arm = 32, lineWidth = 8;
+  const canvas = document.createElement("canvas");
+  canvas.width = size; canvas.height = size;
+  const c2d = canvas.getContext("2d");
+  c2d.strokeStyle = "#ffffff";
+  c2d.lineWidth = lineWidth;
+  c2d.lineCap = "square";
+  function corner(x, y, dx, dy){
+    c2d.beginPath();
+    c2d.moveTo(x + dx*arm, y);
+    c2d.lineTo(x, y);
+    c2d.lineTo(x, y + dy*arm);
+    c2d.stroke();
+  }
+  corner(margin, margin, 1, 1);                       // top-left
+  corner(size-margin, margin, -1, 1);                  // top-right
+  corner(margin, size-margin, 1, -1);                  // bottom-left
+  corner(size-margin, size-margin, -1, -1);             // bottom-right
+  bracketTexture = new THREE.CanvasTexture(canvas);
+  return bracketTexture;
+}
+
+// Purely a selection indicator (bracket sprite), same RTS-style pattern as
+// setShipSelected/setDroneSelected/setStationSelected — never touches the
+// camera. Unlike those singletons, planets support MULTI-select (see
+// scene/controls.js's planetSelectionOrder, needed for the dev-tools
+// "connect selected planets" line), so this only toggles the one planet's
+// own flag/bracket — the caller is responsible for tracking which planets
+// are selected.
+export function setPlanetSelected(p, val){
+  p.selected = val;
+  p.selectionBracket.visible = val;
+}
+
 // Builds a mesh + entry in `ctx.planets` from a body row (local or networked).
 // `elapsedSec` advances comets to where they should be "now" (important for
 // a player joining a game already in progress).
@@ -276,6 +325,14 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     mesh.add(ring);
   }
 
+  const bracketMat = new THREE.SpriteMaterial({
+    map: getBracketTexture(), transparent: true, opacity: 0.95, depthWrite: false
+  });
+  const selectionBracket = new THREE.Sprite(bracketMat);
+  selectionBracket.scale.setScalar(radius * PLANET_BRACKET_SCALE);
+  selectionBracket.visible = false;
+  mesh.add(selectionBracket);
+
   const basePos = pos.clone();
   if(kind === "comet" && vel){
     basePos.addScaledVector(vel, elapsedSec||0);
@@ -291,6 +348,8 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     valueBonus: row.value_bonus||0,
     pendingDamage: 0,
     spin: (Math.random()-0.5)*0.6,
+    selected: false,
+    selectionBracket: selectionBracket,
     sunHalo: sunHalo,
     sunRays: sunRays,
     sunPhase: Math.random()*10,

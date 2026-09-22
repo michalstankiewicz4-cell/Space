@@ -189,6 +189,51 @@ canvas{ display:block; touch-action:none; cursor: grab; }
 }
 #droneScriptBtn:hover{ border-color: var(--teal) !important; filter:none !important; }
 
+/* Shares #dronePanel's exact right-side slot — never shown at the same
+   time (see scene/controls.js's deselectAllPlanets/clearSelection, called
+   whenever the drone/station get selected and vice versa). */
+#planetPanel{
+  top: 50%; right: 18px; transform: translateY(-50%);
+  padding: 12px 16px 14px;
+  width: 200px;
+  pointer-events:none;
+  backdrop-filter: none; /* same reason as #dronePanel: don't blur the live thumbnail behind #planetThumbWrap */
+}
+#planetCloseBtn{ pointer-events:auto; }
+#planetPanel.hidden{ display:none; }
+#planetPanel .row{
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.03em;
+  color: var(--ink-dim); margin: 5px 0; gap: 12px;
+}
+#planetPanel .row b{ color: var(--teal); font-weight:600; }
+#planetThumbWrap{
+  width: 100%; height: 110px; margin-bottom: 10px;
+  background: rgba(0,0,0,0.15); border: 1px solid var(--panel-edge);
+}
+
+/* Dev Tools: small corner button (bottom-right) + its popup menu. Anchored
+   above #shipCam's own reserved rect (bottom:18px, 150px tall) so the two
+   never overlap regardless of whether the ship cam PIP is active. */
+#devToolsBtn{
+  position:fixed; z-index:6; right: 18px; bottom: 186px;
+  width: 36px; height: 36px;
+  display:flex; align-items:center; justify-content:center;
+  pointer-events:auto; cursor:pointer;
+  background: var(--panel); border: 1px solid var(--panel-edge); color: var(--ink-dim);
+  font-size: 16px; padding:0;
+  clip-path: polygon(0 6px, 6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+}
+#devToolsBtn:hover{ color: var(--ink); border-color: var(--teal); }
+#devToolsMenu{
+  position:fixed; z-index:6; right: 18px; bottom: 230px;
+  background: var(--panel); border: 1px solid var(--panel-edge);
+  padding: 8px 14px; pointer-events:auto;
+  clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+}
+#devToolsMenu.hidden{ display:none; }
+#devToolsMenu .setupCheckRow{ margin: 8px 0; white-space:nowrap; }
+
 #droneScriptModalBox{ width: 480px; max-height: 82vh; overflow:auto; }
 #droneScriptHeaderBtns{ display:flex; align-items:center; gap: 6px; }
 #droneScriptHelpBtn{
@@ -628,4 +673,7 @@ canvas{ display:block; touch-action:none; cursor: grab; }
   #shipCam{ display:none; }
   #dronePanel{ display:none; }
   #stationPanel{ display:none; }
+  #planetPanel{ display:none; }
+  #devToolsBtn{ display:none; }
+  #devToolsMenu{ display:none; }
 }

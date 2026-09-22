@@ -29,6 +29,11 @@ import { initDroneThumb, renderDroneThumb } from "./drone/droneThumb.js";
 import { initDronePanel, refreshDronePanel } from "./ui/dronePanel.js";
 import { spawnStation } from "./station/station.js";
 import { initStationPanel, refreshStationPanel } from "./ui/stationPanel.js";
+import { initPlanetPanel, refreshPlanetPanel } from "./ui/planetPanel.js";
+import { initPlanetThumb, renderPlanetThumb } from "./world/planetThumb.js";
+import { initDevTools } from "./ui/devTools.js";
+import { updateLightMarkers } from "./scene/lightMarkers.js";
+import { updateDistanceLines } from "./scene/planetDistanceLines.js";
 
 load();
 
@@ -56,6 +61,9 @@ initDroneThumb();
 initDronePanel();
 spawnStation();
 initStationPanel();
+initPlanetPanel();
+initPlanetThumb();
+initDevTools();
 
 if(NET_ENABLED){
   initNet();
@@ -81,6 +89,8 @@ function tick(){
   updateDust(dt);
   updateDrone(dt);
   updateDronePrintFx(dt);
+  updateLightMarkers();
+  updateDistanceLines();
   maintainPlanetCount(dt);
   if(NET_ENABLED){
     updateRemoteShips(dt);
@@ -94,6 +104,7 @@ function tick(){
     renderPlayersList();
     refreshDronePanel();
     refreshStationPanel();
+    refreshPlanetPanel();
   }
 
   // Reset to full-canvas before the main render, in case last frame's ship
@@ -105,6 +116,7 @@ function tick(){
   updateShipCam();
   renderShipCamPIP();
   renderDroneThumb();
+  renderPlanetThumb(dt);
 
   requestAnimationFrame(tick);
 }
