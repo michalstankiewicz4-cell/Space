@@ -37,15 +37,17 @@ const MODULE_FILES = [
   "js/fx/breakup.js", "js/fx/particles.js", "js/i18n.js", "js/main.js",
   "js/moderation.js", "js/net/bodiesSync.js", "js/net/connect.js",
   "js/net/identity.js", "js/net/presence.js", "js/net/shipsBroadcast.js",
-  "js/scene/controls.js", "js/scene/pulsars.js", "js/scene/setup.js", "js/scene/shipcam.js",
-  "js/scene/skybox.js",
+  "js/scene/controls.js", "js/scene/lightMarkers.js", "js/scene/lightsToggle.js",
+  "js/scene/picking.js", "js/scene/planetDistanceLines.js", "js/scene/pulsars.js",
+  "js/scene/setup.js", "js/scene/shipcam.js", "js/scene/skybox.js", "js/scene/tooltip.js",
   "js/settings.js", "js/ships/swarm.js", "js/station/station.js",
   "js/station/stationModel.js", "js/supabaseClient.js",
-  "js/ui/banner.js", "js/ui/dock.js", "js/ui/dronePanel.js", "js/ui/fleet.js",
-  "js/ui/hud.js", "js/ui/i18nApply.js", "js/ui/panels.js", "js/ui/players.js",
-  "js/ui/stationPanel.js",
+  "js/ui/banner.js", "js/ui/devTools.js", "js/ui/dock.js", "js/ui/dronePanel.js",
+  "js/ui/fleet.js", "js/ui/hud.js", "js/ui/i18nApply.js", "js/ui/panels.js",
+  "js/ui/planetPanel.js", "js/ui/players.js", "js/ui/stationPanel.js",
   "js/version.js", "js/versionCheck.js", "js/world/blackholes.js",
-  "js/world/bodies.js", "js/world/textures.js"
+  "js/world/bodies.js", "js/world/bodyMeshParts.js", "js/world/bodyParams.js",
+  "js/world/planetThumb.js", "js/world/textures.js"
 ];
 const REFRESH_TIMEOUT_MS = 3000; // don't leave the player stuck if the network is slow/flaky
 

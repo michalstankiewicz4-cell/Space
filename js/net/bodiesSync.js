@@ -5,9 +5,9 @@ import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
 import {
   materializePlanet, requestSpawnPlanet, spawnPlanetLocalOnly,
-  despawnLocalOnly, applyHealthVisual, destroyPlanet, pendingSpawnCount,
-  bodyValueEstimate
+  despawnLocalOnly, applyHealthVisual, destroyPlanet, pendingSpawnCount
 } from "../world/bodies.js";
+import { bodyValueEstimate } from "../world/bodyParams.js";
 import { materializeBlackHole } from "../world/blackholes.js";
 import { refreshDock } from "../ui/dock.js";
 import { triggerBreakup } from "../fx/breakup.js";

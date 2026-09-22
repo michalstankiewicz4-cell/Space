@@ -2,12 +2,14 @@ import { ctx } from "../core/context.js";
 import { removeItem } from "../core/utils.js";
 import { showToast } from "../ui/hud.js";
 import { setShipSelected } from "../ships/swarm.js";
-import { bodyVariantKey, bodyValueEstimate, setPlanetSelected } from "../world/bodies.js";
+import { setPlanetSelected } from "../world/bodyMeshParts.js";
 import { openDronePanel, closeDronePanel } from "../ui/dronePanel.js";
 import { setDroneSelected } from "../drone/drone.js";
 import { openStationPanel, closeStationPanel } from "../ui/stationPanel.js";
 import { setStationSelected } from "../station/station.js";
 import { openPlanetPanel, closePlanetPanel } from "../ui/planetPanel.js";
+import { pickShipAt, pickDroneAt, pickStationAt, pickPlanetAt, pickBlackHoleAt } from "./picking.js";
+import { initTooltip, showTooltip, showBlackHoleTooltip, hideTooltip } from "./tooltip.js";
 import { t } from "../i18n.js";
 import { settings } from "../settings.js";
 
@@ -28,7 +30,6 @@ export function updateCamera(dt){
   ctx.camera.lookAt(0,0,0);
 }
 
-const raycaster = new THREE.Raycaster();
 const MOUSE_LEFT = 0, MOUSE_RIGHT = 2;
 // Logical roles, resolved live from settings so toggling "swap" in Setup
 // takes effect immediately without needing to reload.
@@ -36,14 +37,6 @@ function rotateButton(){ return settings.swapMouseButtons ? MOUSE_LEFT : MOUSE_R
 function selectButton(){ return settings.swapMouseButtons ? MOUSE_RIGHT : MOUSE_LEFT; }
 const DRAG_THRESHOLD = 6;
 let leftDown = false, leftStartX = 0, leftStartY = 0, leftIsDrag = false;
-
-function ndcFromEvent(e){
-  const rect = ctx.renderer.domElement.getBoundingClientRect();
-  return {
-    x: ((e.clientX-rect.left)/rect.width)*2 - 1,
-    y: -((e.clientY-rect.top)/rect.height)*2 + 1
-  };
-}
 
 function screenPos(vec3){
   const v = vec3.clone().project(ctx.camera);
@@ -53,89 +46,6 @@ function screenPos(vec3){
     y: rect.top + (-v.y*0.5+0.5)*rect.height,
     behind: v.z > 1
   };
-}
-
-function pickShipAt(e){
-  const ndc = ndcFromEvent(e);
-  raycaster.setFromCamera(ndc, ctx.camera);
-  const pickMeshes = ctx.ships.map(function(sh){ return sh.pickMesh; });
-  const hits = raycaster.intersectObjects(pickMeshes, false);
-  if(hits.length===0) return null;
-  return hits[0].object.userData.ship;
-}
-
-function pickDroneAt(e){
-  if(!ctx.drone) return null;
-  const ndc = ndcFromEvent(e);
-  raycaster.setFromCamera(ndc, ctx.camera);
-  const hits = raycaster.intersectObject(ctx.drone.pickMesh, false);
-  return hits.length > 0 ? ctx.drone : null;
-}
-
-function pickStationAt(e){
-  if(!ctx.station) return null;
-  const ndc = ndcFromEvent(e);
-  raycaster.setFromCamera(ndc, ctx.camera);
-  const hits = raycaster.intersectObject(ctx.station.pickMesh, false);
-  return hits.length > 0 ? ctx.station : null;
-}
-
-function pickPlanetAt(e){
-  const ndc = ndcFromEvent(e);
-  raycaster.setFromCamera(ndc, ctx.camera);
-  const meshes = ctx.planets.map(function(p){ return p.mesh; });
-  const hits = raycaster.intersectObjects(meshes, false);
-  if(hits.length===0) return null;
-  const mesh = hits[0].object;
-  for(let i=0;i<ctx.planets.length;i++){ if(ctx.planets[i].mesh===mesh) return ctx.planets[i]; }
-  return null;
-}
-
-let tooltipEl = null, ttTitleEl = null, ttRow1LabelEl = null, ttRow1ValEl = null, ttRow2LabelEl = null, ttRow2ValEl = null;
-const TOOLTIP_OFFSET = 16;
-
-function positionTooltip(clientX, clientY){
-  tooltipEl.classList.remove("hidden");
-  const rect = tooltipEl.getBoundingClientRect();
-  const maxX = window.innerWidth - rect.width - 8;
-  const maxY = window.innerHeight - rect.height - 8;
-  tooltipEl.style.left = Math.max(8, Math.min(clientX+TOOLTIP_OFFSET, maxX)) + "px";
-  tooltipEl.style.top = Math.max(8, Math.min(clientY+TOOLTIP_OFFSET, maxY)) + "px";
-}
-
-function showTooltip(p, clientX, clientY){
-  if(!tooltipEl) return;
-  ttTitleEl.textContent = t("body." + bodyVariantKey(p));
-  ttRow1LabelEl.textContent = t("tooltip.health");
-  ttRow1ValEl.textContent = Math.max(0, Math.round(p.health)) + " / " + Math.round(p.maxHealth);
-  ttRow2LabelEl.textContent = t("tooltip.value");
-  ttRow2ValEl.textContent = "~" + bodyValueEstimate(p);
-  positionTooltip(clientX, clientY);
-}
-
-function showBlackHoleTooltip(bh, clientX, clientY){
-  if(!tooltipEl) return;
-  ttTitleEl.textContent = t("body.blackhole");
-  ttRow1LabelEl.textContent = t("tooltip.timeLeft");
-  ttRow1ValEl.textContent = Math.max(0, Math.round(bh.maxLife-bh.life)) + "s";
-  ttRow2LabelEl.textContent = t("tooltip.hazard");
-  ttRow2ValEl.textContent = t("tooltip.hazardWarning");
-  positionTooltip(clientX, clientY);
-}
-
-function hideTooltip(){
-  if(tooltipEl) tooltipEl.classList.add("hidden");
-}
-
-function pickBlackHoleAt(e){
-  const ndc = ndcFromEvent(e);
-  raycaster.setFromCamera(ndc, ctx.camera);
-  for(let i=0;i<ctx.blackholes.length;i++){
-    const bh = ctx.blackholes[i];
-    const hits = raycaster.intersectObjects([bh.core, bh.horizon, bh.disk], false);
-    if(hits.length>0) return bh;
-  }
-  return null;
 }
 
 // Planets support multi-select (for Dev Tools' "connect selected planets"
@@ -197,12 +107,7 @@ export function initControls(){
   const cmdFlashEl = document.getElementById("cmdFlash");
   const dom = ctx.renderer.domElement;
 
-  tooltipEl = document.getElementById("bodyTooltip");
-  ttTitleEl = document.getElementById("ttTitle");
-  ttRow1LabelEl = document.getElementById("ttRow1Label");
-  ttRow1ValEl = document.getElementById("ttRow1Val");
-  ttRow2LabelEl = document.getElementById("ttRow2Label");
-  ttRow2ValEl = document.getElementById("ttRow2Val");
+  initTooltip();
 
   dom.addEventListener("contextmenu", function(e){ e.preventDefault(); });
   dom.addEventListener("pointerleave", hideTooltip);

@@ -1,4 +1,4 @@
-import { bodyVariantKey, bodyValueEstimate } from "../world/bodies.js";
+import { bodyVariantKey, bodyValueEstimate } from "../world/bodyParams.js";
 import { t } from "../i18n.js";
 
 // Which planet the panel is currently showing — module-local, not on ctx,

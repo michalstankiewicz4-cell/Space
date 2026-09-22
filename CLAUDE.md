@@ -79,6 +79,30 @@ local (`localStorage`).
   object in its own file under `js/bodies/`, aggregated by `js/content.js`.
   A "planet" DB row only stores `kind`+`temp`, not which of the 3 planet
   variants generated it — `variantForTemp()` re-derives it deterministically.
+- **`world/bodies.js` and `scene/controls.js` are split by concern, not by
+  feature** — both grew large enough (500+/350+ lines) across several
+  sessions' worth of additions that a codebase-structure review flagged
+  them. `world/bodies.js` kept only body *lifecycle* (materialize/spawn/
+  despawn/update/destroy); the pure kind+temp math (`pickBodyType`,
+  `variantForTemp`, `bodyParams`, `bodyVariantKey`, `bodyValueEstimate`,
+  `tempColor`, `randomPlanetSpawnData`) moved to `world/bodyParams.js`, and
+  the optional-decoration mesh builders (`buildSunRays`, `buildCometTail`,
+  the selection-bracket sprite, `setPlanetSelected`) moved to
+  `world/bodyMeshParts.js` — the same "model-building lives in its own
+  file" split `station/stationModel.js` already used, just applied
+  retroactively to the file that had accumulated the most. `scene/controls.js`
+  similarly kept only camera state + the actual selection/event-wiring
+  logic; the five `pickXAt()` raycast functions (+ the shared
+  `THREE.Raycaster` instance) moved to `scene/picking.js`, and the hover
+  tooltip (`showTooltip`/`showBlackHoleTooltip`/`hideTooltip`, previously
+  reaching into module-local DOM refs) moved to `scene/tooltip.js` behind
+  its own `initTooltip()`. **This was a pure reorganization — every
+  function kept its exact same behavior, just a new import path** — verified
+  live afterward by watching real `bite_body` RPC traffic (30 calls, all
+  200s, health decreasing correctly) during a full eat-a-planet cycle, not
+  just a lint/load check, specifically because the Supabase-facing code
+  (`net/bodiesSync.js`, `requestSpawnPlanet`) was among the files whose
+  imports had to be repointed at the new module boundaries.
 - **Ships only ever move on an explicit order.** `ships/swarm.js`'s
   `updateShips()` sets a ship's `target` straight from `commandedTarget`
   (set by `commandTo()` in `scene/controls.js`, when ships are selected
@@ -263,7 +287,7 @@ local (`localStorage`).
     everywhere ship-like logic exists: `world/blackholes.js` has a
     separate gravity/kill-radius block for it (with a `defense`-based
     survival roll instead of `ships`' unconditional consumption), its
-    picking/selection lives in `scene/controls.js` alongside — but
+    picking/selection lives in `scene/picking.js` alongside — but
     separate from — `pickShipAt()`, and `net/shipsBroadcast.js` sends its
     `[x,y,z,heading]` as its own `drone` field on the broadcast payload,
     separate from the `ships` array (this was missed when the drone

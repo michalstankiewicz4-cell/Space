@@ -4,6 +4,17 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.14]
+
+### Changed
+- Internal reorganization, no player-visible behavior change: split the
+  two largest files (`world/bodies.js`, `scene/controls.js`) by concern.
+  Pure body-type math moved to `world/bodyParams.js`, optional-decoration
+  mesh builders to `world/bodyMeshParts.js`, raycast picking to
+  `scene/picking.js`, and the hover tooltip to `scene/tooltip.js`. Also
+  fixed `js/versionCheck.js`'s `MODULE_FILES` list, which had fallen out
+  of sync with several files added over recent versions.
+
 ## [1.10.13]
 
 ### Changed

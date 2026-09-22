@@ -10,9 +10,9 @@ import { initScene } from "../scene/setup.js";
 import { camState, updateCamera } from "../scene/controls.js";
 import { initParticles, updateParticles } from "../fx/particles.js";
 import {
-  randomPlanetSpawnData, materializePlanet, despawnLocalOnly
+  materializePlanet, despawnLocalOnly, updateBodies
 } from "../world/bodies.js";
-import { updateBodies } from "../world/bodies.js";
+import { randomPlanetSpawnData } from "../world/bodyParams.js";
 import { randomBlackHoleSpawnData, materializeBlackHole, updateBlackHoles } from "../world/blackholes.js";
 
 const TAB_LABELS = {
