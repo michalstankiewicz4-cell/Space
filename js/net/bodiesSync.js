@@ -83,12 +83,28 @@ export function onBodyDeleted(oldRow){
   }
 }
 
+// If bite_body itself is unreachable (server error, timeout, dead socket —
+// reported live as a Cloudflare 522, but any rejection behaves the same),
+// re-queuing the failed damage unconditionally used to mean the very next
+// setInterval(flushDamage, 150) tick fired an identical RPC call again —
+// with nothing to ever break the cycle, a prolonged outage kept the client
+// hammering the server every 150ms indefinitely. Same exponential-backoff
+// shape as net/connect.js's Realtime reconnect (capped lower, since a
+// missed bite is far cheaper to retry than a whole dropped connection):
+// a run of consecutive failures grows the delay before flushDamage()
+// attempts anything again, and a single success resets it back to full
+// speed immediately.
+let damageFailStreak = 0;
+let damageBackoffUntil = 0;
+
 export function flushDamage(){
+  if(Date.now() < damageBackoffUntil) return;
   ctx.planets.forEach(function(p){
     if(p.pendingDamage > 0 && p.dbId){
       const amount = p.pendingDamage;
       p.pendingDamage = 0;
       supabase.rpc("bite_body", { p_body_id: p.dbId, p_amount: amount }).then(function(res){
+        damageFailStreak = 0;
         const row = res.data && res.data[0];
         if(!row) return;
         if(row.killed){
@@ -101,7 +117,11 @@ export function flushDamage(){
           p.health = Math.min(p.health, row.health);
           applyHealthVisual(p);
         }
-      }).catch(function(){ p.pendingDamage += amount; });
+      }).catch(function(){
+        p.pendingDamage += amount;
+        damageFailStreak++;
+        damageBackoffUntil = Date.now() + Math.min(10000, 500 * Math.pow(2, damageFailStreak));
+      });
     }
   });
 }

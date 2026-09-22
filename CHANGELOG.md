@@ -4,6 +4,17 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.10]
+
+### Fixed
+- `flushDamage()` retried a failed `bite_body` call (server error, timeout,
+  dead socket) unconditionally on the very next 150ms tick, with nothing
+  to ever break the cycle — a prolonged server-side hiccup (reported live
+  as a Cloudflare 522 while attacking a planet) kept the client hammering
+  the same RPC every 150ms indefinitely. Now backs off exponentially
+  (capped at 10s) after consecutive failures, same shape as the existing
+  Realtime reconnect backoff, resetting instantly on the next success.
+
 ## [1.10.9]
 
 ### Added
