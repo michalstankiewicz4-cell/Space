@@ -91,4 +91,5 @@ export function applyStaticText(){
   document.getElementById("devToolsBtn").title = t("devTools.button");
   document.getElementById("devLightsLabel").textContent = t("devTools.lights");
   document.getElementById("devDistanceLabel").textContent = t("devTools.distance");
+  document.getElementById("devNoLightsLabel").textContent = t("devTools.noLights");
 }

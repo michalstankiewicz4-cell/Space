@@ -34,6 +34,7 @@ import { initPlanetThumb, renderPlanetThumb } from "./world/planetThumb.js";
 import { initDevTools } from "./ui/devTools.js";
 import { updateLightMarkers } from "./scene/lightMarkers.js";
 import { updateDistanceLines } from "./scene/planetDistanceLines.js";
+import { updateLightsToggle } from "./scene/lightsToggle.js";
 
 load();
 
@@ -91,6 +92,7 @@ function tick(){
   updateDronePrintFx(dt);
   updateLightMarkers();
   updateDistanceLines();
+  updateLightsToggle();
   maintainPlanetCount(dt);
   if(NET_ENABLED){
     updateRemoteShips(dt);

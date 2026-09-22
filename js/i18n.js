@@ -127,7 +127,8 @@ const STRINGS = {
     devTools: {
       button: "Dev Tools",
       lights: "Show light sources",
-      distance: "Connect selected planets"
+      distance: "Connect selected planets",
+      noLights: "Turn off lights"
     }
   },
   pl: {
@@ -254,7 +255,8 @@ const STRINGS = {
     devTools: {
       button: "Dev Tools",
       lights: "Pokaż źródła światła",
-      distance: "Połącz zaznaczone planety"
+      distance: "Połącz zaznaczone planety",
+      noLights: "Wyłącz światła"
     }
   }
 };

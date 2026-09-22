@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.12]
+
+### Added
+- Dev Tools: a "Turn off lights" checkbox that hides every light in the
+  scene (ambient + both fixed lights + every dynamically spawned sun/ship/
+  drone glow), leaving only emissive materials visible — a quick way to
+  see which surfaces are self-lit vs. lit-by-scene-light.
+
 ## [1.10.11]
 
 ### Added
