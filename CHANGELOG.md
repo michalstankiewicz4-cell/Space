@@ -4,6 +4,18 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.13]
+
+### Changed
+- Dev Tools' "Show light sources" now marks *every* light in the scene
+  (the two fixed lights, plus every currently-live sun/ship/drone glow),
+  not just the fixed lights and suns — a generic scene traversal instead
+  of a fixed list, so anything added later is covered for free. Markers
+  are now small icon sprites, always drawn on top (never hidden inside
+  whatever they're illuminating), tinted to each light's own color, and
+  kept at a constant apparent size on screen at any zoom — the same
+  editor-gizmo convention Unity/Unreal use for light icons.
+
 ## [1.10.12]
 
 ### Added
