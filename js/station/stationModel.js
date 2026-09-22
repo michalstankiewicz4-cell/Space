@@ -10,6 +10,8 @@
 // native scale — callers shrink the whole returned group down for actual
 // gameplay (see STATION_MODEL_SCALE in config.js) rather than these
 // numbers changing.
+import { disposeMesh } from "../core/utils.js";
+
 export const STATION_RING_RADIUS = 23;
 export const STATION_RING_TUBE = 2.3;
 // Rough outer silhouette radius (ring + a small margin), used to size a
@@ -151,17 +153,10 @@ export function buildStationMesh(opts){
   return station;
 }
 
-// Every material instance this build created, deduped — so a caller that's
-// done with a built group (see net/shipsBroadcast.js#removeGhostStation)
-// can dispose geometries+materials without guessing how many distinct
-// materials are in play or double-disposing a shared one needlessly.
-export function disposeStationMesh(group){
-  const seenMaterials = new Set();
-  group.traverse(function(obj){
-    if(obj.geometry) obj.geometry.dispose();
-    if(obj.material && !seenMaterials.has(obj.material)){
-      seenMaterials.add(obj.material);
-      obj.material.dispose();
-    }
-  });
+// Thin wrapper around core/utils.js#disposeMesh, kept exported from here so
+// callers (see net/shipsBroadcast.js#removeGhostStation) don't need to know
+// this model happens to share ~150+ sub-meshes' worth of materials — that
+// dedupe-before-dispose behavior now lives once, in the shared helper.
+export function disposeStationMesh(scene, group){
+  disposeMesh(scene, group);
 }

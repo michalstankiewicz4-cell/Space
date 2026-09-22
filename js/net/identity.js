@@ -1,5 +1,6 @@
 import { IDENTITY_ADJECTIVES, IDENTITY_NOUNS, NET_MAX_NICK_LENGTH } from "../config.js";
 import { containsProfanity } from "../moderation.js";
+import { readStorage, writeStorage } from "../core/utils.js";
 
 // Letters (any script - \p{L} isn't just a-z), digits, and spaces only.
 const NICK_PATTERN = /^[\p{L}\p{N} ]+$/u;
@@ -16,13 +17,6 @@ export const clientId = (function(){
 
 export const joinedAt = Date.now();
 
-function readStored(key){
-  try{ return localStorage.getItem(key); }catch(e){ return null; }
-}
-function writeStored(key, value){
-  try{ localStorage.setItem(key, value); }catch(e){ /* ignore */ }
-}
-
 export function randomNickSuggestion(){
   return IDENTITY_ADJECTIVES[Math.floor(Math.random()*IDENTITY_ADJECTIVES.length)]+" "+IDENTITY_NOUNS[Math.floor(Math.random()*IDENTITY_NOUNS.length)];
 }
@@ -31,27 +25,27 @@ export function randomNickSuggestion(){
 // — until they do, `myIdentity.nick` is just a suggestion, never saved, so on
 // the next visit without confirming, the game will ask for it again.
 export function hasConfirmedNick(){
-  return !!readStored("roj-nick");
+  return !!readStorage("roj-nick");
 }
 
 export function confirmNick(nick){
   const trimmed = (nick||"").trim().slice(0, NET_MAX_NICK_LENGTH);
   if(!trimmed || !NICK_PATTERN.test(trimmed) || containsProfanity(trimmed)) return null;
   myIdentity.nick = trimmed;
-  writeStored("roj-nick", trimmed);
+  writeStorage("roj-nick", trimmed);
   return trimmed;
 }
 
 function loadOrCreateColor(){
-  let color = readStored("roj-color");
+  let color = readStorage("roj-color");
   if(!color){
     color = "#"+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,"0");
-    writeStored("roj-color", color);
+    writeStorage("roj-color", color);
   }
   return color;
 }
 
 export const myIdentity = {
-  nick: readStored("roj-nick") || randomNickSuggestion(),
+  nick: readStorage("roj-nick") || randomNickSuggestion(),
   color: loadOrCreateColor()
 };

@@ -88,6 +88,17 @@ function selectedShips(){
   return ctx.ships.filter(function(sh){ return sh.selected; });
 }
 
+// Drone/station selection is the same 3-step shape wherever it happens
+// (drag-select and plain-click below both need it) — the only thing that
+// differs per kind is which setSelected/openPanel pair to call. Doesn't
+// itself handle clearSelection()/shift-key logic, since drag-select and
+// plain-click each decide that differently.
+function selectSingleton(obj, setSelectedFn, openPanelFn){
+  deselectAllPlanets();
+  setSelectedFn(obj, true);
+  openPanelFn();
+}
+
 function commandTo(planet, list, cmdFlashEl){
   if(!planet || list.length===0) return;
   list.forEach(function(sh){ sh.commandedTarget = planet; sh.target = planet; });
@@ -195,8 +206,8 @@ export function initControls(){
         // slot (see ui/planetPanel.js) — selecting either one always closes
         // a still-open planet selection, even with shift held (clearSelection()
         // above only runs without shift).
-        if(droneHit){ deselectAllPlanets(); setDroneSelected(ctx.drone, true); openDronePanel(); }
-        if(stationHit){ deselectAllPlanets(); setStationSelected(ctx.station, true); openStationPanel(); }
+        if(droneHit) selectSingleton(ctx.drone, setDroneSelected, openDronePanel);
+        if(stationHit) selectSingleton(ctx.station, setStationSelected, openStationPanel);
         if(within.length>0) showToast(t("toast.selected")(selectedShips().length, ctx.ships.length));
       } else if(!e.shiftKey){
         clearSelection();
@@ -205,17 +216,13 @@ export function initControls(){
       const hitDrone = pickDroneAt(e);
       if(hitDrone){
         if(!e.shiftKey) clearSelection();
-        deselectAllPlanets();
-        setDroneSelected(hitDrone, true);
-        openDronePanel();
+        selectSingleton(hitDrone, setDroneSelected, openDronePanel);
         return;
       }
       const hitStation = pickStationAt(e);
       if(hitStation){
         if(!e.shiftKey) clearSelection();
-        deselectAllPlanets();
-        setStationSelected(hitStation, true);
-        openStationPanel();
+        selectSingleton(hitStation, setStationSelected, openStationPanel);
         return;
       }
       const hitShip = pickShipAt(e);

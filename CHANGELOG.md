@@ -4,6 +4,55 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [1.10.15]
+
+### Fixed
+- A ship whose target planet died mid-bite (networked mode) could keep
+  damaging/spawning particles on the already-gone body for the whole
+  server round-trip, because only `target` was cleared, not
+  `commandedTarget` — the very next frame re-assigned `target` right back
+  from it.
+- A save written by an older build (before some upgrade-tree node existed)
+  could leave that node `undefined` after loading, turning a stat formula
+  into `NaN` and silently making the affected planet type unkillable for
+  the rest of the session. `load()` now merges known keys onto the
+  current defaults instead of replacing the whole object.
+- A ship lost to a black hole was instantly, silently respawned the same
+  frame by an unrelated fleet-size reconciliation call — losing a ship to
+  a hazard now actually lasts for the rest of the session, as intended.
+- Several Supabase RPC/Realtime calls (`requestSpawnPlanet`,
+  `requestSpawnBlackHole`, Presence `track()`) had no `.catch()` on
+  rejection (as opposed to a resolved `{ error }`), which could leave
+  internal bookkeeping (`pendingSpawnCount`, steward election) silently
+  stuck after a network failure.
+- Pressing Escape didn't close the station or planet side panels, only
+  the drone panel and ship cam.
+- The planet info panel's title was set once, only when the panel opened,
+  so it never picked up a language switch made while the panel was still
+  open — every other label in the panel already refreshed live.
+- Closed a live exploit: `bodies.health`/`max_health`/`max_life` had no
+  NOT NULL constraint, so a crafted insert with `health: null` bypassed
+  `bite_body`'s damage math entirely and could report a body as
+  unkillable/undying. Per-kind CHECK constraints now require the right
+  set of these columns to be present (and in range) for that kind.
+
+### Changed
+- Internal cleanup, no player-visible behavior change: consolidated
+  several duplicated patterns found in a full-project review — black hole
+  disposal, generic mesh disposal (ships/drone/station all shared the same
+  scene.remove+traverse-dispose shape), ghost-unit materials and
+  target/lerp bookkeeping in `net/shipsBroadcast.js`, the drone/station
+  singleton raycast pick helpers, drone/station selection in
+  `scene/controls.js`, the try/catch-guarded `localStorage` read/write
+  reimplemented in six separate modules, ~15 separate
+  `#id.hidden{ display:none; }` CSS rules collapsed into one generic
+  `.hidden` rule, and the steward-gated staleness-fallback logic shared by
+  planet and black-hole top-up. Also reduced a few frequently-allocated
+  `THREE.Vector3`s in `ships/swarm.js`'s per-frame ship loop and
+  `world/blackholes.js`'s gravity loops to reused scratch vectors, and
+  cached a comet's drift-tail direction once at spawn instead of
+  recomputing it every ~0.03s (it never changes after spawn).
+
 ## [1.10.14]
 
 ### Changed

@@ -7,6 +7,8 @@ import { isTechModalOpen, closeTechModal } from "./panels.js";
 import { isFleetModalOpen, closeFleetModal } from "./fleet.js";
 import { isShipCamActive, clearShipCamTarget } from "../scene/shipcam.js";
 import { isDroneScriptModalOpen, closeDroneScriptModal, isDronePanelOpen, closeDronePanel } from "./dronePanel.js";
+import { isStationPanelOpen, closeStationPanel } from "./stationPanel.js";
+import { isPlanetPanelOpen, closePlanetPanel } from "./planetPanel.js";
 
 function updateNickPlaceholder(){
   document.getElementById("nickInput").placeholder = t("banner.nickPlaceholder") + " (" + t("banner.nickSuggestionPrefix") + " " + randomNickSuggestion() + ")";
@@ -135,9 +137,9 @@ export function initBanner(){
   });
 
   // Escape closes whichever overlay is topmost first (drone script, then
-  // tech/fleet modals, then setup, then the drone panel/ship cam), and
-  // only once nothing else is open does it reopen/close the start screen
-  // itself (e.g. to change nickname or language mid-game).
+  // tech/fleet modals, then setup, then the drone/station/planet panel or
+  // ship cam), and only once nothing else is open does it reopen/close the
+  // start screen itself (e.g. to change nickname or language mid-game).
   window.addEventListener("keydown", function(e){
     if(e.key !== "Escape") return;
     if(isDroneScriptModalOpen()){ closeDroneScriptModal(); return; }
@@ -145,6 +147,8 @@ export function initBanner(){
     if(isFleetModalOpen()){ closeFleetModal(); return; }
     if(isSetupModalOpen()){ closeSetupModal(); return; }
     if(isDronePanelOpen()){ closeDronePanel(); return; }
+    if(isStationPanelOpen()){ closeStationPanel(); return; }
+    if(isPlanetPanelOpen()){ closePlanetPanel(); return; }
     if(isShipCamActive()){ clearShipCamTarget(); return; }
     banner.classList.toggle("hidden");
     if(!banner.classList.contains("hidden")) nickInput.focus();

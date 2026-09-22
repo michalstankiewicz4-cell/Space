@@ -148,6 +148,12 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     shakePhase: Math.random()*10,
     moving: kind==="comet",
     vel: vel,
+    // A comet's vel never changes after spawn (nothing accelerates it -
+    // gravity from black holes only ever pulls ships/the drone, see
+    // world/blackholes.js), so the tail's "opposite the direction of
+    // travel" unit vector is exactly the same value on every single one of
+    // updateBodies()'s ~33/sec recomputations - cache it once here instead.
+    driftDir: (kind==="comet" && vel) ? vel.clone().normalize().multiplyScalar(-1) : null,
     tailTimer: 0
   };
   ctx.planets.push(p);
@@ -185,6 +191,15 @@ export function requestSpawnPlanet(forcedType){
   }).then(function(res){
     pendingSpawnCount--;
     if(res.error) console.warn("requestSpawnPlanet failed", res.error);
+  }).catch(function(err){
+    // A rejected promise (not just a resolved {error}) skips .then()
+    // entirely - same class of failure as the bite_body 522 documented in
+    // net/bodiesSync.js#flushDamage. Without this, pendingSpawnCount never
+    // decrements on a rejection, and maintainPlanetCount() permanently
+    // believes one extra spawn is in flight - under-topping-up the world
+    // by one slot for the rest of the session, for every failed request.
+    pendingSpawnCount--;
+    console.warn("requestSpawnPlanet rejected", err);
   });
 }
 
@@ -267,8 +282,7 @@ export function updateBodies(dt){
       p.tailTimer -= dt;
       if(p.tailTimer <= 0){
         p.tailTimer = 0.03;
-        const driftDir = p.vel.clone().normalize().multiplyScalar(-1);
-        spawnTailParticle(p.mesh.position, driftDir, p.mesh.material.color);
+        spawnTailParticle(p.mesh.position, p.driftDir, p.mesh.material.color);
       }
 
       if(p.basePos.length() > FIELD_RADIUS*1.6){

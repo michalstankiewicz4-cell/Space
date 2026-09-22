@@ -85,11 +85,32 @@ alter table bodies add constraint bodies_radius_check check (
 alter table bodies drop constraint if exists bodies_temp_check;
 alter table bodies add constraint bodies_temp_check check (temp >= -1 and temp <= 1);
 
+-- Per-kind existence, not just range: a black hole legitimately has no
+-- health (it isn't bitten, only expires via max_life below), so `health is
+-- null` was allowed outright — but that same leniency let a crafted insert
+-- claim kind='planet' (or sun/comet/meteoroid) with health=NULL too.
+-- bite_body's own UPDATE is gated on `health is not null` (see below), so a
+-- NULL-health "planet" can never be bitten by anyone — a permanent, un-
+-- killable piece of clutter sitting in the shared world (and counting
+-- against the body cap) forever, found by tracing exactly what bite_body's
+-- WHERE clause excludes. Requiring health/max_health for every non-
+-- blackhole kind (and forbidding them for blackhole, which never had a use
+-- for them) closes that gap the same way radius/value_bonus already got
+-- tightened per-kind above, for the same "shared range was more permissive
+-- than any real row needs" reason.
 alter table bodies drop constraint if exists bodies_health_check;
-alter table bodies add constraint bodies_health_check check (health is null or (health >= 0 and health <= 200));
+alter table bodies add constraint bodies_health_check check (
+  case when kind = 'blackhole' then health is null
+       else health is not null and health >= 0 and health <= 200
+  end
+);
 
 alter table bodies drop constraint if exists bodies_max_health_check;
-alter table bodies add constraint bodies_max_health_check check (max_health is null or (max_health > 0 and max_health <= 200));
+alter table bodies add constraint bodies_max_health_check check (
+  case when kind = 'blackhole' then max_health is null
+       else max_health is not null and max_health > 0 and max_health <= 200
+  end
+);
 
 -- Same per-kind reasoning as radius above: only suns (40) and comets (25)
 -- legitimately carry a value_bonus at all (see js/bodies/*.js) — a shared
@@ -116,8 +137,19 @@ alter table bodies add constraint bodies_vel_check check (
   (vel_z is null or abs(vel_z) <= 20)
 );
 
+-- Mirror image of the health/max_health tightening above: max_life is the
+-- blackhole-only expiry timer (see world/blackholes.js#updateBlackHoles),
+-- meaningless for anything else — a crafted kind='blackhole' insert with
+-- max_life=NULL passed the old "null or in-range" check just as easily,
+-- producing a permanent gravity hazard that never fades/deletes itself
+-- (the only code path that ever issues its DELETE is gated on
+-- `life >= maxLife`, which a null maxLife never satisfies).
 alter table bodies drop constraint if exists bodies_max_life_check;
-alter table bodies add constraint bodies_max_life_check check (max_life is null or (max_life > 0 and max_life <= 120));
+alter table bodies add constraint bodies_max_life_check check (
+  case when kind = 'blackhole' then max_life is not null and max_life > 0 and max_life <= 120
+       else max_life is null
+  end
+);
 
 -- Hard cap on the number of bodies at once — without this, anyone could keep
 -- inserting (even valid, within the CHECK constraints above) rows forever

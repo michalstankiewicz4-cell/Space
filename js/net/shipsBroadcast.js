@@ -1,4 +1,5 @@
 import { ctx } from "../core/context.js";
+import { disposeMesh } from "../core/utils.js";
 import {
   NET_SHIP_BROADCAST_MS, NET_REMOTE_PLAYER_TIMEOUT_MS, NET_GHOST_LERP_SPEED,
   NET_MAX_REMOTE_SHIPS, NET_MAX_REMOTE_PLAYERS, NET_MAX_NICK_LENGTH, DRONE_PRINT_MAX_LEN
@@ -13,15 +14,23 @@ import { spawnPrintEffect } from "../drone/dronePrintFx.js";
 import { buildStationMesh, disposeStationMesh } from "../station/stationModel.js";
 import { STATION_MODEL_SCALE } from "../config.js";
 
-function makeGhostShipMesh(colorHex){
-  const geo = new THREE.ConeGeometry(0.28, 0.9, 8);
+// Shared by every simple (non-station) ghost unit — a remote ship/drone is
+// flat-recolored to its owner's color, simple enough for one solid tint to
+// read fine on a cone/octahedron (unlike the station, see makeGhostStationMesh
+// below). Only the geometry+orientation differ between ship and drone ghosts.
+function makeGhostMesh(geo, colorHex){
   const mat = new THREE.MeshStandardMaterial({
     color: colorHex, emissive: colorHex, emissiveIntensity:0.6,
     roughness:0.5, metalness:0.3, transparent:true, opacity:0.75
   });
   const mesh = new THREE.Mesh(geo, mat);
-  mesh.rotation.x = Math.PI/2;
   ctx.scene.add(mesh);
+  return mesh;
+}
+
+function makeGhostShipMesh(colorHex){
+  const mesh = makeGhostMesh(new THREE.ConeGeometry(0.28, 0.9, 8), colorHex);
+  mesh.rotation.x = Math.PI/2;
   return mesh;
 }
 
@@ -30,22 +39,32 @@ function makeGhostShipMesh(colorHex){
 // a drone, tinted by owner color like their ships instead of drone gold —
 // consistent with how every other remote unit is told apart.
 function makeGhostDroneMesh(colorHex){
-  const geo = new THREE.OctahedronGeometry(0.42, 0);
-  const mat = new THREE.MeshStandardMaterial({
-    color: colorHex, emissive: colorHex, emissiveIntensity:0.6,
-    roughness:0.5, metalness:0.3, transparent:true, opacity:0.75
-  });
-  const mesh = new THREE.Mesh(geo, mat);
-  ctx.scene.add(mesh);
-  return mesh;
+  return makeGhostMesh(new THREE.OctahedronGeometry(0.42, 0), colorHex);
 }
 
 function removeGhostDrone(rp){
   if(!rp.droneMesh) return;
-  ctx.scene.remove(rp.droneMesh);
-  rp.droneMesh.geometry.dispose();
-  rp.droneMesh.material.dispose();
+  disposeMesh(ctx.scene, rp.droneMesh);
   rp.droneMesh = null;
+}
+
+// The "target vector + snap-to-target on first sighting" bookkeeping below
+// is identical for every ghost kind (ships, drone, station) — a ghost only
+// ever learns a new position from a broadcast payload, never moves on its
+// own, so lerpGhost() (used in updateRemoteShips()) can smoothly interpolate
+// toward whatever this last set, except on the very first sighting where
+// snapping avoids an initial lerp-in from the scene origin.
+function setGhostTarget(mesh, x, y, z){
+  if(!mesh.userData.target) mesh.userData.target = new THREE.Vector3();
+  mesh.userData.target.set(x, y, z);
+  if(!mesh.userData.inited){
+    mesh.position.copy(mesh.userData.target);
+    mesh.userData.inited = true;
+  }
+}
+
+function lerpGhost(mesh, dt){
+  if(mesh.userData.target) mesh.position.lerp(mesh.userData.target, Math.min(1, dt*NET_GHOST_LERP_SPEED));
 }
 
 // Unlike the ghost ship/drone (flat-recolored to the owner's color, simple
@@ -64,8 +83,7 @@ function makeGhostStationMesh(colorHex){
 
 function removeGhostStation(rp){
   if(!rp.stationMesh) return;
-  ctx.scene.remove(rp.stationMesh);
-  disposeStationMesh(rp.stationMesh);
+  disposeStationMesh(ctx.scene, rp.stationMesh);
   rp.stationMesh = null;
 }
 
@@ -109,22 +127,13 @@ export function handleRemoteShips(payload){
 
   const list = Array.isArray(payload.ships) ? payload.ships.slice(0, NET_MAX_REMOTE_SHIPS) : [];
   while(rp.meshes.length < list.length) rp.meshes.push(makeGhostShipMesh(rp.color));
-  while(rp.meshes.length > list.length){
-    const mOld = rp.meshes.pop();
-    ctx.scene.remove(mOld);
-    mOld.geometry.dispose(); mOld.material.dispose();
-  }
+  while(rp.meshes.length > list.length) disposeMesh(ctx.scene, rp.meshes.pop());
   const d = Array.isArray(payload.drone) ? payload.drone : null;
   if(d){
     if(!rp.droneMesh) rp.droneMesh = makeGhostDroneMesh(rp.color);
     const mesh = rp.droneMesh;
-    if(!mesh.userData.target) mesh.userData.target = new THREE.Vector3();
-    mesh.userData.target.set(safeCoord(d[0]), safeCoord(d[1]), safeCoord(d[2]));
+    setGhostTarget(mesh, safeCoord(d[0]), safeCoord(d[1]), safeCoord(d[2]));
     mesh.rotation.y = Number.isFinite(Number(d[3])) ? Number(d[3]) : mesh.rotation.y;
-    if(!mesh.userData.inited){
-      mesh.position.copy(mesh.userData.target);
-      mesh.userData.inited = true;
-    }
   } else {
     removeGhostDrone(rp);
   }
@@ -133,26 +142,15 @@ export function handleRemoteShips(payload){
   if(st){
     if(!rp.stationMesh) rp.stationMesh = makeGhostStationMesh(rp.color);
     const mesh = rp.stationMesh;
-    if(!mesh.userData.target) mesh.userData.target = new THREE.Vector3();
-    mesh.userData.target.set(safeCoord(st[0]), safeCoord(st[1]), safeCoord(st[2]));
+    setGhostTarget(mesh, safeCoord(st[0]), safeCoord(st[1]), safeCoord(st[2]));
     mesh.rotation.y = Number.isFinite(Number(st[3])) ? Number(st[3]) : mesh.rotation.y;
-    if(!mesh.userData.inited){
-      mesh.position.copy(mesh.userData.target);
-      mesh.userData.inited = true;
-    }
   } else {
     removeGhostStation(rp);
   }
 
   for(let i=0;i<list.length;i++){
-    const mesh = rp.meshes[i];
-    if(!mesh.userData.target) mesh.userData.target = new THREE.Vector3();
     const p = Array.isArray(list[i]) ? list[i] : [];
-    mesh.userData.target.set(safeCoord(p[0]), safeCoord(p[1]), safeCoord(p[2]));
-    if(!mesh.userData.inited){
-      mesh.position.copy(mesh.userData.target);
-      mesh.userData.inited = true;
-    }
+    setGhostTarget(rp.meshes[i], safeCoord(p[0]), safeCoord(p[1]), safeCoord(p[2]));
   }
 }
 
@@ -161,22 +159,16 @@ export function updateRemoteShips(dt){
   Object.keys(ctx.remotePlayers).forEach(function(id){
     const rp = ctx.remotePlayers[id];
     if(now - rp.lastSeen > NET_REMOTE_PLAYER_TIMEOUT_MS){
-      rp.meshes.forEach(function(m){ ctx.scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+      rp.meshes.forEach(function(m){ disposeMesh(ctx.scene, m); });
       removeGhostDrone(rp);
       removeGhostStation(rp);
       delete ctx.remotePlayers[id];
       updatePlayersHud();
       return;
     }
-    rp.meshes.forEach(function(m){
-      if(m.userData.target) m.position.lerp(m.userData.target, Math.min(1, dt*NET_GHOST_LERP_SPEED));
-    });
-    if(rp.droneMesh && rp.droneMesh.userData.target){
-      rp.droneMesh.position.lerp(rp.droneMesh.userData.target, Math.min(1, dt*NET_GHOST_LERP_SPEED));
-    }
-    if(rp.stationMesh && rp.stationMesh.userData.target){
-      rp.stationMesh.position.lerp(rp.stationMesh.userData.target, Math.min(1, dt*NET_GHOST_LERP_SPEED));
-    }
+    rp.meshes.forEach(function(m){ lerpGhost(m, dt); });
+    if(rp.droneMesh) lerpGhost(rp.droneMesh, dt);
+    if(rp.stationMesh) lerpGhost(rp.stationMesh, dt);
   });
 }
 

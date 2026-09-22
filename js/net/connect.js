@@ -57,7 +57,15 @@ function connectRoom(){
       connected = true;
       reconnectAttempt = 0;
       setConnectionStatus(true);
-      roomChannel.track({ client_id: clientId, joined_at: joinedAt, nick: myIdentity.nick, color: myIdentity.color });
+      // Not awaited (this client doesn't block startup on it landing), but
+      // its returned promise is still checked — a failed track() used to
+      // fail completely silently: this client would never appear in
+      // Presence, so it'd never be counted toward steward election or show
+      // up in other players' HUD list, with nothing in the console to
+      // explain why.
+      roomChannel.track({ client_id: clientId, joined_at: joinedAt, nick: myIdentity.nick, color: myIdentity.color })
+        .then(function(status){ if(status !== "ok") console.warn("Presence track() did not report ok:", status); })
+        .catch(function(err){ console.warn("Presence track() rejected", err); });
       // Self-reported only (see actor_nicks' own comment in schema.sql) —
       // this is purely so admin.html can show a display name next to an
       // activity_log actor UUID for the common/honest case; `actor`

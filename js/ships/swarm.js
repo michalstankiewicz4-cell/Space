@@ -1,4 +1,5 @@
 import { ctx } from "../core/context.js";
+import { disposeMesh } from "../core/utils.js";
 import { ORBIT_RADIUS } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { state, swarmStats, save } from "../core/gameState.js";
@@ -9,6 +10,21 @@ import { triggerBreakup } from "../fx/breakup.js";
 import { showToast } from "../ui/hud.js";
 import { refreshDock } from "../ui/dock.js";
 import { t } from "../i18n.js";
+
+// Reused every frame across every ship in updateShips() instead of several
+// fresh `new THREE.Vector3()`s per ship per frame (same pattern as
+// world/blackholes.js's toHoleScratch) — every one of these is read and
+// discarded within the same iteration (lerp()/lookAt()/copy()/clone() all
+// read values immediately, none retain the vector object itself), so a
+// single ship's leftover values from last iteration are always fully
+// overwritten before the next ship reads them.
+const toTargetScratch = new THREE.Vector3();
+const lookTargetScratch = new THREE.Vector3();
+const orbitScratch = new THREE.Vector3();
+const orbitPosScratch = new THREE.Vector3();
+const shakeScratch = new THREE.Vector3();
+const outwardScratch = new THREE.Vector3();
+const surfacePointScratch = new THREE.Vector3();
 
 function makeShipMesh(){
   const group = new THREE.Group();
@@ -168,7 +184,7 @@ export function updateShips(dt){
     sh.target = sh.commandedTarget;
     if(!sh.target){ hideBolt(sh); continue; }
 
-    const toTarget = new THREE.Vector3().subVectors(sh.target.mesh.position, sh.pos);
+    const toTarget = toTargetScratch.subVectors(sh.target.mesh.position, sh.pos);
     const dist = toTarget.length();
     const eatRange = ORBIT_RADIUS;
 
@@ -179,13 +195,13 @@ export function updateShips(dt){
       sh.pos.addScaledVector(sh.vel, dt);
       sh.mesh.position.copy(sh.pos);
       // orient towards the direction of travel
-      const lookTarget = new THREE.Vector3().addVectors(sh.pos, sh.vel);
+      const lookTarget = lookTargetScratch.addVectors(sh.pos, sh.vel);
       sh.mesh.lookAt(lookTarget);
     } else {
       // orbit gently around the planet while eating
       sh.eatPulse += dt*4;
-      const orbit = new THREE.Vector3(Math.cos(sh.eatPulse), Math.sin(sh.eatPulse*0.7)*0.4, Math.sin(sh.eatPulse)).multiplyScalar(eatRange*0.9);
-      const orbitPos = new THREE.Vector3().addVectors(sh.target.mesh.position, orbit);
+      const orbit = orbitScratch.set(Math.cos(sh.eatPulse), Math.sin(sh.eatPulse*0.7)*0.4, Math.sin(sh.eatPulse)).multiplyScalar(eatRange*0.9);
+      const orbitPos = orbitPosScratch.addVectors(sh.target.mesh.position, orbit);
       sh.pos.lerp(orbitPos, 0.12);
       sh.mesh.position.copy(sh.pos);
       sh.mesh.lookAt(sh.target.mesh.position);
@@ -206,7 +222,7 @@ export function updateShips(dt){
       if(healthFrac < 0.3){
         const shakeAmt = ((0.3-healthFrac)/0.3) * sh.target.radius*0.014;
         sh.target.shakePhase += dt*32;
-        const shk = new THREE.Vector3(
+        const shk = shakeScratch.set(
           Math.sin(sh.target.shakePhase*1.3),
           Math.sin(sh.target.shakePhase*1.7),
           Math.sin(sh.target.shakePhase*0.9)
@@ -215,8 +231,8 @@ export function updateShips(dt){
       }
 
       // debris/particles + lightning-beam + scorch marks on the surface
-      const outward = new THREE.Vector3().subVectors(sh.pos, sh.target.mesh.position).normalize();
-      const surfacePoint = new THREE.Vector3().addVectors(sh.target.mesh.position, outward.clone().multiplyScalar(sh.target.radius));
+      const outward = outwardScratch.subVectors(sh.pos, sh.target.mesh.position).normalize();
+      const surfacePoint = surfacePointScratch.copy(outward).multiplyScalar(sh.target.radius).add(sh.target.mesh.position);
 
       // the zigzag shape refreshes at a lower rate (a "crackle" effect), but
       // the beam geometry is rebuilt EVERY FRAME from the ship's current
@@ -254,6 +270,16 @@ export function updateShips(dt){
           // points; the explosion and cleanup arrive via Realtime DELETE for everyone
           hideBolt(sh);
           sh.target = null;
+          // Also clear commandedTarget, not just target - the top-of-loop
+          // guard above only re-clears commandedTarget once the planet is
+          // flagged .dying or actually removed from ctx.planets, neither of
+          // which happens until the real server DELETE round-trips back.
+          // Without this, the very next frame re-assigns sh.target from the
+          // still-set commandedTarget (same planet, not yet gone locally),
+          // and since the ship never moved, it re-enters the eat branch and
+          // keeps damaging/spawning particles on an already-dead body for
+          // the whole DELETE round-trip window.
+          sh.commandedTarget = null;
         }
       }
     }
@@ -262,11 +288,7 @@ export function updateShips(dt){
 
 export function disposeShip(sh){
   setShipSelected(sh, false);
-  ctx.scene.remove(sh.mesh);
-  sh.mesh.traverse(function(obj){
-    if(obj.geometry) obj.geometry.dispose();
-    if(obj.material) obj.material.dispose();
-  });
+  disposeMesh(ctx.scene, sh.mesh);
   hideBolt(sh);
   if(sh.boltCore){ ctx.scene.remove(sh.boltCore); sh.boltCore.geometry.dispose(); sh.boltCore.material.dispose(); }
   if(sh.boltGlow){ ctx.scene.remove(sh.boltGlow); sh.boltGlow.geometry.dispose(); sh.boltGlow.material.dispose(); }

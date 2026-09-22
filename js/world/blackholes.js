@@ -1,5 +1,5 @@
 import { ctx } from "../core/context.js";
-import { removeItem } from "../core/utils.js";
+import { removeItem, disposeMesh } from "../core/utils.js";
 import { FIELD_RADIUS } from "../config.js";
 import { CONTENT } from "../content.js";
 import { NET_ENABLED } from "../env.js";
@@ -8,37 +8,31 @@ import { makeAccretionTexture, makeHaloTexture } from "./textures.js";
 import { showToast } from "../ui/hud.js";
 import { spawnExplosionParticles } from "../fx/particles.js";
 import { spawnShockwave } from "../fx/breakup.js";
-import { disposeShip, reconcileFleetSize } from "../ships/swarm.js";
+import { disposeShip } from "../ships/swarm.js";
 import { refreshDock } from "../ui/dock.js";
 import { save } from "../core/gameState.js";
 import { isSteward } from "../net/presence.js";
-import { isConnected } from "../net/connect.js";
+import { createStalenessGate } from "../net/stewardFallback.js";
 import { stopDroneScript } from "../drone/drone.js";
 import { t } from "../i18n.js";
 
 let blackHoleTimer = CONTENT.blackhole.firstSpawnMinS + Math.random()*CONTENT.blackhole.firstSpawnRangeS;
 
-// Same class of bug bodiesSync.js#maintainPlanetCount() already had fixed
-// once (see CLAUDE.md's "Realtime channel health has no free lunch"): a
-// steward whose Realtime socket has silently died (while plain REST still
-// works fine) sees its own ctx.blackholes as perpetually empty even when a
-// black hole genuinely exists, and — unlike maintainPlanetCount() — nothing
-// here was checking isConnected() before spawning, so a desynced steward
-// could keep inserting duplicate black holes nobody asked for. Worse: with
-// no fallback at all, a steward whose tab is merely backgrounded (not
-// disconnected — Presence re-election never fires for that, only for an
-// actual socket drop) has requestAnimationFrame throttled to a crawl by the
-// browser, so its own blackHoleTimer barely advances in real time — black
-// holes could stop appearing for the whole session with nothing to correct
-// it. `lastBlackHoleActivityAt` (bumped in materializeBlackHole() below,
-// which every client's own spawn *and* every remote one they observe both
-// go through) tracks the last confirmed non-stuck moment; BLACKHOLE_STALE_MS
-// sits comfortably above the longest legitimate gap between two black holes
-// (respawnMinS..respawnMinS+respawnRangeS, 34-58s) so it never fires during
-// normal play, jittered per client so idle clients don't all fire the
-// fallback in the same instant.
-let lastBlackHoleActivityAt = Date.now();
-const BLACKHOLE_STALE_MS = 90000 + Math.random()*30000;
+// Reused every frame by updateBlackHoles()'s gravity loops (ships, then
+// drone) instead of a fresh `new THREE.Vector3()` per ship/drone x
+// black-hole pair — see the comment at its first use site below.
+const toHoleScratch = new THREE.Vector3();
+
+// See net/stewardFallback.js for why this needs both an isConnected() guard
+// and a staleness fallback, not just steward-gating (this exact gap once
+// meant black holes could stop appearing for a whole session — see
+// CLAUDE.md's "Realtime channel health has no free lunch"). bump() is
+// called in materializeBlackHole() below, which every client's own spawn
+// *and* every remote one they observe both go through. The base/jitter here
+// (90-120s) sits comfortably above the longest legitimate gap between two
+// black holes (respawnMinS..respawnMinS+respawnRangeS, 34-58s) so it never
+// fires during normal play.
+const blackHoleTopupGate = createStalenessGate(90000, 30000);
 
 export function randomBlackHoleSpawnData(){
   const bh = CONTENT.blackhole;
@@ -107,10 +101,24 @@ export function materializeBlackHole(row, pos){
     flowSpeed: 0.05+Math.random()*0.06
   };
   ctx.blackholes.push(bh);
-  lastBlackHoleActivityAt = Date.now();
+  blackHoleTopupGate.bump();
   showToast(t("toast.blackholeDetected"));
   if(NET_ENABLED) ctx.netBodies[row.id] = bh;
   return bh;
+}
+
+// Shared teardown for a black hole's 4-piece mesh group (core/horizon/disk/
+// halo) — used both by its natural expiry below and by net/bodiesSync.js
+// (a remote DELETE, or bootstrapWorld's reconcile) and js/editor/main.js's
+// preview, instead of each site re-deriving the same dispose sequence by
+// hand. If a future change adds/renames a sub-mesh, there's now exactly one
+// place that needs to know about it — previously all 4 call sites did.
+export function disposeBlackHole(bh){
+  ctx.scene.remove(bh.group);
+  bh.core.geometry.dispose(); bh.core.material.dispose();
+  bh.horizon.geometry.dispose(); bh.horizon.material.dispose();
+  bh.disk.geometry.dispose(); bh.disk.material.dispose();
+  bh.halo.material.dispose();
 }
 
 export function spawnBlackHoleLocalOnly(){
@@ -129,6 +137,11 @@ export function requestSpawnBlackHole(){
     max_life: data.maxLife
   }).then(function(res){
     if(res.error) console.warn("requestSpawnBlackHole failed", res.error);
+  }).catch(function(err){
+    // No pending-counter to leak here (unlike requestSpawnPlanet), but a
+    // rejected promise with no .catch() is still an unhandled rejection -
+    // add explicit, quiet handling for the same reason bodies.js does.
+    console.warn("requestSpawnBlackHole rejected", err);
   });
 }
 
@@ -136,16 +149,7 @@ export function updateBlackHoles(dt){
   blackHoleTimer -= dt;
   if(blackHoleTimer <= 0 && ctx.blackholes.length === 0){
     if(NET_ENABLED){
-      // isConnected() guard: same reasoning as maintainPlanetCount() — a
-      // steward with a dead Realtime socket must not insert blindly via
-      // plain REST, since it can no longer see whether one already exists.
-      // The staleness half of the condition is the actual fix for "black
-      // holes stopped appearing": any other connected client can step in
-      // once it's been far longer than the normal cadence since one last
-      // appeared, instead of waiting forever for a steward stuck on a
-      // backgrounded tab.
-      const stale = Date.now() - lastBlackHoleActivityAt > BLACKHOLE_STALE_MS;
-      if(isConnected() && (isSteward || stale)) requestSpawnBlackHole();
+      if(blackHoleTopupGate.shouldSpawn()) requestSpawnBlackHole();
     }
     else { spawnBlackHoleLocalOnly(); }
     blackHoleTimer = CONTENT.blackhole.respawnMinS + Math.random()*CONTENT.blackhole.respawnRangeS;
@@ -178,11 +182,7 @@ export function updateBlackHoles(dt){
     }
 
     if(bh.life >= bh.maxLife){
-      ctx.scene.remove(bh.group);
-      bh.core.geometry.dispose(); bh.core.material.dispose();
-      bh.horizon.geometry.dispose(); bh.horizon.material.dispose();
-      bh.disk.geometry.dispose(); bh.disk.material.dispose();
-      bh.halo.material.dispose();
+      disposeBlackHole(bh);
       ctx.blackholes.splice(i,1);
       if(NET_ENABLED && bh.dbId){
         delete ctx.netBodies[bh.dbId];
@@ -203,7 +203,14 @@ export function updateBlackHoles(dt){
     const sh = ctx.ships[s];
     for(let b=0;b<ctx.blackholes.length;b++){
       const hole = ctx.blackholes[b];
-      const toHole = new THREE.Vector3().subVectors(hole.group.position, sh.pos);
+      // Reused scratch vector, not a fresh `new THREE.Vector3()` per
+      // ships*blackholes iteration every frame - this loop runs every
+      // frame whenever any black hole exists, so with a larger fleet and
+      // multiple simultaneous holes the allocation count added up to real
+      // GC pressure right when frame time matters most (many ships near a
+      // hazard).
+      toHoleScratch.subVectors(hole.group.position, sh.pos);
+      const toHole = toHoleScratch;
       const d = toHole.length();
       if(d < hole.killRadius){
         toConsume.push({ ship: sh, hole: hole });
@@ -224,7 +231,17 @@ export function updateBlackHoles(dt){
     removeItem(ctx.ships, sh);
     showToast(t("toast.shipConsumed"));
   });
-  if(toConsume.length>0){ reconcileFleetSize(); refreshDock(); save(); }
+  // Deliberately NOT calling reconcileFleetSize() here. That function's
+  // only job is "top ctx.ships back up to the upgrade-derived target" (see
+  // ships/swarm.js) - correct right after spawnInitialFleet()/a fleet
+  // upgrade purchase, where the target itself just changed, but calling it
+  // after a black-hole loss instantly respawned the eaten ship in the same
+  // frame, silently undoing the toast/VFX above and leaving "a hazard to
+  // avoid" with zero actual gameplay cost. Losing a ship now lasts for the
+  // rest of the session (until the next reconcile - a reload or a new
+  // fleet-level purchase, both of which re-derive the count from the
+  // upgrade level, not from what was lost - see ui/dock.js/main.js).
+  if(toConsume.length>0){ refreshDock(); save(); }
 
   // The drone isn't in ctx.ships (it never auto-moves, so it isn't part of
   // the swarm loop above) — handled separately here, with its `defense`
@@ -234,7 +251,8 @@ export function updateBlackHoles(dt){
     const drone = ctx.drone;
     for(let b=0; b<ctx.blackholes.length; b++){
       const hole = ctx.blackholes[b];
-      const toHole = new THREE.Vector3().subVectors(hole.group.position, drone.pos);
+      toHoleScratch.subVectors(hole.group.position, drone.pos);
+      const toHole = toHoleScratch;
       const d = toHole.length();
       if(d < hole.killRadius){
         const survivalChance = Math.min(0.9, drone.defense * 0.18);
@@ -249,11 +267,7 @@ export function updateBlackHoles(dt){
           spawnExplosionParticles(drone.pos, new THREE.Color(0xb98cff), 26);
           spawnShockwave({ mesh:{ position: drone.pos, material:{ color:new THREE.Color(0x6a3fb0) } }, radius: 0.7 });
           stopDroneScript(drone);
-          ctx.scene.remove(drone.mesh);
-          drone.mesh.traverse(function(obj){
-            if(obj.geometry) obj.geometry.dispose();
-            if(obj.material) obj.material.dispose();
-          });
+          disposeMesh(ctx.scene, drone.mesh);
           ctx.drone = null;
           showToast(t("toast.shipConsumed"));
         }

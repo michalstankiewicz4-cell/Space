@@ -8,19 +8,18 @@ import {
   despawnLocalOnly, applyHealthVisual, destroyPlanet, pendingSpawnCount
 } from "../world/bodies.js";
 import { bodyValueEstimate } from "../world/bodyParams.js";
-import { materializeBlackHole } from "../world/blackholes.js";
+import { materializeBlackHole, disposeBlackHole } from "../world/blackholes.js";
 import { refreshDock } from "../ui/dock.js";
 import { triggerBreakup } from "../fx/breakup.js";
 import { state, save } from "../core/gameState.js";
 import { showToast } from "../ui/hud.js";
-import { isSteward } from "./presence.js";
-import { isConnected } from "./connect.js";
+import { createStalenessGate } from "./stewardFallback.js";
 import { t } from "../i18n.js";
 
 // Builds a local object (planet/comet/... or black hole) from a `bodies` row.
 export function materializeBody(row){
   if(ctx.netBodies[row.id]) return;
-  lastSpawnSeenAt = Date.now();
+  planetTopupGate.bump();
   const pos = new THREE.Vector3(row.pos_x, row.pos_y, row.pos_z);
   if(row.kind === "blackhole"){
     materializeBlackHole(row, pos);
@@ -52,11 +51,7 @@ export function onBodyDeleted(oldRow){
   delete ctx.netBodies[oldRow.id];
 
   if(ctx.blackholes.indexOf(obj) !== -1){
-    ctx.scene.remove(obj.group);
-    obj.core.geometry.dispose(); obj.core.material.dispose();
-    obj.horizon.geometry.dispose(); obj.horizon.material.dispose();
-    obj.disk.geometry.dispose(); obj.disk.material.dispose();
-    obj.halo.material.dispose();
+    disposeBlackHole(obj);
     ctx.blackholes.splice(ctx.blackholes.indexOf(obj), 1);
     return;
   }
@@ -126,19 +121,12 @@ export function flushDamage(){
   });
 }
 
-// Presence-based steward election (see net/presence.js) only reacts to a
-// client explicitly joining/leaving — it has no liveness/heartbeat check,
-// so a steward whose tab is backgrounded/frozen (but whose socket hasn't
-// actually disconnected yet) stays "steward" forever while doing nothing,
-// and the world just drains as things get eaten with nobody topping it up.
-// `lastSpawnSeenAt` (bumped in materializeBody on every INSERT this client
-// sees, from any source) tracks how long it's actually been since anything
-// last spawned; if that's gone on far longer than the normal top-up cadence
-// despite being under MAX_PLANETS, any client can step in instead of
-// waiting forever for a steward that may never reconnect. Jittered per
-// client so idle clients don't all fire the fallback in the same instant.
-const STALE_TOPUP_MS = 8000 + Math.random() * 4000;
-let lastSpawnSeenAt = Date.now();
+// See net/stewardFallback.js for why this needs both an isConnected() guard
+// and a staleness fallback, not just steward-gating. bump() is called in
+// materializeBody() on every INSERT this client sees (from any source), so
+// shouldSpawn() knows how long it's actually been since anything last
+// spawned.
+const planetTopupGate = createStalenessGate(8000, 4000);
 
 let topUpTimer = 0;
 export function maintainPlanetCount(dt){
@@ -147,15 +135,7 @@ export function maintainPlanetCount(dt){
   topUpTimer = NET_PLANET_TOPUP_S;
   if(ctx.planets.length + pendingSpawnCount >= MAX_PLANETS) return;
   if(NET_ENABLED){
-    // Gated on isConnected(): a client whose Realtime channel has silently
-    // died stops receiving other clients' INSERTs, so its local
-    // ctx.planets.length looks perpetually low even if the real world is
-    // full — without this guard, that client would use the staleness
-    // fallback (or, if it was steward before disconnecting, its normal
-    // top-up path) to blindly insert new bodies forever via plain REST
-    // (which keeps working even with a dead socket), flooding the shared
-    // world for everyone else while the disconnected player never notices.
-    if(isConnected() && (isSteward || (Date.now() - lastSpawnSeenAt > STALE_TOPUP_MS))) requestSpawnPlanet();
+    if(planetTopupGate.shouldSpawn()) requestSpawnPlanet();
   } else {
     spawnPlanetLocalOnly();
   }
@@ -181,11 +161,7 @@ export function bootstrapWorld(){
       const obj = ctx.netBodies[id];
       delete ctx.netBodies[id];
       if(ctx.blackholes.indexOf(obj) !== -1){
-        ctx.scene.remove(obj.group);
-        obj.core.geometry.dispose(); obj.core.material.dispose();
-        obj.horizon.geometry.dispose(); obj.horizon.material.dispose();
-        obj.disk.geometry.dispose(); obj.disk.material.dispose();
-        obj.halo.material.dispose();
+        disposeBlackHole(obj);
         removeItem(ctx.blackholes, obj);
       } else if(ctx.planets.indexOf(obj) !== -1){
         despawnLocalOnly(obj);

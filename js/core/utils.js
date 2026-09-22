@@ -8,3 +8,41 @@ export function removeItem(arr, item){
   if(i !== -1) arr.splice(i, 1);
   return i !== -1;
 }
+
+// The same try/catch-guarded localStorage read/write was independently
+// reimplemented in every small persisted module (net/identity.js,
+// settings.js, i18n.js, drone/drone.js, admin/main.js, core/gameState.js —
+// see CLAUDE.md's "Settings vs. identity vs. i18n" note on why those stay
+// separate modules rather than being merged: they persist unrelated data,
+// they just all need the same "don't throw in a private-browsing/storage-
+// disabled tab" guard around the two calls that can actually throw).
+// Callers still own their own key names, JSON parsing and defaults - this
+// only dedupes the boilerplate around the storage access itself.
+export function readStorage(key){
+  try{ return localStorage.getItem(key); }catch(e){ return null; }
+}
+export function writeStorage(key, value){
+  try{ localStorage.setItem(key, value); }catch(e){ /* storage unavailable - ignore */ }
+}
+
+// Removes a mesh/group from the scene and disposes every geometry/material
+// found by traversing it — the same few lines were previously duplicated
+// (with the same subtle station-mesh-only material dedupe, since a
+// many-submesh group like the station model can share one material across
+// several children, and disposing it twice is a no-op but still wasteful
+// busywork) across ships/swarm.js#disposeShip, world/blackholes.js's
+// drone-consumed-by-blackhole cleanup, and station/stationModel.js's
+// disposeStationMesh. `scene` is passed explicitly rather than imported
+// from core/context.js so this stays a small, dependency-free helper
+// callable from anywhere, same spirit as removeItem() above.
+export function disposeMesh(scene, mesh){
+  scene.remove(mesh);
+  const seenMaterials = new Set();
+  mesh.traverse(function(obj){
+    if(obj.geometry) obj.geometry.dispose();
+    if(obj.material && !seenMaterials.has(obj.material)){
+      seenMaterials.add(obj.material);
+      obj.material.dispose();
+    }
+  });
+}

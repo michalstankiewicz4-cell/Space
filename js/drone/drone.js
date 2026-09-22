@@ -1,4 +1,5 @@
 import { ctx } from "../core/context.js";
+import { readStorage, writeStorage } from "../core/utils.js";
 import { NET_ENABLED } from "../env.js";
 import { state, save } from "../core/gameState.js";
 import { showToast } from "../ui/hud.js";
@@ -36,11 +37,11 @@ const MAX_INSTANT_STEPS_PER_FRAME = 2000;
 const SCRIPT_STORAGE_KEY = "roj-drone-script";
 
 function loadStoredScript(){
-  try{ return localStorage.getItem(SCRIPT_STORAGE_KEY) || ""; }catch(e){ return ""; }
+  return readStorage(SCRIPT_STORAGE_KEY) || "";
 }
 
 function saveStoredScript(src){
-  try{ localStorage.setItem(SCRIPT_STORAGE_KEY, src); }catch(e){ /* storage unavailable - ignore */ }
+  writeStorage(SCRIPT_STORAGE_KEY, src);
 }
 
 function makeDroneMesh(){

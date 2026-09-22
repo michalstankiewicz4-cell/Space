@@ -21,7 +21,6 @@ export function getPanelPlanet(){
 
 export function openPlanetPanel(p){
   currentPlanet = p;
-  document.getElementById("planetPanelTitle").textContent = t("body." + bodyVariantKey(p));
   document.getElementById("planetPanel").classList.remove("hidden");
   refreshPlanetPanel();
 }
@@ -39,12 +38,20 @@ export function closePlanetPanel(){
 
 // Called every ~0.4s from main.js's tick, same cadence as
 // refreshDronePanel()/refreshStationPanel() — stats, not per-frame data.
+// Re-deriving the title from t() here too (not just once in
+// openPlanetPanel()) matches how the drone panel's own dynamic label
+// (droneStatusVal) stays in sync — without this, switching language while
+// the panel was open left the title stuck in the old language until the
+// player deselected and reselected a planet, since applyStaticText() (run
+// on every language change) has no reference to planetPanelTitle at all,
+// same "one-shot lookup, no refresh hook" gap.
 export function refreshPlanetPanel(){
   const p = currentPlanet;
   if(!p || p.dying){
     closePlanetPanel();
     return;
   }
+  document.getElementById("planetPanelTitle").textContent = t("body." + bodyVariantKey(p));
   document.getElementById("planetHealthVal").textContent =
     Math.max(0, Math.round(p.health)) + " / " + Math.round(p.maxHealth);
   document.getElementById("planetRadiusVal").textContent = p.radius.toFixed(1);

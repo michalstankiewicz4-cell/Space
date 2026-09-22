@@ -1,3 +1,5 @@
+import { readStorage, writeStorage } from "./core/utils.js";
+
 // Minimal i18n: English is the default, Polish is a toggle (see ui/setup.js).
 // t("a.b.c") looks up a dotted path in the current language, falling back to
 // English if missing. For strings with a variable, the value is a function
@@ -264,17 +266,15 @@ const STRINGS = {
 export const LANGS = ["en", "pl"];
 
 let currentLang = "en";
-try{
-  const saved = localStorage.getItem("roj-lang");
-  if(saved && STRINGS[saved]) currentLang = saved;
-}catch(e){ /* ignore */ }
+const savedLang = readStorage("roj-lang");
+if(savedLang && STRINGS[savedLang]) currentLang = savedLang;
 
 export function getLang(){ return currentLang; }
 
 export function setLang(lang){
   if(!STRINGS[lang]) return;
   currentLang = lang;
-  try{ localStorage.setItem("roj-lang", lang); }catch(e){ /* ignore */ }
+  writeStorage("roj-lang", lang);
 }
 
 export function t(key){

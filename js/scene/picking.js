@@ -26,20 +26,23 @@ export function pickShipAt(e){
   return hits[0].object.userData.ship;
 }
 
-export function pickDroneAt(e){
-  if(!ctx.drone) return null;
+// Shared by every "at most one of these exists" pickable (drone, station) —
+// unlike ships/planets/black holes, there's only ever zero or one, so there's
+// no need for intersectObjects()+array-search, just a single pickMesh test.
+function pickSingletonAt(e, obj){
+  if(!obj) return null;
   const ndc = ndcFromEvent(e);
   raycaster.setFromCamera(ndc, ctx.camera);
-  const hits = raycaster.intersectObject(ctx.drone.pickMesh, false);
-  return hits.length > 0 ? ctx.drone : null;
+  const hits = raycaster.intersectObject(obj.pickMesh, false);
+  return hits.length > 0 ? obj : null;
+}
+
+export function pickDroneAt(e){
+  return pickSingletonAt(e, ctx.drone);
 }
 
 export function pickStationAt(e){
-  if(!ctx.station) return null;
-  const ndc = ndcFromEvent(e);
-  raycaster.setFromCamera(ndc, ctx.camera);
-  const hits = raycaster.intersectObject(ctx.station.pickMesh, false);
-  return hits.length > 0 ? ctx.station : null;
+  return pickSingletonAt(e, ctx.station);
 }
 
 export function pickPlanetAt(e){

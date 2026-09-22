@@ -13,7 +13,7 @@ import {
   materializePlanet, despawnLocalOnly, updateBodies
 } from "../world/bodies.js";
 import { randomPlanetSpawnData } from "../world/bodyParams.js";
-import { randomBlackHoleSpawnData, materializeBlackHole, updateBlackHoles } from "../world/blackholes.js";
+import { randomBlackHoleSpawnData, materializeBlackHole, updateBlackHoles, disposeBlackHole } from "../world/blackholes.js";
 
 const TAB_LABELS = {
   sun: "Sun", icePlanet: "Ice Planet", neutralPlanet: "Neutral Planet",
@@ -155,11 +155,7 @@ function clearPreview(){
   }
   if(previewBlackhole){
     const bh = previewBlackhole;
-    ctx.scene.remove(bh.group);
-    bh.core.geometry.dispose(); bh.core.material.dispose();
-    bh.horizon.geometry.dispose(); bh.horizon.material.dispose();
-    bh.disk.geometry.dispose(); bh.disk.material.dispose();
-    bh.halo.material.dispose();
+    disposeBlackHole(bh);
     removeItem(ctx.blackholes, bh);
     if(bh.dbId) delete ctx.netBodies[bh.dbId];
     previewBlackhole = null;

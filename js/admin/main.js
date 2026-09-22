@@ -1,4 +1,5 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../env.js";
+import { readStorage, writeStorage } from "../core/utils.js";
 
 // Not linked from the game (same treatment as planetEditor.html) and safe to
 // ship publicly on GitHub Pages despite calling a privileged-looking RPC:
@@ -17,10 +18,10 @@ const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const ready = client.auth.signInAnonymously();
 
 function readStoredSecret(){
-  try{ return localStorage.getItem(SECRET_STORAGE_KEY) || ""; }catch(e){ return ""; }
+  return readStorage(SECRET_STORAGE_KEY) || "";
 }
 function writeStoredSecret(v){
-  try{ localStorage.setItem(SECRET_STORAGE_KEY, v); }catch(e){ /* ignore */ }
+  writeStorage(SECRET_STORAGE_KEY, v);
 }
 
 function setStatus(msg, isError){

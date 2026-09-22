@@ -1,4 +1,5 @@
 import { TREE } from "../config.js";
+import { readStorage, writeStorage } from "./utils.js";
 
 // Player progress — deliberately local (localStorage), not synced over the
 // network. The world (planets/other players' ships) is shared, but how many
@@ -26,20 +27,31 @@ export function swarmStats(){
 }
 
 export function save(){
-  try{
-    localStorage.setItem("roj-swarm-save", JSON.stringify(state));
-  }catch(e){ /* storage unavailable - ignore */ }
+  writeStorage("roj-swarm-save", JSON.stringify(state));
 }
 
 export function load(){
   try{
-    const raw = localStorage.getItem("roj-swarm-save");
+    const raw = readStorage("roj-swarm-save");
     if(raw){
       const parsed = JSON.parse(raw);
       if(parsed && parsed.levels){
         state.points = parsed.points;
         state.eaten = parsed.eaten;
-        state.levels = parsed.levels;
+        // Merge key-by-key onto the current default `state.levels`, never
+        // replace the object outright - a save written before some future
+        // TREE node existed would otherwise leave that key `undefined`,
+        // and TREE.<key>.effect(undefined) turns into NaN (most effect()
+        // formulas are `lvl * something`), which then poisons swarmStats()
+        // and every derived stat (ship speed/damage/etc) for the rest of
+        // the session - including sh.target.health, which can never drop
+        // to <=0 again once it's NaN, silently freezing that planet as
+        // unkillable. Only copying known TREE keys also means a save from
+        // a *newer* build with an extra key some older build doesn't know
+        // about won't leak stray fields into state.levels either.
+        Object.keys(state.levels).forEach(function(key){
+          if(typeof parsed.levels[key] === "number") state.levels[key] = parsed.levels[key];
+        });
       }
     }
   }catch(e){ /* ignore */ }
