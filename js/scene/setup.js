@@ -1,6 +1,7 @@
 import { ctx } from "../core/context.js";
 import { addSkybox } from "./skybox.js";
 import { addPulsars } from "./pulsars.js";
+import { addOrbitLines } from "./orbitLines.js";
 
 // Creates the scene/camera/renderer + lighting + starfield background,
 // mounts the canvas in the DOM and wires up resize handling. Call once, on
@@ -8,9 +9,19 @@ import { addPulsars } from "./pulsars.js";
 export function initScene(){
   const stage = document.getElementById("stage");
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x05060a, 0.0065);
+  // Density rescaled for the fixed 9-orbit solar system (world/
+  // solarSystem.js, a=90..890) - the old 0.0065 was tuned for the previous
+  // ~34-unit-radius world and would fog out almost everything past the
+  // first orbit or two at this new scale (1-exp(-(0.0065*220)^2) alone is
+  // already ~87% opaque at orbit 3's distance).
+  scene.fog = new THREE.FogExp2(0x05060a, 0.0007);
 
-  const camera = new THREE.PerspectiveCamera(52, window.innerWidth/window.innerHeight, 0.1, 2000);
+  // far=12000: must clear the skybox's own radius (9000, scene/skybox.js)
+  // from any camera position, not just the solar system's own farthest
+  // orbit (a=890) - the skybox needs real margin beyond the camera's max
+  // zoom (2500, scene/controls.js) to read as a smooth, distant backdrop
+  // rather than a visibly faceted nearby shape (see skybox.js's own note).
+  const camera = new THREE.PerspectiveCamera(52, window.innerWidth/window.innerHeight, 0.1, 12000);
   const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -32,6 +43,7 @@ export function initScene(){
   addSkybox(scene);
   starfield(scene);
   addPulsars(scene);
+  addOrbitLines(scene);
 
   window.addEventListener("resize", function(){
     camera.aspect = window.innerWidth/window.innerHeight;
@@ -73,7 +85,10 @@ function starfield(scene){
   const pos = new Float32Array(count*3);
   const col = new Float32Array(count*3);
   for(let i=0;i<count;i++){
-    const r = 260 + Math.random()*500;
+    // Pushed out for the fixed 9-orbit solar system (world/solarSystem.js,
+    // a=90..890) - the old 260-760 range now sits right in the middle of
+    // where in-system planets orbit, instead of behind all of them.
+    const r = 1200 + Math.random()*1400;
     const theta = Math.random()*Math.PI*2;
     const phi = Math.acos(2*Math.random()-1);
     pos[i*3]   = r*Math.sin(phi)*Math.cos(theta);
@@ -90,10 +105,10 @@ function starfield(scene){
   geo.setAttribute("color", new THREE.BufferAttribute(col,3));
   const mat = new THREE.PointsMaterial({
     vertexColors: true, size:1.15, sizeAttenuation:true, transparent:true, opacity:0.85,
-    // Without this, the scene's FogExp2 (density 0.0065) blends stars this
-    // far out almost entirely into the fog color well before they'd
-    // naturally fade from distance alone — a fixed backdrop shouldn't dim
-    // with camera-relative fog the way foreground objects do.
+    // Without this, the scene's FogExp2 would blend stars this far out
+    // almost entirely into the fog color well before they'd naturally fade
+    // from distance alone — a fixed backdrop shouldn't dim with
+    // camera-relative fog the way foreground objects do.
     fog: false
   });
   scene.add(new THREE.Points(geo, mat));

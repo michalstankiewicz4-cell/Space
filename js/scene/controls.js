@@ -15,7 +15,12 @@ import { settings } from "../settings.js";
 
 // Camera: RIGHT button = rotate, scroll = zoom (unless the player swapped
 // the buttons in Setup — see rotateButton()/selectButton() below).
-export const camState = { az: 0.6, pol: 1.05, radius: 46, autoSpin: true };
+// radius default/range rescaled for the fixed 9-orbit solar system
+// (world/solarSystem.js — orbits now span a=90..890, test.html's own
+// actual scale) — the old 46/14-140 range was tuned for the previous,
+// much more compact system and would start the camera INSIDE the
+// innermost orbit, showing nothing but the sun.
+export const camState = { az: 0.6, pol: 1.05, radius: 950, autoSpin: true };
 let camDragging = false, camLastX = 0, camLastY = 0;
 function clampPol(p){ return Math.max(0.35, Math.min(Math.PI-0.35, p)); }
 
@@ -125,7 +130,11 @@ export function initControls(){
 
   dom.addEventListener("wheel", function(e){
     e.preventDefault();
-    camState.radius = Math.max(14, Math.min(140, camState.radius + e.deltaY*0.02));
+    // Multiplicative, not additive - an additive step sized for the old
+    // 14-140 range would take hundreds of scroll ticks to cross the new
+    // 20-2500 one. Same shape test.html's own free-camera zoom uses for
+    // exactly this reason (its sunViewRadius zoom spans 120-6000).
+    camState.radius = Math.max(20, Math.min(2500, camState.radius * (1 + e.deltaY*0.001)));
   }, { passive:false });
 
   dom.addEventListener("pointerdown", function(e){

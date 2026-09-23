@@ -4,6 +4,31 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.0.1]
+
+### Changed
+- Orbits are now visible — a faint line traces each of the 9 orbits (plus
+  the player-station ring), same as test.html's own reference view.
+- Rescaled the whole solar system out to test.html's actual distances
+  (previously a much more compact analog) — orbits now span roughly
+  90-890 units from the Sun instead of 7.5-44. Camera zoom range, fog
+  falloff, the skybox/starfield backdrop, and gravity's own `GM_SUN`
+  constant were all rescaled together to match (found live: leaving fog
+  density and the skybox's own size at their old values made almost
+  everything past the first orbit fade into fog, and put the camera close
+  enough to the skybox's low-poly geometry for its facets to show).
+
+### Fixed
+- Each orbit's angular speed was carried over unchanged from the old,
+  much smaller distances — at the new scale that made every planet's
+  actual (linear) speed far higher than a ship's own top speed, so ships
+  could never catch up to and dock onto a moving target at all. Orbital
+  speeds are now tuned so every orbit moves slower than a ship can fly,
+  which does mean a full lap now realistically takes anywhere from tens of
+  minutes (innermost) to several hours (outermost) — matching how real
+  outer planets take a very long time to complete an orbit too, not an
+  oversight.
+
 ## [2.0.0]
 
 ### Changed

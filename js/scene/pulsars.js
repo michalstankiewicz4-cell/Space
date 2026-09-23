@@ -4,8 +4,8 @@
 // is meant to read as a rare, eye-catching detail woven into the
 // background, not a light show competing with actual gameplay.
 const PULSAR_COUNT = 6;
-const PULSAR_MIN_RADIUS = 280; // inside the starfield's own 260-760 range (scene/setup.js)
-const PULSAR_MAX_RADIUS = 700;
+const PULSAR_MIN_RADIUS = 1300; // inside the starfield's own 1200-2600 range (scene/setup.js)
+const PULSAR_MAX_RADIUS = 2500;
 
 function makePulsarTexture(){
   const size = 64;

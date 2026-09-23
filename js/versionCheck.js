@@ -39,6 +39,7 @@ const MODULE_FILES = [
   "js/net/identity.js", "js/net/presence.js", "js/net/shipsBroadcast.js",
   "js/net/solarBodiesSync.js", "js/net/stewardFallback.js",
   "js/scene/controls.js", "js/scene/lightMarkers.js", "js/scene/lightsToggle.js",
+  "js/scene/orbitLines.js",
   "js/scene/picking.js", "js/scene/planetDistanceLines.js", "js/scene/pulsars.js",
   "js/scene/setup.js", "js/scene/shipcam.js", "js/scene/skybox.js", "js/scene/tooltip.js",
   "js/settings.js", "js/ships/swarm.js", "js/station/station.js",

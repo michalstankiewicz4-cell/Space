@@ -2,7 +2,16 @@
 // gradient + soft color-cloud texture, same "no external image assets"
 // approach as every other texture in the game (see world/textures.js),
 // just for the backdrop instead of a body.
-const SKY_RADIUS = 900; // well past the starfield's own outer radius (setup.js) and FIELD_RADIUS (config.js) — always behind everything
+// Well past the starfield's own outer radius (setup.js) and the fixed
+// 9-orbit solar system's farthest orbit (world/solarSystem.js, a=890) —
+// always behind everything. Needs to stay proportionally FAR beyond the
+// camera's own max zoom (2500, scene/controls.js), not just numerically
+// larger than it — found live: an earlier, smaller radius here (3200) put
+// the camera close enough to the sphere's surface that its low-poly facets
+// (invisible when it was proportionally much farther away, as it used to
+// be at the old, much smaller camera-zoom scale) became visible as a
+// distinct faceted shape instead of reading as a smooth, distant backdrop.
+const SKY_RADIUS = 9000;
 
 function makeNebulaTexture(){
   const w = 1024, h = 512;
@@ -67,14 +76,13 @@ function makeNebulaTexture(){
 // rather than importing ctx — this runs during initScene(), before
 // ctx.scene is actually assigned, so reading it here would just be null.
 export function addSkybox(scene){
-  const geo = new THREE.SphereGeometry(SKY_RADIUS, 32, 20);
+  const geo = new THREE.SphereGeometry(SKY_RADIUS, 48, 32);
   const mat = new THREE.MeshBasicMaterial({
     map: makeNebulaTexture(),
     side: THREE.BackSide,
     // The scene's FogExp2 (see initScene()) would otherwise fully hide
-    // something this far out — exp(-(density*900)^2) rounds to zero — so
-    // the sky has to opt out of fog entirely, same as a skybox always
-    // should.
+    // something this far out — so the sky has to opt out of fog entirely,
+    // same as a skybox always should.
     fog: false,
     depthWrite: false
   });
