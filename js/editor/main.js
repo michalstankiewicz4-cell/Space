@@ -13,7 +13,7 @@ import {
   materializePlanet, despawnLocalOnly, updateBodies
 } from "../world/bodies.js";
 import { randomPlanetSpawnData } from "../world/bodyParams.js";
-import { randomBlackHoleSpawnData, materializeBlackHole, updateBlackHoles, disposeBlackHole } from "../world/blackholes.js";
+import { randomBlackHoleRadius, materializeBlackHole, updateBlackHoles, disposeBlackHole } from "../world/blackholes.js";
 
 const TAB_LABELS = {
   sun: "Sun", icePlanet: "Ice Planet", neutralPlanet: "Neutral Planet",
@@ -154,10 +154,8 @@ function clearPreview(){
     previewPlanet = null;
   }
   if(previewBlackhole){
-    const bh = previewBlackhole;
-    disposeBlackHole(bh);
-    removeItem(ctx.blackholes, bh);
-    if(bh.dbId) delete ctx.netBodies[bh.dbId];
+    disposeBlackHole(previewBlackhole);
+    removeItem(ctx.blackholes, previewBlackhole);
     previewBlackhole = null;
   }
 }
@@ -165,12 +163,7 @@ function clearPreview(){
 function regeneratePreview(){
   clearPreview();
   if(state.activeKind === "blackhole"){
-    const data = randomBlackHoleSpawnData();
-    const row = {
-      id: "preview-"+Math.random().toString(36).slice(2),
-      radius: data.radius, max_life: data.maxLife, spawned_at: new Date().toISOString()
-    };
-    previewBlackhole = materializeBlackHole(row, new THREE.Vector3(0,0,0));
+    previewBlackhole = materializeBlackHole(randomBlackHoleRadius());
   } else {
     const type = CONTENT[state.activeKind];
     const data = randomPlanetSpawnData(type);

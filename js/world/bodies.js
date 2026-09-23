@@ -1,6 +1,6 @@
 import { ctx } from "../core/context.js";
 import { removeItem } from "../core/utils.js";
-import { FIELD_RADIUS, MAX_PLANETS } from "../config.js";
+import { FIELD_RADIUS, SOLAR_REGEN_RATE } from "../config.js";
 import { CONTENT } from "../content.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
@@ -9,8 +9,10 @@ import {
 } from "./textures.js";
 import { spawnTailParticle } from "../fx/particles.js";
 import { hideBolt } from "../ships/swarm.js";
-import { bodyParams, tempColor, randomPlanetSpawnData } from "./bodyParams.js";
+import { bodyParams, tempColor, randomPlanetSpawnData, contentKindFor } from "./bodyParams.js";
 import { buildSunRays, buildCometTail, buildSelectionBracket } from "./bodyMeshParts.js";
+import { SOLAR_BODIES, SOLAR_BODY_BY_SLOT, bodyPosAt, nowSimTime } from "./solarSystem.js";
+import { materializeBlackHole } from "./blackholes.js";
 
 // Body lifecycle: materializing a mesh from spawn data, spawning/despawning
 // (local-only and networked), and the per-frame update. Pure body-type
@@ -18,6 +20,18 @@ import { buildSunRays, buildCometTail, buildSelectionBracket } from "./bodyMeshP
 // body's optional decorations (sun rays, comet tail, selection bracket)
 // live in ./bodyMeshParts.js — this file is what's left: turning that data
 // into an actual scene object and keeping it alive.
+//
+// Two kinds of body pass through materializePlanet()/updateBodies() now:
+// - Fixed solar bodies (sun + 8 planet-ish orbit slots, `row.orbit_slot`
+//   set) — shape (kind/radius/temp) comes from the hardcoded
+//   world/solarSystem.js table, never from the DB row; only health/
+//   max_health/updated_at are server state. Position is re-derived from
+//   bodyPosAt() every frame, health regenerates (see the "health
+//   checkpoint" comment below) — never destroyed/removed.
+// - Comets (`row.orbit_slot` absent) — entirely unchanged from before:
+//   full row-driven shape, straight-line drift, spawn/despawn pool.
+// The black hole (orbit_slot 9) is NOT among these — it has its own,
+// visually distinct materializeBlackHole() in world/blackholes.js.
 
 export function applyHealthVisual(obj){
   if(!obj.crackMesh || !obj.maxHealth) return;
@@ -27,11 +41,22 @@ export function applyHealthVisual(obj){
 
 // Builds a mesh + entry in `ctx.planets` from a body row (local or networked).
 // `elapsedSec` advances comets to where they should be "now" (important for
-// a player joining a game already in progress).
+// a player joining a game already in progress) — meaningless for fixed
+// solar bodies, which derive position from wall-clock time instead (see
+// below), not an elapsed-since-spawn value.
 export function materializePlanet(row, pos, vel, elapsedSec){
-  const kind = row.kind;
-  const radius = row.radius;
-  const temp = row.temp;
+  const orbitSlot = row.orbit_slot != null ? row.orbit_slot : null;
+  let kind, radius, temp;
+  if(orbitSlot != null){
+    const solar = SOLAR_BODY_BY_SLOT[orbitSlot];
+    kind = contentKindFor(solar.kind);
+    radius = solar.radius;
+    temp = solar.temp;
+  } else {
+    kind = row.kind;
+    radius = row.radius;
+    temp = row.temp;
+  }
   const params = bodyParams(kind, temp);
   const color = kind==="sun" ? new THREE.Color().setHSL(0.09,0.9,0.6)
     : kind==="comet" ? new THREE.Color(0xffffff)
@@ -125,13 +150,37 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     mesh.position.copy(basePos);
   }
 
+  // Health checkpoint for fixed solar bodies — (healthBase, healthUpdatedAtMs)
+  // is the last committed server value + when it was set; `health` itself is
+  // recomputed from that checkpoint every frame in updateBodies() (and once
+  // more here, in case a lot of time passed between the server row's
+  // updated_at and this exact materialize moment, e.g. reconnecting after
+  // being away) — a pure function of "last known state + elapsed time",
+  // never a locally-ticked/incremented number. See ships/swarm.js's kill
+  // handling for the matching rule: any optimistic local damage must reset
+  // this checkpoint too, or next frame's regen recompute would silently
+  // undo the hit.
+  let healthBase = null, healthUpdatedAtMs = null, health, maxHealth;
+  if(orbitSlot != null){
+    healthBase = row.health;
+    healthUpdatedAtMs = row.updated_at ? new Date(row.updated_at).getTime() : Date.now();
+    maxHealth = row.max_health;
+    health = Math.min(maxHealth, healthBase + SOLAR_REGEN_RATE*(Date.now()-healthUpdatedAtMs)/1000);
+  } else {
+    health = row.health!=null ? row.health : radius*params.healthMult;
+    maxHealth = row.max_health!=null ? row.max_health : radius*params.healthMult;
+  }
+
   const p = {
-    dbId: row.id,
+    dbId: orbitSlot != null ? null : row.id,
+    orbitSlot: orbitSlot,
     kind: kind,
     mesh: mesh, radius: radius, temp: temp,
-    health: row.health!=null ? row.health : radius*params.healthMult,
-    maxHealth: row.max_health!=null ? row.max_health : radius*params.healthMult,
-    valueBonus: row.value_bonus||0,
+    health: health,
+    maxHealth: maxHealth,
+    healthBase: healthBase,
+    healthUpdatedAtMs: healthUpdatedAtMs,
+    valueBonus: orbitSlot != null ? (params.valueBonus||0) : (row.value_bonus||0),
     pendingDamage: 0,
     spin: (Math.random()-0.5)*0.6,
     selected: false,
@@ -149,22 +198,30 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     moving: kind==="comet",
     vel: vel,
     // A comet's vel never changes after spawn (nothing accelerates it -
-    // gravity from black holes only ever pulls ships/the drone, see
-    // world/blackholes.js), so the tail's "opposite the direction of
-    // travel" unit vector is exactly the same value on every single one of
-    // updateBodies()'s ~33/sec recomputations - cache it once here instead.
+    // ambient/black-hole gravity only ever pulls ships/the drone, see
+    // world/solarGravity.js and world/blackholes.js), so the tail's
+    // "opposite the direction of travel" unit vector is exactly the same
+    // value on every single one of updateBodies()'s ~33/sec recomputations
+    // - cache it once here instead.
     driftDir: (kind==="comet" && vel) ? vel.clone().normalize().multiplyScalar(-1) : null,
     tailTimer: 0
   };
   ctx.planets.push(p);
   applyHealthVisual(p);
-  if(NET_ENABLED) ctx.netBodies[row.id] = p;
+  if(NET_ENABLED){
+    if(orbitSlot != null) ctx.netSolarBodies[orbitSlot] = p;
+    else ctx.netBodies[row.id] = p;
+  }
   return p;
 }
 
+// Comets are the only body kind still spawned/despawned from a pool (see
+// this file's header comment) — these two functions used to be generic
+// over any forcedType, but every real caller now always means "a comet".
+
 // Offline mode (multiplayer not configured): creates the body immediately, no networking.
-export function spawnPlanetLocalOnly(forcedType){
-  const data = randomPlanetSpawnData(forcedType);
+export function spawnCometLocalOnly(){
+  const data = randomPlanetSpawnData(CONTENT.comet);
   materializePlanet({
     id: "local-"+Math.random().toString(36).slice(2),
     kind: data.kind, radius: data.radius, temp: data.temp,
@@ -175,11 +232,11 @@ export function spawnPlanetLocalOnly(forcedType){
 // Networked mode: only the steward sends the INSERT; the mesh is created for
 // everyone (including the steward) once the Realtime echo arrives — a single
 // code path. `pendingSpawnCount` counts inserts "in flight" (sent, not yet
-// materialized), so the top-up logic (maintainPlanetCount) doesn't count them
+// materialized), so the top-up logic (maintainCometCount) doesn't count them
 // again while the network response is still pending.
 export let pendingSpawnCount = 0;
-export function requestSpawnPlanet(forcedType){
-  const data = randomPlanetSpawnData(forcedType);
+export function requestSpawnComet(){
+  const data = randomPlanetSpawnData(CONTENT.comet);
   pendingSpawnCount++;
   supabase.from("bodies").insert({
     kind: data.kind, radius: data.radius, temp: data.temp,
@@ -190,16 +247,16 @@ export function requestSpawnPlanet(forcedType){
     vel_z: data.vel ? data.vel.z : null
   }).then(function(res){
     pendingSpawnCount--;
-    if(res.error) console.warn("requestSpawnPlanet failed", res.error);
+    if(res.error) console.warn("requestSpawnComet failed", res.error);
   }).catch(function(err){
     // A rejected promise (not just a resolved {error}) skips .then()
     // entirely - same class of failure as the bite_body 522 documented in
     // net/bodiesSync.js#flushDamage. Without this, pendingSpawnCount never
-    // decrements on a rejection, and maintainPlanetCount() permanently
-    // believes one extra spawn is in flight - under-topping-up the world
+    // decrements on a rejection, and maintainCometCount() permanently
+    // believes one extra spawn is in flight - under-topping-up the pool
     // by one slot for the rest of the session, for every failed request.
     pendingSpawnCount--;
-    console.warn("requestSpawnPlanet rejected", err);
+    console.warn("requestSpawnComet rejected", err);
   });
 }
 
@@ -288,6 +345,27 @@ export function updateBodies(dt){
       if(p.basePos.length() > FIELD_RADIUS*1.6){
         despawnBodySilently(p);
       }
+    } else if(p.orbitSlot != null){
+      // Fixed solar body: position is a pure function of wall-clock time,
+      // not something integrated frame-to-frame (see world/solarSystem.js).
+      // Written into basePos first, then copied to mesh.position - same
+      // two-step shape comets use above - so ships/swarm.js's low-health
+      // "shake" effect (which reads basePos + an offset, applied to
+      // mesh.position AFTER this runs, since updateBodies() is called
+      // before updateShips() in main.js's tick()) always shakes around
+      // this frame's correct orbital position, not last frame's.
+      bodyPosAt(p.orbitSlot, nowSimTime(), p.basePos);
+      p.mesh.position.copy(p.basePos);
+
+      // Health regeneration - recomputed fresh from the (healthBase,
+      // healthUpdatedAtMs) checkpoint every frame, never incremented in
+      // place, so there's nothing here that can drift from what the server
+      // (or this client's own last optimistic hit) actually knows. See the
+      // materializePlanet() comment on this same checkpoint shape.
+      if(p.healthBase != null){
+        p.health = Math.min(p.maxHealth, p.healthBase + SOLAR_REGEN_RATE*(Date.now()-p.healthUpdatedAtMs)/1000);
+        applyHealthVisual(p);
+      }
     }
   }
 }
@@ -321,7 +399,28 @@ export function destroyPlanet(p){
 }
 
 // Initial seeding in offline mode (no multiplayer). In networked mode the
-// world comes from the database — see net/bodiesSync.js.
+// fixed solar bodies come from the database once (see
+// net/solarBodiesSync.js#bootstrapSolarSystem) rather than being generated
+// here — offline mode has no server, so it builds the exact same 9 fixed
+// slots (+ sun) directly from SOLAR_BODIES, health=maxHealth, no DB row
+// needed. The black hole (slot 9) goes through its own
+// materializeBlackHole(), not materializePlanet() — see world/blackholes.js.
+// No initial comets: same as the networked path, they just trickle in over
+// the next several seconds via the normal top-up cadence (maintainCometCount)
+// — a fine steady state, not something that needs seeding.
 export function seedLocalWorld(){
-  for(let i=0;i<MAX_PLANETS;i++) spawnPlanetLocalOnly();
+  SOLAR_BODIES.forEach(function(solar){
+    if(solar.kind === "blackhole"){
+      materializeBlackHole(solar.radius, solar.slot);
+      return;
+    }
+    const healthMult = bodyParams(contentKindFor(solar.kind), solar.temp).healthMult;
+    const maxHealth = solar.radius*healthMult;
+    const pos = bodyPosAt(solar.slot, nowSimTime());
+    materializePlanet({
+      orbit_slot: solar.slot, kind: solar.kind,
+      health: maxHealth, max_health: maxHealth,
+      updated_at: new Date().toISOString()
+    }, pos, null, 0);
+  });
 }

@@ -3,6 +3,12 @@
 
 create extension if not exists pgcrypto;
 
+-- As of the fixed 9-orbit solar system (see js/world/solarSystem.js),
+-- `bodies` holds ONLY comets — the sun + 8 planet-ish orbit slots + the
+-- black hole are each one permanent, hand-designed body now, tracked
+-- instead in `solar_bodies` below (never inserted/deleted after a one-time
+-- seed, only ever UPDATEd). Comets keep the exact same shape/lifecycle
+-- they always had: randomly rolled, spawned/despawned from a small pool.
 create table if not exists bodies (
   id uuid primary key default gen_random_uuid(),
   kind text not null check (kind in ('planet','sun','comet','meteoroid','blackhole')),
@@ -14,10 +20,53 @@ create table if not exists bodies (
   pos_x float not null, pos_y float not null, pos_z float not null,
   vel_x float, vel_y float, vel_z float,
   spawned_at timestamptz not null default now(),
-  max_life float,
   updated_at timestamptz not null default now()
 );
 alter table bodies replica identity full;
+-- Retrofits an existing live table (a fresh project's create-table above
+-- already omits the column) — max_life was the black hole's old expiry
+-- timer; the black hole is now permanent, and comets never used this
+-- column at all (they self-despawn via a field-radius exit check, not a
+-- timer — see js/world/bodies.js#updateBodies).
+alter table bodies drop column if exists max_life;
+
+-- The fixed 9-orbit solar system: the sun (slot 0) + 8 planet-ish orbit
+-- slots (1,2,3,5,6,7,8 — slot 4 is the player-station ring, not a body at
+-- all) + the black hole (slot 9). Shape (kind/radius/temp/color) lives in
+-- js/world/solarSystem.js, never in this table — only the truly mutable
+-- server state (health) does. Seeded exactly once (see the INSERT below);
+-- after that, only ever UPDATEd via bite_solar_body(), never
+-- inserted/deleted again.
+create table if not exists solar_bodies (
+  orbit_slot int primary key,
+  kind text not null check (kind in ('sun','planet','meteoroid','blackhole')),
+  health float,
+  max_health float,
+  updated_at timestamptz not null default now()
+);
+alter table solar_bodies replica identity full;
+
+-- Seeded exactly once, directly here (not via a runtime claim RPC the way
+-- the old scattered pool used to be — there's no race to arbitrate, the
+-- slots and their shape are fixed at deploy time). health/max_health =
+-- radius*kind's healthMult from js/world/solarSystem.js/js/bodies/*.js —
+-- see that file for where each number comes from. `on conflict do nothing`
+-- keeps this idempotent/safe to re-run, same as every other seed in this
+-- file, but on a LIVE project with the old scattered-pool `bodies` rows
+-- still in it, running this alone does not remove them — see
+-- supabase/migrate_to_solar_system.sql for that one-time, non-idempotent
+-- cutover step.
+insert into solar_bodies (orbit_slot, kind, health, max_health) values
+  (0, 'sun',       126,  126),  -- radius 4.2 * healthMult 30 (sun.js)
+  (1, 'planet',    35.2, 35.2), -- radius 1.6 * healthMult 22 (volcanicPlanet.js)
+  (2, 'planet',    50.6, 50.6), -- radius 2.3 * 22
+  (3, 'planet',    41.8, 41.8), -- radius 1.9 * 22 (neutralPlanet.js)
+  (5, 'planet',    57.2, 57.2), -- radius 2.6 * 22
+  (6, 'planet',    37.4, 37.4), -- radius 1.7 * 22 (icePlanet.js)
+  (7, 'planet',    52.8, 52.8), -- radius 2.4 * 22
+  (8, 'meteoroid', 16.5, 16.5), -- radius 1.1 * healthMult 15 (meteoroid.js)
+  (9, 'blackhole', null, null)  -- kill-on-contact, not bitten — see solar_bodies_health_check
+on conflict (orbit_slot) do nothing;
 
 create table if not exists world_meta (
   id int primary key default 1,
@@ -29,6 +78,16 @@ insert into world_meta (id, initialized) values (1, false)
 
 alter table bodies enable row level security;
 alter table world_meta enable row level security;
+alter table solar_bodies enable row level security;
+
+drop policy if exists "solar_bodies readable by anyone" on solar_bodies;
+create policy "solar_bodies readable by anyone" on solar_bodies for select using (true);
+-- Deliberately NO insert/update/delete policy at all — Postgres RLS
+-- default-denies any command with no matching policy. The set of rows
+-- never changes after the one-time seed below, and the only legitimate
+-- mutation (health) only ever happens through bite_solar_body()
+-- (SECURITY DEFINER), so unlike `bodies` there's no legitimate direct-
+-- client write case left to reason about at all.
 
 drop policy if exists "bodies readable by anyone" on bodies;
 create policy "bodies readable by anyone" on bodies for select using (true);
@@ -63,66 +122,54 @@ drop policy if exists "world_meta writable by authed" on world_meta;
 -- e.g. radius=1e9 or a negative health and break rendering for every player.
 -- Ranges chosen with headroom above what the game itself generates (js/world/*).
 --
--- radius is checked PER KIND (not one shared 0-6 range) because a single
--- wide bound let someone insert a "meteoroid" (legitimately 0.32-0.68) with
--- radius up near 6 — the game itself never generates that combination, but
--- nothing stopped a direct insert from claiming it, and radius feeds
--- straight into the points formula (radius*14 + ...), so an oversized fake
--- "meteoroid" was worth ~15x a real one for one bite. Ranges below have
--- generous headroom above js/bodies/*.js's actual radiusMin/radiusMax per
--- kind — if those ranges change meaningfully, revisit this too.
+-- `bodies` is comet-only now (see the table's own header comment) — one
+-- more, additional constraint restricting `kind` itself, layered on top of
+-- the original inline check above rather than replacing it (that one has
+-- no separate name to ALTER/DROP by, but a *more* restrictive constraint
+-- can just coexist with a looser one — the row has to satisfy both).
+alter table bodies drop constraint if exists bodies_kind_comet_check;
+alter table bodies add constraint bodies_kind_comet_check check (kind = 'comet');
+
+-- Ranges below match CONTENT.comet (js/bodies/comet.js) with headroom —
+-- no more per-kind branching needed now that every row is a comet.
 alter table bodies drop constraint if exists bodies_radius_check;
-alter table bodies add constraint bodies_radius_check check (
-  radius > 0 and (
-    (kind = 'meteoroid' and radius <= 1.2) or
-    (kind = 'comet' and radius <= 1.2) or
-    (kind = 'planet' and radius <= 4.5) or
-    (kind = 'sun' and radius <= 6) or
-    (kind = 'blackhole' and radius <= 3)
-  )
-);
+alter table bodies add constraint bodies_radius_check check (radius > 0 and radius <= 1.2);
 
 alter table bodies drop constraint if exists bodies_temp_check;
 alter table bodies add constraint bodies_temp_check check (temp >= -1 and temp <= 1);
 
--- Per-kind existence, not just range: a black hole legitimately has no
--- health (it isn't bitten, only expires via max_life below), so `health is
--- null` was allowed outright — but that same leniency let a crafted insert
--- claim kind='planet' (or sun/comet/meteoroid) with health=NULL too.
--- bite_body's own UPDATE is gated on `health is not null` (see below), so a
--- NULL-health "planet" can never be bitten by anyone — a permanent, un-
--- killable piece of clutter sitting in the shared world (and counting
--- against the body cap) forever, found by tracing exactly what bite_body's
--- WHERE clause excludes. Requiring health/max_health for every non-
--- blackhole kind (and forbidding them for blackhole, which never had a use
--- for them) closes that gap the same way radius/value_bonus already got
--- tightened per-kind above, for the same "shared range was more permissive
--- than any real row needs" reason.
 alter table bodies drop constraint if exists bodies_health_check;
 alter table bodies add constraint bodies_health_check check (
-  case when kind = 'blackhole' then health is null
-       else health is not null and health >= 0 and health <= 200
-  end
+  health is not null and health >= 0 and health <= 20
 );
 
 alter table bodies drop constraint if exists bodies_max_health_check;
 alter table bodies add constraint bodies_max_health_check check (
-  case when kind = 'blackhole' then max_health is null
-       else max_health is not null and max_health > 0 and max_health <= 200
+  max_health is not null and max_health > 0 and max_health <= 20
+);
+
+alter table bodies drop constraint if exists bodies_value_bonus_check;
+alter table bodies add constraint bodies_value_bonus_check check (
+  value_bonus >= 0 and value_bonus <= 40
+);
+
+-- Fixed solar bodies (sun + 8 orbit slots + black hole) — per-kind
+-- existence, same shape as `bodies`' own old health check used to be:
+-- the black hole isn't bitten (it kills on contact instead, see
+-- js/world/blackholes.js), so it legitimately has no health at all; every
+-- other kind must have one, clamped to max_health.
+alter table solar_bodies drop constraint if exists solar_bodies_health_check;
+alter table solar_bodies add constraint solar_bodies_health_check check (
+  case when kind = 'blackhole' then health is null
+       else health is not null and health >= 0 and health <= max_health
   end
 );
 
--- Same per-kind reasoning as radius above: only suns (40) and comets (25)
--- legitimately carry a value_bonus at all (see js/bodies/*.js) — a shared
--- 0-100 range let a disguised "meteoroid"/"planet" insert claim a large
--- bonus on top of an already-inflated radius.
-alter table bodies drop constraint if exists bodies_value_bonus_check;
-alter table bodies add constraint bodies_value_bonus_check check (
-  value_bonus >= 0 and (
-    (kind = 'sun' and value_bonus <= 60) or
-    (kind = 'comet' and value_bonus <= 40) or
-    (kind in ('planet', 'meteoroid', 'blackhole') and value_bonus <= 10)
-  )
+alter table solar_bodies drop constraint if exists solar_bodies_max_health_check;
+alter table solar_bodies add constraint solar_bodies_max_health_check check (
+  case when kind = 'blackhole' then max_health is null
+       else max_health is not null and max_health > 0 and max_health <= 200
+  end
 );
 
 alter table bodies drop constraint if exists bodies_pos_check;
@@ -137,31 +184,24 @@ alter table bodies add constraint bodies_vel_check check (
   (vel_z is null or abs(vel_z) <= 20)
 );
 
--- Mirror image of the health/max_health tightening above: max_life is the
--- blackhole-only expiry timer (see world/blackholes.js#updateBlackHoles),
--- meaningless for anything else — a crafted kind='blackhole' insert with
--- max_life=NULL passed the old "null or in-range" check just as easily,
--- producing a permanent gravity hazard that never fades/deletes itself
--- (the only code path that ever issues its DELETE is gated on
--- `life >= maxLife`, which a null maxLife never satisfies).
-alter table bodies drop constraint if exists bodies_max_life_check;
-alter table bodies add constraint bodies_max_life_check check (
-  case when kind = 'blackhole' then max_life is not null and max_life > 0 and max_life <= 120
-       else max_life is null
-  end
-);
+-- max_life (the black hole's old expiry timer) no longer exists on this
+-- table at all — see the column drop up near the table definition. The
+-- black hole is now one of the permanent solar_bodies rows instead and
+-- never expires.
 
--- Hard cap on the number of bodies at once — without this, anyone could keep
--- inserting (even valid, within the CHECK constraints above) rows forever
--- and flood the shared world with thousands of objects, freezing rendering
--- for everyone.
+-- Hard cap on the number of comets at once — without this, anyone could
+-- keep inserting (even valid, within the CHECK constraints above) rows
+-- forever and flood the shared world with objects. Lowered from the old
+-- pool's 40 now that `bodies` only ever holds a handful of comets
+-- (MAX_COMETS, js/config.js) — generous headroom above that, same spirit
+-- as before, just against a much smaller legitimate ceiling.
 create or replace function enforce_bodies_cap()
 returns trigger
 language plpgsql
 as $$
 begin
-  if (select count(*) from bodies) >= 40 then
-    raise exception 'World body limit reached (40)';
+  if (select count(*) from bodies) >= 10 then
+    raise exception 'Comet limit reached (10)';
   end if;
   return new;
 end;
@@ -170,6 +210,19 @@ $$;
 drop trigger if exists trg_bodies_cap on bodies;
 create trigger trg_bodies_cap before insert on bodies
   for each row execute function enforce_bodies_cap();
+
+-- Realtime for solar_bodies: only ever UPDATEd after the one-time seed
+-- (see net/solarBodiesSync.js), but still needs its own publication entry
+-- the same way `bodies` does below.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'solar_bodies'
+  ) then
+    alter publication supabase_realtime add table solar_bodies;
+  end if;
+end $$;
 
 -- Realtime: clients need to receive insert/update/delete for `bodies` live.
 do $$
@@ -351,16 +404,13 @@ $$;
 -- Security model notes in CLAUDE.md) — legitimate play never comes close
 -- to this threshold, so these BEFORE triggers reject (not just log) once
 -- one actor's rate clearly leaves legitimate play behind, same spirit as
--- bite_body's own rate limit just below. Threshold picked with headroom
--- above the one legitimate burst that exists: the steward's one-time
--- initial world seed (up to MAX_PLANETS=14 inserts in quick succession)
--- — 15 is deliberately still tight above that, since catching a scripted
--- flood matters more than the vanishingly rare false positive (and even
--- that costs a legitimate steward nothing but one retried top-up, since
--- another client's staleness fallback or its own next cycle covers it —
--- see maintainPlanetCount() in js/net/bodiesSync.js). BEFORE (not AFTER)
--- specifically so it can actually cancel the row via RAISE EXCEPTION,
--- not just observe it after the fact.
+-- bite_body's own rate limit just below. `bodies` is comet-only now (see
+-- its own header comment) — legitimate comet insert/delete traffic is a
+-- low single-digit trickle (MAX_COMETS, js/config.js), nothing like the
+-- old scattered-planet pool's occasional ~14-row bulk seed this threshold
+-- used to sit above — tightened from 15 to 5 accordingly. BEFORE (not
+-- AFTER) specifically so it can actually cancel the row via RAISE
+-- EXCEPTION, not just observe it after the fact.
 create or replace function log_body_insert_if_bursty()
 returns trigger
 language plpgsql
@@ -375,7 +425,7 @@ begin
     return new;
   end if;
   v_count := bump_activity_rate(v_actor, 'body_insert', interval '10 seconds');
-  if v_count > 15 then
+  if v_count > 5 then
     insert into activity_log (actor, event_type, detail)
     values (v_actor, 'body_insert_burst', jsonb_build_object(
       'count_in_window', v_count, 'kind', new.kind, 'radius', new.radius, 'value_bonus', new.value_bonus
@@ -407,7 +457,7 @@ begin
     return old;
   end if;
   v_count := bump_activity_rate(v_actor, 'body_delete', interval '10 seconds');
-  if v_count > 15 then
+  if v_count > 5 then
     insert into activity_log (actor, event_type, detail)
     values (v_actor, 'body_delete_burst', jsonb_build_object('count_in_window', v_count, 'kind', old.kind, 'id', old.id) || request_meta());
     raise exception 'Too many body deletes too fast';
@@ -420,8 +470,10 @@ drop trigger if exists trg_log_body_delete on bodies;
 create trigger trg_log_body_delete before delete on bodies
   for each row execute function log_body_delete_if_bursty();
 
--- Atomic "bite" of a body. Returns its health after the hit and whether
--- this caller landed the final blow (killed = true => only they get points).
+-- Atomic "bite" of a body — comet-only now (see `bodies`' own header
+-- comment; the 9 fixed solar bodies + sun go through bite_solar_body
+-- below instead). Returns its health after the hit and whether this
+-- caller landed the final blow (killed = true => only they get points).
 -- When health drops to zero, the row is deleted immediately (DELETE), which
 -- triggers the shared explosion animation for every client via Realtime.
 -- `p_amount` is clamped to a sensible max per call — a client sends one
@@ -481,6 +533,98 @@ begin
   else
     return query select p_body_id, v_health, false;
   end if;
+end;
+$$;
+
+-- Same atomic-bite shape as bite_body above, for the 9 fixed solar bodies
+-- (+ sun) instead of comets — the one real difference: health regenerates
+-- over time instead of the row being deleted on death. Regen is DERIVED,
+-- not ticked by a cron job: v_health_now recomputes what the health would
+-- be right now from the last-committed (health, updated_at) checkpoint +
+-- elapsed time, the exact same "pure function of last known state +
+-- elapsed time" shape js/world/bodies.js's client-side health checkpoint
+-- uses — v_regen_rate below must match js/config.js#SOLAR_REGEN_RATE, or
+-- the client's own local recompute (used for the health bar between syncs)
+-- would visibly disagree with what the server eventually confirms.
+--
+-- `killed` is edge-triggered — but against a 10%-of-max_health THRESHOLD,
+-- not a bare `> 0` check. Found live, the hard way: a bare `v_health_now >
+-- 0` re-triggered `killed:true` on a second bite sent mere milliseconds
+-- after the first, because continuous regen makes health tick up from
+-- 0 by a tiny (but strictly positive) sliver almost immediately — a
+-- scripted client hammering this RPC could re-collect the full kill
+-- reward on nearly every call. Requiring a REAL, meaningful recovery
+-- (10% of that body's own max_health, which takes real seconds — for the
+-- smallest body, ~6s at v_regen_rate=0.6) before another kill can register
+-- closes that: a fresh kill afterward still means the body genuinely
+-- regenerated a noticeable amount, not that regen ticked a few
+-- milliseconds' worth of a health point. This is the single most
+-- load-bearing correctness property in this function — verified live
+-- against the actual bug, not just reasoned about.
+create or replace function bite_solar_body(p_orbit_slot int, p_amount float)
+returns table(orbit_slot int, health float, killed boolean)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_regen_rate constant float := 0.6; -- must match js/config.js#SOLAR_REGEN_RATE
+  v_health_before float;
+  v_max_health float;
+  v_updated_at timestamptz;
+  v_health_now float;
+  v_new_health float;
+  v_actor uuid := auth.uid();
+  v_amount float := least(greatest(p_amount, 0), 300); -- same clamp as bite_body
+  v_count int;
+begin
+  if v_actor is null then
+    return;
+  end if;
+
+  -- Shares bite_rate_limit/the same 20-calls/1s window with bite_body — a
+  -- client's total legitimate bite rate is bounded regardless of how many
+  -- different targets (comets vs. solar bodies) it's biting at once, so
+  -- one combined budget is more correct than two independent ones that
+  -- would together allow double the rate.
+  insert into bite_rate_limit (actor, window_start, count)
+  values (v_actor, now(), 1)
+  on conflict (actor) do update
+    set count = case when bite_rate_limit.window_start <= now() - interval '1 second'
+                      then 1 else bite_rate_limit.count + 1 end,
+        window_start = case when bite_rate_limit.window_start <= now() - interval '1 second'
+                             then now() else bite_rate_limit.window_start end
+    returning count into v_count;
+
+  if v_count is not null and v_count > 20 then
+    insert into activity_log (actor, event_type, detail)
+    values (v_actor, 'bite_rate_exceeded', jsonb_build_object('count_in_window', v_count, 'orbit_slot', p_orbit_slot) || request_meta());
+    return; -- rate limited: silently drop this bite, no error, no effect
+  end if;
+
+  -- Column refs qualified with the table name throughout this function -
+  -- `returns table(orbit_slot, health, killed)` implicitly declares those
+  -- same names as OUT variables in scope here, so a bare `health` is
+  -- ambiguous between the table column and the OUT parameter (confirmed
+  -- live: an unqualified version of this SELECT failed with exactly that
+  -- ambiguity error).
+  select solar_bodies.health, solar_bodies.max_health, solar_bodies.updated_at
+    into v_health_before, v_max_health, v_updated_at
+    from solar_bodies where solar_bodies.orbit_slot = p_orbit_slot for update;
+
+  if v_health_before is null then
+    -- either the slot doesn't exist, or it's the black hole (health is
+    -- always null for it, see solar_bodies_health_check) — not biteable.
+    return;
+  end if;
+
+  v_health_now := least(v_max_health, v_health_before + v_regen_rate*extract(epoch from now()-v_updated_at));
+  v_new_health := greatest(0, v_health_now - v_amount);
+
+  update solar_bodies set health = v_new_health, updated_at = now()
+    where solar_bodies.orbit_slot = p_orbit_slot;
+
+  return query select p_orbit_slot, v_new_health, (v_health_now > v_max_health * 0.1 and v_new_health <= 0);
 end;
 $$;
 

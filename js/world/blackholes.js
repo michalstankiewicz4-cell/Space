@@ -1,9 +1,5 @@
 import { ctx } from "../core/context.js";
 import { removeItem, disposeMesh } from "../core/utils.js";
-import { FIELD_RADIUS } from "../config.js";
-import { CONTENT } from "../content.js";
-import { NET_ENABLED } from "../env.js";
-import { supabase } from "../supabaseClient.js";
 import { makeAccretionTexture, makeHaloTexture } from "./textures.js";
 import { showToast } from "../ui/hud.js";
 import { spawnExplosionParticles } from "../fx/particles.js";
@@ -11,48 +7,42 @@ import { spawnShockwave } from "../fx/breakup.js";
 import { disposeShip } from "../ships/swarm.js";
 import { refreshDock } from "../ui/dock.js";
 import { save } from "../core/gameState.js";
-import { isSteward } from "../net/presence.js";
-import { createStalenessGate } from "../net/stewardFallback.js";
 import { stopDroneScript } from "../drone/drone.js";
+import { CONTENT } from "../content.js";
+import { SOLAR_BODY_BY_SLOT, bodyPosAt, nowSimTime } from "./solarSystem.js";
 import { t } from "../i18n.js";
 
-let blackHoleTimer = CONTENT.blackhole.firstSpawnMinS + Math.random()*CONTENT.blackhole.firstSpawnRangeS;
+// The black hole is now a single permanent fixture on orbit 9 (see
+// world/solarSystem.js) — no more spawn timer, expiry, fade-out or
+// respawn. It's materialized once at boot from the fixed SOLAR_BODIES
+// entry (not a spawned/despawned `bodies` row) and its position is
+// recomputed every frame from bodyPosAt(9, t), same as every other fixed
+// orbiting body — it just also happens to pull/consume ships, which none
+// of the others do.
 
 // Reused every frame by updateBlackHoles()'s gravity loops (ships, then
 // drone) instead of a fresh `new THREE.Vector3()` per ship/drone x
 // black-hole pair — see the comment at its first use site below.
 const toHoleScratch = new THREE.Vector3();
 
-// See net/stewardFallback.js for why this needs both an isConnected() guard
-// and a staleness fallback, not just steward-gating (this exact gap once
-// meant black holes could stop appearing for a whole session — see
-// CLAUDE.md's "Realtime channel health has no free lunch"). bump() is
-// called in materializeBlackHole() below, which every client's own spawn
-// *and* every remote one they observe both go through. The base/jitter here
-// (90-120s) sits comfortably above the longest legitimate gap between two
-// black holes (respawnMinS..respawnMinS+respawnRangeS, 34-58s) so it never
-// fires during normal play.
-const blackHoleTopupGate = createStalenessGate(90000, 30000);
-
-export function randomBlackHoleSpawnData(){
+// Editor-preview-only now (js/editor/main.js) — the game itself always
+// uses SOLAR_BODY_BY_SLOT[9]'s one fixed radius, but planetEditor.html's
+// whole job is letting you look at the range js/bodies/blackhole.js's
+// radiusMin/radiusRange still describes, same as every other kind there.
+export function randomBlackHoleRadius(){
   const bh = CONTENT.blackhole;
-  const radius = bh.radiusMin + Math.random()*bh.radiusRange;
-  const dist = 16 + Math.random()*(FIELD_RADIUS*0.8);
-  const theta = Math.random()*Math.PI*2;
-  const phi = Math.acos(2*Math.random()-1);
-  const pos = new THREE.Vector3(
-    dist*Math.sin(phi)*Math.cos(theta),
-    dist*Math.sin(phi)*Math.sin(theta)*0.55,
-    dist*Math.cos(phi)
-  );
-  const maxLife = bh.lifeMin + Math.random()*bh.lifeRange;
-  return { radius: radius, pos: pos, maxLife: maxLife };
+  return bh.radiusMin + Math.random()*bh.radiusRange;
 }
 
-export function materializeBlackHole(row, pos){
-  const radius = row.radius;
+// `radius` comes from the caller: the game always passes
+// SOLAR_BODY_BY_SLOT[9].radius (one fixed value); the object editor passes
+// randomBlackHoleRadius() to preview the kind's whole range. `orbitSlot` is
+// optional — the game passes 9 so updateBlackHoles() keeps repositioning it
+// every frame from bodyPosAt(); the editor omits it entirely so its preview
+// stays put at the origin (its group starts there by default) instead of
+// drifting off to wherever orbit 9 actually is right now.
+export function materializeBlackHole(radius, orbitSlot){
   const group = new THREE.Group();
-  group.position.copy(pos);
 
   const core = new THREE.Mesh(
     new THREE.SphereGeometry(radius, 24, 18),
@@ -88,31 +78,25 @@ export function materializeBlackHole(row, pos){
 
   ctx.scene.add(group);
 
-  const elapsedSec = Math.max(0, (Date.now() - new Date(row.spawned_at||Date.now()).getTime())/1000);
   const bh = {
-    dbId: row.id,
+    orbitSlot: orbitSlot,
     group: group, core: core, horizon: horizon, disk: disk, halo: halo,
     radius: radius,
     gravityRadius: radius*7.5,
     killRadius: radius*1.35,
-    life: elapsedSec,
-    maxLife: row.max_life,
     pulsePhase: Math.random()*10,
     flowSpeed: 0.05+Math.random()*0.06
   };
   ctx.blackholes.push(bh);
-  blackHoleTopupGate.bump();
   showToast(t("toast.blackholeDetected"));
-  if(NET_ENABLED) ctx.netBodies[row.id] = bh;
   return bh;
 }
 
 // Shared teardown for a black hole's 4-piece mesh group (core/horizon/disk/
-// halo) — used both by its natural expiry below and by net/bodiesSync.js
-// (a remote DELETE, or bootstrapWorld's reconcile) and js/editor/main.js's
-// preview, instead of each site re-deriving the same dispose sequence by
-// hand. If a future change adds/renames a sub-mesh, there's now exactly one
-// place that needs to know about it — previously all 4 call sites did.
+// halo) — the game itself never tears down its own permanent black hole
+// (there's nothing to dispose until the page unloads), but js/editor/main.js's
+// preview still creates and destroys one on every parameter change, so this
+// stays exported for that one remaining caller.
 export function disposeBlackHole(bh){
   ctx.scene.remove(bh.group);
   bh.core.geometry.dispose(); bh.core.material.dispose();
@@ -121,43 +105,11 @@ export function disposeBlackHole(bh){
   bh.halo.material.dispose();
 }
 
-export function spawnBlackHoleLocalOnly(){
-  const data = randomBlackHoleSpawnData();
-  materializeBlackHole({
-    id: "local-"+Math.random().toString(36).slice(2),
-    radius: data.radius, max_life: data.maxLife, spawned_at: new Date().toISOString()
-  }, data.pos);
-}
-
-export function requestSpawnBlackHole(){
-  const data = randomBlackHoleSpawnData();
-  supabase.from("bodies").insert({
-    kind: "blackhole", radius: data.radius, temp: 0,
-    pos_x: data.pos.x, pos_y: data.pos.y, pos_z: data.pos.z,
-    max_life: data.maxLife
-  }).then(function(res){
-    if(res.error) console.warn("requestSpawnBlackHole failed", res.error);
-  }).catch(function(err){
-    // No pending-counter to leak here (unlike requestSpawnPlanet), but a
-    // rejected promise with no .catch() is still an unhandled rejection -
-    // add explicit, quiet handling for the same reason bodies.js does.
-    console.warn("requestSpawnBlackHole rejected", err);
-  });
-}
-
 export function updateBlackHoles(dt){
-  blackHoleTimer -= dt;
-  if(blackHoleTimer <= 0 && ctx.blackholes.length === 0){
-    if(NET_ENABLED){
-      if(blackHoleTopupGate.shouldSpawn()) requestSpawnBlackHole();
-    }
-    else { spawnBlackHoleLocalOnly(); }
-    blackHoleTimer = CONTENT.blackhole.respawnMinS + Math.random()*CONTENT.blackhole.respawnRangeS;
-  }
-
-  for(let i=ctx.blackholes.length-1; i>=0; i--){
+  const t = nowSimTime();
+  for(let i=0;i<ctx.blackholes.length;i++){
     const bh = ctx.blackholes[i];
-    bh.life += dt;
+    if(bh.orbitSlot != null) bodyPosAt(bh.orbitSlot, t, bh.group.position);
     // We rotate the whole mesh (not the texture via offset.x) - RingGeometry
     // has planar UV mapping (u,v from x,y position, not from angle), so
     // animating the offset slides the texture like a flat image: the bright
@@ -171,29 +123,6 @@ export function updateBlackHoles(dt){
     bh.halo.material.opacity = 0.75 + 0.2*Math.abs(Math.sin(bh.pulsePhase*0.8));
     const haloPulseScale = 1 + 0.04*Math.abs(Math.sin(bh.pulsePhase*0.8));
     bh.halo.scale.setScalar(bh.radius*3.1*haloPulseScale);
-
-    const fadeStart = bh.maxLife - CONTENT.blackhole.fadeOutS;
-    if(bh.life >= fadeStart){
-      const e = Math.min(1, (bh.life-fadeStart)/CONTENT.blackhole.fadeOutS);
-      bh.group.scale.setScalar(1-e);
-      bh.horizon.material.opacity *= (1-e);
-      bh.halo.material.opacity *= (1-e);
-      bh.disk.material.opacity = 0.85*(1-e);
-    }
-
-    if(bh.life >= bh.maxLife){
-      disposeBlackHole(bh);
-      ctx.blackholes.splice(i,1);
-      if(NET_ENABLED && bh.dbId){
-        delete ctx.netBodies[bh.dbId];
-        if(isSteward) supabase.from("bodies").delete().eq("id", bh.dbId).then(function(){});
-      }
-    }
-  }
-
-  if(ctx.blackholes.length === 0 && blackHoleTimer <= 0){
-    // safety net: in case the hole expired at the exact same moment the timer reset
-    blackHoleTimer = CONTENT.blackhole.respawnMinS + Math.random()*CONTENT.blackhole.respawnRangeS;
   }
 
   if(ctx.blackholes.length === 0 || ctx.ships.length === 0) return;

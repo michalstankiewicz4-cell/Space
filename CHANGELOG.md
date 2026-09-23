@@ -4,6 +4,44 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.0.0]
+
+### Changed
+- **The world is now a real, fixed solar system instead of a randomly
+  scattered, endlessly-respawning pool.** One Sun at the center, 9
+  concentric orbits (2 volcanic planets, 2 neutral, 2 ice, 1 meteoroid, 1
+  black hole, and orbit 4 reserved as the ring every player's station spawns
+  on), each real body a hand-picked, permanent fixture — no more random kind/
+  position rolls, no more despawn-on-death for planets/suns/meteoroids/the
+  black hole. Orbits are real closed-form ellipses (semi-major/minor axis,
+  inclination, ascending-node rotation), not straight lines or static points.
+- **Real gravity.** Every ship (and the drone) is pulled by exactly one
+  dominant body at a time — whichever one's sphere of influence it's
+  currently inside, otherwise the Sun — the same patched-conics model Kerbal
+  Space Program uses. An idle ship with no orders now visibly drifts under
+  gravity instead of sitting perfectly still forever.
+- **Eaten bodies regenerate instead of dying.** Biting the Sun or a planet
+  down to zero health no longer destroys it — health regrows over time (a
+  live pace, not "reload to reset"), and the body stays biteable throughout.
+  The black hole keeps its old kill-on-contact hazard behavior unchanged,
+  just as a permanent fixture on the outermost orbit now instead of a
+  temporary, randomly-spawning one.
+- **Player stations now sit on their own dedicated orbit (4)**, at a fixed
+  angle derived from each player's own identity — a station never
+  relocates just because some other player joined or left. It also has a
+  containment field now: a player's own ships drifting too far from home
+  under ambient gravity get gently pulled back.
+- Comets are unaffected by any of the above — still their own independent,
+  short-lived flyby mechanic, spawned/despawned from a small pool exactly
+  as before.
+- Supabase schema: the fixed solar bodies live in a new `solar_bodies`
+  table (seeded once, only ever updated — never inserted/deleted again),
+  with a new `bite_solar_body` RPC replacing `bite_body` for them (health
+  regen computed server-side the same way client-side, never a cron job).
+  `bodies` itself now holds only comets. See `supabase/schema.sql` and
+  `supabase/migrate_to_solar_system.sql` for the live migration this
+  version shipped with.
+
 ## [1.10.15]
 
 ### Fixed

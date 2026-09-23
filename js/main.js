@@ -11,6 +11,7 @@ import { initParticles, updateParticles } from "./fx/particles.js";
 import { updateFragments, updateShockwaves, updateDust } from "./fx/breakup.js";
 import { seedLocalWorld, updateBodies } from "./world/bodies.js";
 import { updateBlackHoles } from "./world/blackholes.js";
+import { updateSolarGravity } from "./world/solarGravity.js";
 import { spawnInitialFleet, updateShips, reconcileFleetSize } from "./ships/swarm.js";
 import { refreshDock } from "./ui/dock.js";
 import { updateTelemetry } from "./ui/hud.js";
@@ -19,7 +20,8 @@ import { initPanels } from "./ui/panels.js";
 import { initFleet } from "./ui/fleet.js";
 import { initShipCam, updateShipCam, renderShipCamPIP } from "./scene/shipcam.js";
 import { renderPlayersList } from "./ui/players.js";
-import { maintainPlanetCount, flushDamage } from "./net/bodiesSync.js";
+import { maintainCometCount, flushDamage } from "./net/bodiesSync.js";
+import { flushSolarDamage } from "./net/solarBodiesSync.js";
 import { updateRemoteShips, maybeBroadcastShips } from "./net/shipsBroadcast.js";
 import { initNet } from "./net/connect.js";
 import { initVersionCheck } from "./versionCheck.js";
@@ -28,6 +30,7 @@ import { updateDronePrintFx } from "./drone/dronePrintFx.js";
 import { initDroneThumb, renderDroneThumb } from "./drone/droneThumb.js";
 import { initDronePanel, refreshDronePanel } from "./ui/dronePanel.js";
 import { spawnStation } from "./station/station.js";
+import { applyStationField } from "./station/stationField.js";
 import { initStationPanel, refreshStationPanel } from "./ui/stationPanel.js";
 import { initPlanetPanel, refreshPlanetPanel } from "./ui/planetPanel.js";
 import { initPlanetThumb, renderPlanetThumb } from "./world/planetThumb.js";
@@ -69,6 +72,7 @@ initDevTools();
 if(NET_ENABLED){
   initNet();
   setInterval(flushDamage, NET_DAMAGE_FLUSH_MS);
+  setInterval(flushSolarDamage, NET_DAMAGE_FLUSH_MS);
 }
 
 /* ---------------------------------------------------------
@@ -81,11 +85,21 @@ function tick(){
   const dt = Math.min(0.05, clock.getDelta());
   updateCamera(dt);
   updatePulsars(dt);
+  // Ambient gravity (every fixed solar body pulling ships/the drone, patched-
+  // conics style) and the station's containment field both mutate ship
+  // velocity/position — both need to run BEFORE updateShips() so this
+  // frame's pull is actually integrated into movement this frame, not next.
+  updateSolarGravity(dt);
+  applyStationField(dt);
+  // Bodies' own orbital positions (+ health regen) refresh before ships:
+  // ships/swarm.js's low-health "shake" effect overwrites a target's
+  // mesh.position based on its freshly-updated basePos, and needs to run
+  // AFTER that position is set for this frame, not before.
+  updateBodies(dt);
   updateShips(dt);
   updateParticles(dt);
   updateFragments(dt);
   updateShockwaves(dt);
-  updateBodies(dt);
   updateBlackHoles(dt);
   updateDust(dt);
   updateDrone(dt);
@@ -93,7 +107,7 @@ function tick(){
   updateLightMarkers();
   updateDistanceLines();
   updateLightsToggle();
-  maintainPlanetCount(dt);
+  maintainCometCount(dt);
   if(NET_ENABLED){
     updateRemoteShips(dt);
     maybeBroadcastShips(performance.now());

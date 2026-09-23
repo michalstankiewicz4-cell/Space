@@ -1,5 +1,6 @@
 import { FIELD_RADIUS } from "../config.js";
-import { CONTENT, BODY_TYPES } from "../content.js";
+import { CONTENT } from "../content.js";
+import { SOLAR_BODY_BY_SLOT } from "./solarSystem.js";
 
 // Pure data/math for the 7 body types (kind+temp -> variant, spawn rolls,
 // display value) — split out of world/bodies.js, which used to mix this
@@ -7,19 +8,15 @@ import { CONTENT, BODY_TYPES } from "../content.js";
 // THREE.Scene/Mesh or ctx; every function is a plain calculation, callable
 // from anywhere (the game, the planet editor, a future server-side script)
 // without pulling in rendering.
-
-// Picks one of the 7 body types (everything in js/bodies/* except
-// blackhole.js, which spawns on its own timer — see world/blackholes.js),
-// weighted by .spawnWeight. Weights don't need to sum to 1.
-export function pickBodyType(){
-  const total = BODY_TYPES.reduce(function(s, t){ return s + t.spawnWeight; }, 0);
-  let r = Math.random() * total;
-  for(let i=0;i<BODY_TYPES.length;i++){
-    if(r < BODY_TYPES[i].spawnWeight) return BODY_TYPES[i];
-    r -= BODY_TYPES[i].spawnWeight;
-  }
-  return BODY_TYPES[BODY_TYPES.length-1];
-}
+//
+// As of the fixed 9-orbit solar system, comets are the only kind still
+// randomly rolled/spawned by the game itself — the other 6 kinds
+// (sun/ice/neutral/volcanic/meteoroid/blackhole) are each one fixed body
+// now (see world/solarSystem.js). randomPlanetSpawnData() below stays
+// fully generic, though: planetEditor.html still uses it (forcing every
+// kind in turn) to preview the whole range a kind's js/bodies/*.js params
+// describe, independent of the live game only ever picking one point in
+// that range per slot.
 
 // A "planet" DB row only stores kind+temp, not which of the 3 planet
 // variants (ice/neutral/volcanic) generated it — so it's re-derived from
@@ -40,6 +37,16 @@ export function bodyParams(kind, temp){
   return variantForTemp(temp!=null ? temp : 0);
 }
 
+// SOLAR_BODIES (world/solarSystem.js) stores the already-resolved planet
+// variant directly ("volcanic"/"neutral"/"ice"), unlike the DB's older
+// generic "planet"+temp pair — translates back to the "planet" kind string
+// bodyParams()/variantForTemp() above expect, so a fixed body's shape still
+// re-resolves through the exact same code path a comet/editor-preview row
+// does. Used by both world/bodies.js#materializePlanet and #seedLocalWorld.
+export function contentKindFor(solarKind){
+  return (solarKind === "volcanic" || solarKind === "neutral" || solarKind === "ice") ? "planet" : solarKind;
+}
+
 // i18n key (see js/i18n.js "body" section) identifying which of the 7 body
 // types a live planet object is, re-deriving the planet variant from temp
 // the same way bodyParams()/variantForTemp() do.
@@ -53,8 +60,13 @@ export function bodyVariantKey(p){
 
 // Same formula used when a body is fully devoured (see ships/swarm.js) —
 // shared so the hover tooltip's estimate never drifts from the real payout.
+// Fixed solar bodies (p.orbitSlot != null) don't carry their own
+// radius/temp/valueBonus locally (only health/maxHealth come from their DB
+// row — see world/bodies.js#materializePlanet) — read shape from the fixed
+// SOLAR_BODIES table instead. Comets (orbitSlot == null) are unchanged.
 export function bodyValueEstimate(p){
-  return Math.round(p.radius*14 + Math.abs(p.temp)*8 + (p.valueBonus||0));
+  const shape = p.orbitSlot != null ? SOLAR_BODY_BY_SLOT[p.orbitSlot] : p;
+  return Math.round(shape.radius*14 + Math.abs(shape.temp)*8 + (p.valueBonus||0));
 }
 
 export function tempColor(t){
@@ -70,12 +82,12 @@ export function tempColor(t){
 }
 
 // Pure function: rolls the parameters for a new body (no mesh/scene side
-// effects). Used both for network seeding (INSERT into Supabase) and for
-// offline mode (multiplayer not configured). `forcedType` is one of the
-// exported CONTENT.* objects (e.g. CONTENT.icePlanet) — pass it to force a
-// specific type instead of rolling one via pickBodyType().
-export function randomPlanetSpawnData(forcedType){
-  const type = forcedType || pickBodyType();
+// effects). `type` is one of the exported CONTENT.* objects (e.g.
+// CONTENT.comet) — every real caller forces one explicitly now (the comet
+// top-up loop always forces CONTENT.comet; planetEditor.html forces
+// whichever kind tab is active) since there's no more shared weighted pool
+// to roll an unforced type from.
+export function randomPlanetSpawnData(type){
   const radius = type.radiusMin + Math.random()*(type.radiusMax-type.radiusMin);
   const temp = type.tempMin + Math.random()*(type.tempMax-type.tempMin);
 

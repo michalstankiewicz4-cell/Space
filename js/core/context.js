@@ -18,8 +18,13 @@ export const ctx = {
   shockwaves: [],
   dustParticles: [],
 
-  // Multiplayer: dbId -> local object (body or black hole), and
-  // client_id -> remote player state. Shared between world/* and net/*.
+  // Multiplayer: dbId -> local object, client_id -> remote player state.
+  // As of the fixed 9-orbit solar system, netBodies is comet-only (fixed
+  // solar bodies use netSolarBodies below, keyed by orbit_slot — an int
+  // 0-9, a different identity scheme than comets' uuid ids, so a single
+  // shared dict would mix two unrelated key types). Shared between world/*
+  // and net/*.
   netBodies: {},
+  netSolarBodies: {}, // orbit_slot (int) -> local object — see net/solarBodiesSync.js
   remotePlayers: {}
 };

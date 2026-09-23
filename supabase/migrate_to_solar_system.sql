@@ -1,0 +1,47 @@
+-- ONE-TIME, NON-IDEMPOTENT migration for the live project, cutting over
+-- from the old randomly-scattered body pool to the fixed 9-orbit solar
+-- system. Unlike schema.sql (safe to re-run any time, describes the
+-- target shape), running this twice is harmless but pointless the second
+-- time — it only ever has real rows to delete once.
+--
+-- Order matters. Run in this sequence, not all at once blindly:
+--
+-- 1. Apply the updated schema.sql FIRST (creates + seeds `solar_bodies`,
+--    narrows `bodies`' CHECK constraints to comet-only, adds
+--    bite_solar_body) — this step alone is already safe for any
+--    still-connected OLD client: solar_bodies is new and nothing old reads
+--    it, and the narrowed `bodies` constraints only reject *future* writes
+--    of a kind other than 'comet' (old clients would only ever fail an
+--    insert here if they're still trying to spawn a scattered planet,
+--    which just silently fails the same way any other RPC/insert failure
+--    already does today — no crash, no visible corruption).
+--
+-- 2. Deploy the new game client (bump js/version.js + the two ?v= params
+--    in index.html, per the project's own versioning convention) and push.
+--    js/versionCheck.js already exists for exactly this purpose — it will
+--    flag any tab that's still running the OLD client as outdated and
+--    block further play with a "please refresh" prompt once it notices,
+--    without needing any new mechanism here.
+--
+-- 3. WAIT for old tabs to actually drain/refresh before running the
+--    DELETE below. Check first, don't assume:
+--      select kind, count(*) from bodies group by kind order by 2 desc;
+--    If there are still many non-comet rows and/or the counts haven't
+--    stabilized, more old clients are likely still connected and topping
+--    the old pool back up — wait longer. A quiet moment (low overall
+--    traffic) is the safest window to actually run step 4.
+--
+-- 4. The one genuinely destructive step:
+delete from bodies where kind != 'comet';
+
+-- A client still connected at the exact moment this runs (should be rare
+-- if step 3's wait was real) sees a Realtime DELETE for bodies it never
+-- ate — a harmless one-time visual "pop" for whatever old-style planets
+-- were left, not a crash or a stuck state, since versionCheck.js should
+-- already have it blocked from meaningfully interacting with the world by
+-- then anyway.
+--
+-- Nothing else to do after this — `enforce_bodies_cap`/the burst-detection
+-- triggers/CHECK constraints described in schema.sql already apply to
+-- whatever's left (only comets), and solar_bodies was already seeded in
+-- step 1.

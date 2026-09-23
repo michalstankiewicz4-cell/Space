@@ -182,7 +182,16 @@ export function updateShips(dt){
       sh.commandedTarget = null;
     }
     sh.target = sh.commandedTarget;
-    if(!sh.target){ hideBolt(sh); continue; }
+    if(!sh.target){
+      // Ambient solar gravity (world/solarGravity.js, called earlier in
+      // main.js's tick()) mutates sh.vel every frame regardless of whether
+      // this ship has a target - an idle ship still needs to integrate that
+      // into position, or gravity silently has zero visible effect on it.
+      hideBolt(sh);
+      sh.pos.addScaledVector(sh.vel, dt);
+      sh.mesh.position.copy(sh.pos);
+      continue;
+    }
 
     const toTarget = toTargetScratch.subVectors(sh.target.mesh.position, sh.pos);
     const dist = toTarget.length();
@@ -206,10 +215,22 @@ export function updateShips(dt){
       sh.mesh.position.copy(sh.pos);
       sh.mesh.lookAt(sh.target.mesh.position);
 
+      const healthBeforeDamage = sh.target.health;
       const eff = eatEfficiency(stats, sh.target);
       const dmg = basePower*eff*dt;
       sh.target.health -= dmg;
       sh.target.pendingDamage = (sh.target.pendingDamage||0) + dmg;
+      if(sh.target.orbitSlot != null){
+        // Keep the health checkpoint (world/bodies.js#updateBodies' regen
+        // source of truth) in lockstep with every optimistic decrement, not
+        // just the final kill one - otherwise the very next frame's regen
+        // recompute (which runs before this file, see main.js's tick())
+        // would overwrite this frame's damage with a checkpoint that never
+        // moved, making the crack overlay flicker up and down instead of
+        // smoothly increasing while a ship is actively biting.
+        sh.target.healthBase = sh.target.health;
+        sh.target.healthUpdatedAtMs = Date.now();
+      }
 
       pulseBolt(sh, dt);
 
@@ -252,7 +273,49 @@ export function updateShips(dt){
         paintScorch(sh.target, surfacePoint, 1+damage*2);
       }
 
-      if(sh.target.health <= 0){
+      if(sh.target.orbitSlot != null){
+        // Fixed solar body: never destroyed/removed - health regenerates
+        // over time instead (world/bodies.js#updateBodies). Edge-triggered
+        // against a 10%-of-maxHealth threshold, exactly like the server's
+        // own bite_solar_body RPC (supabase/schema.sql) - NOT a bare `> 0`
+        // check. Found live (against the server RPC, same bug would apply
+        // here): per-frame regen ticks health up by a tiny sliver almost
+        // immediately after hitting 0, so a bare `>0` check would silently
+        // re-award the kill on nearly every subsequent frame a ship sits
+        // there, instead of once per real kill.
+        if(healthBeforeDamage > sh.target.maxHealth*0.1 && sh.target.health <= 0){
+          const deadBody = sh.target;
+          hideBolt(sh);
+          sh.target = null;
+          sh.commandedTarget = null;
+          if(NET_ENABLED){
+            // Points are awarded later, by net/solarBodiesSync.js's
+            // flushSolarDamage() once the server's bite_solar_body RPC
+            // confirms killed:true - same deferred-to-server-confirmation
+            // pattern comets/old planets already used in networked mode
+            // (see the else-if branch below).
+          } else {
+            // No server to confirm a kill offline - resolve immediately,
+            // same spirit as the offline comet/old-planet branch below,
+            // just never calling destroyPlanet (this body isn't going
+            // anywhere).
+            const gained = bodyValueEstimate(deadBody);
+            state.points += gained;
+            state.eaten += 1;
+            showToast(t("toast.eaten")(gained));
+            triggerBreakup(deadBody);
+            refreshDock();
+            save();
+          }
+          // Reset the health checkpoint to exactly 0 right now, in both
+          // modes - otherwise the very next updateBodies() regen recompute
+          // would use a stale (pre-kill) checkpoint and instantly show a
+          // big chunk of health back, undoing the kill's visual/gameplay
+          // weight until the server's own row syncs back.
+          deadBody.healthBase = 0;
+          deadBody.healthUpdatedAtMs = Date.now();
+        }
+      } else if(sh.target.health <= 0){
         if(!NET_ENABLED && !sh.target.dying){
           // offline mode: no server to arbitrate "who landed the last hit",
           // so the kill is resolved immediately, locally, as before

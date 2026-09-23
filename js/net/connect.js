@@ -3,6 +3,7 @@ import { clientId, joinedAt, myIdentity } from "./identity.js";
 import { setPresenceState } from "./presence.js";
 import { updatePlayersHud, setConnectionStatus } from "../ui/hud.js";
 import { materializeBody, onBodyUpdated, onBodyDeleted, bootstrapWorld } from "./bodiesSync.js";
+import { onSolarBodyUpdated, bootstrapSolarSystem } from "./solarBodiesSync.js";
 import { handleRemoteShips, handleRemoteDronePrint } from "./shipsBroadcast.js";
 
 export let roomChannel = null;
@@ -51,6 +52,10 @@ function connectRoom(){
   roomChannel.on("postgres_changes", { event: "INSERT", schema: "public", table: "bodies" }, function(payload){ materializeBody(payload.new); });
   roomChannel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "bodies" }, function(payload){ onBodyUpdated(payload.new); });
   roomChannel.on("postgres_changes", { event: "DELETE", schema: "public", table: "bodies" }, function(payload){ onBodyDeleted(payload.old); });
+  // solar_bodies is a permanent, fixed set (see net/solarBodiesSync.js) —
+  // only ever UPDATEd, never INSERTed/DELETEd after the one-time migration
+  // seed, so that's the only event this subscribes to.
+  roomChannel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "solar_bodies" }, function(payload){ onSolarBodyUpdated(payload.new); });
 
   roomChannel.subscribe(function(status){
     if(status === "SUBSCRIBED"){
@@ -85,6 +90,12 @@ function connectRoom(){
       // catches up on anything this client missed while disconnected,
       // including deletes, which Realtime never replays after the fact.
       bootstrapWorld();
+      // The fixed solar bodies (+ sun) never need despawn/reconcile logic —
+      // the set itself never changes, only health does, and any missed
+      // UPDATEs during a disconnect self-correct via each body's own
+      // (healthBase, healthUpdatedAtMs) regen recompute anyway. A plain
+      // one-time fetch is enough, on both first connect and reconnect.
+      bootstrapSolarSystem();
     } else if(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED"){
       if(connected){ connected = false; setConnectionStatus(false); }
       scheduleReconnect();

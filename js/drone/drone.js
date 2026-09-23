@@ -183,17 +183,49 @@ function applyAttack(drone){
   const { body, dist } = nearestBody(drone);
   if(!body || dist > body.radius * DRONE_DOCK_RANGE_MULT) return 0;
 
+  const healthBeforeDamage = body.health;
   const dmg = drone.attackPower;
   body.health -= dmg;
   body.pendingDamage = (body.pendingDamage || 0) + dmg;
   applyHealthVisual(body);
+  if(body.orbitSlot != null){
+    // Keep the health checkpoint in lockstep with every optimistic
+    // decrement, same reasoning as ships/swarm.js#updateShips - otherwise
+    // the next frame's regen recompute (world/bodies.js#updateBodies)
+    // would overwrite this hit with a checkpoint that never moved.
+    body.healthBase = body.health;
+    body.healthUpdatedAtMs = Date.now();
+  }
 
   const outward = drone.pos.clone().sub(body.mesh.position).normalize();
   const surfacePoint = body.mesh.position.clone().addScaledVector(outward, body.radius);
   spawnBiteParticles(surfacePoint, outward, body.mesh.material.color, 4);
   paintScorch(body, surfacePoint, 1);
 
-  if(!NET_ENABLED && !body.dying && body.health <= 0){
+  if(body.orbitSlot != null){
+    // Fixed solar body: never destroyed/removed, health regenerates
+    // instead - same edge-triggered kill detection (against a 10%-of-
+    // maxHealth threshold, not a bare >0 check - see
+    // ships/swarm.js#updateShips and supabase/schema.sql#bite_solar_body
+    // for why a bare >0 check was a real, live-confirmed exploit) as
+    // ships/swarm.js#updateShips, so a drone camping a barely-
+    // regenerating body can't re-collect the kill reward every hit.
+    if(healthBeforeDamage > body.maxHealth*0.1 && body.health <= 0){
+      if(!NET_ENABLED){
+        const gained = bodyValueEstimate(body);
+        state.points += gained;
+        state.eaten += 1;
+        showToast(t("toast.eaten")(gained));
+        triggerBreakup(body);
+        refreshDock();
+        save();
+      }
+      // else: net/solarBodiesSync.js#flushSolarDamage awards points once
+      // the server's bite_solar_body RPC confirms killed:true.
+      body.healthBase = 0;
+      body.healthUpdatedAtMs = Date.now();
+    }
+  } else if(!NET_ENABLED && !body.dying && body.health <= 0){
     const gained = bodyValueEstimate(body);
     state.points += gained;
     state.eaten += 1;

@@ -22,9 +22,3 @@ export const CONTENT = {
   meteoroid: METEOROID,
   blackhole: BLACKHOLE
 };
-
-// Every spawnable body type except black holes (which spawn on their own
-// timer instead of the shared random pool — see world/blackholes.js).
-// Weighted by .spawnWeight; weights don't need to sum to 1, pickBodyType()
-// normalizes them.
-export const BODY_TYPES = [SUN, ICE_PLANET, NEUTRAL_PLANET, VOLCANIC_PLANET, COMET, METEOROID];
