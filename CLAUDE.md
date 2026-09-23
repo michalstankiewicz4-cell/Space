@@ -162,7 +162,14 @@ local (`localStorage`).
   live with two clients: the non-steward correctly didn't spawn while not
   stale, then correctly did once `Date.now()` was patched far enough
   ahead to cross the threshold — and the result synced to both clients via
-  Realtime, same as a steward-spawned one would.
+  Realtime, same as a steward-spawned one would. **This
+  `isConnected() && (isSteward || stale)` shape is now a shared helper**,
+  `net/stewardFallback.js#createStalenessGate(baseMs, jitterMs)` — both
+  `maintainPlanetCount` and `updateBlackHoles` had independently grown the
+  identical pattern by 1.10.15, so it was consolidated into one factory
+  returning `{bump(), shouldSpawn()}` rather than staying duplicated a
+  third time the next this shape is needed for some other steward-gated
+  top-up loop.
 - **DELETE on `bodies` always means "eaten" except for comets.** A
   planet/sun/meteoroid has no other legitimate way to leave the database;
   only comets can also self-despawn locally for flying out of the field.
@@ -175,7 +182,16 @@ local (`localStorage`).
 - **Settings vs. identity vs. i18n**: three separate small persisted
   modules, deliberately not merged — `js/settings.js` (local input/UX
   prefs: mouse invert/swap), `js/net/identity.js` (nickname/color, shared
-  with other players), `js/i18n.js` (language toggle).
+  with other players), `js/i18n.js` (language toggle). Staying separate
+  modules doesn't mean duplicating the storage boilerplate, though: as of
+  1.10.15 the try/catch-guarded `localStorage.getItem`/`setItem` pair
+  (needed since a private/storage-disabled tab throws) had been
+  independently reimplemented in six modules (these three, plus
+  `drone/drone.js`, `admin/main.js`, `core/gameState.js`) — now they all
+  call `core/utils.js#readStorage(key)`/`writeStorage(key, value)` instead.
+  Each module still owns its own key name, JSON parsing and defaults; only
+  the two calls that can actually throw got deduped. New persisted state
+  should use these too, not a fresh inline try/catch.
 - **Nickname moderation is defense-in-depth, not just input validation.**
   `js/moderation.js`'s `containsProfanity()` is checked both when a player
   confirms their own nick (`net/identity.js`, a courtesy — just blocks the
@@ -288,15 +304,27 @@ local (`localStorage`).
     separate gravity/kill-radius block for it (with a `defense`-based
     survival roll instead of `ships`' unconditional consumption), its
     picking/selection lives in `scene/picking.js` alongside — but
-    separate from — `pickShipAt()`, and `net/shipsBroadcast.js` sends its
-    `[x,y,z,heading]` as its own `drone` field on the broadcast payload,
-    separate from the `ships` array (this was missed when the drone
-    shipped — other players simply never saw it until fixed). A remote
-    drone renders as a ghost octahedron (`makeGhostDroneMesh`) tinted by
-    owner color, tracked as `remotePlayers[id].droneMesh` — a single
-    mesh, not an array like `.meshes` — since there's only ever one drone
-    per player; disposed on both `payload.drone === null` and the same
-    `NET_REMOTE_PLAYER_TIMEOUT_MS` staleness cleanup as ghost ships.
+    separate from — `pickShipAt()` (both `pickDroneAt`/`pickStationAt` are,
+    as of 1.10.15, one-line callers of a shared `pickSingletonAt(e, obj)`
+    helper in the same file, since "zero-or-one pickable object" is the
+    same shape for both and only the object differs), and
+    `net/shipsBroadcast.js` sends its `[x,y,z,heading]` as its own `drone`
+    field on the broadcast payload, separate from the `ships` array (this
+    was missed when the drone shipped — other players simply never saw it
+    until fixed). A remote drone renders as a ghost octahedron
+    (`makeGhostDroneMesh`) tinted by owner color, tracked as
+    `remotePlayers[id].droneMesh` — a single mesh, not an array like
+    `.meshes` — since there's only ever one drone per player; disposed on
+    both `payload.drone === null` and the same
+    `NET_REMOTE_PLAYER_TIMEOUT_MS` staleness cleanup as ghost ships. As of
+    1.10.15, `makeGhostShipMesh`/`makeGhostDroneMesh` both call a shared
+    `makeGhostMesh(geo, colorHex)` (only the geometry differs — the
+    flat-recolor material was byte-identical between them), and the
+    "target vector + snap-on-first-sighting, then lerp toward it" bookkeeping
+    that used to be copy-pasted for ships/drone/station separately in both
+    `handleRemoteShips()` and `updateRemoteShips()` is now
+    `setGhostTarget(mesh, x, y, z)`/`lerpGhost(mesh, dt)`, called once per
+    ghost kind.
   - **`spawnDrone()` deliberately spawns it ~6 units out from the origin,
     not inside the ships' own +-2 spawn cube** (`ships/swarm.js`'s
     `spawnShip()`), and its pick sphere is smaller than a ship's (0.5 vs
@@ -388,7 +416,19 @@ local (`localStorage`).
     visually hidden, assert on `getComputedStyle(el).display` (or a
     screenshot), never just the presence of a CSS class name** — a class
     can be applied perfectly correctly and still do nothing if the rule
-    for it doesn't exist.
+    for it doesn't exist. **Fixed structurally in 1.10.15**, not just
+    patched for this one panel: `css/style.css` now has a single generic
+    `.hidden{ display:none !important; }` rule (near `.panel`'s own
+    definition) instead of the ~15 separate `#id.hidden{...}` rules this
+    file used to need one of per panel/overlay — a future hideable element
+    needs zero new CSS to support `.hidden`, closing this exact class of
+    gap for good rather than just for `#dronePanel`. The `!important` is
+    deliberate: several base rules (`#legend`, `#banner`, `#outdatedOverlay`,
+    `.modal`) set their own `display` directly, at higher specificity than
+    a plain `.hidden` class alone could beat, so `!important` sidesteps
+    that comparison instead of requiring every new element to write its
+    own `#itsId.hidden{...}` override just to out-specificity its own base
+    rule.
 - **Space station** (`js/station/*.js`): one static per-player landmark,
   same "singleton on `ctx`, not an array" shape as the drone (`ctx.station`,
   not `ctx.ships`) — but unlike the drone it never moves once spawned (no
@@ -439,11 +479,17 @@ local (`localStorage`).
     the detail. Instead `buildStationMesh({ windowColor, opacity })` only
     retints the window glow + accent stripe to the owner's color and keeps
     every hull material as-is, so a remote station still reads as *a
-    station*, just tinted — `disposeStationMesh()` (also in
-    `stationModel.js`) exists because disposing a many-material group needs
-    to walk it and dedupe shared materials, unlike the single
-    geometry+material `.dispose()` calls `removeGhostDrone()` gets away
-    with.
+    station*, just tinted. **As of 1.10.15, `disposeStationMesh(scene, group)`
+    is a thin wrapper around the shared `core/utils.js#disposeMesh(scene,
+    mesh)`** — `disposeShip()` (`ships/swarm.js`), the drone-consumed-by-
+    black-hole cleanup (`world/blackholes.js`), and every ghost unit's
+    teardown (`net/shipsBroadcast.js`'s `removeGhostDrone`/the ships-array
+    shrink path) had all independently reimplemented the same
+    `scene.remove(mesh)` + traverse-and-dispose-geometry/material shape;
+    `disposeMesh()` always dedupes materials via a `Set` before disposing
+    (needed for the station's ~150+ shared sub-mesh materials, harmless
+    no-op overhead for a single-material ship/drone mesh), so there's now
+    exactly one dispose implementation instead of four near-identical ones.
 
 ## Security model (Supabase)
 

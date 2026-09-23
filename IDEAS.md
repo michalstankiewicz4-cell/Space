@@ -160,6 +160,27 @@ own open questions, but they're meant to connect (materials feed building/
 trading, orbits affect how you reach the bodies you mine, scripting is what
 lets players automate the resulting complexity).
 
+**Update (2026-09-23)**: the user built a standalone prototype exploring the
+orbital-physics and programming-model pieces together — a small solar
+system (sun + planets on real elliptical/inclined orbits, two with moons),
+patched-conics gravity (the ship is pulled by exactly one dominant body at
+a time, whichever's sphere-of-influence — derived from mass — it's
+currently inside; otherwise the sun), and a Scratch-style block palette
+(engine thrust %, yaw/pitch/roll degrees, wait, repeat-with-nesting) instead
+of the drone's text DSL, plus a live predicted-trajectory line (one from
+current velocity alone, one simulating the whole planned block program
+first). It's local-only right now (not checked into this repo, not linked
+from the game) — see the two subsections below for how it lands on the
+open questions they'd already raised. The explicit framing from the user:
+**the next real update is planned to go in this direction**, but the
+game's existing UI/UX (panel styling, HUD conventions) will most likely
+carry over rather than the prototype's own interface chrome — this
+prototype is a mechanics/gameplay-concept proof, not a visual-design one.
+Follow the project's usual prototype-then-integrate flow once this is
+actually greenlit: extract shared orbit/gravity math into `js/` modules,
+keep the existing panel/HUD look, retire the standalone file once it's
+live in-game.
+
 ### Programming model — still undecided: Scratch-style blocks, or text scripts
 
 The drone already has a real scripting language (`js/drone/dsl.js`'s
@@ -185,6 +206,27 @@ AST `interpreter.js` already walks.
   same syntax (like Blockly compiling to a text language) — worth keeping
   in mind if this gets picked up, so the two modes don't diverge into two
   separate script engines.
+- **This question now has a concrete data point, not just a hypothetical.**
+  The orbital-physics prototype (see the "Update" note above) implements
+  the Scratch-style option directly, and — notably — applies it to the
+  *main ship*, not a side unit like the drone: a palette of blocks (thrust
+  %, yaw/pitch/roll degrees, wait, repeat) built into a list, with nesting
+  for `repeat`. It's its own from-scratch block model (own `program`/
+  `activeContainer`/block-registry data structures), **not** built on top
+  of `dsl.js`/`interpreter.js` — so as of this prototype the "middle path"
+  above (blocks as a friendlier front-end that still compiles to the
+  existing DSL/AST) hasn't actually been tried; if the block direction is
+  adopted, that reuse work is still fully ahead, not already done. The
+  prototype's own interpreter is much simpler than `interpreter.js`'s
+  generator-based approach: `execBlock()` is `async`, and blocking actions
+  (`wait`, the turn-rotation blocks) just `await sleep(ms)` in a loop
+  rather than yielding control back to a per-frame driver — fine for a
+  single-ship toy with one program running at a time, but the existing
+  drone interpreter's generator/yield design was specifically chosen so
+  `driveGenerator()` could pace execution against the frame loop and
+  enforce `MAX_INSTANT_STEPS_PER_FRAME` (see CLAUDE.md's drone bullets) —
+  something to revisit if this scales to multiple player-controlled ships
+  running programs concurrently rather than one ship with one script.
 
 ### Real elements & minerals → processing/manufacturing
 
@@ -273,6 +315,28 @@ means accounting for its orbit, not just its current position.
   idea) gravity sources — worth keeping in mind that a sun becomes a much
   more mechanically important body than today's "big, valuable, glowing
   planet-equivalent."
+- **The orbital-physics prototype (see the "Update" note above) validates
+  the "still just a function of time, nothing new to sync" property this
+  section predicted**, with a concrete formula: each body's position is a
+  closed-form point on a fixed ellipse (semi-major/minor axis, inclination,
+  ascending-node rotation, phase + angular speed — all set once, not
+  simulated), so any client can compute "where is this body right now"
+  the same way they already do for a comet's straight-line drift, just a
+  different formula. It also demonstrates the gravity side concretely
+  instead of leaving it abstract: **patched conics**, not full n-body —
+  at any moment the ship is pulled by exactly one dominant source, whichever
+  body's sphere-of-influence (`soiRadius`, derived from that body's mass
+  relative to the sun's) it's currently inside, falling back to the sun
+  everywhere else. This sidesteps simulating every body pulling on the ship
+  simultaneously (what "real" gravity would require) at the cost of a sharp
+  handoff at each SOI boundary — the same simplification Kerbal Space
+  Program itself uses, and a reasonable match for "simplified... but
+  actually matters for navigation" as originally scoped here. The prototype
+  also renders a live predicted-trajectory line — one variant from current
+  velocity alone, another that simulates the whole planned script/block
+  program first — which reads as a very natural pairing with a
+  programming-based control scheme: seeing the consequence of a maneuver
+  before committing to it.
 
 ### Open questions (all four pieces)
 
