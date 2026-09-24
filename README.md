@@ -27,10 +27,17 @@ js/
   supabaseClient.js  Supabase client singleton
   core/              shared game state (scene/entity collections, player points) + small utilities
   scene/             camera, renderer, mouse controls/selection, hover tooltip, ship cam (picture-in-picture cockpit view),
-                     nebula skybox (skybox.js), background pulsars (pulsars.js)
-  world/             celestial body logic (mesh/textures/animation) — per-type data lives in js/bodies/
+                     nebula skybox (skybox.js), background pulsars (pulsars.js),
+                     the 9 fixed orbit lines + each comet's own trajectory line (orbitLines.js)
+  world/             celestial body logic — the 9-orbit solar system's fixed bodies
+                     (solarSystem.js: orbit table/positions, solarGravity.js: patched-conics
+                     gravity on ships/drone), comet-specific real physics (cometPhysics.js:
+                     gravity-curved flight simulation), body mesh/lifecycle (bodies.js,
+                     bodyParams.js, bodyMeshParts.js) — per-type data lives in js/bodies/
   bodies/            7 body types, one file each (sun.js, icePlanet.js, neutralPlanet.js,
-                     volcanicPlanet.js, comet.js, meteoroid.js, blackhole.js) — see "Object editor" below
+                     volcanicPlanet.js, comet.js, meteoroid.js, blackhole.js) — see "Object editor" below.
+                     Only comets are still randomly rolled; the other 6 are each one fixed,
+                     hand-placed body in the solar system (see CLAUDE.md's "Solar system" notes)
   content.js         aggregates js/bodies/ into one place the game and the editor both read from
   fx/                particles, debris, shockwaves, dust — planet-breakup effects
   ships/             player's ship swarm (movement, eating, bite-beam)
@@ -39,7 +46,8 @@ js/
                      its live thumbnail camera (droneThumb.js), and the print() gas+laser
                      effect (dronePrintFx.js) — see "Programmable drone" below
   station/           each player's static space station — the procedural mesh
-                     (stationModel.js) and the game-side entity (station.js) —
+                     (stationModel.js), the game-side entity (station.js), and its
+                     containment field pulling stray ships back (stationField.js) —
                      see "Space station" below
   ui/                HUD (telemetry, players list, collapsible panels, Wiki/Tech/Fleet buttons and modals,
                      legend, upgrade dock, drone panel) and the Setup modal (banner.js)
@@ -172,7 +180,9 @@ already uses.
 
 ## Multiplayer / Supabase setup
 
-The world (planets, comets, suns, meteoroids, black holes) and other
+The world is a fixed 9-orbit solar system (one Sun, 9 hand-placed orbit
+slots, plus a single sun-grazing comet passing through at a time — see
+CLAUDE.md's "Solar system"/"Comets" notes for the mechanics) and other
 players' ships, drones **and stations** are shared live via
 [Supabase](https://supabase.com), with no login at all (an invisible
 anonymous session) — just a nickname (letters, digits and spaces only,
@@ -183,10 +193,13 @@ To run your own instance:
 
 1. Create a free project at [supabase.com](https://supabase.com).
 2. In the **SQL Editor**, paste and run the contents of
-   [`supabase/schema.sql`](supabase/schema.sql).
+   [`supabase/schema.sql`](supabase/schema.sql) — this also seeds the 9
+   fixed solar bodies + Sun into `solar_bodies`.
 3. **Authentication → Sign In / Providers** → enable **Anonymous Sign-ins**.
 4. **Database → Replication** → enable Realtime for the `bodies` table
-   (insert / update / delete).
+   (insert / update / delete — comets only now) **and** the `solar_bodies`
+   table (update only — the 9 fixed bodies + Sun never get inserted or
+   deleted after the schema seeds them).
 5. **Project Settings → API** → copy the **Project URL** and **anon public
    key** and paste them into [`js/env.js`](js/env.js) as the
    `SUPABASE_URL` / `SUPABASE_ANON_KEY` constants (or set

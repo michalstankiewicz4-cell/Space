@@ -160,26 +160,36 @@ own open questions, but they're meant to connect (materials feed building/
 trading, orbits affect how you reach the bodies you mine, scripting is what
 lets players automate the resulting complexity).
 
-**Update (2026-09-23)**: the user built a standalone prototype exploring the
-orbital-physics and programming-model pieces together — a small solar
-system (sun + planets on real elliptical/inclined orbits, two with moons),
-patched-conics gravity (the ship is pulled by exactly one dominant body at
-a time, whichever's sphere-of-influence — derived from mass — it's
-currently inside; otherwise the sun), and a Scratch-style block palette
-(engine thrust %, yaw/pitch/roll degrees, wait, repeat-with-nesting) instead
-of the drone's text DSL, plus a live predicted-trajectory line (one from
-current velocity alone, one simulating the whole planned block program
-first). It's local-only right now (not checked into this repo, not linked
-from the game) — see the two subsections below for how it lands on the
-open questions they'd already raised. The explicit framing from the user:
-**the next real update is planned to go in this direction**, but the
-game's existing UI/UX (panel styling, HUD conventions) will most likely
-carry over rather than the prototype's own interface chrome — this
-prototype is a mechanics/gameplay-concept proof, not a visual-design one.
-Follow the project's usual prototype-then-integrate flow once this is
-actually greenlit: extract shared orbit/gravity math into `js/` modules,
-keep the existing panel/HUD look, retire the standalone file once it's
-live in-game.
+**Update (2026-09-23)**: the user built a standalone prototype (`test.html`,
+still local-only, not checked into this repo) exploring the orbital-physics
+and programming-model pieces together — a small solar system (sun +
+planets on real elliptical/inclined orbits, two with moons), patched-conics
+gravity (the ship is pulled by exactly one dominant body at a time,
+whichever's sphere-of-influence — derived from mass — it's currently
+inside; otherwise the sun), and a Scratch-style block palette (engine
+thrust %, yaw/pitch/roll degrees, wait, repeat-with-nesting) instead of the
+drone's text DSL, plus a live predicted-trajectory line (one from current
+velocity alone, one simulating the whole planned block program first).
+
+**Update (2026-09-23, since landed for real, v2.0.0+)**: the fixed-orbit
+and patched-conics-gravity pieces of this prototype have since actually
+shipped in the live game, not just as a prototype — see CLAUDE.md's "Solar
+system" architecture bullet. Applied to the game's existing 9 planet-ish
+bodies (not the prototype's own moons/multi-planet system) and to
+comets specifically got taken a step further than the prototype ever did:
+a comet's flight is genuinely *simulated* frame-by-frame under real
+gravity (curving, sun-grazing swing-by), not just a closed-form ellipse —
+see CLAUDE.md's "Comets" bullet, including a real predicted-trajectory
+line for each comet's own flight path (`scene/orbitLines.js#
+buildCometTrajectoryLine`), the same concept the prototype's own
+predicted-trajectory line explored. **What's still genuinely open from
+this prototype**: the Scratch-style block programming model (the drone
+still only has the text DSL — see the "Programming model" subsection
+below, unaffected by this update) and moons (see the "Real celestial body
+types" subsection below — planets have real orbits now, but nothing orbits
+a *moving* parent body yet). The game's existing UI/UX carried over as
+expected — no visual-design changes rode along with the orbital-mechanics
+work.
 
 ### Programming model — still undecided: Scratch-style blocks, or text scripts
 
@@ -237,7 +247,7 @@ from bodies, processed into intermediate materials, and used to build ships
 `category`/`shape`/`color` data) or trade with other players.
 
 - **What a body "contains"** would need to be derived from its existing
-  data-driven type (`js/content.js`'s `BODY_TYPES`, one file per kind under
+  data-driven type (`js/content.js`'s `CONTENT`, one file per kind under
   `js/bodies/*.js`) — e.g. a volcanic planet's high `temp` could bias toward
   heavier/rarer elements, an ice planet toward volatiles, a meteoroid toward
   raw ore, following the same "kind + temp → variant" derivation
@@ -264,85 +274,68 @@ from bodies, processed into intermediate materials, and used to build ships
 ### Real celestial body types (moons, pulsars, and friends)
 
 **Concept**: expand the roster of interactable body kinds beyond today's 7
-(`js/content.js`'s `BODY_TYPES`: sun, ice/neutral/volcanic planet, comet,
+(`js/content.js`'s `CONTENT`: sun, ice/neutral/volcanic planet, comet,
 meteoroid, black hole) toward more astronomically real variety — moons
 orbiting planets, pulsars as an actual body type, maybe asteroid belts.
 
 - **Pulsars already exist visually** (`js/scene/pulsars.js`) but are purely
   decorative background dressing — small sprites with a randomized
   brightness pulse, not part of `ctx.planets`, not edible, not spawned
-  through the `BODY_TYPES` system at all (see CLAUDE.md's "Pulsars" note).
+  through the `CONTENT` system at all (see CLAUDE.md's "Pulsars" note).
   Turning them into a real gameplay body would mean moving them into the
   same data-driven pipeline as everything else in `js/bodies/*.js`, which
   they deliberately aren't today.
 - **Moons** are the one kind here that isn't just "a new leaf" in the flat
-  `BODY_TYPES` list — a moon needs a parent body to orbit, which is exactly
-  the orbital-physics piece below, not a separable feature. Worth building
-  after (or together with) simplified orbits, not before.
+  `CONTENT` list — a moon needs a parent body to orbit, which is the one
+  still-open piece of the "Simplified orbital physics" subsection below
+  (real orbits around the Sun already shipped, v2.0.0+; orbiting a
+  *moving* parent body specifically doesn't exist yet). Worth building
+  after (or together with) that piece, not before.
 - Each new kind slots into the existing per-kind pattern (own file under
-  `js/bodies/`, own entry in `BODY_TYPES`, `variantForTemp()`-style
+  `js/bodies/`, own entry in `CONTENT`, `variantForTemp()`-style
   derivation if it needs sub-variants) — this part of the plan is low-risk
   precisely because the body-type system was already built to be
   data-driven or extension.
 
-### Simplified orbital physics affecting navigation
+### Simplified orbital physics affecting navigation — DONE for planets/comets, moons still open
 
-**Concept**: real (if simplified) gravity/orbits instead of today's
-either-stationary-or-straight-line body motion, so navigating toward a body
-means accounting for its orbit, not just its current position.
+**Original concept**: real (if simplified) gravity/orbits instead of the
+old either-stationary-or-straight-line body motion, so navigating toward a
+body means accounting for its orbit, not just its current position. **This
+shipped for real** (v2.0.0+, see the "Update" note above and CLAUDE.md's
+"Solar system"/"Comets" architecture bullets) — kept here only for the one
+piece that's still genuinely open:
 
-- **This fits the existing networking model surprisingly well.** The
-  project's whole multiplayer design leans on bodies being *kinematic* —
-  each client computes "where is this body right now" locally from
-  parameters set once at spawn (`spawned_at` + velocity for comets — see
-  CLAUDE.md's "Multiplayer" section and `world/bodies.js#updateBodies()`),
-  rather than syncing position continuously. A body on a fixed orbit (around
-  a sun, or a moon around a planet) is *still* a pure function of time given
-  its orbital elements at spawn — same "every client derives position
-  locally, nothing new to sync" property comets already have, just a
-  different formula (Keplerian-ish ellipse instead of straight-line
-  velocity) instead of a bigger networking problem.
-- **Gravity affecting navigation** (ships/drone pulled off a straight
-  course near a massive body) is the part that's genuinely new — today only
-  black holes exert any pull (`js/world/blackholes.js`), and that's a
-  binary "close enough = consumed" hazard, not continuous steering
-  influence. Extending real gravitational influence to ship movement would
-  change core flight feel and needs its own balancing pass, likely gated
-  behind a toggle or a gentle falloff so it reads as "interesting" rather
-  than "my ships keep drifting off course unexpectedly."
-- Suns already pull double duty as light sources (`PointLight` child of the
-  mesh — see the "Show light sources" Dev Tools marker) and (with this
-  idea) gravity sources — worth keeping in mind that a sun becomes a much
-  more mechanically important body than today's "big, valuable, glowing
-  planet-equivalent."
-- **The orbital-physics prototype (see the "Update" note above) validates
-  the "still just a function of time, nothing new to sync" property this
-  section predicted**, with a concrete formula: each body's position is a
-  closed-form point on a fixed ellipse (semi-major/minor axis, inclination,
-  ascending-node rotation, phase + angular speed — all set once, not
-  simulated), so any client can compute "where is this body right now"
-  the same way they already do for a comet's straight-line drift, just a
-  different formula. It also demonstrates the gravity side concretely
-  instead of leaving it abstract: **patched conics**, not full n-body —
-  at any moment the ship is pulled by exactly one dominant source, whichever
-  body's sphere-of-influence (`soiRadius`, derived from that body's mass
-  relative to the sun's) it's currently inside, falling back to the sun
-  everywhere else. This sidesteps simulating every body pulling on the ship
-  simultaneously (what "real" gravity would require) at the cost of a sharp
-  handoff at each SOI boundary — the same simplification Kerbal Space
-  Program itself uses, and a reasonable match for "simplified... but
-  actually matters for navigation" as originally scoped here. The prototype
-  also renders a live predicted-trajectory line — one variant from current
-  velocity alone, another that simulates the whole planned script/block
-  program first — which reads as a very natural pairing with a
-  programming-based control scheme: seeing the consequence of a maneuver
-  before committing to it.
+- **Moons** — the fixed 9-orbit solar system that shipped has every planet
+  on its own real orbit around the Sun, and `world/solarGravity.js`'s
+  patched-conics gravity already picks whichever body's SOI a ship is
+  currently inside as the dominant pull source, exactly the mechanism a
+  moon would need — but nothing in the shipped system orbits a *moving*
+  parent body yet, only the Sun. Orbiting a moving parent is a genuinely
+  different closed-form problem (the parent's own position has to feed
+  into the moon's orbit calculation each frame, not just a fixed center),
+  not something the current `bodyPosAt(slot, t)` formula handles as-is.
+  See the "Real celestial body types" subsection below — this is still
+  the one piece of that subsection that depends on orbital mechanics
+  rather than being a standalone new body kind.
+- The old networking argument for why this fits the existing model
+  ("still just a function of time, nothing new to sync") held up exactly
+  as predicted for the 9 fixed bodies, and should still hold for a moon
+  too: `moon_world_pos(t) = parent_pos(t) + local_ellipse_point(t)` is
+  still a pure sum of two closed-form functions, no simulation needed —
+  unlike comets, which notably did *not* end up fitting this model at all
+  (see CLAUDE.md's "Comets" bullet: a gravity-curved swing-by isn't a
+  fixed ellipse, so a late-joining client has to replay a real simulation
+  instead of evaluating a formula). Worth flagging comets as the
+  exception, not the pattern, if this gets scoped for real.
 
 ### Open questions (all four pieces)
 
-- Sequencing: orbital physics is a prerequisite for moons but not for
-  elements/materials or pulsars-as-a-body — the pieces don't all have to
-  land together, and probably shouldn't.
+- Sequencing: orbital physics (now shipped, v2.0.0+ — see the "Simplified
+  orbital physics" subsection above) was a prerequisite for moons and
+  still is; it was never a prerequisite for elements/materials or
+  pulsars-as-a-body, so those don't have to wait on moons specifically —
+  the pieces don't all have to land together, and probably shouldn't.
 - How much of this becomes visible in the existing side-panel UI patterns
   (the planet info panel added for planet selection, the station's
   "read-only for now" docking panel) versus needing wholly new UI.
