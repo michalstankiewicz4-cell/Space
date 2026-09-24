@@ -651,8 +651,13 @@ map is enough for orientation but not enough to safely modify this code.
 - **Space station** (`js/station/*.js`): one static per-player landmark,
   same "singleton on `ctx`, not an array" shape as the drone (`ctx.station`,
   not `ctx.ships`) — but unlike the drone it never moves once spawned (no
-  fuel/commands, `spawnStation()` picks one random point on a
-  `STATION_SPAWN_RADIUS` circle and that's it forever). Selecting it (same
+  fuel/commands). `spawnStation()` places it on a deterministic point on
+  the station ring (`world/solarSystem.js#STATION_RING`, orbit slot 4's
+  own ellipse) derived from a simple hash of this client's own stable
+  `clientId` (`angleFromClientId()`) — not a random angle rolled fresh
+  each spawn, so a player's station never relocates just because the page
+  reloaded or another player joined/left; heading is `angle + PI`, facing
+  back toward the Sun. Selecting it (same
   drone-style pick-priority-before-ships/planets treatment in
   `scene/controls.js`, checked right after the drone) opens a docking panel
   (`ui/stationPanel.js`, `#stationPanel`) that's read-only for now — fleet

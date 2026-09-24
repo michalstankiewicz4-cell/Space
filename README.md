@@ -37,7 +37,7 @@ js/
   bodies/            7 body types, one file each (sun.js, icePlanet.js, neutralPlanet.js,
                      volcanicPlanet.js, comet.js, meteoroid.js, blackhole.js) — see "Object editor" below.
                      Only comets are still randomly rolled; the other 6 are each one fixed,
-                     hand-placed body in the solar system (see CLAUDE.md's "Solar system" notes)
+                     hand-placed body in the solar system (see docs/architecture.md)
   content.js         aggregates js/bodies/ into one place the game and the editor both read from
   fx/                particles, debris, shockwaves, dust — planet-breakup effects
   ships/             player's ship swarm (movement, eating, bite-beam)
@@ -47,8 +47,9 @@ js/
                      effect (dronePrintFx.js) — see "Programmable drone" below
   station/           each player's static space station — the procedural mesh
                      (stationModel.js), the game-side entity (station.js), and its
-                     containment field pulling stray ships back (stationField.js) —
-                     see "Space station" below
+                     containment field pulling stray ships back (stationField.js);
+                     ships/the drone also spawn arranged around it, inside a
+                     gravity-free zone (world/solarGravity.js) — see "Space station" below
   ui/                HUD (telemetry, players list, collapsible panels, Wiki/Tech/Fleet buttons and modals,
                      legend, upgrade dock, drone panel) and the Setup modal (banner.js)
   net/               multiplayer: identity, "steward" election, world sync, ship broadcast,
@@ -141,12 +142,14 @@ There's a companion devlog at
 [swarmprotocol.blogspot.com](https://swarmprotocol.blogspot.com/) (Polish),
 hosted on Blogger — separate from this repo's own docs, for
 announcement/behind-the-scenes style posts rather than technical
-reference. `blog/` in this repo holds each post's hero image (AI-generated,
-one per post) — the Blogger API has no endpoint to upload post images
-directly, so images are hosted here instead and pulled into the post's
-HTML by URL via GitHub Pages, the same way the game itself is served.
-Every AI-generated image gets a small caption disclosing that and stating
-it isn't (and won't become) an actual in-game asset.
+reference. `blog/` in this repo holds each post's hero image (a real
+gameplay screenshot for most posts, occasionally AI-generated) — the
+Blogger API has no endpoint to upload post images directly, so images
+are hosted here instead and pulled into the post's HTML by URL via
+GitHub Pages, the same way the game itself is served. Any AI-generated
+image gets a small caption disclosing that and stating it isn't (and
+won't become) an actual in-game asset; a real screenshot's caption just
+says so instead.
 
 Publishing goes through the Blogger API (OAuth credentials in the
 gitignored `pass` file, same pattern as the Supabase Management API
@@ -154,8 +157,9 @@ token) rather than the Blogger web UI.
 
 ## Programmable drone
 
-Every player also has one drone (a distinct gold octahedron, spawned well
-away from the ship swarm) that never moves on its own — select it and open
+Every player also has one drone (a distinct gold octahedron, spawned next
+to the player's own station, offset above the ship swarm's own formation
+there) that never moves on its own — select it and open
 its Script button to write a small program for it (`if`/`while`/variables,
 plus `move()`, `turn()`, `wait()`, `attack()`, `fuel()`, `nearPlanet()`,
 `print("text")` — the in-game `[?]` button lists all of them with
@@ -176,13 +180,23 @@ spawns once and never moves. Select it to open its docking panel: a
 read-only overview (fleet size, evolution points, upgrade levels) with
 shortcuts into the existing Tech/Fleet modals — no separate resource
 economy, just a window onto the same points/upgrades everything else
-already uses.
+already uses. The ship swarm and drone both spawn arranged around it,
+inside a small zone where ambient gravity doesn't apply, so a fresh
+fleet doesn't immediately start drifting toward the Sun.
+
+## Camera
+
+Top-center in the HUD, a toggle switches between two fully mouse-
+controlled camera modes (drag to rotate, scroll to zoom either way):
+**Base** (the default) orbits the player's own station, framed so the
+Sun sits behind and a little above it; **System** orbits the Sun,
+showing the whole solar system at once.
 
 ## Multiplayer / Supabase setup
 
 The world is a fixed 9-orbit solar system (one Sun, 9 hand-placed orbit
 slots, plus a single sun-grazing comet passing through at a time — see
-CLAUDE.md's "Solar system"/"Comets" notes for the mechanics) and other
+docs/architecture.md for the mechanics) and other
 players' ships, drones **and stations** are shared live via
 [Supabase](https://supabase.com), with no login at all (an invisible
 anonymous session) — just a nickname (letters, digits and spaces only,
