@@ -172,16 +172,27 @@ alter table solar_bodies add constraint solar_bodies_max_health_check check (
   end
 );
 
+-- Bounds match COMET_ENTRY_RADIUS/js/bodies/comet.js's speedMin+speedRange
+-- (js/world/cometPhysics.js) with headroom — a comet's pos_x/y/z/vel_x/y/z
+-- are only ever written once, at spawn (INSERT), never updated afterward
+-- (position at any later moment is derived client-side via advanceComet,
+-- not re-written to the DB), so these only need to cover the SPAWN state,
+-- not the much larger mid-flight speed near perihelion. Left at the old
+-- small-scale world's bounds (+-100/+-20) through the distance-rescale
+-- commits that introduced the ~1023-unit entry radius - found live as the
+-- comet silently failing to spawn at all (every INSERT rejected with a
+-- generic Postgres 400) once a real player actually hit the empty-system
+-- cooldown window.
 alter table bodies drop constraint if exists bodies_pos_check;
 alter table bodies add constraint bodies_pos_check check (
-  abs(pos_x) <= 100 and abs(pos_y) <= 100 and abs(pos_z) <= 100
+  abs(pos_x) <= 1200 and abs(pos_y) <= 1200 and abs(pos_z) <= 1200
 );
 
 alter table bodies drop constraint if exists bodies_vel_check;
 alter table bodies add constraint bodies_vel_check check (
-  (vel_x is null or abs(vel_x) <= 20) and
-  (vel_y is null or abs(vel_y) <= 20) and
-  (vel_z is null or abs(vel_z) <= 20)
+  (vel_x is null or abs(vel_x) <= 15) and
+  (vel_y is null or abs(vel_y) <= 15) and
+  (vel_z is null or abs(vel_z) <= 15)
 );
 
 -- max_life (the black hole's old expiry timer) no longer exists on this

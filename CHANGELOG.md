@@ -4,6 +4,18 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.0.3]
+
+### Fixed
+- Comets could never actually spawn once live: `bodies_pos_check`/
+  `bodies_vel_check` in `supabase/schema.sql` were still bounding comet
+  position/velocity to the old small-scale world (±100/±20), left over
+  from before the distance rescale (v2.0.1) — a real comet now enters at
+  ~1023 units, so every INSERT was silently rejected with a generic
+  Postgres 400. Widened both to ±1200/±15 (comet pos_x/y/z/vel_x/y/z are
+  only ever written once, at spawn, so these just need to cover the entry
+  state, not the much higher mid-flight speed near perihelion).
+
 ## [2.0.2]
 
 ### Changed
