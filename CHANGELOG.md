@@ -4,6 +4,15 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.0.4]
+
+### Changed
+- A comet's own flight path is now traced as a faint line the moment it
+  spawns (same visual style as the 9 fixed orbits), showing its whole
+  sun-grazing swing-by from entry to exit — not just the moving comet
+  itself. The line disappears together with the comet, whether it's
+  eaten or flies back out of the system.
+
 ## [2.0.3]
 
 ### Fixed

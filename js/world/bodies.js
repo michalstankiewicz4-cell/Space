@@ -13,7 +13,8 @@ import { bodyParams, tempColor, randomPlanetSpawnData, contentKindFor } from "./
 import { buildSunRays, buildCometTail, updateCometTailDirection, buildSelectionBracket } from "./bodyMeshParts.js";
 import { SOLAR_BODIES, SOLAR_BODY_BY_SLOT, bodyPosAt, nowSimTime } from "./solarSystem.js";
 import { materializeBlackHole } from "./blackholes.js";
-import { stepComet, advanceComet, COMET_EXIT_RADIUS } from "./cometPhysics.js";
+import { stepComet, advanceComet, COMET_EXIT_RADIUS, computeCometTrajectory } from "./cometPhysics.js";
+import { buildCometTrajectoryLine } from "../scene/orbitLines.js";
 
 // Body lifecycle: materializing a mesh from spawn data, spawning/despawning
 // (local-only and networked), and the per-frame update. Pure body-type
@@ -131,6 +132,12 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   // is right now, so the tail's initial direction isn't stale for a
   // late-joining client.
   let cometTail = null;
+  // The comet's own "orbit" line (see scene/orbitLines.js) - a separate,
+  // top-level scene object (not a mesh child), since it shows the WHOLE
+  // static flight path in world space while the comet itself moves along
+  // it - added to the scene when the comet appears, removed again when it
+  // despawns (despawnLocalOnly/destroyPlanet below).
+  let trajectoryLine = null;
 
   // a subtle orbital ring on some planets (not comets) - a purely cosmetic
   // choice, rolled independently by each client
@@ -161,6 +168,12 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     mesh.position.copy(basePos);
     cometTail = buildCometTail(radius, basePos.clone().normalize());
     mesh.add(cometTail);
+    // From the ORIGINAL entry pos/vel (not basePos/cometVel, which the
+    // advanceComet() call above already fast-forwarded to "now") - the
+    // line should trace the whole path from where the comet entered, not
+    // just what's left of it for a late-joining client.
+    trajectoryLine = buildCometTrajectoryLine(computeCometTrajectory(pos, vel));
+    ctx.scene.add(trajectoryLine);
   }
 
   // Health checkpoint for fixed solar bodies — (healthBase, healthUpdatedAtMs)
@@ -215,6 +228,7 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     shakePhase: Math.random()*10,
     moving: kind==="comet",
     cometTail: cometTail,
+    trajectoryLine: trajectoryLine,
     // The CURRENT (gravity-advanced) velocity, not the original spawn
     // value - see the comment above where cometVel is computed. Comets
     // are the only body whose velocity keeps changing every frame
@@ -314,6 +328,7 @@ export function despawnLocalOnly(p){
     if(other.commandedTarget===p) other.commandedTarget=null;
   });
   ctx.scene.remove(p.mesh);
+  if(p.trajectoryLine){ ctx.scene.remove(p.trajectoryLine); p.trajectoryLine.geometry.dispose(); }
   removeItem(ctx.planets, p);
 }
 
@@ -415,6 +430,10 @@ export function destroyPlanet(p){
     if(other.target===p){ other.target=null; hideBolt(other); }
     if(other.commandedTarget===p) other.commandedTarget=null;
   });
+  // Removed right away, not tied to the pop() animation below - the
+  // trajectory line is a separate static indicator, not part of the
+  // body's own death effect.
+  if(p.trajectoryLine){ ctx.scene.remove(p.trajectoryLine); p.trajectoryLine.geometry.dispose(); }
   const t0 = performance.now();
   function pop(){
     const el = (performance.now()-t0)/220;

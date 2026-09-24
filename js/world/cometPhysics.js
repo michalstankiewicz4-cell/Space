@@ -106,3 +106,30 @@ export function randomCometEntry(){
 
   return { pos: pos, vel: vel };
 }
+
+// One-time precompute of a comet's FULL flight path (entry all the way out
+// past COMET_EXIT_RADIUS), for a static "orbit" trajectory line (see
+// scene/orbitLines.js#buildCometTrajectoryLine, called once from
+// world/bodies.js#materializePlanet) — deliberately run from the comet's
+// ORIGINAL entry pos/vel, not the advanceComet()-fast-forwarded current
+// state, so a late-joining client's line still shows the whole path from
+// where it entered, not just what's left of it. Sampled coarser than the
+// physics step itself (a line doesn't need every single 0.05s sub-step to
+// look smooth) - a typical ~150-230s transit lands around 400-600 points,
+// cheap for a THREE.Line. The step cap is a safety net for a hypothetical
+// degenerate orbit that never reaches COMET_EXIT_RADIUS - real solved
+// trajectories always do, well under this many steps.
+const TRAJECTORY_SAMPLE_STRIDE = 8;
+const TRAJECTORY_MAX_STEPS = 20000;
+export function computeCometTrajectory(pos, vel){
+  const p = pos.clone(), v = vel.clone();
+  const points = [p.clone()];
+  let i = 0;
+  while(p.length() < COMET_EXIT_RADIUS && i < TRAJECTORY_MAX_STEPS){
+    stepComet(p, v, STEP_DT);
+    i++;
+    if(i % TRAJECTORY_SAMPLE_STRIDE === 0) points.push(p.clone());
+  }
+  points.push(p.clone());
+  return points;
+}
