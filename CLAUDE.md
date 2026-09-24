@@ -63,6 +63,11 @@ shared live via Supabase; a player's own points/upgrades stay local
   as "changes to the game, version by version" — none of the above have
   a version number to file themselves under, so they're just a plain git
   commit, not a changelog entry.
+
+  **New `js/`/`css/` file → add it to `js/versionCheck.js#MODULE_FILES`**
+  (incl. `@import`ed CSS) — hand-maintained, easy to forget, and
+  forgetting silently breaks the "Refresh now" cache refresh for that
+  file (see `docs/gotchas.md`).
 - **Testing before commit**: there's no test suite. Verify changes with a
   local static server (`python -m http.server 8877` from the repo root)
   and a throwaway Playwright script in the scratchpad dir (headless
@@ -179,6 +184,14 @@ the full detail behind each of these.
   (`dsl.js`/`interpreter.js`, generator-based, not JS/eval). Full
   gotchas (runaway-script safety net, click-priority bug history, the
   `.hidden`/`display:none` CSS trap, `pointerdown` vs `click`) in the doc.
+- **New-style UI kit** (`css/ui/`, start screen + setup modal so far;
+  in-game HUD still old-style, `UI-standalone.html` is its untracked
+  mockup): fixed 1536x1024 `.uiStage` + full-width `.uiBar`, both
+  scaled by `--uiScale` set in an inline `<head>` script. `main.js`
+  inits and paints the start screen *before* `initScene()` (which
+  blocks the main thread); fonts are self-hosted + preloaded. Full
+  detail and gotchas (`:where()` button reset, `.uiPanel` vs the HUD's
+  `.panel`, `data-lang-pending`) in docs/architecture.md.
 - **Space station** (`js/station/*.js`): one static per-player landmark,
   read-only docking panel, mesh shared between local + ghost rendering
   via `buildStationMesh(opts)`. Ships spawn arranged around it on a

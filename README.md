@@ -11,11 +11,18 @@ background if you're picking this project back up after a while).
 ## Project structure
 
 A plain static site — no build step, no npm. `index.html` is a thin shell
-(DOM + CSS); all the logic lives in native ES modules under `js/`, loaded
-via `<script type="module" src="js/main.js">`:
+(DOM + CSS, plus one tiny inline `<head>` script that has to run before
+first paint — UI scaling and the saved language); all the logic lives in
+native ES modules under `js/`, loaded via
+`<script type="module" src="js/main.js">`:
 
 ```
-css/style.css        game styling (HUD, upgrade dock, start banner, Setup/Tech/Fleet modals)
+css/style.css        game styling (HUD, upgrade dock, Tech/Fleet modals); @imports the files below
+css/fonts.css        self-hosted web fonts (@font-face for fonts/, latin + latin-ext subsets)
+css/ui/              the new-style UI kit: shared primitives (kit.css — scaled design stage,
+                     full-width bars, "material" surfaces, panels) + one file per screen built
+                     on it (startScreen.css, setupModal.css); grain.png is the material's texture
+fonts/               the .woff2 font files (SIL Open Font License, originally from Google Fonts)
 js/
   version.js         current version number (shown next to the title) — bump on every meaningful release
   versionCheck.js    periodically checks for a newer deploy; blocks play with a "please refresh" overlay if this tab is stale
@@ -51,7 +58,9 @@ js/
                      ships/the drone also spawn arranged around it, inside a
                      gravity-free zone (world/solarGravity.js) — see "Space station" below
   ui/                HUD (telemetry, players list, collapsible panels, Wiki/Tech/Fleet buttons and modals,
-                     legend, upgrade dock, drone panel) and the Setup modal (banner.js)
+                     legend, upgrade dock, drone/station/planet panels), the start screen (banner.js),
+                     the Setup modal (setupModal.js), the global Escape-key chain (escapeKey.js)
+                     and all static UI text per language (i18nApply.js)
   net/               multiplayer: identity, "steward" election, world sync, ship broadcast,
                      Realtime reconnect handling
   main.js            entry point — wires the modules together and runs the game loop
@@ -61,7 +70,8 @@ supabase/schema.sql  database schema (tables, RLS, RPC functions) to paste into 
 `admin.html`/`css/admin.css`/`js/admin/`, `planetEditor.html`/`css/editor.css`/`js/editor/`,
 and `shipEditor.html` are separate developer-tool entry points, not part of
 the game's own module graph above — see "Object editor", "Admin panel" and
-"Ship editor" below. `blog/` isn't part of the game at all — see "Devlog"
+"Ship editor" below. `tools/` holds small standalone dev utilities (e.g.
+`grainTexture.html`, which regenerates `css/ui/grain.png`). `blog/` isn't part of the game at all — see "Devlog"
 below.
 
 Adding a new mechanic (e.g. another upgrade type, a new kind of celestial
@@ -142,8 +152,8 @@ There's a companion devlog at
 [swarmprotocol.blogspot.com](https://swarmprotocol.blogspot.com/) (Polish),
 hosted on Blogger — separate from this repo's own docs, for
 announcement/behind-the-scenes style posts rather than technical
-reference. `blog/` in this repo holds each post's hero image (a real
-gameplay screenshot for most posts, occasionally AI-generated) — the
+reference. `blog/` in this repo holds each post's images (real
+gameplay screenshots for most posts, occasionally AI-generated) — the
 Blogger API has no endpoint to upload post images directly, so images
 are hosted here instead and pulled into the post's HTML by URL via
 GitHub Pages, the same way the game itself is served. Any AI-generated
@@ -238,6 +248,7 @@ its own regardless; [`js/versionCheck.js`](js/versionCheck.js) handles
 that case by blocking play with a "please refresh" prompt once it detects
 a newer version is live. Its "Refresh now" button force-refreshes every
 JS/CSS file's browser cache entry before navigating (a hand-maintained
-list in that file — needs updating when a new file is added to `js/`),
+`MODULE_FILES` list in that file — needs updating whenever a file is
+added to `js/` or `css/`, including CSS pulled in via `@import`),
 plus an "or Ctrl+Shift+R" hint underneath either way, since a static
 site with no build step can't guarantee a clean cache bypass on its own.
