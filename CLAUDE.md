@@ -122,7 +122,12 @@ the full detail behind each of these.
   (`bodyPosAt`); health regenerates from a checkpoint
   (`SOLAR_REGEN_RATE`) via `bite_solar_body`, never destroyed.
   Patched-conics gravity on ships/drone lives in `world/solarGravity.js`;
-  orbit lines in `scene/orbitLines.js`.
+  orbit lines in `scene/orbitLines.js`. **The Sun must stay excluded from
+  the primary-body competition loop there** (`b.kind === "sun"`, same as
+  `"blackhole"`) — it has `soiRadius:Infinity`, so it otherwise always
+  "wins" as primary at its own weak per-body `gm` (~66.7) instead of the
+  real `GM_SUN` (60000), a real ~900x-undershoot bug live since v2.0.0
+  until fixed in v2.0.9 (see docs/architecture.md for the full story).
 - **Comets are the one body genuinely SIMULATED, not closed-form**
   (`world/cometPhysics.js`) — real gravity-curved swing-by, replayed via
   `advanceComet()` for late joiners. Exactly one exists at a time

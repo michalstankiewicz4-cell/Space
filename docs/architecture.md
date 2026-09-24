@@ -153,6 +153,38 @@ map is enough for orientation but not enough to safely modify this code.
     `world/blackholes.js` (gravity + kill radius unchanged from before
     the rewrite, just no more spawn/expiry timer now that there's exactly
     one, permanent black hole at slot 9).
+    **The Sun itself had to be excluded from that same loop too (v2.0.9)
+    — a real, ~900x-undershoot live bug, not just a design nuance.**
+    `SOLAR_BODIES[0]` (the Sun) has `soiRadius = Infinity` (its own `a=0`
+    means no SOI competition is needed against other bodies), so without
+    excluding it explicitly, it always "won" the primary-body competition
+    trivially for anything not actually inside a real planet's SOI — at
+    its own generic per-body `gm` (`radius³*0.9` ≈ 66.7 for the Sun's
+    radius 4.2), not the real `GM_SUN` constant (60000) that's supposed
+    to represent the Sun's actual pull. This silently weakened *all*
+    fallback-to-the-Sun gravity (ships and the drone both) to about
+    1/900th of its intended strength, for anything not currently inside
+    some planet's own (much smaller) SOI — which in practice is most of
+    the empty space in the system, including the station's own ~290-unit
+    orbit. Been live since this file was first written (v2.0.0), not
+    something the v2.0.6-2.0.8 station-field/camera/comet work
+    introduced. Found investigating a live report — "I flew the drone far
+    from the station and the Sun isn't pulling it" — and confirmed
+    directly: calling `updateSolarGravity(1)` (a full second of simulated
+    gravity in one call) against a drone placed 300 units from the Sun
+    moved it 0.0007 units instead of the real `GM_SUN/r²` prediction of
+    ~0.667 — a ~900x mismatch that lines up almost exactly with
+    `60000/66.7`. Fixed by also excluding `b.kind === "sun"` from the
+    primary-competition loop, same as the black hole already was;
+    `GM_SUN`/`bodyPosScratches[0]` (the Sun's actual position) remain
+    exactly as they were as the loop's own *fallback* source when no real
+    planet's SOI applies — only the accidental *competition* entry was
+    the bug. Re-verified after the fix: the same direct call now moves
+    that drone by 0.6667 units, matching the real prediction to 6
+    decimal places; ships/the drone still sit perfectly motionless within
+    `STATION_FIELD_RADIUS` (unaffected, confirmed separately); a drone
+    flown 50 units past the station now visibly drifts ~4.3 units toward
+    the Sun over 10 seconds — sane and gradual, not explosive.
   - **Orbit lines are static, precomputed once** (`scene/orbitLines.js#
     addOrbitLines()`, called from `scene/setup.js#initScene()`) — each of
     the 9 orbits (+ the station ring) is a closed ellipse sampled at 128

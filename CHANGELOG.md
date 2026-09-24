@@ -4,6 +4,27 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.0.9]
+
+### Fixed
+- **Ambient gravity toward the Sun was ~900x weaker than intended, for
+  ships and the drone both, ever since the fixed solar system shipped
+  (v2.0.0).** The Sun was never excluded from `world/solarGravity.js`'s
+  own "which body is currently the dominant pull source" competition the
+  way the black hole already was — since the Sun's own sphere-of-influence
+  is unbounded (`Infinity`, by design, as the ultimate fallback), it
+  always won that competition trivially for anything not actually inside
+  a real planet's much smaller SOI, using its own generic per-body mass
+  figure (~66.7) instead of the real constant meant to represent its
+  actual pull (60000). Reported live as "I flew the drone far from the
+  station and the Sun isn't pulling it" — confirmed directly (a drone
+  300 units out moved 0.0007 units in a full simulated second of
+  gravity, instead of the ~0.667 the real numbers predict) and fixed by
+  also excluding the Sun from that competition loop, the same way the
+  black hole already was. Re-verified: a drone flown 50 units past the
+  station now visibly drifts toward the Sun over time, at a sane, gradual
+  rate — not explosive, not imperceptible.
+
 ## [2.0.8]
 
 ### Changed

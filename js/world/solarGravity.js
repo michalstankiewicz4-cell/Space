@@ -40,7 +40,26 @@ function applyGravityToOne(entity, dt, applyToVel){
   let primary = null, primaryDist = Infinity, primaryPos = null;
   for(let i=0;i<SOLAR_BODIES.length;i++){
     const b = SOLAR_BODIES[i];
-    if(b.kind === "blackhole") continue; // handled separately, see header comment
+    // The black hole is handled separately (see header comment). The Sun
+    // itself must ALSO be excluded here, not just used as the fallback
+    // below - its own soiRadius is Infinity (world/solarSystem.js: a=0
+    // means no SOI competition needed against other bodies), so without
+    // this it always "won" the primary-body competition below trivially,
+    // at its own generic per-body `gm` (radius^3*0.9 = ~66.7 for the Sun's
+    // radius 4.2) instead of the real GM_SUN constant (60000) meant for
+    // "the Sun pulling things directly" - a real, live bug, not just a
+    // weak-but-working effect: found because the drone visibly wasn't
+    // drifting after flying far from the station, and confirmed by
+    // calling updateSolarGravity(1) directly - it moved a drone 300 units
+    // out by 0.0007 units in one full second of simulated gravity instead
+    // of the ~0.667 the real GM_SUN/r² predicts, an ~900x undershoot that
+    // matches 60000/66.7 almost exactly. This silently weakened gravity
+    // for EVERY ship too, not just the drone, ever since this file was
+    // first written - not something introduced by the drone-specific
+    // v2.0.8 change, just never noticed until the drone's own field
+    // exemption made "does gravity work AT ALL past the field" a much
+    // easier thing to actually observe.
+    if(b.kind === "blackhole" || b.kind === "sun") continue;
     const d = entity.pos.distanceTo(bodyPosScratches[i]);
     if(d < b.soiRadius && d < primaryDist){ primary = b; primaryDist = d; primaryPos = bodyPosScratches[i]; }
   }
