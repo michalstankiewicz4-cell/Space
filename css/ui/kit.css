@@ -27,11 +27,25 @@
   font-family:var(--uiFontBody); color:var(--uiText);
   pointer-events:none;
 }
-.uiStage > *, .uiPanel > *{ position:absolute; }
+/* Full-window-width strip in the same design-pixel space as .uiStage
+   (same --uiScale), for bars whose middle stretches with the window:
+   children anchored with `left` stick to the left edge, with `right` to
+   the right edge, and `left` + `right` together stretch. Its width in
+   design pixels is the window width divided by the scale — never less
+   than 1536, since the scale is width-limited on narrower windows. */
+.uiBar{
+  position:absolute; left:0; top:0;
+  width:calc(100% / var(--uiScale)); height:83px;
+  transform-origin:top left;
+  transform:scale(var(--uiScale));
+  font-family:var(--uiFontBody); color:var(--uiText);
+  pointer-events:none;
+}
+.uiStage > *, .uiBar > *, .uiPanel > *{ position:absolute; }
 /* :where() keeps this reset at plain-element specificity, so .mat/.oBtn
    backgrounds still win over it. */
-:where(.uiStage) button{ font:inherit; color:inherit; border:0; padding:0; background:none; cursor:pointer; }
-:where(.uiStage) button:disabled{ cursor:default; }
+:where(.uiStage, .uiBar) button{ font:inherit; color:inherit; border:0; padding:0; background:none; cursor:pointer; }
+:where(.uiStage, .uiBar) button:disabled{ cursor:default; }
 
 /* Material: grain + highlight/shade gradients, color set per variant. */
 .mat{

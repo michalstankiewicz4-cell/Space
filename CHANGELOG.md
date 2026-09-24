@@ -4,6 +4,16 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.1.4]
+
+### Changed
+- The start screen's top bar now spans the full window width: the logo
+  group sticks to the left edge, the DEV Blog group to the right edge,
+  and the two rails between them stretch. Previously the bar was fixed
+  to the 1536px design width, leaving empty space on both sides of wide
+  windows. New UI kit primitive `.uiBar` for such stretchy full-width
+  strips.
+
 ## [2.1.3]
 
 ### Fixed

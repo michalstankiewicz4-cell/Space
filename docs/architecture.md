@@ -807,7 +807,12 @@ map is enough for orientation but not enough to safely modify this code.
   inline `<head>` script in `index.html` — deliberately not a module: as
   one it only ran once main.js and all its imports had loaded, and the
   start screen flashed at full size until then (v2.1.1). Anchored to the
-  top edge so the top bar stays on top on portrait screens. Gotchas: the
+  top edge so the top bar stays on top on portrait screens. The top bar
+  itself is *not* in `.uiStage` but in a `.uiBar` (v2.1.4): a
+  full-window-width strip in the same scaled design-pixel space, whose
+  width in design px is `100% / --uiScale` — left-group elements use
+  `left`, right-group ones `right`, and the two rails use both, so they
+  stretch with the window. Gotchas: the
   kit's button reset is wrapped in `:where(.uiStage)` on purpose — at
   normal `.uiStage button` specificity its `background:none` beats `.mat`
   and every material button renders transparent. The game's own `.panel`

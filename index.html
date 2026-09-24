@@ -11,7 +11,7 @@
 <link rel="preload" href="fonts/oswald-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/roboto-condensed-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="css/ui/grain.png" as="image">
-<link rel="stylesheet" href="css/style.css?v=2.1.3">
+<link rel="stylesheet" href="css/style.css?v=2.1.4">
 <!-- Runs before first paint. Inline and in <head> on purpose: as a module it
      would only run once main.js and all its imports have loaded.
      1. UI kit stage scaling (css/ui/kit.css#.uiStage): fits the fixed
@@ -57,8 +57,8 @@
 
 <!-- Start screen + setup modal, built on the UI kit (css/ui/). -->
 <div id="banner">
-  <div class="uiStage">
-    <!-- Top bar -->
+  <!-- Top bar: full window width, the two middle rails stretch. -->
+  <div class="uiBar" id="topBar">
     <div class="mat blue" id="tlBracket"></div>
     <svg id="insignia" viewBox="0 0 52 48" aria-hidden="true">
       <defs>
@@ -86,7 +86,9 @@
     <div id="sdBox"></div>
     <a id="devBlogBtn" href="https://swarmprotocol.blogspot.com/" target="_blank" rel="noopener noreferrer">DEV Blog.PL</a>
     <div class="mat blue" id="trCap"></div>
+  </div>
 
+  <div class="uiStage">
     <!-- Start panel -->
     <section class="uiPanel" id="box">
       <div class="mat blueV" id="boxSide"></div>
@@ -348,6 +350,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script type="module" src="js/main.js?v=2.1.3"></script>
+<script type="module" src="js/main.js?v=2.1.4"></script>
 </body>
 </html>
