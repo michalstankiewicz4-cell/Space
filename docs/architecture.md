@@ -465,18 +465,26 @@ map is enough for orientation but not enough to safely modify this code.
     `setGhostTarget(mesh, x, y, z)`/`lerpGhost(mesh, dt)`, called once per
     ghost kind.
   - **`spawnDrone()` deliberately spawns it ~6 units out from the origin,
-    not inside the ships' own +-2 spawn cube** (`ships/swarm.js`'s
-    `spawnShip()`), and its pick sphere is smaller than a ship's (0.5 vs
-    0.55). This was a real, reported bug, not a style choice: the drone
-    is picked *before* ships/planets on every click (`scene/controls.js`),
-    so when it overlapped the swarm's spawn area, an ordinary click meant
-    to command ships onto a planet could silently reselect the drone
-    instead — which, since selecting it reopens its side panel, was
-    reported and investigated for several rounds as "the close button
-    doesn't work" (it did; a subsequent normal gameplay click was just
-    reselecting the drone and reopening the panel a moment later). If the
-    drone ever needs to move/spawn near the swarm again, revisit the
-    click-priority order or give ships priority over the drone instead.
+    away from the swarm's own spawn area** (its pick sphere is also
+    smaller than a ship's: 0.5 vs 0.55). This was a real, reported bug,
+    not a style choice: the drone is picked *before* ships/planets on
+    every click (`scene/controls.js`), so when it overlapped the swarm's
+    old spawn cube (both spawned near the origin, pre-v2.0.6), an
+    ordinary click meant to command ships onto a planet could silently
+    reselect the drone instead — which, since selecting it reopens its
+    side panel, was reported and investigated for several rounds as "the
+    close button doesn't work" (it did; a subsequent normal gameplay
+    click was just reselecting the drone and reopening the panel a moment
+    later). **The swarm's own spawn point moved away from the origin
+    entirely in v2.0.6** (`ships/swarm.js#shipSpawnPosition()`, now a
+    golden-angle spiral around `ctx.station.pos` — see the new "Ships
+    spawn at the station" bullet below), so this exact overlap can't
+    recur the way it originally did; the drone's own spawn point wasn't
+    touched by that change and still sits near the origin (i.e. now near
+    the Sun specifically, not just "empty space" the way it was
+    pre-9-orbit-rewrite) — if the drone ever needs revisiting, that's a
+    separate, not-yet-reported concern, not the click-priority bug this
+    bullet documents.
   - **`print(x)`'s in-world effect** (`js/drone/dronePrintFx.js`) is a gas
     puff + a laser that projects the text onto it, both spawned as plain
     scene objects (`THREE.Sprite`s for the gas/text via `CanvasTexture`,
@@ -629,3 +637,44 @@ map is enough for orientation but not enough to safely modify this code.
     (needed for the station's ~150+ shared sub-mesh materials, harmless
     no-op overhead for a single-material ship/drone mesh), so there's now
     exactly one dispose implementation instead of four near-identical ones.
+  - **Ships spawn arranged around the station, inside a gravity-free
+    containment field, instead of scattered near the origin** (v2.0.6) —
+    a real problem once ships spawn far from the Sun: with the old
+    `+-2` spawn cube (a leftover from before the 9-orbit rewrite, when
+    the origin was just empty space), ships would now spawn almost
+    inside the Sun's own radius (4.2). `ships/swarm.js#
+    shipSpawnPosition(index)` instead places each new ship on a
+    golden-angle spiral (the same even, non-overlapping distribution
+    phyllotaxis/sunflower-seed-head patterns use — `index * 2.3999...`
+    radians per step, radius growing with `sqrt(index)`) centered on
+    `ctx.station.pos`, sized so even a full ~23-ship fleet
+    (`TREE.fleet`'s max level) stays well inside `STATION_FIELD_RADIUS`
+    (11, `config.js`). `index` is just `ctx.ships.length` at spawn time —
+    no upfront fleet-size knowledge needed, so `reconcileFleetSize()`
+    (buying a Fleet upgrade) adding one ship at a time still gives each
+    new ship its own non-overlapping slot, same as the initial fleet
+    spawning all at once. `main.js` now spawns the station *before* the
+    initial fleet specifically so `ctx.station.pos` already exists for
+    this (previously the fleet spawned first).
+  - **`world/solarGravity.js#updateSolarGravity()` skips ambient gravity
+    entirely for any ship within `STATION_FIELD_RADIUS` of the
+    station** (same radius `station/stationField.js`'s own containment
+    pull-back already used — one coherent field, not two independently-
+    tuned radii: inside it, gravity simply doesn't apply; at/beyond the
+    boundary, `stationField.js`'s existing pull-back takes over for
+    anything that traveled away and went idle far from home). Before
+    this, the existing pull-back alone wasn't enough to keep a freshly-
+    spawned fleet parked: it only reacts once a ship has *already*
+    drifted past the boundary, so gravity would still tug on ships sitting
+    at the station the whole time, in a permanent tug-of-war rather than
+    genuinely being exempt. The station itself has no `soiRadius` of its
+    own in the patched-conics model (`world/solarSystem.js`'s own header
+    comment: orbit slot 4 is "the player-station ring, not a body"), so
+    without this exemption, real solar gravity at the station's own
+    ~290-unit distance (strong enough to matter, not negligible) was the
+    dominant, unopposed pull on anything parked there. Verified live
+    (offline mode): three freshly-spawned ships' positions were bit-for-
+    bit identical after 8 idle seconds, vs. drifting under the old
+    scattered near-origin spawn. Ships only, matching
+    `stationField.js`'s own existing scope — the drone was never covered
+    by that field either, and wasn't brought into this change.

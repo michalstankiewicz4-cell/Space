@@ -166,7 +166,11 @@ the full detail behind each of these.
   `.hidden`/`display:none` CSS trap, `pointerdown` vs `click`) in the doc.
 - **Space station** (`js/station/*.js`): one static per-player landmark,
   read-only docking panel, mesh shared between local + ghost rendering
-  via `buildStationMesh(opts)`.
+  via `buildStationMesh(opts)`. Ships spawn arranged around it on a
+  golden-angle spiral (`ships/swarm.js#shipSpawnPosition()`), inside a
+  gravity-free containment field (`STATION_FIELD_RADIUS`) —
+  `world/solarGravity.js` skips ambient gravity for any ship inside it,
+  `station/stationField.js` pulls back anything that's drifted beyond it.
 
 ## Security model (Supabase)
 

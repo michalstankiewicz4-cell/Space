@@ -4,6 +4,19 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.0.7]
+
+### Added
+- The station now has a subtle gravity-free containment field around it —
+  ambient solar gravity no longer pulls on ships parked there, instead of
+  fighting a permanent tug-of-war against the existing pull-back field.
+
+### Changed
+- Ships now spawn arranged around the player's own station instead of
+  scattered in a small cube near the Sun (a leftover from before the
+  fixed solar system, when that spot used to be empty space) — both the
+  initial fleet and any new ship added by a Fleet upgrade.
+
 ## [2.0.6]
 
 ### Added

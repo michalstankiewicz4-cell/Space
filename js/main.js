@@ -52,6 +52,17 @@ if(!NET_ENABLED){
   seedLocalWorld();
 }
 
+// Spawns before the fleet on purpose - ships/swarm.js#spawnShip() arranges
+// each new ship around ctx.station.pos, so the station has to exist first
+// or the very first fleet would fall back to the old near-origin spawn
+// (see spawnShip()'s own comment). Base camera's default framing needs
+// ctx.station.pos too, so this runs right after spawnStation() rather than
+// inside initControls() (which runs before any body/station exists yet) -
+// "base" is the default view on load (see scene/controls.js#
+// setCameraMode's own comment).
+spawnStation();
+setCameraMode("base");
+
 spawnInitialFleet();
 refreshDock();
 reconcileFleetSize();
@@ -63,12 +74,6 @@ initVersionCheck();
 spawnDrone();
 initDroneThumb();
 initDronePanel();
-spawnStation();
-// Base camera's default framing needs ctx.station.pos, so this runs right
-// after spawnStation() rather than inside initControls() (which runs
-// before any body/station exists yet) - "base" is the default view on
-// load (see scene/controls.js#setCameraMode's own comment).
-setCameraMode("base");
 initStationPanel();
 initPlanetPanel();
 initPlanetThumb();

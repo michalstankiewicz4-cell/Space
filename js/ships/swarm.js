@@ -26,6 +26,41 @@ const shakeScratch = new THREE.Vector3();
 const outwardScratch = new THREE.Vector3();
 const surfacePointScratch = new THREE.Vector3();
 
+// New ships spawn arranged around the player's own station, not scattered
+// near the origin (the old spawn cube predates the fixed 9-orbit solar
+// system, when the origin was just empty space - it's the Sun's own
+// position now, so that old +-2 cube would spawn ships almost inside the
+// Sun's own radius, 4.2). A golden-angle spiral (the same even-spacing
+// trick sunflower seed heads/phyllotaxis use) rather than a fixed ring: it
+// doesn't need to know the eventual fleet size up front, so
+// reconcileFleetSize() can call spawnShip() one at a time (buying a Fleet
+// upgrade) and each new ship still lands in its own non-overlapping slot,
+// same as the initial fleet spawning all at once.
+const SHIP_SPAWN_GOLDEN_ANGLE = 2.399963229728653; // radians, ~137.5°
+const SHIP_SPAWN_BASE_RADIUS = 5; // clears the station's own physical model (silhouette radius ~4.3)
+const SHIP_SPAWN_RADIUS_STEP = 0.9; // keeps even a full ~23-ship fleet (TREE.fleet's max) well inside STATION_FIELD_RADIUS (11, config.js), so the whole formation starts inside the gravity-free field (world/solarGravity.js)
+
+// Not a per-frame hot loop (only called at startup and when a Fleet
+// upgrade adds a ship), so this returns a fresh Vector3 rather than
+// reusing a module-level scratch one - the caller keeps this exact object
+// as the new ship's own sh.pos for the rest of its life.
+function shipSpawnPosition(index){
+  if(!ctx.station){
+    // Defensive fallback only - main.js spawns the station before any
+    // fleet now, so this shouldn't be reachable in practice, but a ship
+    // spawned with nothing to anchor to at least lands somewhere sane
+    // instead of crashing on ctx.station.pos.
+    return new THREE.Vector3((Math.random()-0.5)*4, (Math.random()-0.5)*4, (Math.random()-0.5)*4);
+  }
+  const angle = index * SHIP_SPAWN_GOLDEN_ANGLE;
+  const r = SHIP_SPAWN_BASE_RADIUS + SHIP_SPAWN_RADIUS_STEP*Math.sqrt(index);
+  return new THREE.Vector3(
+    ctx.station.pos.x + r*Math.cos(angle),
+    ctx.station.pos.y + Math.sin(index*0.9)*1.5,
+    ctx.station.pos.z + r*Math.sin(angle)
+  );
+}
+
 function makeShipMesh(){
   const group = new THREE.Group();
   const body = new THREE.ConeGeometry(0.28, 0.9, 8);
@@ -60,7 +95,7 @@ export function setShipSelected(sh, val){
 
 export function spawnShip(){
   const built = makeShipMesh();
-  const startPos = new THREE.Vector3((Math.random()-0.5)*4, (Math.random()-0.5)*4, (Math.random()-0.5)*4);
+  const startPos = shipSpawnPosition(ctx.ships.length);
   built.group.position.copy(startPos);
   ctx.scene.add(built.group);
   const ship = {

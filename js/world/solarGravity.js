@@ -1,5 +1,6 @@
 import { ctx } from "../core/context.js";
 import { SOLAR_BODIES, GM_SUN, bodyPosAt, nowSimTime } from "./solarSystem.js";
+import { STATION_FIELD_RADIUS } from "../config.js";
 
 // Per-frame ambient gravity — generalizes test.html's own patched-conics
 // tick() (its lines 822-835): a ship/the drone is pulled toward exactly one
@@ -56,8 +57,26 @@ function applyGravityToOne(entity, dt, applyToVel){
   else entity.pos.addScaledVector(toSrcScratch, accel);
 }
 
+// Same radius as station/stationField.js's own containment pull-back
+// (config.js#STATION_FIELD_RADIUS) - one coherent "protective field"
+// around the station, not two independently-tuned radii: inside it,
+// ambient gravity simply doesn't apply at all (so a freshly-spawned or
+// docked fleet sits still instead of immediately drifting toward the Sun
+// - real solar gravity is strong enough even at the station's own ~290-unit
+// distance that this isn't a negligible effect over time); at/beyond the
+// boundary, stationField.js's own pull-back takes over for anything that's
+// drifted or traveled away. Ships only, matching stationField.js's own
+// scope - the drone was never covered by that field either.
+function insideStationField(pos){
+  return !!ctx.station && pos.distanceTo(ctx.station.pos) < STATION_FIELD_RADIUS;
+}
+
 export function updateSolarGravity(dt){
   refreshBodyPositions(nowSimTime());
-  for(let i=0;i<ctx.ships.length;i++){ applyGravityToOne(ctx.ships[i], dt, true); }
+  for(let i=0;i<ctx.ships.length;i++){
+    const sh = ctx.ships[i];
+    if(insideStationField(sh.pos)) continue;
+    applyGravityToOne(sh, dt, true);
+  }
   if(ctx.drone) applyGravityToOne(ctx.drone, dt, false);
 }
