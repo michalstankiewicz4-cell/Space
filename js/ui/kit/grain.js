@@ -1,9 +1,6 @@
-// Shared runtime helpers for the new UI kit (see the "new UI kit" section
-// of css/style.css): the fixed-size .uiStage scaling and the procedural
-// grain texture that every .mat surface blends in.
-
-const STAGE_W = 1536;
-const STAGE_H = 1024;
+// Procedural grain texture for the UI kit's .mat surfaces (see
+// css/ui/kit.css): generated once at startup and exposed as the --grain
+// CSS var, which every .mat blends in with soft-light.
 
 // Tileable grayscale value noise (vertical streaks + blotches) plus fine
 // grain, applied with soft-light over every .mat surface.
@@ -41,13 +38,6 @@ function makeGrainTexture(size = 160, seed = 7){
   return cv.toDataURL("image/png");
 }
 
-function fitStage(){
-  const s = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
-  document.documentElement.style.setProperty("--uiScale", s.toFixed(4));
-}
-
-export function initUiKit(){
+export function applyGrainTexture(){
   document.documentElement.style.setProperty("--grain", `url(${makeGrainTexture()})`);
-  window.addEventListener("resize", fitStage);
-  fitStage();
 }

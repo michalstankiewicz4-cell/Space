@@ -1,0 +1,38 @@
+/* Setup modal (language / mouse / help). Built on css/ui/kit.css. */
+#setupModal{ position:fixed; inset:0; z-index:10; background:rgb(0 0 8 / .6); }
+#setupModalBox{ left:528px; top:318px; width:480px; height:330px; }
+#smSq{ left:12px; top:12px; width:22px; height:22px; border-radius:10px 3px 3px 9px; }
+#setupModalTitle{ left:44px; top:8px; font-family:var(--uiFontLabel); font-size:21px; letter-spacing:.4px; color:var(--uiHdText); }
+#setupCloseBtn{ right:12px; top:10px; width:44px; height:26px; border-radius:4px 13px 13px 4px;
+  font-family:var(--uiFontLabel); font-size:15px; color:#2a0508; transition:filter .15s; }
+#setupCloseBtn:hover{ filter:brightness(1.12); }
+#smLine{ left:12px; right:12px; top:44px; }
+#smSide{ left:12px; top:54px; width:18px; height:264px; border-radius:0 0 0 12px; }
+#setupTabs{ left:40px; top:56px; width:428px; height:30px; }
+#setupTabs button{ position:absolute; top:0; height:30px; width:138px; font-family:var(--uiFontLabel); font-weight:500;
+  font-size:16px; color:#0c1440; border-radius:8px 8px 3px 8px; transition:filter .15s; }
+#setupTabs button:nth-child(1){ left:0; } #setupTabs button:nth-child(2){ left:145px; } #setupTabs button:nth-child(3){ left:290px; }
+#setupTabs button:hover{ filter:brightness(1.12); }
+#setupTabs button.active{ border-radius:3px 18px 0 0; }
+.setupTabPanel{ left:40px; top:100px; width:428px; height:210px; }
+.setupTabPanel > *{ position:absolute; }
+#setupLangLabel{ left:0; top:4px; font-size:17px; color:#c7d0ff; }
+#setupLangButtons{ left:0; top:36px; width:428px; height:44px; }
+#setupLangButtons button{ position:absolute; top:0; width:160px; }
+#setupLangButtons button:nth-child(2){ left:170px; }
+#setupLangButtons button.active{ border-color:#f5bd5c; box-shadow:0 0 8px rgb(245 189 92 / .45), inset 0 0 8px rgb(245 189 92 / .12); }
+/* Scoped to #setupModal: the dev tools menu reuses plain .setupCheckRow. */
+#setupModal .setupCheckRow{ position:absolute; left:0; margin:0; display:flex; align-items:center; gap:12px;
+  font-family:var(--uiFontBody); font-size:17px; color:#c7d0ff; cursor:pointer; }
+#setupModal .setupCheckRow:nth-child(1){ top:4px; }
+#setupModal .setupCheckRow:nth-child(2){ top:50px; }
+#setupModal .setupCheckRow:nth-child(3){ top:96px; }
+#setupModal .setupCheckRow input{ position:absolute; opacity:0; pointer-events:none; }
+#setupModal .setupCheckRow .chk{ width:44px; height:24px; border-radius:4px 12px 12px 4px; border:1.5px solid #3c55d8;
+  background:#030820; position:relative; transition:border-color .15s; }
+#setupModal .setupCheckRow .chk::after{ content:""; position:absolute; left:3px; top:3px; width:15px; height:15px; border-radius:3px;
+  background:#2a3c96; transition:left .15s, background .15s; }
+#setupModal .setupCheckRow input:checked + .chk{ border-color:#f5bd5c; }
+#setupModal .setupCheckRow input:checked + .chk::after{ left:23px; background:linear-gradient(180deg,#ffda92,#f8bb56 55%,#d38b37); }
+#setupModal .setupCheckRow input:focus-visible + .chk{ box-shadow:0 0 0 2px #6f86ff; }
+#setupHelpText{ left:0; top:4px; width:428px; font-size:17px; line-height:30px; color:#c7d0ff; }

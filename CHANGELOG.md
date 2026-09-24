@@ -4,6 +4,25 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.1.2]
+
+### Changed
+- Split the new UI kit into proper files, no visual change: shared kit
+  primitives in `css/ui/kit.css`, one CSS file per screen
+  (`css/ui/startScreen.css`, `css/ui/setupModal.css`); on the JS side the
+  setup modal (`js/ui/setupModal.js`) and the global Escape-key chain
+  (`js/ui/escapeKey.js`) moved out of `js/ui/banner.js`, and the grain
+  texture lives in `js/ui/kit/grain.js`. Language changes now notify
+  subscribers via `i18n.js#onLangChange()`. Stage scaling has a single
+  source of truth (the inline `<head>` script) instead of being
+  duplicated in JS.
+
+### Fixed
+- `js/ui/uiKit.js` (added in 2.1.0) was missing from
+  `versionCheck.js#MODULE_FILES`, so the "Refresh now" button couldn't
+  force-refresh it. The list now covers every new file, including the
+  `@import`ed CSS.
+
 ## [2.1.1]
 
 ### Fixed

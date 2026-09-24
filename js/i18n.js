@@ -279,10 +279,19 @@ if(savedLang && STRINGS[savedLang]) currentLang = savedLang;
 
 export function getLang(){ return currentLang; }
 
+// Modules that own language-dependent text subscribe here instead of
+// whoever calls setLang() having to know about all of them.
+const langChangeListeners = [];
+
+export function onLangChange(fn){
+  langChangeListeners.push(fn);
+}
+
 export function setLang(lang){
   if(!STRINGS[lang]) return;
   currentLang = lang;
   writeStorage("roj-lang", lang);
+  langChangeListeners.forEach(function(fn){ fn(lang); });
 }
 
 export function t(key){

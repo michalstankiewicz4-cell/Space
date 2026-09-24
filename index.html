@@ -7,12 +7,21 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Antonio:wght@400;600;700&family=Oswald:wght@400;500;600&family=Roboto+Condensed:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=2.1.1">
-<!-- Set the UI kit's stage scale before first paint: js/ui/uiKit.js only
-     runs once main.js and all its imports have loaded, so until then the
-     start screen would flash at full 1536x1024 size. uiKit.js keeps it
-     updated on resize (same formula, keep the two in sync). -->
-<script>document.documentElement.style.setProperty("--uiScale", Math.min(innerWidth / 1536, innerHeight / 1024).toFixed(4));</script>
+<link rel="stylesheet" href="css/style.css?v=2.1.2">
+<!-- UI kit stage scaling (css/ui/kit.css#.uiStage): fits the fixed
+     1536x1024 design into the window. Inline and in <head> on purpose, so
+     the scale is set before first paint — as a module it would only run
+     once main.js and all its imports have loaded, and the start screen
+     would flash at full size until then. -->
+<script>
+(function(){
+  function fitUiStage(){
+    document.documentElement.style.setProperty("--uiScale", Math.min(innerWidth / 1536, innerHeight / 1024).toFixed(4));
+  }
+  fitUiStage();
+  addEventListener("resize", fitUiStage);
+})();
+</script>
 </head>
 <body>
 
@@ -27,8 +36,7 @@
   </div>
 </div>
 
-<!-- Start screen + setup modal: fixed 1536x1024 design, scaled to fit the
-     viewport by js/ui/uiKit.js (fitStage). -->
+<!-- Start screen + setup modal, built on the UI kit (css/ui/). -->
 <div id="banner">
   <div class="uiStage">
     <!-- Top bar -->
@@ -321,6 +329,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script type="module" src="js/main.js?v=2.1.1"></script>
+<script type="module" src="js/main.js?v=2.1.2"></script>
 </body>
 </html>

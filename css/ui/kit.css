@@ -1,0 +1,72 @@
+/* UI kit: shared primitives for the new-style UI (start screen and setup
+   modal so far). Screen-specific layout lives in its own file next to this
+   one (startScreen.css, setupModal.css). */
+:root{
+  --grain: none;               /* set at runtime by js/ui/kit/grain.js */
+  --uiScale: 1;
+  --uiFrame: #1c3bb4;
+  --uiFrameGlow: rgb(40 80 255 / .45);
+  --uiHdText: #96a8ff;
+  --uiText: #eef1ff;
+  --uiFontHead: "Antonio", "Arial Narrow", sans-serif;
+  --uiFontLabel: "Oswald", "Arial Narrow", sans-serif;
+  --uiFontBody: "Roboto Condensed", "Arial Narrow", sans-serif;
+}
+/* A fixed 1536x1024 design surface; everything inside is absolutely
+   positioned in design pixels. Scaled to fit the window via --uiScale,
+   set by the inline script in index.html's <head>. Anchored to the top
+   edge (not centered) so the top bar stays at the top of the viewport on
+   tall/portrait screens too. */
+.uiStage{
+  position:absolute; left:50%; top:0;
+  width:1536px; height:1024px;
+  transform-origin:top center;
+  transform:translateX(-50%) scale(var(--uiScale));
+  font-family:var(--uiFontBody); color:var(--uiText);
+  pointer-events:none;
+}
+.uiStage > *, .uiPanel > *{ position:absolute; }
+/* :where() keeps this reset at plain-element specificity, so .mat/.oBtn
+   backgrounds still win over it. */
+:where(.uiStage) button{ font:inherit; color:inherit; border:0; padding:0; background:none; cursor:pointer; }
+:where(.uiStage) button:disabled{ cursor:default; }
+
+/* Material: grain + highlight/shade gradients, color set per variant. */
+.mat{
+  --c:#5f77f7; --hi:#93a4ff; --lo:#3549c9;
+  background-color:var(--c);
+  background-image:
+    var(--grain),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--hi) 75%, transparent) 0%,
+      transparent 42%, transparent 62%,
+      color-mix(in srgb, var(--lo) 70%, transparent) 100%),
+    radial-gradient(140% 120% at 18% 8%, rgb(255 255 255 / .22), transparent 55%);
+  background-size:160px 160px, 100% 100%, 100% 100%;
+  background-blend-mode:soft-light, normal, normal;
+  box-shadow: inset 0 1px 1px rgb(255 255 255 / .35), inset 0 -2px 3px rgb(0 0 0 / .28);
+}
+.mat.gold  { --c:#f8bb56; --hi:#ffda92; --lo:#d38b37; }
+.mat.blue  { --c:#5f77f7; --hi:#90a3ff; --lo:#3a50d2; }
+.mat.blue3 { --c:#8ea6fd; --hi:#b7c6ff; --lo:#687fe6; }
+.mat.lilac { --c:#b07cb6; --hi:#d2a4d8; --lo:#8a5693; }
+.mat.red   { --c:#d05b69; --hi:#f08995; --lo:#a83a48; }
+.mat.blueV { --c:#6f86fa; --hi:#6078f5; --lo:#9aadff; }
+.mat.blueT { --c:#5c6ff1; --hi:#8b9bff; --lo:#4155d6; }
+
+.uiPanel{ pointer-events:auto; }
+.uiPanel::before{
+  content:""; position:absolute; inset:0; border-radius:12px;
+  border:1.5px solid var(--uiFrame);
+  box-shadow:0 0 8px var(--uiFrameGlow), inset 0 0 8px rgb(40 80 255 / .18);
+  background:rgb(0 2 12 / .9);
+  pointer-events:none;
+}
+.hdLine{ height:1.5px; background:linear-gradient(90deg,#2c4bd8,#1f3bb5 70%,#1a2f95); }
+.uiStage .oBtn{ height:44px; border:1.5px solid #3c55d8; border-radius:7px;
+  background:linear-gradient(180deg,#050a24,#00020c); font-family:var(--uiFontLabel);
+  font-size:17px; color:#e6ebff; letter-spacing:.3px; transition:box-shadow .15s, border-color .15s, filter .15s; }
+.uiStage .oBtn:not(:disabled):hover{ border-color:#6f86ff; box-shadow:0 0 8px rgb(95 119 247 / .5); }
+.uiStage .oBtn.gold{ border-color:#d9a75a; }
+.uiStage .oBtn.gold:not(:disabled):hover{ box-shadow:0 0 8px rgb(245 189 92 / .5); border-color:#f5bd5c; }
+.uiStage .oBtn:disabled{ opacity:.45; }

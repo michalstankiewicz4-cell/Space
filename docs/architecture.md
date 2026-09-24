@@ -788,20 +788,31 @@ map is enough for orientation but not enough to safely modify this code.
     position completely untouched (confirmed structurally too — the
     function's loop only ever iterates `ctx.ships`).
 - **New UI kit (start screen + setup modal, v2.1.0)**: ported from the
-  standalone `UI-start.html` mockup. A fixed 1536x1024 design (`.uiStage`,
-  everything absolutely positioned in design pixels) scaled to the window
-  by `js/ui/uiKit.js#fitStage()` via the `--uiScale` CSS var (also set once
-  by an inline `<head>` script in `index.html` before first paint, or the
-  screen flashes at full size until main.js loads), anchored to
-  the top edge so the top bar stays on top on portrait screens. `.mat`
-  surfaces blend a procedural grain texture (`--grain`, generated once in
-  `initUiKit()`). Gotchas: the kit's button reset is wrapped in
-  `:where(.uiStage)` on purpose — at normal `.uiStage button` specificity
-  its `background:none` beats `.mat` and every material button renders
-  transparent. The game's own `.panel` class (HUD) is unrelated — the kit
-  uses `.uiPanel` to avoid colliding with it. The start screen is
-  translucent over the live scene, so the HUD is hidden while it's open
-  via `body:has(#banner:not(.hidden))` in CSS, no JS. `.setupCheckRow` is
-  shared with the dev tools menu, so the kit's toggle-switch styling is
-  scoped to `#setupModal`. The in-game HUD itself still uses the old
-  style; `UI-standalone.html` is the mockup for porting it next.
+  standalone `UI-start.html` mockup. File layout: `css/ui/kit.css` holds
+  the shared primitives (`.uiStage`, `.mat` + color variants, `.uiPanel`,
+  `.hdLine`, `.oBtn`), one CSS file per screen next to it
+  (`startScreen.css`, `setupModal.css`), all pulled in via `@import` at
+  the top of `css/style.css` so its `?v=` stays the only CSS
+  cache-busting literal (imported files are in `versionCheck.js#
+  MODULE_FILES` instead). JS side: `js/ui/kit/grain.js` (procedural grain
+  for `.mat`, exposed as `--grain`), `ui/banner.js` (start screen only),
+  `ui/setupModal.js`, and `ui/escapeKey.js` (the global Escape priority
+  chain, a table of `[isOpen, close]` pairs — add new overlays there).
+  Language-dependent text refreshes via `i18n.js#onLangChange()`
+  subscribers, not a hardcoded callback list in whoever calls `setLang()`.
+  `.uiStage` is a fixed 1536x1024 design (everything absolutely positioned
+  in design pixels), scaled by the `--uiScale` CSS var, which is set by an
+  inline `<head>` script in `index.html` — deliberately not a module: as
+  one it only ran once main.js and all its imports had loaded, and the
+  start screen flashed at full size until then (v2.1.1). Anchored to the
+  top edge so the top bar stays on top on portrait screens. Gotchas: the
+  kit's button reset is wrapped in `:where(.uiStage)` on purpose — at
+  normal `.uiStage button` specificity its `background:none` beats `.mat`
+  and every material button renders transparent. The game's own `.panel`
+  class (HUD) is unrelated — the kit uses `.uiPanel` to avoid colliding
+  with it. The start screen is translucent over the live scene, so the
+  HUD is hidden while it's open via `body:has(#banner:not(.hidden))` in
+  CSS, no JS. `.setupCheckRow` is shared with the dev tools menu, so the
+  kit's toggle-switch styling is scoped to `#setupModal`. The in-game HUD
+  itself still uses the old style; `UI-standalone.html` is the mockup for
+  porting it next.

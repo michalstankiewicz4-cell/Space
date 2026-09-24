@@ -1,0 +1,82 @@
+/* Start screen (#banner): top bar + start panel. Built on css/ui/kit.css. */
+/* Full-viewport overlay; the live 3D scene shows through the shade. */
+#banner{
+  position:fixed; z-index:9; inset:0;
+  background:radial-gradient(60% 60% at 50% 52%, rgb(0 0 0 / .45), rgb(0 0 0 / .85));
+}
+/* The in-game HUD would otherwise show through the translucent shade. */
+body:has(#banner:not(.hidden)) :is(.hud, #devToolsBtn, #devToolsMenu){ visibility:hidden; }
+
+#tlBracket{ left:8px; top:9px; width:38px; height:66px;
+  clip-path:path("M38 0 H32 C12 0 0 16 0 34 C0 52 10 66 30 66 H38 Z"); }
+#insignia{ left:59px; top:12px; width:46px; height:42.5px; filter:drop-shadow(0 0 4px rgb(255 190 90 / .35)); }
+#title{ left:111px; top:4px; margin:0; font-family:var(--uiFontHead); font-weight:600;
+  font-size:37px; line-height:56px; letter-spacing:.2px; white-space:nowrap; }
+#title .t{ background:linear-gradient(180deg,#ffd88f 0%,#f8bb56 50%,#dd9540 100%);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 5px rgb(255 180 80 / .25)); }
+#versionTag{ font-family:var(--uiFontBody); font-size:14px; font-weight:400; color:#93a6ff; margin-left:6px; }
+#tb1{ left:49px;  top:63px; width:61px; height:11px; border-radius:5px 0 0 5px; }
+#tb2{ left:112px; top:63px; width:74px; height:11px; clip-path:polygon(0 0, 88% 0, 100% 50%, 88% 100%, 0 100%); }
+#tb3{ left:186px; top:63px; width:34px; height:11px; }
+#tb4{ left:226px; top:63px; width:95px; height:11px; }
+#goldSwoosh{ left:326px; top:8px; width:135px; height:67px;
+  clip-path:path("M0 51 H46 C64 51 72 44 78 30 C85 12 93 0 112 0 H124 Q135 0 135 10 L128 67 H0 Z"); }
+#topRail{ left:465px; top:8px; width:870px; height:8px; border-radius:0 4px 4px 0; }
+#bottomRail{ left:461px; top:66px; width:874px; height:9px; }
+#lilacSwoosh{ left:1338px; top:9px; width:50px; height:32px;
+  clip-path:path("M0 32 C9 32 12 24 14 14 C16 4 22 0 32 0 H50 V32 Z"); }
+#sdTop{ left:1384px; top:9px; width:100px; height:8px; }
+#sdBottom{ left:1384px; top:67px; width:100px; height:7px; }
+#sdBox{ left:1370px; top:17px; width:110px; height:50px; background:#000; border-radius:20px 0 0 20px; }
+#devBlogBtn{ left:1384px; top:25px; width:92px; height:34px; border:1.5px solid #3c55d8; border-radius:6px;
+  background:linear-gradient(180deg,#050a24,#00020c); font-family:var(--uiFontLabel); font-size:14px;
+  color:#e6ebff; letter-spacing:.3px; text-decoration:none; display:flex; align-items:center; justify-content:center;
+  pointer-events:auto; transition:box-shadow .15s, border-color .15s; }
+#devBlogBtn:hover{ border-color:#6f86ff; box-shadow:0 0 8px rgb(95 119 247 / .5); }
+#trCap{ left:1478px; top:9px; width:42px; height:65px;
+  clip-path:path("M0 0 H14 C32 0 42 14 42 32 C42 52 32 65 14 65 H0 Z"); }
+
+#box{ left:438px; top:302px; width:660px; height:410px; }
+#boxSide{ left:10px; top:10px; width:18px; height:270px; border-radius:12px 0 0 0; }
+#boxSide2{ left:10px; top:286px; width:18px; height:50px; }
+#boxSide3{ left:10px; top:342px; width:18px; height:58px; border-radius:0 0 0 12px; }
+
+#modeRow{ left:36px; top:10px; width:612px; height:34px; }
+#modeRow button{ position:absolute; top:0; height:34px; font-family:var(--uiFontLabel); font-weight:500;
+  font-size:18px; letter-spacing:.3px; color:#0c1440; transition:filter .15s; }
+#modeSingle { left:0;   width:196px; border-radius:3px 8px 3px 8px; }
+#modeMulti  { left:202px; width:208px; border-radius:3px 20px 0 0; }
+#modeFriends{ left:416px; width:196px; border-radius:8px 14px 3px 8px; }
+#modeRow .modeDisabled{ filter:saturate(.35) brightness(.55); display:flex; flex-direction:column;
+  align-items:center; justify-content:center; line-height:17px; padding-top:1px; cursor:not-allowed; }
+#modeRow .modeDisabled::after{ content:attr(title); display:block; font-family:var(--uiFontBody);
+  font-size:11px; font-weight:400; letter-spacing:.4px; line-height:12px; color:#0c1440; opacity:.85; }
+
+#bannerDesc{ left:48px; top:62px; width:590px; margin:0; font-size:18px; line-height:26px; color:#c7d0ff; }
+#descLine{ left:48px; right:22px; top:184px; }
+
+#nickLabel{ left:48px; top:196px; font-family:var(--uiFontLabel); font-size:17px; color:var(--uiHdText); letter-spacing:.3px; }
+#nickRow{ left:48px; top:226px; width:590px; height:48px; }
+#nickRow > *{ position:absolute; top:0; }
+/* Not wired up yet — Google sign-in is a future addition, grayed out
+   like every other not-yet-available control (#modeSingle/#modeFriends). */
+#nickGoogleBtn{ left:0; width:48px; height:48px; border:1.5px solid #3c55d8; border-radius:7px;
+  background:linear-gradient(180deg,#050a24,#00020c); display:flex; align-items:center; justify-content:center; }
+#nickGoogleBtn:disabled{ opacity:.45; cursor:not-allowed; }
+#nickGoogleBtn svg{ width:22px; height:22px; }
+#nickInput{ left:58px; width:474px; height:48px; margin:0; padding:0 14px; border:1.5px solid #3c55d8; border-radius:7px;
+  background:linear-gradient(180deg,#030820,#00020a); color:#fff; font-family:var(--uiFontBody); font-size:19px;
+  outline:none; transition:border-color .15s, box-shadow .15s; }
+#nickInput::placeholder{ color:#5f6fb8; }
+#nickInput:focus{ border-color:#f5bd5c; box-shadow:0 0 8px rgb(245 189 92 / .45), inset 0 0 8px rgb(245 189 92 / .1); }
+#nickRandomBtn{ left:542px; width:48px; height:48px; display:flex; align-items:center; justify-content:center; }
+#nickRandomBtn svg{ width:26px; height:26px; }
+#nickError{ left:48px; top:280px; font-size:16px; color:#ff6b6e; }
+
+#bannerButtons{ left:48px; top:316px; width:590px; height:52px; }
+#startBtn{ position:absolute; left:0; top:0; width:420px; height:52px; border-radius:6px 24px 24px 6px;
+  font-family:var(--uiFontLabel); font-weight:600; font-size:22px; letter-spacing:.8px; color:#241404; transition:filter .15s; }
+#startBtn:not(:disabled):hover{ filter:brightness(1.08); }
+#startBtn:disabled{ filter:saturate(.25) brightness(.5); cursor:not-allowed; }
+#setupBtn{ position:absolute; left:430px; top:0; width:160px; height:52px; }
