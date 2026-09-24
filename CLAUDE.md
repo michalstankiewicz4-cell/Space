@@ -12,7 +12,10 @@ found and fixed, exact function names) lives in `docs/`:
 [`docs/gotchas.md`](docs/gotchas.md), [`docs/blogger.md`](docs/blogger.md).
 Read the relevant one with the Read tool before modifying that subsystem —
 the summaries here are for orientation, not enough detail to safely change
-the code.
+the code. Don't read the long ones whole: `docs/architecture.md` and
+`docs/security.md` have one `## ` section per subsystem (listed in a
+Contents block at the top) — grep `^## ` for line numbers, then read
+only the section you need.
 
 ## What this is
 

@@ -3,14 +3,45 @@
 Referenced from [`CLAUDE.md`](../CLAUDE.md)'s condensed architecture map —
 this file holds the full history/verification behind each design decision
 (why it was chosen, live bugs found and fixed, exact function names). Read
-the relevant bullet here before touching that subsystem; CLAUDE.md's own
+the relevant section here before touching that subsystem; CLAUDE.md's own
 map is enough for orientation but not enough to safely modify this code.
+
+## Contents
+
+Section names only (no line numbers — they'd go stale). To jump to one
+without reading the whole file: grep `^## ` for its current line number,
+then read just that range.
+
+- [Body types](#body-types)
+- [Module split: bodies.js and controls.js](#module-split-bodiesjs-and-controlsjs)
+- [Ship movement: explicit orders only](#ship-movement-explicit-orders-only)
+- [Object editor](#object-editor)
+- [Camera modes](#camera-modes)
+- [Multiplayer and the steward](#multiplayer-and-the-steward)
+- [Solar system and gravity](#solar-system-and-gravity)
+- [Comets](#comets)
+- [Realtime channel health](#realtime-channel-health)
+- [Comet DELETE handling](#comet-delete-handling)
+- [Settings, identity and i18n](#settings-identity-and-i18n)
+- [Nickname moderation](#nickname-moderation)
+- [Ship cam](#ship-cam)
+- [Nebula skybox and starfield](#nebula-skybox-and-starfield)
+- [Pulsars](#pulsars)
+- [Programmable drone](#programmable-drone)
+- [Space station](#space-station)
+- [UI kit (start screen and setup modal)](#ui-kit-start-screen-and-setup-modal)
+- [Load order and first paint](#load-order-and-first-paint)
+
+## Body types
 
 - **Body types are data-driven**: each of the 7 celestial body kinds (sun,
   ice/neutral/volcanic planet, comet, meteoroid, black hole) is a plain
   object in its own file under `js/bodies/`, aggregated by `js/content.js`.
   A "planet" DB row only stores `kind`+`temp`, not which of the 3 planet
   variants generated it — `variantForTemp()` re-derives it deterministically.
+
+## Module split: bodies.js and controls.js
+
 - **`world/bodies.js` and `scene/controls.js` are split by concern, not by
   feature** — both grew large enough (500+/350+ lines) across several
   sessions' worth of additions that a codebase-structure review flagged
@@ -38,6 +69,9 @@ map is enough for orientation but not enough to safely modify this code.
   (`net/bodiesSync.js`, `requestSpawnPlanet` — since renamed
   `requestSpawnComet`, see below) was among the files whose imports had to
   be repointed at the new module boundaries.
+
+## Ship movement: explicit orders only
+
 - **Ships only ever move on an explicit order.** `ships/swarm.js`'s
   `updateShips()` sets a ship's `target` straight from `commandedTarget`
   (set by `commandTo()` in `scene/controls.js`, when ships are selected
@@ -47,11 +81,17 @@ map is enough for orientation but not enough to safely modify this code.
   and clicking a planet with nothing selected silently sent the *entire*
   swarm. Clicking a planet with no selection now just shows a "select
   ships first" toast (`toast.noSelection`) instead of doing anything.
+
+## Object editor
+
 - **Object editor** (`planetEditor.html`, not linked from the game) reuses the
   game's own `materializePlanet`/`materializeBlackHole` functions for its
   live preview, so it can never visually drift from actual gameplay. It
   has no backend, so "Download" just produces copy-pasteable
   `export const ... = {...}` blocks for `js/bodies/*.js`.
+
+## Camera modes
+
 - **Camera has two modes, toggled top-center in the HUD** (`scene/
   controls.js#setCameraMode()`, v2.0.6): "system" orbits the Sun at the
   origin (the original, only view before this); "base" orbits the
@@ -94,6 +134,9 @@ map is enough for orientation but not enough to safely modify this code.
   after this change specifically because of that shared-module risk: the
   editor's own camera still orbits the origin at its own independently-set
   radius, unaffected.
+
+## Multiplayer and the steward
+
 - **Multiplayer** (Supabase, anonymous auth, no login UI) splits into two
   completely different sync models depending on whether a body is
   permanent — see the "Solar system" and "Comets" bullets right below for
@@ -111,6 +154,9 @@ map is enough for orientation but not enough to safely modify this code.
   staleness gate (`net/stewardFallback.js#createStalenessGate`) lets any
   other connected client step in once it's been suspiciously longer than a
   comet's own full lifecycle (transit + cooldown) since one last appeared.
+
+## Solar system and gravity
+
 - **The world is a fixed 9-orbit solar system, not the old randomly-
   scattered, endlessly-respawning pool of up to ~40 bodies** (v2.0.0,
   `world/solarSystem.js`'s `SOLAR_BODIES` table: Sun at the center, orbits
@@ -256,6 +302,9 @@ map is enough for orientation but not enough to safely modify this code.
     just the orbit radii themselves.** (A third instance of this exact
     lesson, missed the first time around, is documented in
     [`docs/security.md`](security.md): `bodies_pos_check`/`bodies_vel_check`.)
+
+## Comets
+
 - **Comets are the one body whose position is genuinely SIMULATED, not a
   closed-form function of time** (`world/cometPhysics.js`) — everything
   in the "Solar system" bullet above computes "where am I right now"
@@ -332,6 +381,9 @@ map is enough for orientation but not enough to safely modify this code.
     that speed scale changes meaningfully**, the same distance-rescale
     lesson the "Solar system" bullet above already flags for orbital
     speed and DB constraints specifically.
+
+## Realtime channel health
+
 - **Realtime channel health has no free lunch.** `net/connect.js` handles
   `subscribe()`'s `"CHANNEL_ERROR"`/`"TIMED_OUT"`/`"CLOSED"` statuses with
   an exponential-backoff reconnect, and exposes `isConnected()`. Don't
@@ -374,6 +426,9 @@ map is enough for orientation but not enough to safely modify this code.
   instead of a population cap (see the "Comets" architecture bullet
   above) — but `createStalenessGate` itself is still exactly this shape,
   now with just the one caller.
+
+## Comet DELETE handling
+
 - **A DELETE on `bodies` (comet-only now, see the "Comets" architecture
   bullet above) can mean either "eaten" or "flew back out of the system
   on its own"** — `onBodyDeleted()` in `js/net/bodiesSync.js` distinguishes
@@ -390,6 +445,9 @@ map is enough for orientation but not enough to safely modify this code.
   contained to comets now that fixed solar bodies never leave `bodies`
   (or `solar_bodies`) at all — they're eaten in place and regenerate,
   never deleted.
+
+## Settings, identity and i18n
+
 - **Settings vs. identity vs. i18n**: three separate small persisted
   modules, deliberately not merged — `js/settings.js` (local input/UX
   prefs: mouse invert/swap), `js/net/identity.js` (nickname/color, shared
@@ -403,6 +461,9 @@ map is enough for orientation but not enough to safely modify this code.
   Each module still owns its own key name, JSON parsing and defaults; only
   the two calls that can actually throw got deduped. New persisted state
   should use these too, not a fresh inline try/catch.
+
+## Nickname moderation
+
 - **Nickname moderation is defense-in-depth, not just input validation.**
   `js/moderation.js`'s `containsProfanity()` is checked both when a player
   confirms their own nick (`net/identity.js`, a courtesy — just blocks the
@@ -422,6 +483,9 @@ map is enough for orientation but not enough to safely modify this code.
     `NET_MAX_NICK_LENGTH` (20) in `confirmNick()` — one shared constant
     for both the own-nick length cap and the remote-payload safety clamp
     in `shipsBroadcast.js`, not two numbers that can drift apart.
+
+## Ship cam
+
 - **Ship cam** (`js/scene/shipcam.js`): a picture-in-picture "cockpit" view
   rendered as a *second* render pass into a small corner rectangle of the
   same canvas/renderer (`setViewport`/`setScissor`, right after the main
@@ -433,6 +497,9 @@ map is enough for orientation but not enough to safely modify this code.
   (verified empirically, not yet root-caused) — the ship cam camera
   corrects for this with a 180°-about-Y flip before copying the mesh's
   quaternion, since a camera always looks down its own -Z.
+
+## Nebula skybox and starfield
+
 - **Nebula skybox** (`js/scene/skybox.js#addSkybox()`): a huge (radius 900)
   inverted sphere with a canvas-generated equirectangular texture (a dark
   gradient + additive-blended soft color-cloud blobs in the game's own
@@ -457,6 +524,9 @@ map is enough for orientation but not enough to safely modify this code.
   orange/red) did individual colored stars actually read as colored,
   confirmed via a cropped, upscaled screenshot, not just eyeballing the
   full-scene view where single pixels are too small to judge.
+
+## Pulsars
+
 - **Pulsars** (`js/scene/pulsars.js`): a handful (`PULSAR_COUNT`, currently
   6) of small `THREE.Sprite`s scattered among the starfield's own radius
   range, each independently brightening/dimming on its own randomized
@@ -469,6 +539,9 @@ map is enough for orientation but not enough to safely modify this code.
   purely so other code (or a test) can tell them apart from the sun-halo/
   drone-print sprites already sharing the scene, since none of those set
   that flag.
+
+## Programmable drone
+
 - **Programmable drone** (`js/drone/*.js`): a single
   extra ship per player that only moves by running a player-written
   script — never auto-targets anything like the swarm's ships do.
@@ -648,6 +721,9 @@ map is enough for orientation but not enough to safely modify this code.
     that comparison instead of requiring every new element to write its
     own `#itsId.hidden{...}` override just to out-specificity its own base
     rule.
+
+## Space station
+
 - **Space station** (`js/station/*.js`): one static per-player landmark,
   same "singleton on `ctx`, not an array" shape as the drone (`ctx.station`,
   not `ctx.ships`) — but unlike the drone it never moves once spawned (no
@@ -787,6 +863,9 @@ map is enough for orientation but not enough to safely modify this code.
     directly against a drone placed far from the station left its
     position completely untouched (confirmed structurally too — the
     function's loop only ever iterates `ctx.ships`).
+
+## UI kit (start screen and setup modal)
+
 - **New UI kit (start screen + setup modal, v2.1.0)**: ported from the
   standalone `UI-start.html` mockup. File layout: `css/ui/kit.css` holds
   the shared primitives (`.uiStage`, `.mat` + color variants, `.uiPanel`,
@@ -823,6 +902,9 @@ map is enough for orientation but not enough to safely modify this code.
   kit's toggle-switch styling is scoped to `#setupModal`. The in-game HUD
   itself still uses the old style; `UI-standalone.html` is the mockup for
   porting it next.
+
+## Load order and first paint
+
 - **Load order / first paint (v2.1.3)**: `initScene()` (WebGL context +
   first shader compiles) blocks the main thread long enough to notice,
   and the browser can't paint or restyle during it. Three consequences,

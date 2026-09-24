@@ -2,9 +2,24 @@
 
 Referenced from [`CLAUDE.md`](../CLAUDE.md)'s condensed security rules —
 this file holds the exploit post-mortems and live-verification detail
-behind each rule. Read the relevant bullet here before touching RLS
+behind each rule. Read the relevant section here before touching RLS
 policies, CHECK constraints, or any `SECURITY DEFINER` RPC in
 `supabase/schema.sql`.
+
+## Contents
+
+Section names only (no line numbers — they'd go stale). To jump to one
+without reading the whole file: grep `^## ` for its current line number,
+then read just that range.
+
+- [No client-writable UPDATE policy](#no-client-writable-update-policy)
+- [Rate-limited INSERT and DELETE on bodies](#rate-limited-insert-and-delete-on-bodies)
+- [bodies narrowed to comets](#bodies-narrowed-to-comets)
+- [activity_log audit trail](#activitylog-audit-trail)
+- [bite_body rate limit](#bitebody-rate-limit)
+- [Anonymous-auth spam](#anonymous-auth-spam)
+
+## No client-writable UPDATE policy
 
 - **Rule: no client-writable UPDATE policy on `bodies`, `solar_bodies`, or
   `world_meta`.** The only column that ever needs to change after insert
@@ -29,6 +44,9 @@ policies, CHECK constraints, or any `SECURITY DEFINER` RPC in
   same class of bug structurally impossible there, not just
   policy-avoided. Don't reintroduce a permissive UPDATE policy on either
   table when adding new mutable columns.
+
+## Rate-limited INSERT and DELETE on bodies
+
 - **INSERT/DELETE on `bodies` stay permissive on purpose — up to a rate
   (1.9.2).** Any anon-authenticated client can still insert or delete
   rows directly (steward election is a client-side courtesy for
@@ -48,6 +66,9 @@ policies, CHECK constraints, or any `SECURITY DEFINER` RPC in
   (see below), those per-kind branches collapsed back into one flat range
   again — this time correctly "plausible-looking," since there's only one
   kind left to satisfy, not a reintroduction of the original gap.
+
+## bodies narrowed to comets
+
 - **`bodies` narrowed to comet-only** once the 9-orbit rewrite shipped
   (v2.0.0) — `bodies_kind_comet_check` (`check (kind = 'comet')`) layers
   on top of the original inline kind check, and the cap trigger
@@ -87,6 +108,9 @@ policies, CHECK constraints, or any `SECURITY DEFINER` RPC in
     burst-rejection threshold — both stay low-severity and self-healing,
     and both are at least *noticed* even when paced that carefully (see
     the `activity_log` bullet below).
+
+## activity_log audit trail
+
 - **`activity_log` itself is a passive audit trail — nothing reads it and
   auto-bans anyone.** Same "RLS enabled, zero policies" shape as
   `bite_rate_limit`: no client, modified or not, can read, write, or
@@ -219,6 +243,9 @@ policies, CHECK constraints, or any `SECURITY DEFINER` RPC in
     `_burst`/`_bruteforce`/`_spam`/`_exceeded`, it'll have the same silent
     gap — rename to fit the convention rather than special-casing another
     exact string.
+
+## bite_body rate limit
+
 - **`bite_body` is rate-limited per actor (20 calls/second)**, via the
   `bite_rate_limit` table (RLS enabled, zero policies — reachable only
   from inside the `SECURITY DEFINER` function, never directly by a
@@ -229,6 +256,9 @@ policies, CHECK constraints, or any `SECURITY DEFINER` RPC in
   concurrent calls against one body applied exactly 20 and dropped 20.
   Tripping it now also writes to `activity_log` (see below) — still just
   dropped silently as far as the caller can tell, nothing changed there.
+
+## Anonymous-auth spam
+
 - **Anonymous-auth spam**: the live project has
   `rate_limit_anonymous_users = 30` (Supabase's own per-IP throttle — this
   is what produces the 429s during heavy testing, see gotcha below) and
