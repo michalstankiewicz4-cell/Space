@@ -30,6 +30,15 @@ Supabase Management API token.
   (that redirect URI was never added to the client's authorized list).
   If the refresh token ever needs regenerating, redo it via OAuth
   Playground rather than fighting a fresh `localhost` flow again.
+- **`posts.insert` publishes immediately by default — pass
+  `?isDraft=true` on the URL to create a draft instead.** Confirmed live
+  (2026-09-24): creating a post normally (via `POST .../posts/`) with no
+  query param would go straight to `status: LIVE`; adding `?isDraft=true`
+  made the same call return `status: DRAFT` instead, leaving the actual
+  publish step to the user reviewing it in the Blogger UI — the
+  established workflow (Claude drafts, the user reviews and publishes
+  manually) depends on remembering this param every time, not just on
+  leaving `posts.publish` uncalled.
 - **`posts.publish`/`posts.revert` (and any other empty-body POST to the
   Blogger API) need an explicit `Content-Length: 0` header** — without
   it, Google's edge returns a bare `411 Length Required` HTML page
