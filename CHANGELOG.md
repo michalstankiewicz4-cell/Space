@@ -4,6 +4,20 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.0.5]
+
+### Fixed
+- Removed a stray dashed trail of separate white dots visible behind a
+  comet from certain viewing angles — not the tail, an unrelated sparkle
+  particle effect (`spawnTailParticle`, inherited from ship engine
+  trails) spawning one particle every fixed 0.03s at the comet's current
+  position. That looked like a continuous streak at the old, much slower
+  comet speed, but at real comet speeds (up to ~44 units/s near
+  perihelion) each spawn point ends up too far from the last to read as
+  anything but a row of distinct dots. Removed entirely rather than
+  re-tuned — redundant now with both the comet's own geometric tail and
+  the new trajectory line (v2.0.4).
+
 ## [2.0.4]
 
 ### Changed

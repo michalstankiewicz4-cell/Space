@@ -7,7 +7,6 @@ import { supabase } from "../supabaseClient.js";
 import {
   generateCrackTexture, makeRockGeometry, makeSunHaloTexture, makePlanetSurfaceTexture
 } from "./textures.js";
-import { spawnTailParticle } from "../fx/particles.js";
 import { hideBolt } from "../ships/swarm.js";
 import { bodyParams, tempColor, randomPlanetSpawnData, contentKindFor } from "./bodyParams.js";
 import { buildSunRays, buildCometTail, updateCometTailDirection, buildSelectionBracket } from "./bodyMeshParts.js";
@@ -236,8 +235,7 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     // fixed solar body's closed-form orbit or a ship's own steering) — no
     // more cached driftDir, either: "away from the sun" changes as the
     // comet moves, so it's recomputed fresh each frame instead.
-    vel: kind==="comet" ? cometVel : vel,
-    tailTimer: 0
+    vel: kind==="comet" ? cometVel : vel
   };
   ctx.planets.push(p);
   applyHealthVisual(p);
@@ -384,17 +382,10 @@ export function updateBodies(dt){
       // "Away from the sun," recomputed fresh every frame since the comet
       // is now curving (not moving in a fixed direction) - the Sun sits at
       // the origin, so the comet's own position IS that direction once
-      // normalized. Both the particle trail and the tail mesh itself
-      // (bodyMeshParts.js#updateCometTailDirection) use this same
-      // real-astronomy direction now, not "opposite velocity."
+      // normalized (bodyMeshParts.js#updateCometTailDirection uses this
+      // same real-astronomy direction, not "opposite velocity").
       const awayFromSun = outwardCometScratch.copy(p.basePos).normalize();
       if(p.cometTail) updateCometTailDirection(p.cometTail, awayFromSun);
-
-      p.tailTimer -= dt;
-      if(p.tailTimer <= 0){
-        p.tailTimer = 0.03;
-        spawnTailParticle(p.mesh.position, awayFromSun, p.mesh.material.color);
-      }
 
       if(p.basePos.length() > COMET_EXIT_RADIUS){
         despawnBodySilently(p);

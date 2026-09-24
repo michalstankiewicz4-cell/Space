@@ -11,8 +11,15 @@ for(let pi=0; pi<MAX_PARTICLES; pi++){
   particlePool.push({ active:false, life:0, maxLife:0, pos:new THREE.Vector3(), vel:new THREE.Vector3(), color:new THREE.Color() });
 }
 
-// Creates the shared particle system (debris/explosions/comet trails) and
-// adds it to the scene. Call once, after initScene().
+// Creates the shared particle system (bite debris/explosions) and adds it
+// to the scene. Call once, after initScene(). Comets used to also spawn a
+// sparkle trail from this pool (spawnTailParticle, removed) - at real
+// comet speeds (up to ~44 units/s near perihelion) a fixed-time spawn
+// interval spaced particles too far apart to read as a continuous trail,
+// showing up instead as a visibly dashed line of separate dots trailing
+// the comet - reported live, and redundant with the comet's own geometric
+// tail (bodyMeshParts.js#buildCometTail) plus the new trajectory line
+// (scene/orbitLines.js#buildCometTrajectoryLine) anyway.
 export function initParticles(){
   particleGeo = new THREE.BufferGeometry();
   particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions,3));
@@ -62,18 +69,6 @@ export function spawnExplosionParticles(center, color, count){
     pt.maxLife = 0.55+Math.random()*0.55;
     pt.color.copy(color);
   }
-}
-
-export function spawnTailParticle(pos, driftDir, color){
-  const pt = acquireParticle();
-  if(!pt) return;
-  pt.active = true;
-  pt.pos.copy(pos);
-  const jitter = new THREE.Vector3((Math.random()-0.5),(Math.random()-0.5),(Math.random()-0.5)).multiplyScalar(0.4);
-  pt.vel.copy(driftDir).multiplyScalar(0.6+Math.random()*0.5).add(jitter);
-  pt.life = 0;
-  pt.maxLife = 0.7+Math.random()*0.5;
-  pt.color.copy(color);
 }
 
 export function updateParticles(dt){
