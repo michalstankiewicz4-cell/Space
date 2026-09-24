@@ -95,8 +95,9 @@ shown next to the title on the start screen and in the browser tab title
   inclination, ascending-node rotation), not straight lines or static points.
 - **Real gravity.** Every ship (and the drone) is pulled by exactly one
   dominant body at a time — whichever one's sphere of influence it's
-  currently inside, otherwise the Sun — the same patched-conics model Kerbal
-  Space Program uses. An idle ship with no orders now visibly drifts under
+  currently inside, otherwise the Sun — the same patched-conics
+  simplification real orbital-mechanics games commonly use. An idle ship
+  with no orders now visibly drifts under
   gravity instead of sitting perfectly still forever.
 - **Eaten bodies regenerate instead of dying.** Biting the Sun or a planet
   down to zero health no longer destroys it — health regrows over time (a
@@ -331,8 +332,8 @@ shown next to the title on the start screen and in the browser tab title
 ## [1.10.0]
 
 ### Added
-- A space station for every player: a procedurally built DS9-style
-  ring-and-hub structure (no model files — pure Three.js primitives),
+- A space station for every player: a procedurally built ring-and-hub
+  structure (no model files — pure Three.js primitives),
   spawned once near the swarm's starting area and never moving. Select it
   to open a docking panel showing fleet size, evolution points and a
   compact upgrade-level summary, with shortcuts into the existing Tech and
@@ -710,7 +711,7 @@ list. Fixed before shipping.
 ## [1.6.0]
 
 ### Added
-- Programmable drone (`js/drone/*.js`), Colobot-inspired: a second, distinct
+- Programmable drone (`js/drone/*.js`): a second, distinct
   ship (gold octahedron) that never flies on its own — it only moves by
   running a script the player writes and selects/deselects like any other
   unit (selection ring, RTS-style — the camera never reacts to it).

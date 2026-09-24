@@ -51,9 +51,9 @@ export const TREE = {
   }
 };
 
-// Programmable drone (see js/drone/*.js) — a single extra ship per player,
-// Colobot-style: doesn't fly on its own, only moves/attacks by running a
-// script the player writes. Kept separate from the swarm's own TREE/
+// Programmable drone (see js/drone/*.js) — a single extra ship per player
+// that doesn't fly on its own, only moves/attacks by running a script the
+// player writes. Kept separate from the swarm's own TREE/
 // upgrade stats since the drone isn't part of that economy.
 export const DRONE_MAX_FUEL = 100;
 export const DRONE_FUEL_PER_MOVE_UNIT = 1; // fuel spent per unit of move() distance

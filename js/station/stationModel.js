@@ -1,4 +1,4 @@
-// Procedural DS9-style station mesh — pure primitives (sphere/cylinder/
+// Procedural ring-and-hub station mesh — pure primitives (sphere/cylinder/
 // cone/torus/box), no model files. Single source of truth shared by two
 // callers: the local player's own station (js/station/station.js,
 // spawnStation()) and every remote player's ghost station

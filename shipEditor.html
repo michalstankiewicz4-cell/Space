@@ -183,8 +183,8 @@
   // ---------- block geometry builders ----------
   // Every shape is built to fit inside a unit cell centered on its own local
   // origin (roughly -0.48..0.48 per axis, leaving a thin gap between
-  // neighboring blocks so individual pieces stay visually distinct — same
-  // idea as Minecraft/Space Engineers' own block gap).
+  // neighboring blocks so individual pieces stay visually distinct — the
+  // usual trick voxel/block-building games use to keep a grid readable).
   //
   // NOT DONE YET, ON PURPOSE (see the user's own "optimize later" framing):
   // no hidden-face culling / greedy meshing between adjacent solid blocks.
@@ -425,8 +425,8 @@
   // Returns { kind:"empty", cell } or { kind:"block", cell, adjacentCell }
   // — `cell` is the hit block's own cell (what Ctrl-click removes),
   // `adjacentCell` is the neighbor in the direction of the hit FACE (what
-  // a plain click extends into, Minecraft-style — face detection per the
-  // user's own request), or null if that neighbor is out of grid bounds.
+  // a plain click extends into — face detection per the user's own
+  // request), or null if that neighbor is out of grid bounds.
   function resolveHit(e){
     const ndc = ndcFromEvent(e);
     raycaster.setFromCamera(ndc, camera);
@@ -585,7 +585,7 @@
   // of continuing — reported live as a drag from a block's underside
   // "catching the walls" instead of continuing further down. Locking to
   // the axis and driving length off screen-space drag distance sidesteps
-  // the ambiguity entirely (the same approach Space Engineers itself uses
+  // the ambiguity entirely (the common approach block-building games use
   // for extruding a line of blocks out from a placed one).
   function axisStepCell(e){
     if(!dragAxis) return null;

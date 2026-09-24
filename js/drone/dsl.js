@@ -1,4 +1,4 @@
-// Tiny Colobot-inspired scripting language for the programmable drone (see
+// Tiny scripting language for the programmable drone (see
 // drone.js/interpreter.js). Deliberately NOT JavaScript — a hand-rolled
 // lexer + recursive-descent parser producing a small AST, so scripts run
 // through our own interpreter (interpreter.js) and can never touch

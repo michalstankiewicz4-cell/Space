@@ -170,8 +170,8 @@ execution for real time without blocking the game loop or the browser tab.
 
 ## Space station
 
-Every player also has one static space station (a DS9-style ring-and-hub
-structure, built entirely from primitive geometry — no model files) that
+Every player also has one static space station (a ring-and-hub structure,
+built entirely from primitive geometry — no model files) that
 spawns once and never moves. Select it to open its docking panel: a
 read-only overview (fleet size, evolution points, upgrade levels) with
 shortcuts into the existing Tech/Fleet modals — no separate resource

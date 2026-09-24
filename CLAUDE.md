@@ -423,7 +423,7 @@ local (`localStorage`).
   purely so other code (or a test) can tell them apart from the sun-halo/
   drone-print sprites already sharing the scene, since none of those set
   that flag.
-- **Programmable drone** (`js/drone/*.js`, Colobot-inspired): a single
+- **Programmable drone** (`js/drone/*.js`): a single
   extra ship per player that only moves by running a player-written
   script — never auto-targets anything like the swarm's ships do.
   - `dsl.js` (hand-rolled lexer + recursive-descent parser, not eval/

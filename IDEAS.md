@@ -12,7 +12,7 @@ feature itself doesn't exist yet.
 **Concept**: give every ship (and maybe the drone/station) a "system
 password." Within a certain range, another player can attempt to log in to
 it via a script they write themselves — reusing the drone's existing
-Colobot-style DSL (`js/drone/dsl.js`/`interpreter.js`) rather than inventing
+DSL (`js/drone/dsl.js`/`interpreter.js`) rather than inventing
 a second scripting system. Fits the game's existing "write a small program
 to interact with the world" loop instead of a bolted-on separate minigame.
 
@@ -166,7 +166,7 @@ and programming-model pieces together — a small solar system (sun +
 planets on real elliptical/inclined orbits, two with moons), patched-conics
 gravity (the ship is pulled by exactly one dominant body at a time,
 whichever's sphere-of-influence — derived from mass — it's currently
-inside; otherwise the sun), and a Scratch-style block palette (engine
+inside; otherwise the sun), and a visual block palette (engine
 thrust %, yaw/pitch/roll degrees, wait, repeat-with-nesting) instead of the
 drone's text DSL, plus a live predicted-trajectory line (one from current
 velocity alone, one simulating the whole planned block program first).
@@ -183,7 +183,7 @@ see CLAUDE.md's "Comets" bullet, including a real predicted-trajectory
 line for each comet's own flight path (`scene/orbitLines.js#
 buildCometTrajectoryLine`), the same concept the prototype's own
 predicted-trajectory line explored. **What's still genuinely open from
-this prototype**: the Scratch-style block programming model (the drone
+this prototype**: the visual block-based programming model (the drone
 still only has the text DSL — see the "Programming model" subsection
 below, unaffected by this update) and moons (see the "Real celestial body
 types" subsection below — planets have real orbits now, but nothing orbits
@@ -191,7 +191,7 @@ a *moving* parent body yet). The game's existing UI/UX carried over as
 expected — no visual-design changes rode along with the orbital-mechanics
 work.
 
-### Programming model — still undecided: Scratch-style blocks, or text scripts
+### Programming model — still undecided: visual blocks, or text scripts
 
 The drone already has a real scripting language (`js/drone/dsl.js`'s
 hand-rolled lexer/parser + `interpreter.js`'s generator-based interpreter —
@@ -199,7 +199,7 @@ see CLAUDE.md's "Programmable drone" section), deliberately numeric-first,
 not JavaScript. Extending automation to production chains (see below) raises
 the same question again at bigger scope: keep the existing **text DSL**
 (consistent with the drone, and with the "Ship hacking" idea above which
-already proposes reusing it), or add a **Scratch-style visual block editor**
+already proposes reusing it), or add a **visual block editor**
 as an alternative/additional input mode that still compiles down to the same
 AST `interpreter.js` already walks.
 
@@ -207,18 +207,19 @@ AST `interpreter.js` already walks.
   safety net (the `MAX_INSTANT_STEPS_PER_FRAME` runaway-script guard and the
   `while`-loop `__tick__` checkpoint — see CLAUDE.md — would just keep
   working), and it's already proven for one automation use case (the drone).
-- A Scratch-style block UI would need its own editor component (nothing
+- A visual block UI would need its own editor component (nothing
   like it exists yet — `js/drone/*` is text-only) but could lower the
   barrier for players who'd never touch a text script, at the cost of a
   real new UI subsystem to build and maintain alongside the DSL.
 - A middle path: keep the DSL as the one actual language, but eventually
   offer a block editor that's just a friendlier *authoring* surface for the
-  same syntax (like Blockly compiling to a text language) — worth keeping
-  in mind if this gets picked up, so the two modes don't diverge into two
-  separate script engines.
+  same syntax (blocks that compile down to the text language, a common
+  pattern for visual programming tools) — worth keeping in mind if this
+  gets picked up, so the two modes don't diverge into two separate script
+  engines.
 - **This question now has a concrete data point, not just a hypothetical.**
   The orbital-physics prototype (see the "Update" note above) implements
-  the Scratch-style option directly, and — notably — applies it to the
+  the visual block-based option directly, and — notably — applies it to the
   *main ship*, not a side unit like the drone: a palette of blocks (thrust
   %, yaw/pitch/roll degrees, wait, repeat) built into a list, with nesting
   for `repeat`. It's its own from-scratch block model (own `program`/
