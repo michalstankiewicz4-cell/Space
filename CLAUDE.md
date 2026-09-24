@@ -108,6 +108,13 @@ the full detail behind each of these.
   fallback. Don't reintroduce one; it was removed deliberately.
 - **Object editor** (`planetEditor.html`) reuses the game's own
   `materializePlanet`/`materializeBlackHole` for its live preview.
+- **Camera has two modes** (top-center HUD toggle, `scene/controls.js#
+  setCameraMode()`): "base" (default) orbits the player's own station,
+  framed so the Sun sits behind and a bit above it; "system" orbits the
+  Sun. Same spherical-orbit math either way (`camState.az/pol/radius`),
+  just a different pivot — both stay fully player-controlled.
+  `planetEditor.html`'s own preview camera reuses this same module
+  unmodified; its missing `ctx.station` is what keeps it safe, not mode.
 - **The world is a fixed 9-orbit solar system** (`world/solarSystem.js`),
   not a random pool — Sun + 9 hand-placed orbit slots (2 volcanic, 2
   neutral, 2 ice, 1 meteoroid, 1 permanent black hole, orbit 4 = the

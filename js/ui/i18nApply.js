@@ -19,6 +19,8 @@ export function applyStaticText(){
   document.getElementById("outdatedHint").textContent = t("outdated.hint");
 
   document.getElementById("connectionStatus").textContent = t("connection.reconnecting");
+  document.getElementById("camModeBaseBtn").textContent = t("camera.base");
+  document.getElementById("camModeSystemBtn").textContent = t("camera.system");
   document.getElementById("setupBtn").textContent = t("banner.setup");
   document.getElementById("setupLangLabel").textContent = t("banner.language");
 

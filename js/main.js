@@ -5,7 +5,7 @@ import { NET_DAMAGE_FLUSH_MS } from "./config.js";
 import { VERSION } from "./version.js";
 
 import { initScene } from "./scene/setup.js";
-import { initControls, updateCamera } from "./scene/controls.js";
+import { initControls, updateCamera, setCameraMode } from "./scene/controls.js";
 import { updatePulsars } from "./scene/pulsars.js";
 import { initParticles, updateParticles } from "./fx/particles.js";
 import { updateFragments, updateShockwaves, updateDust } from "./fx/breakup.js";
@@ -64,6 +64,11 @@ spawnDrone();
 initDroneThumb();
 initDronePanel();
 spawnStation();
+// Base camera's default framing needs ctx.station.pos, so this runs right
+// after spawnStation() rather than inside initControls() (which runs
+// before any body/station exists yet) - "base" is the default view on
+// load (see scene/controls.js#setCameraMode's own comment).
+setCameraMode("base");
 initStationPanel();
 initPlanetPanel();
 initPlanetThumb();

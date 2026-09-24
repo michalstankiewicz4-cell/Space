@@ -52,6 +52,48 @@ map is enough for orientation but not enough to safely modify this code.
   live preview, so it can never visually drift from actual gameplay. It
   has no backend, so "Download" just produces copy-pasteable
   `export const ... = {...}` blocks for `js/bodies/*.js`.
+- **Camera has two modes, toggled top-center in the HUD** (`scene/
+  controls.js#setCameraMode()`, v2.0.6): "system" orbits the Sun at the
+  origin (the original, only view before this); "base" orbits the
+  player's own station instead, and is the default on load. Both modes
+  share the exact same spherical-orbit math (`camState.az/pol/radius`,
+  drag to rotate, scroll to zoom) — only the pivot point differs
+  (`updateCamera()` picks `ctx.station.pos` vs. the origin based on
+  `camState.mode`), so switching modes never turns off player control.
+  **The base camera's default framing is derived from the station's own
+  position, not hardcoded** — since the station sits at `stationPos` with
+  the Sun at the origin, `normalize(stationPos)` is exactly the direction
+  from the Sun to the station; reusing that same direction as the
+  camera's own default orbit angle around the station places the default
+  camera further out along that same ray, on the station's far side from
+  the Sun, so looking back at the station puts the Sun directly behind it
+  (verified via NDC screen-space projection: Sun and station land within
+  ~0.09 of each other horizontally). The camera's `pol` (elevation) is
+  then lifted by `BASE_CAM_ELEVATION_LIFT` (0.35 rad) above that exact
+  angle, per the user's own explicit "słońce widoczne trochę jakby nad
+  bazą" (Sun visible a bit like above the base) spec — breaking the
+  dead-center alignment just enough that the Sun reads as peeking out
+  above the station instead of being invisibly hidden squarely behind its
+  silhouette (verified the same way: Sun's NDC Y ≈0.70 vs. the station's
+  own ≈0, i.e. clearly above center while the station sits dead center).
+  Zoom range is mode-aware too (`BASE_ZOOM_RANGE`/`SYSTEM_ZOOM_RANGE`) —
+  "base" orbits something station-sized (silhouette radius ~4.5), so it
+  needs a much tighter range than "system" orbiting the whole ~890-unit
+  solar system; using one shared range for both would make one of the two
+  either impossible to zoom in properly on or trivially easy to zoom
+  through entirely. `setCameraMode()` runs once at startup right after
+  `spawnStation()` in `main.js` (not inside `initControls()`, which runs
+  before any station exists yet) so the "base" default has a real
+  `ctx.station.pos` to derive from immediately, not a fallback.
+  **`planetEditor.html`'s own preview camera (`js/editor/main.js`) reuses
+  this exact `camState`/`updateCamera()` unmodified** — it never calls
+  `setCameraMode()`, so `camState.mode` stays at this module's own default
+  ("base") there too, but `updateCamera()`'s `ctx.station` guard (the
+  editor never spawns a station) is what actually keeps that safe, falling
+  back to the origin pivot — not the mode value itself. Verified live
+  after this change specifically because of that shared-module risk: the
+  editor's own camera still orbits the origin at its own independently-set
+  radius, unaffected.
 - **Multiplayer** (Supabase, anonymous auth, no login UI) splits into two
   completely different sync models depending on whether a body is
   permanent — see the "Solar system" and "Comets" bullets right below for

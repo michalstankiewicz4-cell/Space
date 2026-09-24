@@ -84,6 +84,10 @@ const STRINGS = {
     connection: {
       reconnecting: "⚠ Reconnecting to server…"
     },
+    camera: {
+      base: "🏠 Base",
+      system: "☀ System"
+    },
     drone: {
       title: "DRONE",
       status: "Status",
@@ -211,6 +215,10 @@ const STRINGS = {
     },
     connection: {
       reconnecting: "⚠ Ponowne łączenie z serwerem…"
+    },
+    camera: {
+      base: "🏠 Baza",
+      system: "☀ Układ"
     },
     drone: {
       title: "DRON",

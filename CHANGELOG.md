@@ -4,6 +4,17 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.0.6]
+
+### Added
+- A camera mode toggle, top-center in the HUD: **Base** (new, and now the
+  default on load) orbits the player's own station instead of the Sun,
+  framed by default so the Sun sits behind and a little above the
+  station — **System** is the previous whole-system view, unchanged.
+  Both stay fully player-controlled (drag to rotate, scroll to zoom,
+  same as before) — switching modes just resets to that mode's own
+  default framing, it isn't a fixed cinematic shot.
+
 ## [2.0.5]
 
 ### Fixed
