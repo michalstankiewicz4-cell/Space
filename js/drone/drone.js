@@ -85,16 +85,23 @@ export function setDroneSelected(drone, val){
 
 export function spawnDrone(){
   const built = makeDroneMesh();
-  // Deliberately spawned away from the ships' spawn cube (+-2 on each axis,
-  // see spawnShip()), not inside it: picking the drone is checked before
-  // ships/planets on every click (see scene/controls.js), so overlapping
-  // the busy fleet-commanding area meant an ordinary click near the swarm
-  // could silently hijack a planet/ship order into re-selecting the drone
-  // instead - which, since selecting it reopens its panel, looked exactly
-  // like "closing the panel doesn't work" (it closed fine; a later normal
-  // click just reselected the drone and reopened it).
-  const angle = Math.random() * Math.PI * 2;
-  const pos = new THREE.Vector3(Math.cos(angle) * 6, (Math.random() - 0.5) * 2, Math.sin(angle) * 6);
+  // Spawns near the station too (v2.0.8, same reasoning as
+  // ships/swarm.js#shipSpawnPosition() - the old origin-relative spawn
+  // predates the fixed 9-orbit solar system, when the origin was just
+  // empty space; it's the Sun's own position now), but offset straight up
+  // from it rather than joining the ships' own golden-angle spiral there:
+  // picking the drone is checked before ships/planets on every click (see
+  // scene/controls.js), so overlapping the busy fleet-commanding area
+  // meant an ordinary click near the swarm could silently hijack a
+  // planet/ship order into re-selecting the drone instead - which, since
+  // selecting it reopens its panel, looked exactly like "closing the
+  // panel doesn't work" (it closed fine; a later normal click just
+  // reselected the drone and reopened it). A fixed vertical offset keeps
+  // it clearly clear of the ships' own small +-1.5 vertical spread at any
+  // fleet size, without needing its own spot in that spiral.
+  const pos = ctx.station
+    ? ctx.station.pos.clone().add(new THREE.Vector3(0, 6, 0))
+    : new THREE.Vector3(Math.cos(Math.random()*Math.PI*2)*6, 3, Math.sin(Math.random()*Math.PI*2)*6);
   built.mesh.position.copy(pos);
   ctx.scene.add(built.mesh);
 

@@ -675,6 +675,38 @@ map is enough for orientation but not enough to safely modify this code.
     dominant, unopposed pull on anything parked there. Verified live
     (offline mode): three freshly-spawned ships' positions were bit-for-
     bit identical after 8 idle seconds, vs. drifting under the old
-    scattered near-origin spawn. Ships only, matching
-    `stationField.js`'s own existing scope — the drone was never covered
-    by that field either, and wasn't brought into this change.
+    scattered near-origin spawn. Ships only as of v2.0.6 — the drone
+    joined this same gravity exemption in v2.0.8, see the dedicated
+    bullet right below.
+  - **The drone joined the same spawn-near-station + gravity-exemption
+    treatment in v2.0.8** (`drone/drone.js#spawnDrone()`,
+    `world/solarGravity.js#updateSolarGravity()`) — the user's own
+    framing, "it's kind of a ship too." Spawns at a fixed `station.pos +
+    (0, 6, 0)` offset rather than joining the ships' own golden-angle
+    spiral there: the old reasoning for spawning it away from the swarm
+    in the first place (picking the drone is checked *before* ships/
+    planets on every click, see `scene/controls.js` — overlapping the
+    busy fleet-commanding area meant an ordinary click near the swarm
+    could silently reselect the drone instead, previously investigated
+    for several rounds as a "close button doesn't work" bug that was
+    really a click-priority conflict) still applies just as much now that
+    both spawn near the station instead of near the origin — a fixed
+    vertical offset keeps it clearly clear of the ships' own small
+    `+-1.5` vertical spread at any fleet size, without needing its own
+    slot in that spiral. **Deliberately does NOT get
+    `stationField.js`'s pull-back-if-wandered treatment, unlike ships** —
+    a ship that's wandered off is always either idle (safe to nudge home)
+    or actively eating something, in which case `updateShips()` overwrites
+    its position outright every frame (the lerp-to-orbit-around-target
+    branch), so that pull never actually fights a ship mid-task. The
+    drone has no equivalent override: docking/refueling
+    (`isDocked()`) is a pure proximity check with nothing pinning its
+    actual position, so pulling it back toward the station at
+    `STATION_FIELD_STRENGTH` the same way would visibly drag it off
+    whatever distant body it's deliberately docked at mid-script —
+    breaking the drone's actual point (autonomously roaming/docking
+    anywhere in the system), not just nudging an idle unit home the way
+    it does for ships. Verified live: `applyStationField()` called
+    directly against a drone placed far from the station left its
+    position completely untouched (confirmed structurally too — the
+    function's loop only ever iterates `ctx.ships`).

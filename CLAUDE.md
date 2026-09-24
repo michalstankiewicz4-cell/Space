@@ -171,6 +171,8 @@ the full detail behind each of these.
   gravity-free containment field (`STATION_FIELD_RADIUS`) —
   `world/solarGravity.js` skips ambient gravity for any ship inside it,
   `station/stationField.js` pulls back anything that's drifted beyond it.
+  The drone spawns nearby too and shares the gravity exemption, but
+  deliberately *not* the pull-back (would drag it off a distant dock).
 
 ## Security model (Supabase)
 

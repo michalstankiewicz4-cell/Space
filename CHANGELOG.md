@@ -4,6 +4,17 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.0.8]
+
+### Changed
+- The drone now also spawns next to the station (offset above it, clear
+  of the ships' own formation) and is exempt from ambient gravity there
+  too — same treatment as the swarm's ships, extended per the user's own
+  "it's kind of a ship too" framing. Unlike ships, it's deliberately
+  *not* pulled back by the station's containment field if it wanders or
+  docks far away — that field would otherwise visibly drag it off
+  whatever distant body it's deliberately parked at mid-script.
+
 ## [2.0.7]
 
 ### Added

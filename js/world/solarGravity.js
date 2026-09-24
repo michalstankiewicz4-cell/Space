@@ -65,8 +65,9 @@ function applyGravityToOne(entity, dt, applyToVel){
 // - real solar gravity is strong enough even at the station's own ~290-unit
 // distance that this isn't a negligible effect over time); at/beyond the
 // boundary, stationField.js's own pull-back takes over for anything that's
-// drifted or traveled away. Ships only, matching stationField.js's own
-// scope - the drone was never covered by that field either.
+// drifted or traveled away. Covers the drone too (v2.0.8) - it's "kind of
+// a ship" too, per the user's own framing, and now spawns right next to
+// the station the same way (drone.js#spawnDrone()).
 function insideStationField(pos){
   return !!ctx.station && pos.distanceTo(ctx.station.pos) < STATION_FIELD_RADIUS;
 }
@@ -78,5 +79,5 @@ export function updateSolarGravity(dt){
     if(insideStationField(sh.pos)) continue;
     applyGravityToOne(sh, dt, true);
   }
-  if(ctx.drone) applyGravityToOne(ctx.drone, dt, false);
+  if(ctx.drone && !insideStationField(ctx.drone.pos)) applyGravityToOne(ctx.drone, dt, false);
 }
