@@ -128,6 +128,15 @@ the full detail behind each of these.
   "wins" as primary at its own weak per-body `gm` (~66.7) instead of the
   real `GM_SUN` (60000), a real ~900x-undershoot bug live since v2.0.0
   until fixed in v2.0.9 (see docs/architecture.md for the full story).
+  **Raw `GM/r²` accel is capped** (`MAX_GRAVITY_ACCEL`, 20/s²) — a close
+  pass near a body's own `minR` clamp could otherwise spike to
+  thousands/s² in one frame, a real numerical-blowup bug this Sun fix
+  immediately exposed. **Commanded ships still stay gravity-immune while
+  cruising even so** (`ships/swarm.js#updateShips()`) — tested and
+  reverted twice (bounded steering, then capped-gravity-under-the-old-
+  lerp): both let a ship never arrive at a target after a close SOI
+  encounter. Reliable point-to-point travel is load-bearing, confirmed by
+  testing, not just cautious.
 - **Comets are the one body genuinely SIMULATED, not closed-form**
   (`world/cometPhysics.js`) — real gravity-curved swing-by, replayed via
   `advanceComet()` for late joiners. Exactly one exists at a time

@@ -15,6 +15,28 @@ import { STATION_FIELD_RADIUS } from "../config.js";
 // tick(). Every other fixed body here is purely attractive, never lethal.
 const toSrcScratch = new THREE.Vector3();
 
+// Caps the raw GM/r² acceleration itself (before multiplying by dt), not
+// just the position/velocity result - a real, live instability found only
+// after fixing the Sun's own ~900x-weak gravity (v2.0.9): at the `minR`
+// clamp below (radius*0.6 for a real planet, or a flat 3 units for the
+// Sun-as-fallback case), GM/r² can still be enormous - e.g. GM_SUN/3² =
+// 6666.7/s², which even at a single 0.05s frame is a ~333 unit/s velocity
+// KICK in one step. A ship/the drone passing close enough to actually hit
+// that clamp got flung into a chaotic trajectory instead of a
+// close-but-controlled swing-by - confirmed live: a commanded ship that
+// reliably arrived in ~300 simulated seconds without gravity never
+// arrived at all across 1000 simulated seconds once real gravity was
+// re-enabled, reaching a peak speed of ~424 units/s (cruise speed is
+// ~1). This is a numerical-integration problem (a fixed, comparatively
+// large timestep sampling a 1/r² force too coarsely near its own
+// singularity), not a tuning problem - no `MAX_STEER_ACCEL`-style
+// "stronger engine" fix on the receiving end can fully compensate for an
+// unbounded force on the source end. Capped well above any legitimate
+// ambient pull (compare: ~0.7/s² at the station's own ~290-unit distance
+// from the Sun) so a genuine close pass still visibly matters, just
+// doesn't blow up.
+const MAX_GRAVITY_ACCEL = 20;
+
 // One scratch Vector3 per orbiting body (persistent across frames, reused
 // in place every frame — never a fresh array/Vector3 per frame, matching
 // this project's established per-frame-hot-loop convention), keyed by the
@@ -71,7 +93,7 @@ function applyGravityToOne(entity, dt, applyToVel){
   const minR = primary ? primary.radius * 0.6 : 3;
   const r = Math.max(toSrcScratch.length(), minR);
   toSrcScratch.normalize();
-  const accel = (gm / (r * r)) * dt;
+  const accel = Math.min(gm / (r * r), MAX_GRAVITY_ACCEL) * dt;
   if(applyToVel) entity.vel.addScaledVector(toSrcScratch, accel);
   else entity.pos.addScaledVector(toSrcScratch, accel);
 }

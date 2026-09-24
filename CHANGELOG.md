@@ -4,6 +4,27 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.0.10]
+
+### Fixed
+- A second gravity bug uncovered immediately by v2.0.9's fix: raw `GM/r²`
+  acceleration was never capped, so a close pass near a body's own `minR`
+  clamp could spike to thousands of units/s² in a single frame — a ship
+  that reliably reached a target in ~250 simulated seconds with gravity
+  off never arrived at all across 1000 seconds with gravity on, peaking
+  at ~424 units/s (cruise speed is ~1). Capped the raw acceleration
+  itself well above any legitimate ambient pull, so a genuine close pass
+  still visibly matters without being able to blow up.
+
+### Investigated (no change)
+- Tried making ambient gravity genuinely felt during a ship's commanded
+  flight (not just while idle) — reverted after live testing showed it
+  isn't reliably compatible with "click a target, arrive there" even
+  with the cap above: a ship could still get knocked off course near an
+  unrelated body and never make it. Commanded ships stay gravity-immune
+  while cruising, confirmed necessary rather than just a cautious
+  default.
+
 ## [2.0.9]
 
 ### Fixed

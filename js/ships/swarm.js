@@ -203,6 +203,31 @@ export function hideBolt(sh){
   sh.boltJitterTimer = 0;
 }
 
+// A commanded ship's cruise-flight velocity is deliberately immune to
+// ambient gravity (world/solarGravity.js), even though gravity itself is
+// real and correctly strong (v2.0.9). Tried making it genuinely felt via
+// bounded "seek" steering instead of the instant every-frame re-home
+// below (letting gravity's own additive contribution persist rather than
+// being overridden each frame) - reverted after live testing found it
+// genuinely unstable, not just weak/strong-tuned wrong: a ship commanded
+// 345 units to a real planet target got hijacked passing near an
+// unrelated body's own small-SOI gravity and never arrived at all across
+// 1000 simulated seconds, even with the ship's own "engine" strengthened
+// 20x to try to compensate. Capping the raw acceleration itself
+// (world/solarGravity.js's own MAX_GRAVITY_ACCEL, added at the same time
+// - a real, separate numerical-stability bug this uncovered, kept
+// regardless of this decision since it also protects the drone/idle
+// ships) tamed the worst blow-up (peak speed dropped from ~424 to ~11
+// units/s) but the ship still never arrived in the same 1000-second
+// window - gravity alone, even bounded, is still strong enough over a
+// multi-hundred-unit commanded flight to prevent reliable net progress
+// with only an 8%/frame course-correction to fight it. Predictable
+// point-to-point travel ("select ships, click a target, they get there")
+// is a real, load-bearing property of this game, not an incidental side
+// effect of how this was written - gravity still visibly matters for
+// anything genuinely idle and for the drone (both go through
+// world/solarGravity.js directly), just not for a ship actively
+// following an order.
 export function updateShips(dt){
   const stats = swarmStats();
   const baseSpeed = 6.5 * stats.speed;
@@ -234,6 +259,8 @@ export function updateShips(dt){
 
     if(dist > eatRange){
       hideBolt(sh);
+      // Deliberately gravity-immune - see updateShips()'s own header
+      // comment above for why.
       toTarget.normalize();
       sh.vel.lerp(toTarget.multiplyScalar(baseSpeed*0.15), 0.08);
       sh.pos.addScaledVector(sh.vel, dt);

@@ -185,6 +185,46 @@ map is enough for orientation but not enough to safely modify this code.
     `STATION_FIELD_RADIUS` (unaffected, confirmed separately); a drone
     flown 50 units past the station now visibly drifts ~4.3 units toward
     the Sun over 10 seconds — sane and gradual, not explosive.
+  - **A second, separate bug surfaced immediately after that fix: the raw
+    `GM/r²` acceleration was never capped, so a close pass near a body's
+    own `minR` clamp could produce an enormous single-frame velocity
+    kick** (v2.0.9) — at `minR` (a real body's own `radius*0.6`, or a
+    flat 3 units for the Sun-as-fallback case), `GM_SUN/3² ≈ 6666.7/s²`,
+    a ~333 unit/s kick in a single 0.05s frame alone. Found immediately
+    while testing the fix above: a ship that reliably reached a real
+    planet target in ~250 simulated seconds with gravity disabled never
+    arrived at all across 1000 simulated seconds with gravity re-enabled,
+    peaking at ~424 units/s (cruise speed is ~1). This is a numerical-
+    integration problem — a comparatively large, fixed timestep sampling
+    a `1/r²` force too coarsely right at its own singularity — not a
+    tuning problem, so `applyGravityToOne()` now clamps the raw `GM/r²`
+    figure itself to `MAX_GRAVITY_ACCEL` (20/s², well above any
+    legitimate ambient pull — compare ~0.7/s² at the station's own
+    ~290-unit distance — so a genuine close pass still visibly matters,
+    just can't blow up) before multiplying by `dt`. This alone brought
+    the same test's peak speed down to ~11 units/s, but — see the next
+    bullet — didn't make gravity-during-commanded-flight actually viable
+    on its own.
+  - **Commanded ships stay deliberately immune to this gravity while
+    cruising, even after both fixes above** (`ships/swarm.js#
+    updateShips()`'s own header comment has the full story) — tried
+    letting gravity's own contribution persist instead of being
+    overridden every frame by the existing course-correction lerp
+    (`sh.vel.lerp(toTarget*cruiseSpeed, 0.08)`), first via a bounded
+    "seek"-steering replacement (reverted: even a 20x-strengthened
+    "engine" couldn't reliably reach a target past a close SOI
+    encounter), then by keeping the lerp but simply re-enabling now-
+    capped gravity underneath it (reverted too: peak speed dropped from
+    ~424 to ~11, but the ship *still* never arrived across the same
+    1000-second window — bounded-but-still-real gravity is strong enough
+    over a multi-hundred-unit commanded flight that an 8%/frame
+    correction alone can't guarantee net progress). Reliable point-to-
+    point travel ("select ships, click a target, they get there") is a
+    real, load-bearing property of this game, confirmed necessary by
+    testing, not just a cautious default — gravity still visibly affects
+    anything genuinely idle and the drone (both call
+    `world/solarGravity.js` directly, unguarded by any course-correction
+    logic), just not a ship actively following an order.
   - **Orbit lines are static, precomputed once** (`scene/orbitLines.js#
     addOrbitLines()`, called from `scene/setup.js#initScene()`) — each of
     the 9 orbits (+ the station ring) is a closed ellipse sampled at 128
