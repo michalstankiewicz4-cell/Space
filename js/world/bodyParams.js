@@ -1,6 +1,7 @@
 import { FIELD_RADIUS } from "../config.js";
 import { CONTENT } from "../content.js";
 import { SOLAR_BODY_BY_SLOT } from "./solarSystem.js";
+import { randomCometEntry } from "./cometPhysics.js";
 
 // Pure data/math for the 7 body types (kind+temp -> variant, spawn rolls,
 // display value) — split out of world/bodies.js, which used to mix this
@@ -93,18 +94,13 @@ export function randomPlanetSpawnData(type){
 
   let pos, vel = null;
   if(type.kind === "comet"){
-    // start tuz za granica pola, lecac po linii przez srodek obszaru gry
-    const shellDist = FIELD_RADIUS*1.15;
-    const theta0 = Math.random()*Math.PI*2;
-    const phi0 = Math.acos(2*Math.random()-1);
-    pos = new THREE.Vector3(
-      shellDist*Math.sin(phi0)*Math.cos(theta0),
-      shellDist*Math.sin(phi0)*Math.sin(theta0)*0.55,
-      shellDist*Math.cos(phi0)
-    );
-    const aimPoint = new THREE.Vector3((Math.random()-0.5)*FIELD_RADIUS*0.5,(Math.random()-0.5)*FIELD_RADIUS*0.3,(Math.random()-0.5)*FIELD_RADIUS*0.5);
-    const speed = CONTENT.comet.speedMin + Math.random()*CONTENT.comet.speedRange;
-    vel = new THREE.Vector3().subVectors(aimPoint,pos).normalize().multiplyScalar(speed);
+    // Entry point/aim/speed generation lives in world/cometPhysics.js now —
+    // a comet flies in from outside the whole solar system and swings
+    // around the Sun under real gravity (curving, not a straight line
+    // through the middle), see that file's own header comment.
+    const entry = randomCometEntry();
+    pos = entry.pos;
+    vel = entry.vel;
   } else {
     const dist = 10 + Math.random()*FIELD_RADIUS;
     const theta = Math.random()*Math.PI*2;

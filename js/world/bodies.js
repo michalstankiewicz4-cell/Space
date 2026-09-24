@@ -1,6 +1,6 @@
 import { ctx } from "../core/context.js";
 import { removeItem } from "../core/utils.js";
-import { FIELD_RADIUS, SOLAR_REGEN_RATE } from "../config.js";
+import { SOLAR_REGEN_RATE } from "../config.js";
 import { CONTENT } from "../content.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
@@ -10,9 +10,10 @@ import {
 import { spawnTailParticle } from "../fx/particles.js";
 import { hideBolt } from "../ships/swarm.js";
 import { bodyParams, tempColor, randomPlanetSpawnData, contentKindFor } from "./bodyParams.js";
-import { buildSunRays, buildCometTail, buildSelectionBracket } from "./bodyMeshParts.js";
+import { buildSunRays, buildCometTail, updateCometTailDirection, buildSelectionBracket } from "./bodyMeshParts.js";
 import { SOLAR_BODIES, SOLAR_BODY_BY_SLOT, bodyPosAt, nowSimTime } from "./solarSystem.js";
 import { materializeBlackHole } from "./blackholes.js";
+import { stepComet, advanceComet, COMET_EXIT_RADIUS } from "./cometPhysics.js";
 
 // Body lifecycle: materializing a mesh from spawn data, spawning/despawning
 // (local-only and networked), and the per-frame update. Pure body-type
@@ -124,12 +125,12 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     mesh.add(sunLight);
   }
 
-  // comet: a tail trailing behind it, opposite the direction of travel
+  // comet: a tail pointing away from the sun (bodyMeshParts.js's own
+  // comment explains why, and why it needs to be re-oriented every frame
+  // now) - built after the fast-forward below computes where it actually
+  // is right now, so the tail's initial direction isn't stale for a
+  // late-joining client.
   let cometTail = null;
-  if(kind === "comet"){
-    cometTail = buildCometTail(radius, vel);
-    mesh.add(cometTail);
-  }
 
   // a subtle orbital ring on some planets (not comets) - a purely cosmetic
   // choice, rolled independently by each client
@@ -145,9 +146,21 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   mesh.add(selectionBracket);
 
   const basePos = pos.clone();
+  // A comet's `vel` (the one stored in the DB row, or freshly rolled for a
+  // local-only spawn) is only ever its INITIAL velocity at spawn — its
+  // real, current velocity has to be reconstructed by replaying gravity
+  // from that starting state up through `elapsedSec` of real time (see
+  // world/cometPhysics.js's header comment for why a closed-form shortcut
+  // doesn't exist here). `cometVel` below is that reconstructed, CURRENT
+  // velocity - the one actually stored on `p.vel` going forward, not the
+  // original spawn value.
+  let cometVel = null;
   if(kind === "comet" && vel){
-    basePos.addScaledVector(vel, elapsedSec||0);
+    cometVel = vel.clone();
+    advanceComet(basePos, cometVel, elapsedSec||0);
     mesh.position.copy(basePos);
+    cometTail = buildCometTail(radius, basePos.clone().normalize());
+    mesh.add(cometTail);
   }
 
   // Health checkpoint for fixed solar bodies — (healthBase, healthUpdatedAtMs)
@@ -182,7 +195,12 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     healthUpdatedAtMs: healthUpdatedAtMs,
     valueBonus: orbitSlot != null ? (params.valueBonus||0) : (row.value_bonus||0),
     pendingDamage: 0,
-    spin: (Math.random()-0.5)*0.6,
+    // Comets get spin:0 deliberately - the tail group is a child of this
+    // mesh, re-oriented every frame in world-space terms (bodyMeshParts.js#
+    // updateCometTailDirection); if the mesh itself kept rotating, that
+    // world-space direction would immediately drift out of alignment again
+    // since it's set in the mesh's LOCAL space.
+    spin: kind==="comet" ? 0 : (Math.random()-0.5)*0.6,
     selected: false,
     selectionBracket: selectionBracket,
     sunHalo: sunHalo,
@@ -196,14 +214,15 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     basePos: basePos,
     shakePhase: Math.random()*10,
     moving: kind==="comet",
-    vel: vel,
-    // A comet's vel never changes after spawn (nothing accelerates it -
-    // ambient/black-hole gravity only ever pulls ships/the drone, see
-    // world/solarGravity.js and world/blackholes.js), so the tail's
-    // "opposite the direction of travel" unit vector is exactly the same
-    // value on every single one of updateBodies()'s ~33/sec recomputations
-    // - cache it once here instead.
-    driftDir: (kind==="comet" && vel) ? vel.clone().normalize().multiplyScalar(-1) : null,
+    cometTail: cometTail,
+    // The CURRENT (gravity-advanced) velocity, not the original spawn
+    // value - see the comment above where cometVel is computed. Comets
+    // are the only body whose velocity keeps changing every frame
+    // (updateBodies() steps it forward under the Sun's pull, unlike every
+    // fixed solar body's closed-form orbit or a ship's own steering) — no
+    // more cached driftDir, either: "away from the sun" changes as the
+    // comet moves, so it's recomputed fresh each frame instead.
+    vel: kind==="comet" ? cometVel : vel,
     tailTimer: 0
   };
   ctx.planets.push(p);
@@ -232,8 +251,9 @@ export function spawnCometLocalOnly(){
 // Networked mode: only the steward sends the INSERT; the mesh is created for
 // everyone (including the steward) once the Realtime echo arrives — a single
 // code path. `pendingSpawnCount` counts inserts "in flight" (sent, not yet
-// materialized), so the top-up logic (maintainCometCount) doesn't count them
-// again while the network response is still pending.
+// materialized), so the top-up logic (net/bodiesSync.js#maintainComet)
+// doesn't treat the system as empty and start a second cooldown/spawn while
+// this one is still on the way.
 export let pendingSpawnCount = 0;
 export function requestSpawnComet(){
   const data = randomPlanetSpawnData(CONTENT.comet);
@@ -252,9 +272,9 @@ export function requestSpawnComet(){
     // A rejected promise (not just a resolved {error}) skips .then()
     // entirely - same class of failure as the bite_body 522 documented in
     // net/bodiesSync.js#flushDamage. Without this, pendingSpawnCount never
-    // decrements on a rejection, and maintainCometCount() permanently
-    // believes one extra spawn is in flight - under-topping-up the pool
-    // by one slot for the rest of the session, for every failed request.
+    // decrements on a rejection, and maintainComet() permanently believes a
+    // spawn is still in flight - the system stays stuck "topping up" and
+    // never starts a fresh cooldown, for the rest of the session.
     pendingSpawnCount--;
     console.warn("requestSpawnComet rejected", err);
   });
@@ -309,6 +329,12 @@ export function despawnBodySilently(p){
   }
 }
 
+// Reused every frame by updateBodies()'s comet branch instead of a fresh
+// `new THREE.Vector3()` per comet per frame - same scratch-vector pattern
+// already established elsewhere (world/blackholes.js's toHoleScratch,
+// ships/swarm.js's toTargetScratch, etc.).
+const outwardCometScratch = new THREE.Vector3();
+
 export function updateBodies(dt){
   for(let i=ctx.planets.length-1; i>=0; i--){
     const p = ctx.planets[i];
@@ -333,16 +359,29 @@ export function updateBodies(dt){
     }
 
     if(p.moving){
-      p.basePos.addScaledVector(p.vel, dt);
+      // Real gravity-curved flight (world/cometPhysics.js), not a straight
+      // line - stepComet() pulls p.vel toward the Sun every frame, same
+      // formula world/solarGravity.js uses for ships, before integrating
+      // position from it.
+      stepComet(p.basePos, p.vel, dt);
       p.mesh.position.copy(p.basePos);
+
+      // "Away from the sun," recomputed fresh every frame since the comet
+      // is now curving (not moving in a fixed direction) - the Sun sits at
+      // the origin, so the comet's own position IS that direction once
+      // normalized. Both the particle trail and the tail mesh itself
+      // (bodyMeshParts.js#updateCometTailDirection) use this same
+      // real-astronomy direction now, not "opposite velocity."
+      const awayFromSun = outwardCometScratch.copy(p.basePos).normalize();
+      if(p.cometTail) updateCometTailDirection(p.cometTail, awayFromSun);
 
       p.tailTimer -= dt;
       if(p.tailTimer <= 0){
         p.tailTimer = 0.03;
-        spawnTailParticle(p.mesh.position, p.driftDir, p.mesh.material.color);
+        spawnTailParticle(p.mesh.position, awayFromSun, p.mesh.material.color);
       }
 
-      if(p.basePos.length() > FIELD_RADIUS*1.6){
+      if(p.basePos.length() > COMET_EXIT_RADIUS){
         despawnBodySilently(p);
       }
     } else if(p.orbitSlot != null){
@@ -405,9 +444,10 @@ export function destroyPlanet(p){
 // slots (+ sun) directly from SOLAR_BODIES, health=maxHealth, no DB row
 // needed. The black hole (slot 9) goes through its own
 // materializeBlackHole(), not materializePlanet() — see world/blackholes.js.
-// No initial comets: same as the networked path, they just trickle in over
-// the next several seconds via the normal top-up cadence (maintainCometCount)
-// — a fine steady state, not something that needs seeding.
+// No initial comet: same as the networked path, the empty system is simply
+// noticed by the normal cooldown-based spawn logic (net/bodiesSync.js#
+// maintainComet) a moment later — a fine steady state, not something that
+// needs seeding.
 export function seedLocalWorld(){
   SOLAR_BODIES.forEach(function(solar){
     if(solar.kind === "blackhole"){

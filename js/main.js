@@ -20,7 +20,7 @@ import { initPanels } from "./ui/panels.js";
 import { initFleet } from "./ui/fleet.js";
 import { initShipCam, updateShipCam, renderShipCamPIP } from "./scene/shipcam.js";
 import { renderPlayersList } from "./ui/players.js";
-import { maintainCometCount, flushDamage } from "./net/bodiesSync.js";
+import { maintainComet, flushDamage } from "./net/bodiesSync.js";
 import { flushSolarDamage } from "./net/solarBodiesSync.js";
 import { updateRemoteShips, maybeBroadcastShips } from "./net/shipsBroadcast.js";
 import { initNet } from "./net/connect.js";
@@ -107,7 +107,7 @@ function tick(){
   updateLightMarkers();
   updateDistanceLines();
   updateLightsToggle();
-  maintainCometCount(dt);
+  maintainComet(dt);
   if(NET_ENABLED){
     updateRemoteShips(dt);
     maybeBroadcastShips(performance.now());

@@ -4,6 +4,24 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.0.2]
+
+### Changed
+- Comets are now a real, gravity-curved sun-grazing flyby instead of a
+  straight-line drift: one spawns at a time (never more than one in the
+  system at once), entering from just outside the outermost orbit,
+  swinging past the Sun at roughly 2/3 of the first orbit's distance
+  (solved analytically via vis-viva + angular momentum, not just aimed at
+  a point — see `js/world/cometPhysics.js`), and exiting back out the far
+  side. After one despawns (eaten, or flown back out of the system), the
+  next one waits a fixed 1-minute cooldown before spawning, replacing the
+  old population-topped-up pool of up to 3 at once.
+- The comet's tail now always points directly away from the Sun (real
+  solar-wind/radiation-pressure direction), re-oriented every frame as the
+  comet's own position changes along its curving path — previously a
+  fixed direction (opposite travel) computed once at spawn, which only
+  ever looked right for the old straight-line drift.
+
 ## [2.0.1]
 
 ### Changed

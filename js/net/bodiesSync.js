@@ -1,6 +1,6 @@
 import { ctx } from "../core/context.js";
 import { removeItem } from "../core/utils.js";
-import { MAX_COMETS, NET_PLANET_TOPUP_S } from "../config.js";
+import { COMET_RESPAWN_DELAY_MS, NET_PLANET_TOPUP_S } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
 import {
@@ -116,21 +116,36 @@ export function flushDamage(){
 // See net/stewardFallback.js for why this needs both an isConnected() guard
 // and a staleness fallback, not just steward-gating. bump() is called in
 // materializeBody() on every INSERT this client sees (from any source), so
-// shouldSpawn() knows how long it's actually been since anything last
-// spawned.
-const cometTopupGate = createStalenessGate(8000, 4000);
+// shouldSpawn() knows how long it's actually been since a comet last
+// appeared. Widened well past the old scattered-pool gate's (8s/4s) — a
+// comet's own lifecycle (several-minute flyby + COMET_RESPAWN_DELAY_MS
+// cooldown) is now far longer than any legitimate gap used to be, so this
+// only needs to catch a steward that's truly gone quiet for multiple full
+// cycles, not just missed one top-up tick.
+const cometTopupGate = createStalenessGate(480000, 120000);
 
-let topUpTimer = 0;
-export function maintainCometCount(dt){
-  topUpTimer -= dt;
-  if(topUpTimer > 0) return;
-  topUpTimer = NET_PLANET_TOPUP_S;
+// At most one comet exists at a time — not a population pool topped up
+// toward a max, but a single flyby followed by a fixed cooldown before the
+// next one starts (the user's explicit spec: "po despawnie odstęp 1
+// minuty" - a 1-minute gap after despawn, not a fixed spawn rate). Edge-
+// triggered: noCometSinceMs is set the instant the system is first noticed
+// empty, and only a spawn attempt (gated the normal steward/staleness way)
+// fires once COMET_RESPAWN_DELAY_MS has actually elapsed since then.
+let noCometSinceMs = null;
+let checkTimer = 0;
+export function maintainComet(dt){
+  checkTimer -= dt;
+  if(checkTimer > 0) return;
+  checkTimer = NET_PLANET_TOPUP_S;
   // ctx.planets also holds the 9 fixed solar bodies (orbitSlot != null) —
-  // count only comets here, or this would never top up at all once those
-  // are loaded (9 alone already exceeds MAX_COMETS).
-  let cometCount = 0;
-  for(let i=0;i<ctx.planets.length;i++){ if(ctx.planets[i].orbitSlot == null) cometCount++; }
-  if(cometCount + pendingSpawnCount >= MAX_COMETS) return;
+  // only a comet has orbitSlot == null.
+  const hasComet = ctx.planets.some(function(p){ return p.orbitSlot == null; });
+  if(hasComet || pendingSpawnCount > 0){
+    noCometSinceMs = null;
+    return;
+  }
+  if(noCometSinceMs == null){ noCometSinceMs = Date.now(); return; }
+  if(Date.now() - noCometSinceMs < COMET_RESPAWN_DELAY_MS) return;
   if(NET_ENABLED){
     if(cometTopupGate.shouldSpawn()) requestSpawnComet();
   } else {

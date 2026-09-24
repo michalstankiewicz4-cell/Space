@@ -6,7 +6,7 @@ import { isConnected } from "./connect.js";
 // Originally grown independently by both the old scattered-planet pool and
 // black holes before the fixed 9-orbit solar system replaced both of those
 // spawn/despawn mechanics — the one remaining caller is
-// net/bodiesSync.js#maintainCometCount (comets are the only body kind still
+// net/bodiesSync.js#maintainComet (comets are the only body kind still
 // spawned/despawned from a pool at all). Kept as its own small module
 // rather than folded back into bodiesSync.js, since the pattern itself may
 // be needed again for some future steward-gated top-up loop. Presence

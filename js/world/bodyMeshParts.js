@@ -46,12 +46,21 @@ export function buildSunRays(radius){
 
 // Comet tail: two crossed planes (the classic "crossed billboard" trick -
 // visible from almost any angle, unlike a single flat plane that disappears
-// when seen "edge-on") trailing in the direction opposite to velocity. A
-// comet's direction of travel is constant for its whole life, so we compute
-// the orientation once, at creation.
-export function buildCometTail(radius, vel){
+// when seen "edge-on") pointing AWAY FROM THE SUN — real comet tails point
+// away from the star (solar wind/radiation pressure), not away from the
+// direction of travel, which only happens to look similar for a straight,
+// unaccelerated path. Now that comets fly a real gravity-curved swing-by
+// (world/cometPhysics.js), "away from the sun" changes every frame as the
+// comet moves, unlike the old straight-line drift where a fixed direction
+// computed once at spawn stayed correct forever — see
+// updateCometTailDirection() below, called every frame from
+// world/bodies.js#updateBodies. Comets are given spin:0 specifically (see
+// materializePlanet) so this group's LOCAL orientation always equals its
+// WORLD orientation — no need to account for a spinning parent mesh here.
+const TAIL_UP = new THREE.Vector3(0, 1, 0);
+
+export function buildCometTail(radius, awayFromSun){
   const group = new THREE.Group();
-  if(!vel || vel.lengthSq() < 0.0001) return group;
 
   const length = radius * (CONTENT.comet.tailLengthMin + Math.random()*CONTENT.comet.tailLengthRange);
   const width = radius * (CONTENT.comet.tailWidthMin + Math.random()*CONTENT.comet.tailWidthRange);
@@ -62,15 +71,29 @@ export function buildCometTail(radius, vel){
     blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
   });
 
-  const dir = vel.clone().normalize().multiplyScalar(-1);
-  const up = new THREE.Vector3(0, 1, 0);
   for(let i=0;i<2;i++){
     const plane = new THREE.Mesh(geo, mat);
-    plane.quaternion.setFromUnitVectors(up, dir);
-    plane.rotateY(i * Math.PI/2);
+    // Each child's own fixed "crossed billboard" offset around the shared
+    // tail axis - reapplied on top of the (per-frame-changing) base
+    // direction every time updateCometTailDirection() runs.
+    plane.userData.tailOffset = i * Math.PI/2;
     group.add(plane);
   }
+  updateCometTailDirection(group, awayFromSun);
   return group;
+}
+
+// Re-orients an existing tail group's two planes toward a fresh
+// "away from the sun" direction - called every frame (world/bodies.js#
+// updateBodies) rather than only once at creation, unlike every other
+// optional decoration mesh in this file.
+export function updateCometTailDirection(group, awayFromSun){
+  if(awayFromSun.lengthSq() < 0.0001) return;
+  for(let i=0;i<group.children.length;i++){
+    const plane = group.children[i];
+    plane.quaternion.setFromUnitVectors(TAIL_UP, awayFromSun);
+    plane.rotateY(plane.userData.tailOffset);
+  }
 }
 
 // Selection indicator for a planet: four L-shaped corner marks (a

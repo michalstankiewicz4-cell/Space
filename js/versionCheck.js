@@ -49,6 +49,7 @@ const MODULE_FILES = [
   "js/ui/planetPanel.js", "js/ui/players.js", "js/ui/stationPanel.js",
   "js/version.js", "js/versionCheck.js", "js/world/blackholes.js",
   "js/world/bodies.js", "js/world/bodyMeshParts.js", "js/world/bodyParams.js",
+  "js/world/cometPhysics.js",
   "js/world/planetThumb.js", "js/world/solarGravity.js", "js/world/solarSystem.js",
   "js/world/textures.js"
 ];
