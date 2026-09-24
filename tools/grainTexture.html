@@ -1,7 +1,23 @@
-// Procedural grain texture for the UI kit's .mat surfaces (see
-// css/ui/kit.css): generated once at startup and exposed as the --grain
-// CSS var, which every .mat blends in with soft-light.
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Grain texture generator</title>
+<!-- Dev tool, not part of the game: regenerates css/ui/grain.png, the
+     tileable grain the UI kit's .mat surfaces blend in (css/ui/kit.css).
+     Deterministic (fixed seed), so the output only changes if the
+     parameters below do. Open from disk, click "Download", replace the
+     file. -->
+<style>
+  body{ background:#111; color:#ddd; font-family:sans-serif; padding:20px; }
+  #preview{ width:480px; height:320px; background-color:#5f77f7; background-blend-mode:soft-light; margin:12px 0; }
+</style>
+</head>
+<body>
+<div>Grain texture (160x160, seed 7) — preview tiled over the kit's blue:</div>
+<div id="preview"></div>
+<a id="download" download="grain.png">Download grain.png</a>
+<script>
 // Tileable grayscale value noise (vertical streaks + blotches) plus fine
 // grain, applied with soft-light over every .mat surface.
 function makeGrainTexture(size = 160, seed = 7){
@@ -38,6 +54,9 @@ function makeGrainTexture(size = 160, seed = 7){
   return cv.toDataURL("image/png");
 }
 
-export function applyGrainTexture(){
-  document.documentElement.style.setProperty("--grain", `url(${makeGrainTexture()})`);
-}
+const url = makeGrainTexture();
+document.getElementById("preview").style.backgroundImage = `url(${url})`;
+document.getElementById("download").href = url;
+</script>
+</body>
+</html>

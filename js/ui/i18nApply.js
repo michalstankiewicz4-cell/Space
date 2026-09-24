@@ -3,6 +3,8 @@ import { t } from "../i18n.js";
 // Sets every static (non-dynamic-stat) piece of UI text from the current
 // language. Call once on startup and again whenever the language changes.
 export function applyStaticText(){
+  // See css/ui/startScreen.css: the start panel stays hidden until now.
+  delete document.documentElement.dataset.langPending;
   document.getElementById("bannerDesc").textContent = t("banner.desc");
   document.getElementById("modeSingle").textContent = t("banner.modeSingle");
   document.getElementById("modeMulti").textContent = t("banner.modeMulti");

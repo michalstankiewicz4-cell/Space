@@ -37,6 +37,10 @@ body:has(#banner:not(.hidden)) :is(.hud, #devToolsBtn, #devToolsMenu){ visibilit
 #trCap{ left:1478px; top:9px; width:42px; height:65px;
   clip-path:path("M0 0 H14 C32 0 42 14 42 32 C42 52 32 65 14 65 H0 Z"); }
 
+/* Set by index.html's <head> script when the saved language isn't the
+   HTML's built-in English, cleared by js/ui/i18nApply.js once the panel is
+   translated — so a Polish player never sees the English text flash. */
+html[data-lang-pending] #box{ visibility:hidden; }
 #box{ left:438px; top:302px; width:660px; height:410px; }
 #boxSide{ left:10px; top:10px; width:18px; height:270px; border-radius:12px 0 0 0; }
 #boxSide2{ left:10px; top:286px; width:18px; height:50px; }

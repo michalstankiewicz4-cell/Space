@@ -794,8 +794,10 @@ map is enough for orientation but not enough to safely modify this code.
   (`startScreen.css`, `setupModal.css`), all pulled in via `@import` at
   the top of `css/style.css` so its `?v=` stays the only CSS
   cache-busting literal (imported files are in `versionCheck.js#
-  MODULE_FILES` instead). JS side: `js/ui/kit/grain.js` (procedural grain
-  for `.mat`, exposed as `--grain`), `ui/banner.js` (start screen only),
+  MODULE_FILES` instead). The `.mat` grain is a static
+  `css/ui/grain.png` (regenerate with `tools/grainTexture.html`), not
+  generated at runtime anymore (v2.1.3). JS side: `ui/banner.js` (start
+  screen only),
   `ui/setupModal.js`, and `ui/escapeKey.js` (the global Escape priority
   chain, a table of `[isOpen, close]` pairs — add new overlays there).
   Language-dependent text refreshes via `i18n.js#onLangChange()`
@@ -816,3 +818,21 @@ map is enough for orientation but not enough to safely modify this code.
   kit's toggle-switch styling is scoped to `#setupModal`. The in-game HUD
   itself still uses the old style; `UI-standalone.html` is the mockup for
   porting it next.
+- **Load order / first paint (v2.1.3)**: `initScene()` (WebGL context +
+  first shader compiles) blocks the main thread long enough to notice,
+  and the browser can't paint or restyle during it. Three consequences,
+  each handled explicitly: (1) `main.js` runs all start-screen UI init
+  (texts, banner, setup modal, Escape) *first*, then awaits one painted
+  frame (top-level `await` on rAF + setTimeout) before building the scene
+  — don't move UI init back below `initScene()`. (2) Fonts are
+  self-hosted (`fonts/`, `css/fonts.css`, latin + latin-ext subsets) and
+  the start-screen ones plus `grain.png` are `<link rel=preload>`ed in
+  `index.html` — a font is otherwise only requested once the browser
+  restyles text using it, i.e. after the scene init, so the page painted
+  with fallback fonts and swapped ~1.5s later. (3) A non-English saved
+  language sets `data-lang-pending` on `<html>` from the `<head>` script
+  (also preloading the latin-ext subsets), hiding `#box` until
+  `i18nApply.js#applyStaticText()` clears it — the HTML ships English, so
+  a Polish player otherwise saw it flash. Measured locally (Chrome with
+  GPU, returning Polish player): translated text 1457ms -> 318ms, fonts
+  1535ms -> ~80ms, first frame already final.

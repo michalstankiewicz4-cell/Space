@@ -2,7 +2,9 @@
    modal so far). Screen-specific layout lives in its own file next to this
    one (startScreen.css, setupModal.css). */
 :root{
-  --grain: none;               /* set at runtime by js/ui/kit/grain.js */
+  /* Tileable grain blended into every .mat surface (regenerate with
+     tools/grainTexture.html). Preloaded from index.html's <head>. */
+  --grain: url("grain.png");
   --uiScale: 1;
   --uiFrame: #1c3bb4;
   --uiFrameGlow: rgb(40 80 255 / .45);

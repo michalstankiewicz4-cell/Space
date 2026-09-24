@@ -2,6 +2,7 @@
    rather than separate <link>s in index.html so this file's ?v= param
    stays the one cache-busting literal to bump (imported files are covered
    by js/versionCheck.js#MODULE_FILES instead, same as JS imports). */
+@import url("fonts.css");
 @import url("ui/kit.css");
 @import url("ui/startScreen.css");
 @import url("ui/setupModal.css");

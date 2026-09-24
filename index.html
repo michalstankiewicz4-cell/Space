@@ -4,15 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Swarm Protocol</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Antonio:wght@400;600;700&family=Oswald:wght@400;500;600&family=Roboto+Condensed:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=2.1.2">
-<!-- UI kit stage scaling (css/ui/kit.css#.uiStage): fits the fixed
-     1536x1024 design into the window. Inline and in <head> on purpose, so
-     the scale is set before first paint — as a module it would only run
-     once main.js and all its imports have loaded, and the start screen
-     would flash at full size until then. -->
+<!-- Start-screen fonts and grain, preloaded so they're fetched right away
+     instead of only once the browser restyles text using them (which on
+     page load waits for main.js to finish building the 3D scene). -->
+<link rel="preload" href="fonts/antonio-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/oswald-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/roboto-condensed-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="css/ui/grain.png" as="image">
+<link rel="stylesheet" href="css/style.css?v=2.1.3">
+<!-- Runs before first paint. Inline and in <head> on purpose: as a module it
+     would only run once main.js and all its imports have loaded.
+     1. UI kit stage scaling (css/ui/kit.css#.uiStage): fits the fixed
+        1536x1024 design into the window — or the start screen flashes at
+        full size first.
+     2. A non-English saved language (js/i18n.js, "roj-lang"): hides the
+        start panel until it's translated (css/ui/startScreen.css) and
+        preloads the latin-ext font subsets its letters need. -->
 <script>
 (function(){
   function fitUiStage(){
@@ -20,6 +27,18 @@
   }
   fitUiStage();
   addEventListener("resize", fitUiStage);
+
+  var lang = null;
+  try{ lang = localStorage.getItem("roj-lang"); }catch(e){}
+  if(lang && lang !== "en"){
+    document.documentElement.dataset.langPending = "";
+    ["oswald-var-latin-ext", "roboto-condensed-var-latin-ext"].forEach(function(name){
+      var link = document.createElement("link");
+      link.rel = "preload"; link.as = "font"; link.type = "font/woff2"; link.crossOrigin = "";
+      link.href = "fonts/" + name + ".woff2";
+      document.head.appendChild(link);
+    });
+  }
 })();
 </script>
 </head>
@@ -329,6 +348,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script type="module" src="js/main.js?v=2.1.2"></script>
+<script type="module" src="js/main.js?v=2.1.3"></script>
 </body>
 </html>

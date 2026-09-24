@@ -18,7 +18,6 @@ import { updateTelemetry } from "./ui/hud.js";
 import { initBanner } from "./ui/banner.js";
 import { initSetupModal } from "./ui/setupModal.js";
 import { initEscapeKey } from "./ui/escapeKey.js";
-import { applyGrainTexture } from "./ui/kit/grain.js";
 import { applyStaticText } from "./ui/i18nApply.js";
 import { onLangChange } from "./i18n.js";
 import { initPanels } from "./ui/panels.js";
@@ -49,6 +48,23 @@ load();
 document.getElementById("versionTag").textContent = "v" + VERSION;
 document.title = document.title + " — v" + VERSION;
 
+// The start screen comes first and gets painted before anything else:
+// initScene() (WebGL context + first shader compiles) blocks the main
+// thread for a noticeable moment, and until it's done the browser can't
+// paint — the player would stare at an untranslated / half-styled page.
+// None of these touch the scene.
+applyStaticText();
+onLangChange(applyStaticText);
+initSetupModal();
+initBanner();
+initEscapeKey();
+// rAF + setTimeout: resumes right after the next frame is actually painted.
+// (A background tab doesn't paint, so there this waits until it's shown —
+// fine, nothing below matters before the player can see it.)
+await new Promise(function(resolve){
+  requestAnimationFrame(function(){ setTimeout(resolve, 0); });
+});
+
 initScene();
 initControls();
 initParticles();
@@ -70,13 +86,8 @@ setCameraMode("base");
 
 spawnInitialFleet();
 refreshDock();
+onLangChange(refreshDock);
 reconcileFleetSize();
-applyGrainTexture();
-applyStaticText();
-onLangChange(function(){ applyStaticText(); refreshDock(); });
-initSetupModal();
-initBanner();
-initEscapeKey();
 initPanels();
 initFleet();
 initShipCam();

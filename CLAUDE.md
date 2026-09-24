@@ -47,7 +47,8 @@ shared live via Supabase; a player's own points/upgrades stay local
   oversights — the common thread is "doesn't change what a player's
   browser actually loads/runs"):
   - `admin.html`/`planetEditor.html`/`shipEditor.html` and their own
-    `js/admin/`, `js/editor/`, `css/admin.css`, `css/editor.css` —
+    `js/admin/`, `js/editor/`, `css/admin.css`, `css/editor.css`, plus
+    `tools/` (e.g. `grainTexture.html`, regenerates `css/ui/grain.png`) —
     standalone dev tools with no version-check mechanism of their own
     (`js/versionCheck.js` only ever watches the *game's* `js/version.js`).
   - The devlog (`blog/` folder, and publishing via the Blogger API — see

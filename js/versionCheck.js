@@ -27,7 +27,7 @@ const CHECK_INTERVAL_MS = 3 * 60 * 1000; // deploys are infrequent; no need to p
 // to derive it automatically) — add new files here when they're added
 // to js/, or this stops being reliable for exactly the files it can't see.
 const MODULE_FILES = [
-  "css/style.css", "css/ui/kit.css", "css/ui/setupModal.css", "css/ui/startScreen.css",
+  "css/fonts.css", "css/style.css", "css/ui/kit.css", "css/ui/setupModal.css", "css/ui/startScreen.css",
   "js/bodies/blackhole.js", "js/bodies/comet.js", "js/bodies/icePlanet.js",
   "js/bodies/meteoroid.js", "js/bodies/neutralPlanet.js", "js/bodies/sun.js",
   "js/bodies/volcanicPlanet.js", "js/config.js", "js/content.js",
@@ -46,7 +46,7 @@ const MODULE_FILES = [
   "js/station/stationField.js", "js/station/stationModel.js", "js/supabaseClient.js",
   "js/ui/banner.js", "js/ui/devTools.js", "js/ui/dock.js", "js/ui/dronePanel.js",
   "js/ui/escapeKey.js", "js/ui/fleet.js", "js/ui/hud.js", "js/ui/i18nApply.js",
-  "js/ui/kit/grain.js", "js/ui/panels.js", "js/ui/planetPanel.js", "js/ui/players.js",
+  "js/ui/panels.js", "js/ui/planetPanel.js", "js/ui/players.js",
   "js/ui/setupModal.js", "js/ui/stationPanel.js",
   "js/version.js", "js/versionCheck.js", "js/world/blackholes.js",
   "js/world/bodies.js", "js/world/bodyMeshParts.js", "js/world/bodyParams.js",
