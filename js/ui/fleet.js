@@ -24,7 +24,7 @@ function renderFleetList(){
     });
     el.appendChild(li);
   });
-  // The drone isn't in ctx.ships (see CLAUDE.md) and has no ship-cam view
+  // The drone isn't in ctx.ships (see docs/architecture.md) and has no ship-cam view
   // of its own - clicking it selects it and opens its side panel instead,
   // the same as clicking it directly in the world.
   if(ctx.drone){

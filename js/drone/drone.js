@@ -33,7 +33,7 @@ const MAX_INSTANT_STEPS_PER_FRAME = 2000;
 // localStorage key, same "roj-" prefix and try/catch-guarded pattern as
 // settings.js/gameState.js, deliberately not folded into either (same
 // "small persisted modules, not merged" reasoning as settings/identity/i18n
-// — see CLAUDE.md).
+// — see docs/architecture.md).
 const SCRIPT_STORAGE_KEY = "roj-drone-script";
 
 function loadStoredScript(){

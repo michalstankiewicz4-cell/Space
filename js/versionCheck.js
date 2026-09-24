@@ -1,6 +1,6 @@
 // A page never re-fetches its own JS on its own once loaded — a deploy
 // doesn't reach an already-open tab until it's reloaded (see the
-// cache-busting gotcha in CLAUDE.md). This periodically re-fetches
+// cache-busting gotcha in docs/gotchas.md). This periodically re-fetches
 // js/version.js itself (bypassing HTTP cache) to see what's actually
 // deployed, and blocks play with a "please refresh" overlay if this tab
 // is running something older, so a stale client can't act on

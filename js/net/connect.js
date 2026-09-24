@@ -104,8 +104,8 @@ function connectRoom(){
 }
 
 // Reuses an already-stored session instead of always minting a fresh
-// anonymous user — confirmed live (see CLAUDE.md's "Anonymous-auth spam"
-// bullet) that calling signInAnonymously() unconditionally on every page
+// anonymous user — confirmed live (see docs/security.md's "Anonymous-auth
+// spam" bullet) that calling signInAnonymously() unconditionally on every page
 // load was creating a brand new Supabase user on every single reload, even
 // in the exact same browser: auth.users grew by exactly one per reload,
 // with a different user.id stored each time. getSession() reads (and

@@ -12,7 +12,7 @@ export function removeItem(arr, item){
 // The same try/catch-guarded localStorage read/write was independently
 // reimplemented in every small persisted module (net/identity.js,
 // settings.js, i18n.js, drone/drone.js, admin/main.js, core/gameState.js —
-// see CLAUDE.md's "Settings vs. identity vs. i18n" note on why those stay
+// see docs/architecture.md's "Settings vs. identity vs. i18n" note on why those stay
 // separate modules rather than being merged: they persist unrelated data,
 // they just all need the same "don't throw in a private-browsing/storage-
 // disabled tab" guard around the two calls that can actually throw).

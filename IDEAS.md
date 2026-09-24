@@ -19,7 +19,7 @@ to interact with the world" loop instead of a bolted-on separate minigame.
 ### Proposed DSL additions
 
 Numeric-first, same philosophy as the existing builtins (strings only exist
-for `print()` today — see CLAUDE.md):
+for `print()` today — see `docs/architecture.md`):
 
 - `scanNearestEnemy()` — 1 if an enemy ship/drone/station is within hacking
   range, else 0. Same shape as `nearPlanet()`.
@@ -112,8 +112,9 @@ Today, `js/drone/drone.js`'s `driveGenerator()` resolves every *instant*
 builtin (`fuel()`, `attack()`, arithmetic, comparisons, the `while` loop's
 `__tick__` checkpoint, ...) synchronously, in a single JS call, up to
 `MAX_INSTANT_STEPS_PER_FRAME` (currently 2000) — that constant exists purely
-as a **tab-freeze safety net** (see CLAUDE.md: a `while(true){}` with no
-blocking call would otherwise spin forever inside one native call), not as
+as a **tab-freeze safety net** (see `docs/architecture.md`: a
+`while(true){}` with no blocking call would otherwise spin forever inside
+one native call), not as
 a deliberate pacing mechanism. Only `move()`/`turn()`/`wait()` are actually
 paced against real time today (via `DRONE_MOVE_SPEED`/`DRONE_TURN_SPEED`),
 so a script that's all branching/arithmetic and no movement effectively
@@ -205,8 +206,9 @@ AST `interpreter.js` already walks.
 
 - Reusing the existing DSL is the cheap path: no new interpreter, no new
   safety net (the `MAX_INSTANT_STEPS_PER_FRAME` runaway-script guard and the
-  `while`-loop `__tick__` checkpoint — see CLAUDE.md — would just keep
-  working), and it's already proven for one automation use case (the drone).
+  `while`-loop `__tick__` checkpoint — see `docs/architecture.md` — would
+  just keep working), and it's already proven for one automation use case
+  (the drone).
 - A visual block UI would need its own editor component (nothing
   like it exists yet — `js/drone/*` is text-only) but could lower the
   barrier for players who'd never touch a text script, at the cost of a
