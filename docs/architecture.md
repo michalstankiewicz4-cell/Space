@@ -790,7 +790,9 @@ map is enough for orientation but not enough to safely modify this code.
 - **New UI kit (start screen + setup modal, v2.1.0)**: ported from the
   standalone `UI-start.html` mockup. A fixed 1536x1024 design (`.uiStage`,
   everything absolutely positioned in design pixels) scaled to the window
-  by `js/ui/uiKit.js#fitStage()` via the `--uiScale` CSS var, anchored to
+  by `js/ui/uiKit.js#fitStage()` via the `--uiScale` CSS var (also set once
+  by an inline `<head>` script in `index.html` before first paint, or the
+  screen flashes at full size until main.js loads), anchored to
   the top edge so the top bar stays on top on portrait screens. `.mat`
   surfaces blend a procedural grain texture (`--grain`, generated once in
   `initUiKit()`). Gotchas: the kit's button reset is wrapped in

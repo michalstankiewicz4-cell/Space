@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.1.1]
+
+### Fixed
+- The start screen briefly showed at full 1536x1024 size on page load and
+  only then shrank to fit the window — its scale was first computed once
+  `main.js` and all its imports had loaded. It's now set by a tiny inline
+  script in `<head>` before the first paint.
+
 ## [2.1.0]
 
 ### Changed
