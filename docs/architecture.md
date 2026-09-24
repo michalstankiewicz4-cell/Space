@@ -787,3 +787,19 @@ map is enough for orientation but not enough to safely modify this code.
     directly against a drone placed far from the station left its
     position completely untouched (confirmed structurally too — the
     function's loop only ever iterates `ctx.ships`).
+- **New UI kit (start screen + setup modal, v2.1.0)**: ported from the
+  standalone `UI-start.html` mockup. A fixed 1536x1024 design (`.uiStage`,
+  everything absolutely positioned in design pixels) scaled to the window
+  by `js/ui/uiKit.js#fitStage()` via the `--uiScale` CSS var, anchored to
+  the top edge so the top bar stays on top on portrait screens. `.mat`
+  surfaces blend a procedural grain texture (`--grain`, generated once in
+  `initUiKit()`). Gotchas: the kit's button reset is wrapped in
+  `:where(.uiStage)` on purpose — at normal `.uiStage button` specificity
+  its `background:none` beats `.mat` and every material button renders
+  transparent. The game's own `.panel` class (HUD) is unrelated — the kit
+  uses `.uiPanel` to avoid colliding with it. The start screen is
+  translucent over the live scene, so the HUD is hidden while it's open
+  via `body:has(#banner:not(.hidden))` in CSS, no JS. `.setupCheckRow` is
+  shared with the dev tools menu, so the kit's toggle-switch styling is
+  scoped to `#setupModal`. The in-game HUD itself still uses the old
+  style; `UI-standalone.html` is the mockup for porting it next.

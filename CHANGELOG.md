@@ -4,6 +4,19 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.1.0]
+
+### Changed
+- Redesigned start screen and setup modal in a new UI kit: a segmented
+  top bar with the game title and DEV Blog button, a framed start panel
+  with colored side segments, grained "material" buttons (gold/blue/lilac),
+  an explicit nickname label, a dice button for a random nickname, and
+  toggle switches instead of plain checkboxes in the Mouse tab. Condensed
+  fonts (Antonio / Oswald / Roboto Condensed). The layout is a fixed
+  1536x1024 design scaled to fit the window (`js/ui/uiKit.js`).
+- The live 3D scene now shows dimmed behind the start screen, while the
+  in-game HUD stays hidden until the player enters orbit.
+
 ## [2.0.10]
 
 ### Fixed

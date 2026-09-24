@@ -9,6 +9,7 @@ import { isShipCamActive, clearShipCamTarget } from "../scene/shipcam.js";
 import { isDroneScriptModalOpen, closeDroneScriptModal, isDronePanelOpen, closeDronePanel } from "./dronePanel.js";
 import { isStationPanelOpen, closeStationPanel } from "./stationPanel.js";
 import { isPlanetPanelOpen, closePlanetPanel } from "./planetPanel.js";
+import { initUiKit } from "./uiKit.js";
 
 function updateNickPlaceholder(){
   document.getElementById("nickInput").placeholder = t("banner.nickPlaceholder") + " (" + t("banner.nickSuggestionPrefix") + " " + randomNickSuggestion() + ")";
@@ -42,7 +43,10 @@ function closeSetupModal(){
 
 function switchSetupTab(tab){
   document.querySelectorAll("#setupTabs button").forEach(function(btn){
-    btn.classList.toggle("active", btn.dataset.tab === tab);
+    const on = btn.dataset.tab === tab;
+    btn.classList.toggle("active", on);
+    btn.classList.toggle("gold", on);
+    btn.classList.toggle("blueT", !on);
   });
   document.getElementById("setupTabLanguage").classList.toggle("hidden", tab !== "language");
   document.getElementById("setupTabMouse").classList.toggle("hidden", tab !== "mouse");
@@ -65,6 +69,7 @@ export function initBanner(){
   const invertYCheck = document.getElementById("invertYCheck");
   const swapButtonsCheck = document.getElementById("swapButtonsCheck");
 
+  initUiKit();
   applyStaticText();
   updateNickPlaceholder();
   updateLangButtons();

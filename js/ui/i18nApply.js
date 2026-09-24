@@ -9,6 +9,7 @@ export function applyStaticText(){
   document.getElementById("modeFriends").textContent = t("banner.modeFriends");
   document.getElementById("modeSingle").title = t("banner.modeComingSoon");
   document.getElementById("modeFriends").title = t("banner.modeComingSoon");
+  document.getElementById("nickLabel").textContent = t("banner.nickPlaceholder");
   document.getElementById("nickInput").placeholder = t("banner.nickPlaceholder");
   document.getElementById("startBtn").textContent = t("banner.start");
   document.getElementById("nickError").textContent = t("banner.nickRejected");
