@@ -2,7 +2,7 @@
    connection status, ship cam, Dev Tools (scene/viewRect.js, ui/hud/devTools.js). */
 /* The scene renders into this rect on the full-window canvas underneath
    (scene/viewRect.js); the frame itself lets clicks through. */
-#viewport{ left:246px; top:89px; right:334px; bottom:33px; pointer-events:none; }
+#viewport{ left:246px; top:89px; right:334px; bottom:11px; pointer-events:none; }
 #viewport::after{ content:""; position:absolute; inset:-3px; border-radius:10px;
   border:1px solid #0f1f66; pointer-events:none; }
 #viewport > *{ position:absolute; pointer-events:auto; }

@@ -1,5 +1,5 @@
 /* HUD minimap (ui/hud/minimap.js). */
-#miniPanel{ right:16px; bottom:30px; width:307px; height:254px; }
+#miniPanel{ right:16px; bottom:8px; width:307px; height:254px; }
 #mmHdSq{ left:9px; top:7px; width:19px; height:21px; }
 #mmHd{ left:39px; top:3px; }
 #mmHdLine{ left:36px; right:8px; top:33px; }

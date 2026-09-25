@@ -1,5 +1,5 @@
 /* HUD event log, stretches vertically (ui/hud/eventLog.js). */
-#eventPanel{ right:16px; top:436px; width:307px; bottom:300px; }
+#eventPanel{ right:16px; top:436px; width:307px; bottom:278px; }
 #evHdSq{ left:9px; top:7px; width:19px; height:21px; }
 #evHd{ left:39px; top:3px; }
 #evHdLine{ left:36px; right:8px; top:33px; }

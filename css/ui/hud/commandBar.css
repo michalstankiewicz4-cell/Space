@@ -1,5 +1,5 @@
 /* HUD command bar, bottom-left of the viewport (ui/hud/commandBar.js). */
-#cmdBar{ left:246px; bottom:30px; width:680px; height:136px; pointer-events:auto; }
+#cmdBar{ left:246px; bottom:8px; width:680px; height:136px; pointer-events:auto; }
 #cmdBar > *{ position:absolute; }
 #cmdFrame{ left:0; top:0; width:680px; height:136px; overflow:visible; }
 #cmdFrame path{ fill:rgb(0 2 10 / .92); stroke:var(--uiFrame); stroke-width:1.5;

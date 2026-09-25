@@ -1,5 +1,5 @@
 /* HUD selected unit panel: ship, group or drone (ui/hud/unitPanel.js). */
-#unitPanel{ left:8px; bottom:30px; width:229px; height:364px; }
+#unitPanel{ left:8px; bottom:8px; width:229px; height:364px; }
 #unitSide{ left:3px; top:3px; bottom:4px; border-radius:10px 0 0 8px; }
 #unitHd{ left:27px; top:3px; }
 #unitCloseBtn{ right:8px; top:4px; z-index:1; }

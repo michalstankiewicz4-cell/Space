@@ -1,5 +1,5 @@
 /* HUD fleet list panel, stretches vertically (ui/hud/fleetList.js). */
-#fleetPanel{ left:8px; top:332px; width:229px; bottom:409px; }
+#fleetPanel{ left:8px; top:332px; width:229px; bottom:387px; }
 #fleetPanel::before{ left:20px; }
 #fleetHdSq{ left:0; top:2px; width:22px; height:22px; }
 #fleetHd{ left:32px; top:0; }

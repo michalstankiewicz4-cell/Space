@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.7.2]
+
+### Changed
+- HUD: the empty black strip under the bottom panels is gone — they now
+  sit as close to the bottom edge as the top bar does to the top (8px
+  instead of 30px), and the 3D view got the extra height.
+
 ## [2.7.1]
 
 ### Changed
