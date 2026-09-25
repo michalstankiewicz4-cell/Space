@@ -204,6 +204,14 @@ the full detail behind each of these.
   same for windows. Full detail,
   gotchas and where every old HUD feature went: docs/architecture.md's
   "UI kit" and "In-game HUD" sections.
+- **Wiki** (`ui/windows/wiki*.js`): read-only, filled in by play via
+  `core/discovery.js` (`"tab:key"` ids, localStorage). Texts in i18n
+  `wiki.entries.<key>` — **the key after the colon must be unique across
+  all tabs**. The Story tab's memory fragments come from
+  `core/storyLog.js`, paced (one per 3 min of play). The game's story
+  premise: the humans are gone, only AI and robots remain — the full
+  draft lives in a **local, untracked `FABULA.md`** (in
+  `.git/info/exclude`): never commit it.
 - **Space station** (`js/station/*.js`): one static per-player landmark,
   read-only info in the HUD's PLANET INFO slot, mesh shared between local + ghost rendering
   via `buildStationMesh(opts)`. Ships spawn arranged around it on a

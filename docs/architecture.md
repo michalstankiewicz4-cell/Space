@@ -685,7 +685,8 @@ then read just that range.
   - **The single actual bug behind every "won't close" report, after all
     of the above were real-but-insufficient fixes: `#dronePanel.hidden`
     had no matching `display:none` rule in `style.css`.** Every other
-    panel/overlay (`#shipCam.hidden`, `.modal.hidden`, `#legend.hidden`,
+    panel/overlay (`#shipCam.hidden`, `.modal.hidden`, `#legend.hidden` —
+    the old body legend, removed in v2.3.0 —
     ...) has one; this one didn't, so the JS-toggled `hidden` class did
     nothing visually — the panel rendered at `display:block` 100% of the
     time regardless of selection state. This slipped through several
@@ -935,6 +936,17 @@ then read just that range.
   and a Graphics tab in Setup holding the ship lab's two sliders, inert
   for now (setup tabs and panels are matched by `data-tab`, so a new tab
   is markup + one i18n key, no JS change).
+- **Story intro (v2.6.1)**: the description is the story opening
+  (`banner.boot` — a terminal-style line in `#bannerBoot` — plus
+  `banner.desc`, two paragraphs split by a `
+` that `#bannerDesc`'s
+  `white-space:pre-line` keeps). The panel grew 40px for it; `#box` and
+  everything below the description are positioned in fixed design px,
+  so a longer text means shifting those tops too. In i18n.js the break
+  must be the two characters `
+` inside the string — a real line break
+  there is a syntax error that silently leaves a non-English start panel
+  blank (it happened once).
 
 ## In-game HUD
 
@@ -1038,7 +1050,11 @@ then read just that range.
   standard atomic weight; chemical formulas) — keep them factual.
 - **Minimap** (`ui/hud/minimap.js`) is schematic, not to scale: 9 evenly
   spaced rings, each body on its own ring at its real angle; the comet
-  and ships are mapped piecewise-linearly between rings. A click goes
+  and ships are mapped piecewise-linearly between rings, with only a
+  small margin past the outer ring — an arriving/leaving comet (out to
+  ~1.3x the outer orbit) was once drawn past the map's left edge. The
+  +/- zoom lives in the panel header since v2.6.0: sitting on the map it
+  covered the outer orbits' lower right, hiding bodies there. A click goes
   through `scene/controls.js#clickPlanet`/`clickStation` — the exact
   code path of a click in the 3D view (course order if ships are
   selected, otherwise select; shift toggles multi-select).

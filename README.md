@@ -1,6 +1,6 @@
 # Swarm Protocol
 
-3D space game built with Three.js. Swarm of ships eats planets, suns, comets, meteoroids for points (select ships, then click a target to send them — they never move on their own); avoid black holes.
+3D space game built with Three.js. You're an AI waking up on a ruined station after the humans are gone, with a swarm of ships and a whole solar system to explore — and a story to piece back together from recovered memory fragments. For now the swarm eats planets, suns, comets and meteoroids for points (select ships, then click a target to send them — they never move on their own); avoid black holes. A programmable drone (text scripts or blocks) and an in-game Wiki you fill in by playing round it out.
 
 Play: https://michalstankiewicz4-cell.github.io/Space/
 
@@ -162,8 +162,9 @@ token) rather than the Blogger web UI.
 Every player also has one drone (a distinct gold octahedron, spawned next
 to the player's own station, offset above the ship swarm's own formation
 there) that never moves on its own — select it (it shows up in the HUD's
-SELECTED UNIT panel) and press SCRIPT to write a small program for it (`if`/`while`/variables,
-plus `move()`, `turn()`, `wait()`, `attack()`, `fuel()`, `nearPlanet()`,
+SELECTED UNIT panel) and press SCRIPT to write a small program for it (`if`/`while`/`repeat`/variables/
+your own functions with `def`/`return`, plus `move()`, `turn()`, `wait()`, `attack()` — at most 4 hits a
+second — `fuel()`, `nearPlanet()`,
 `print("text")` — the in-game `[?]` button lists all of them with
 examples). `print()` doesn't just log the text — it puffs gas from the
 drone's nose and writes the message into it with a laser, visible to
@@ -200,15 +201,22 @@ fleet doesn't immediately start drifting toward the Sun.
 The in-game HUD is laid out in a fixed style that scales with the window
 (the side columns stick to the edges, the middle stretches): a top bar
 with points / units / planets devoured / players online; a left menu
-(FLEET, PLANETS — body types, RESEARCH — upgrades, INTEL — players online,
-SETTINGS); the fleet list and the selected unit (a ship with a ship-cam
+(FLEET, PLANETS — the Wiki's planets tab, RESEARCH — upgrades, BUILD,
+DIPLOMACY — players online, WIKI, SETTINGS); the fleet list and the selected unit (a ship with a ship-cam
 toggle, a group, or the drone with START/STOP/SCRIPT) on the left; the 3D
 view with the camera switch, ship cam and Dev Tools in its corners and
 the command bar under it; planet info (a planet or your station), the
 event log (every in-game message) and a clickable minimap on the right.
-Some controls are placeholders for now (BUILD, DIPLOMACY, the command
-bar's orders, a planet's Waypoint/Scan/Colonize). Details in
-docs/architecture.md's "In-game HUD" section.
+Some controls are placeholders for now (BUILD, the command bar's orders,
+a planet's Waypoint/Scan/Colonize). Details in docs/architecture.md's
+"In-game HUD" section.
+
+The **Wiki** is a read-only encyclopedia filled in by playing: the Story
+(memory fragments of the AI's past, recovered gradually), systems,
+planets, real elements, minerals, ores and refined resources, materials,
+buildings, ships, technologies, drone programming, races, life forms and
+artifacts humans left behind. Undiscovered entries show as silhouettes
+with a hint; many are placeholders for features still to come.
 
 ## Camera
 

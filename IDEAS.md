@@ -184,15 +184,24 @@ see CLAUDE.md's "Comets" bullet, including a real predicted-trajectory
 line for each comet's own flight path (`scene/orbitLines.js#
 buildCometTrajectoryLine`), the same concept the prototype's own
 predicted-trajectory line explored. **What's still genuinely open from
-this prototype**: the visual block-based programming model (the drone
-still only has the text DSL — see the "Programming model" subsection
-below, unaffected by this update) and moons (see the "Real celestial body
+this prototype**: moons (the block-based programming model has since
+shipped too, for the drone — see the "Programming model" subsection
+below) (see the "Real celestial body
 types" subsection below — planets have real orbits now, but nothing orbits
 a *moving* parent body yet). The game's existing UI/UX carried over as
 expected — no visual-design changes rode along with the orbital-mechanics
 work.
 
-### Programming model — still undecided: visual blocks, or text scripts
+### Programming model — DONE for the drone (v2.4.0): both, blocks compile to the DSL
+
+**Update (2026-09-25)**: the "middle path" below is what shipped. The
+drone has a block editor (`js/blocks/`, `ui/windows/block*.js`) whose
+programs compile to the existing text DSL and run through the same
+interpreter; a SCRIPT/BLOCKS switch picks which of the two kept programs
+runs. The DSL gained `repeat`, `def`/`return` for it. What's still open
+is applying this to the main ships/fleet (the prototype's direction).
+The discussion below is kept as the reasoning that led there.
+
 
 The drone already has a real scripting language (`js/drone/dsl.js`'s
 hand-rolled lexer/parser + `interpreter.js`'s generator-based interpreter —
@@ -242,6 +251,14 @@ AST `interpreter.js` already walks.
   running programs concurrently rather than one ship with one script.
 
 ### Real elements & minerals → processing/manufacturing
+
+**Update (2026-09-25)**: the Wiki (v2.3.0+) already describes the chain
+this would use — real elements, minerals and ores → refined resources
+(pig iron, steel, silicon, water…) → materials (hull plating, glass,
+electronics…) → buildings (mine, refinery, shipyard, lab) — all as
+not-yet-discoverable placeholders. The user's stated direction since:
+planets should eventually be **transformed, farmed and built on** rather
+than just devoured for points.
 
 **Concept**: replace (or supplement) the current single abstract
 `state.points` currency with a small set of real elements/minerals mined
