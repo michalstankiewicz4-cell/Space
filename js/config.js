@@ -64,6 +64,7 @@ export const DRONE_BASE_DEFENSE = 1; // survival odds multiplier vs. a black hol
 export const DRONE_DOCK_RANGE_MULT = 3.2; // x radius of the nearest body = "close enough to refuel/attack"
 export const DRONE_REFUEL_RATE = 18; // fuel/second while docked at a planet/sun
 export const DRONE_PRINT_MAX_LEN = 32; // print()'s in-world gas+laser message, clamped (see drone/dronePrintFx.js)
+export const DRONE_ATTACK_COOLDOWN_S = 0.25; // min seconds between attack() hits (see drone.js#startBuiltin) — without it a loop could land ~2000 hits in one frame
 export const DRONE_PRINT_COOLDOWN_S = 1.5; // min seconds between print() calls (see drone.js#triggerPrintFx) — a while(true){print(...)} loop with no wait() would otherwise flood the broadcast channel as fast as the interpreter's step limit allows
 
 // Player space station (see js/station/*.js) — one static landmark per

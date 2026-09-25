@@ -4,6 +4,20 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.4.1]
+
+### Changed
+- Balance: the drone's `attack()` can now hit at most 4 times a second.
+  Called sooner, it waits for the rest of the pause and then hits, so an
+  `attack()` loop no longer needs a `wait()` — but it can also no longer
+  land thousands of hits a second.
+- Block editor: wider window (100 screen pixels from each side), and the
+  border between the blocks and the code view can be dragged.
+
+### Fixed
+- Block editor: the code view could scroll sideways and get stuck; long
+  lines now wrap instead.
+
 ## [2.4.0]
 
 ### Added

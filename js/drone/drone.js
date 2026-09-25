@@ -14,7 +14,7 @@ import { parseDroneScript } from "./dsl.js";
 import { runProgram } from "./interpreter.js";
 import { spawnPrintEffect } from "./dronePrintFx.js";
 import { broadcastDronePrint } from "../net/shipsBroadcast.js";
-import { DRONE_MAX_FUEL, DRONE_FUEL_PER_MOVE_UNIT, DRONE_MOVE_SPEED, DRONE_TURN_SPEED, DRONE_BASE_ATTACK, DRONE_BASE_DEFENSE, DRONE_DOCK_RANGE_MULT, DRONE_REFUEL_RATE, DRONE_PRINT_MAX_LEN, DRONE_PRINT_COOLDOWN_S } from "../config.js";
+import { DRONE_MAX_FUEL, DRONE_FUEL_PER_MOVE_UNIT, DRONE_MOVE_SPEED, DRONE_TURN_SPEED, DRONE_BASE_ATTACK, DRONE_BASE_DEFENSE, DRONE_DOCK_RANGE_MULT, DRONE_REFUEL_RATE, DRONE_PRINT_MAX_LEN, DRONE_PRINT_COOLDOWN_S, DRONE_ATTACK_COOLDOWN_S } from "../config.js";
 
 // Runaway-script guard: a script with no move()/turn()/wait() in a while
 // loop (e.g. `while(true){ attack() }`) would otherwise resolve instant
@@ -117,7 +117,8 @@ export function spawnDrone(){
     logs: [],
     gen: null,
     pending: null,
-    lastPrintAt: -Infinity
+    lastPrintAt: -Infinity,
+    attackReadyIn: 0 // seconds until the next attack() may land
   };
   built.pickMesh.userData.drone = drone;
   ctx.drone = drone;
@@ -250,7 +251,14 @@ function startBuiltin(drone, name, args){
     case "fuel": return { blocking: false, value: drone.fuel };
     case "maxFuel": return { blocking: false, value: drone.maxFuel };
     case "nearPlanet": return { blocking: false, value: isDocked(drone) ? 1 : 0 };
-    case "attack": return { blocking: false, value: applyAttack(drone) };
+    // Rate-limited by waiting, not by failing: a hit landing inside the
+    // cooldown first blocks for the rest of it (like wait()), then lands.
+    // So `while(true){ attack() }` paces itself at 1/DRONE_ATTACK_COOLDOWN_S
+    // hits per second instead of ~2000 per frame, with no wait() needed.
+    case "attack":
+      if(drone.attackReadyIn > 0) return { blocking: true, state: { name: "attack", remaining: drone.attackReadyIn } };
+      drone.attackReadyIn = DRONE_ATTACK_COOLDOWN_S;
+      return { blocking: false, value: applyAttack(drone) };
     case "print": log(drone, args[0]); triggerPrintFx(drone, args[0]); return { blocking: false, value: 0 };
     case "move": return { blocking: true, state: { name: "move", total: Math.max(0, args[0]||0), remaining: Math.max(0, args[0]||0) } };
     case "turn": return { blocking: true, state: { name: "turn", total: args[0]||0, remaining: args[0]||0 } };
@@ -263,6 +271,13 @@ function startBuiltin(drone, name, args){
 // Advances an in-progress blocking op by dt. Returns true once it's done
 // (and the drone's transform/fuel have been updated for this frame).
 function advanceBlocking(drone, pending, dt){
+  if(pending.name === "attack"){
+    pending.remaining -= dt;
+    if(pending.remaining > 0) return false;
+    drone.attackReadyIn = DRONE_ATTACK_COOLDOWN_S;
+    pending.value = applyAttack(drone);
+    return true;
+  }
   if(pending.name === "wait"){
     pending.remaining -= dt;
     return pending.remaining <= 0;
@@ -359,11 +374,13 @@ export function updateDrone(dt){
   drone.docked = isDocked(drone);
   if(drone.docked) drone.fuel = Math.min(drone.maxFuel, drone.fuel + DRONE_REFUEL_RATE*dt);
 
+  drone.attackReadyIn = Math.max(0, drone.attackReadyIn - dt);
   if(drone.running){
     if(drone.pending){
       if(advanceBlocking(drone, drone.pending, dt)){
+        const value = drone.pending.value; // what the blocking call returns (attack())
         drone.pending = null;
-        driveGenerator(drone, undefined);
+        driveGenerator(drone, value);
       }
     } else {
       driveGenerator(drone, undefined);
