@@ -14,10 +14,8 @@ import { randomCometEntry } from "./cometPhysics.js";
 // randomly rolled/spawned by the game itself — the other 6 kinds
 // (sun/ice/neutral/volcanic/meteoroid/blackhole) are each one fixed body
 // now (see world/solarSystem.js). randomPlanetSpawnData() below stays
-// fully generic, though: planetEditor.html still uses it (forcing every
-// kind in turn) to preview the whole range a kind's js/bodies/*.js params
-// describe, independent of the live game only ever picking one point in
-// that range per slot.
+// generic over any kind anyway — it only needs a kind's js/bodies/*.js
+// params.
 
 // A "planet" DB row only stores kind+temp, not which of the 3 planet
 // variants (ice/neutral/volcanic) generated it — so it's re-derived from
@@ -85,9 +83,8 @@ export function tempColor(t){
 // Pure function: rolls the parameters for a new body (no mesh/scene side
 // effects). `type` is one of the exported CONTENT.* objects (e.g.
 // CONTENT.comet) — every real caller forces one explicitly now (the comet
-// top-up loop always forces CONTENT.comet; planetEditor.html forces
-// whichever kind tab is active) since there's no more shared weighted pool
-// to roll an unforced type from.
+// top-up loop always forces CONTENT.comet) since there's no more shared
+// weighted pool to roll an unforced type from.
 export function randomPlanetSpawnData(type){
   const radius = type.radiusMin + Math.random()*(type.radiusMax-type.radiusMin);
   const temp = type.tempMin + Math.random()*(type.tempMax-type.tempMin);

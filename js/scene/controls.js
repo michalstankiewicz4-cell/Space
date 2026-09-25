@@ -27,12 +27,7 @@ import { settings } from "../settings.js";
 // fully player-controlled (drag to rotate, scroll to zoom) rather than a
 // fixed cinematic shot. "base" is the default on load (see
 // setCameraMode() below).
-//
-// planetEditor.html's own preview camera (js/editor/main.js) reuses this
-// exact camState/updateCamera - it never calls setCameraMode(), so it
-// keeps whatever `mode` this module was last given (module-scope default
-// below); updateCamera()'s own `ctx.station` guard is what actually keeps
-// it safe (the editor never spawns a station), not the mode value itself.
+
 const SYSTEM_CAM_DEFAULT = { az: 0.6, pol: 1.05, radius: 950 };
 const SYSTEM_ZOOM_RANGE = [20, 2500];
 const BASE_CAM_RADIUS_DEFAULT = 20;

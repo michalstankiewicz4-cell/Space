@@ -4,6 +4,21 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.2.1]
+
+### Changed
+- Faster page load: the stylesheets and the game's code now start
+  downloading in parallel right away instead of in several waves (the
+  three.js/Supabase libraries no longer hold up the rest, and the UI
+  styles no longer wait for one another), so the start screen appears
+  sooner.
+
+### Removed
+- Dead code only the old object editor used (`randomBlackHoleRadius()`,
+  `disposeBlackHole()`) — the editor itself (`planetEditor.html`) and the
+  old `shipEditor.html` prototype are gone, replaced by the `bodies.html`
+  and `ship.html` labs.
+
 ## [2.2.0]
 
 ### Changed

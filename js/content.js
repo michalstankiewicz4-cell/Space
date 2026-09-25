@@ -1,6 +1,6 @@
 // Every celestial body is its own file with its own properties — see
-// js/bodies/*.js. This module just aggregates them into one place that the
-// game (js/world/*) and the editor (planetEditor.html) both read from.
+// js/bodies/*.js. This module just aggregates them into one place the
+// game (js/world/*) reads from.
 //
 // This is not runtime config (like js/config.js) — it's input data for the
 // procedural generator. Changing a value here changes how NEWLY generated

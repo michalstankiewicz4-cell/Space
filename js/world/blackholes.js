@@ -8,7 +8,6 @@ import { disposeShip } from "../ships/swarm.js";
 import { refreshResearch } from "../ui/windows/research.js";
 import { save } from "../core/gameState.js";
 import { stopDroneScript } from "../drone/drone.js";
-import { CONTENT } from "../content.js";
 import { SOLAR_BODY_BY_SLOT, bodyPosAt, nowSimTime } from "./solarSystem.js";
 import { t } from "../i18n.js";
 
@@ -25,22 +24,10 @@ import { t } from "../i18n.js";
 // black-hole pair — see the comment at its first use site below.
 const toHoleScratch = new THREE.Vector3();
 
-// Editor-preview-only now (js/editor/main.js) — the game itself always
-// uses SOLAR_BODY_BY_SLOT[9]'s one fixed radius, but planetEditor.html's
-// whole job is letting you look at the range js/bodies/blackhole.js's
-// radiusMin/radiusRange still describes, same as every other kind there.
-export function randomBlackHoleRadius(){
-  const bh = CONTENT.blackhole;
-  return bh.radiusMin + Math.random()*bh.radiusRange;
-}
-
-// `radius` comes from the caller: the game always passes
-// SOLAR_BODY_BY_SLOT[9].radius (one fixed value); the object editor passes
-// randomBlackHoleRadius() to preview the kind's whole range. `orbitSlot` is
-// optional — the game passes 9 so updateBlackHoles() keeps repositioning it
-// every frame from bodyPosAt(); the editor omits it entirely so its preview
-// stays put at the origin (its group starts there by default) instead of
-// drifting off to wherever orbit 9 actually is right now.
+// `radius` comes from the caller: the game passes SOLAR_BODY_BY_SLOT[9].radius
+// (one fixed value). `orbitSlot` is optional — the game passes 9 so
+// updateBlackHoles() keeps repositioning it every frame from bodyPosAt();
+// without it the group just stays put at the origin (where it starts).
 export function materializeBlackHole(radius, orbitSlot){
   const group = new THREE.Group();
 
@@ -90,19 +77,6 @@ export function materializeBlackHole(radius, orbitSlot){
   ctx.blackholes.push(bh);
   showToast(t("toast.blackholeDetected"), "alert");
   return bh;
-}
-
-// Shared teardown for a black hole's 4-piece mesh group (core/horizon/disk/
-// halo) — the game itself never tears down its own permanent black hole
-// (there's nothing to dispose until the page unloads), but js/editor/main.js's
-// preview still creates and destroys one on every parameter change, so this
-// stays exported for that one remaining caller.
-export function disposeBlackHole(bh){
-  ctx.scene.remove(bh.group);
-  bh.core.geometry.dispose(); bh.core.material.dispose();
-  bh.horizon.geometry.dispose(); bh.horizon.material.dispose();
-  bh.disk.geometry.dispose(); bh.disk.material.dispose();
-  bh.halo.material.dispose();
 }
 
 export function updateBlackHoles(dt){

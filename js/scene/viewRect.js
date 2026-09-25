@@ -4,9 +4,8 @@ import { ctx } from "../core/context.js";
 // into — and only takes mouse input from — one rect of it: the HUD's
 // #viewport frame (css/ui/hud/). While the start screen covers
 // everything, it's the whole window instead, so the scene still shows
-// full-screen behind the translucent start panel. Pages without the HUD
-// (planetEditor.html reuses scene/controls.js + picking.js) fall back to
-// the canvas's own rect, which is what they always used.
+// full-screen behind the translucent start panel. A page without the HUD
+// (none today) would fall back to the canvas's own rect.
 //
 // Every rect here is in CSS pixels, window coordinates (same space as a
 // pointer event's clientX/clientY and getBoundingClientRect()).

@@ -246,8 +246,8 @@ AST `interpreter.js` already walks.
 **Concept**: replace (or supplement) the current single abstract
 `state.points` currency with a small set of real elements/minerals mined
 from bodies, processed into intermediate materials, and used to build ships
-(see the in-progress `shipEditor.html` prototype and its per-block
-`category`/`shape`/`color` data) or trade with other players.
+(see the `ship.html` lab — its ShipKit ship definitions are built to be
+ported into the game) or trade with other players.
 
 - **What a body "contains"** would need to be derived from its existing
   data-driven type (`js/content.js`'s `CONTENT`, one file per kind under

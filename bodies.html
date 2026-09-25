@@ -1332,8 +1332,8 @@ input[type=range]::-moz-range-thumb{ width:30px; height:20px; border-radius:4px 
       on a SphereGeometry(radius, 22, 16). A BodyKit planet can replace
       that mesh for kind "neutral" (or become a new kind). The per-kind
       data files in js/bodies/ (e.g. neutralPlanet.js) are the natural
-      home for a body's parameter values; planetEditor.html is the
-      existing tuning tool for those files.
+      home for a body's parameter values (tune them here, in this lab —
+      the old planetEditor.html was removed in favor of it).
    3. Size: game radii are 1.6–2.6 units (world/solarSystem.js,
       SOLAR_BODIES[].radius) → body.setRadius(solar.radius). At game
       distances detail 0.3–0.5 is plenty.

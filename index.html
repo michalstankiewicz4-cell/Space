@@ -12,9 +12,9 @@
 <link rel="preload" href="fonts/oswald-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/roboto-condensed-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="css/ui/grain.png" as="image">
-<link rel="stylesheet" href="css/style.css?v=2.2.0">
 <!-- Runs before first paint. Inline and in <head> on purpose: as a module it
-     would only run once main.js and all its imports have loaded.
+     would only run once main.js and all its imports have loaded. Kept above
+     the stylesheets: an inline script after a stylesheet waits for it.
      1. UI kit stage scaling (css/ui/kit.css#.uiStage): fits the fixed
         1536x1024 design into the window — or the start screen flashes at
         full size first.
@@ -42,6 +42,35 @@
   }
 })();
 </script>
+<!-- Stylesheets as parallel <link>s rather than @imports inside style.css:
+     an @import is only discovered once its parent file has downloaded,
+     which cost a whole extra round trip before first paint. The component
+     files carry no ?v= (same as before — js/versionCheck.js#MODULE_FILES
+     covers them), so style.css's ?v= is still the one CSS literal to bump.
+     Order is the cascade order: style.css's own rules come last. -->
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/ui/kit.css">
+<link rel="stylesheet" href="css/ui/topBar.css">
+<link rel="stylesheet" href="css/ui/startScreen.css">
+<link rel="stylesheet" href="css/ui/setupModal.css">
+<link rel="stylesheet" href="css/ui/hud/hud.css">
+<link rel="stylesheet" href="css/ui/hud/topBar.css">
+<link rel="stylesheet" href="css/ui/hud/nav.css">
+<link rel="stylesheet" href="css/ui/hud/fleetList.css">
+<link rel="stylesheet" href="css/ui/hud/unitPanel.css">
+<link rel="stylesheet" href="css/ui/hud/viewport.css">
+<link rel="stylesheet" href="css/ui/hud/commandBar.css">
+<link rel="stylesheet" href="css/ui/hud/infoPanel.css">
+<link rel="stylesheet" href="css/ui/hud/eventLog.css">
+<link rel="stylesheet" href="css/ui/hud/minimap.css">
+<link rel="stylesheet" href="css/ui/windows/window.css">
+<link rel="stylesheet" href="css/ui/windows/research.css">
+<link rel="stylesheet" href="css/ui/windows/fleet.css">
+<link rel="stylesheet" href="css/ui/windows/players.css">
+<link rel="stylesheet" href="css/ui/windows/planets.css">
+<link rel="stylesheet" href="css/ui/windows/droneScript.css">
+<link rel="stylesheet" href="css/ui/windows/about.css">
+<link rel="stylesheet" href="css/style.css?v=2.2.1">
 </head>
 <body>
 
@@ -542,8 +571,13 @@
 <div id="selectBox"></div>
 <div id="cmdFlash"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script type="module" src="js/main.js?v=2.2.0"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- defer: the two libraries no longer block the HTML parser, so main.js's
+     module graph starts downloading right away instead of after the CDN
+     scripts arrive. Execution order is unchanged — deferred classic scripts
+     and module scripts run in document order, so THREE and supabase exist
+     before main.js (and js/supabaseClient.js) evaluate. -->
+<script type="module" src="js/main.js?v=2.2.1"></script>
 </body>
 </html>

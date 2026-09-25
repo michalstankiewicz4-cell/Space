@@ -1,4 +1,4 @@
-// Neutral planet generation parameters (see js/content.js and planetEditor.html).
+// Neutral planet generation parameters (see js/content.js).
 // Gets a real surface map (ocean/continents/ice caps/desert) instead of a
 // flat color — see world/textures.js#makePlanetSurfaceTexture.
 export const NEUTRAL_PLANET = {

@@ -91,7 +91,7 @@ list has to be updated by hand whenever a file is added to `js/` or
 derive it automatically, and forgetting silently makes the fix not cover
 that one new file (this actually happened: `js/ui/uiKit.js` shipped in
 v2.1.0 without an entry, caught and fixed in v2.1.2). CSS files that
-`css/style.css` pulls in via `@import` (`css/fonts.css`, `css/ui/*.css`)
+index.html links next to `css/style.css` (`css/fonts.css`, `css/ui/**/*.css`)
 are in exactly the same position as JS imports — no `?v=` of their own
 — and are listed too; that's deliberate, so `style.css`'s `?v=` stays
 the one CSS literal to bump instead of one per `<link>`. Binary assets

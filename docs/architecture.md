@@ -15,7 +15,6 @@ then read just that range.
 - [Body types](#body-types)
 - [Module split: bodies.js and controls.js](#module-split-bodiesjs-and-controlsjs)
 - [Ship movement: explicit orders only](#ship-movement-explicit-orders-only)
-- [Object editor](#object-editor)
 - [Camera modes](#camera-modes)
 - [Multiplayer and the steward](#multiplayer-and-the-steward)
 - [Solar system and gravity](#solar-system-and-gravity)
@@ -83,14 +82,6 @@ then read just that range.
   swarm. Clicking a planet with no selection now just shows a "select
   ships first" toast (`toast.noSelection`) instead of doing anything.
 
-## Object editor
-
-- **Object editor** (`planetEditor.html`, not linked from the game) reuses the
-  game's own `materializePlanet`/`materializeBlackHole` functions for its
-  live preview, so it can never visually drift from actual gameplay. It
-  has no backend, so "Download" just produces copy-pasteable
-  `export const ... = {...}` blocks for `js/bodies/*.js`.
-
 ## Camera modes
 
 - **Camera has two modes, toggled top-center in the HUD** (`scene/
@@ -126,15 +117,9 @@ then read just that range.
   `spawnStation()` in `main.js` (not inside `initControls()`, which runs
   before any station exists yet) so the "base" default has a real
   `ctx.station.pos` to derive from immediately, not a fallback.
-  **`planetEditor.html`'s own preview camera (`js/editor/main.js`) reuses
-  this exact `camState`/`updateCamera()` unmodified** — it never calls
-  `setCameraMode()`, so `camState.mode` stays at this module's own default
-  ("base") there too, but `updateCamera()`'s `ctx.station` guard (the
-  editor never spawns a station) is what actually keeps that safe, falling
-  back to the origin pivot — not the mode value itself. Verified live
-  after this change specifically because of that shared-module risk: the
-  editor's own camera still orbits the origin at its own independently-set
-  radius, unaffected.
+  (`planetEditor.html` used to reuse this module for its own preview
+  camera, relying on `updateCamera()`'s `ctx.station` guard to fall back
+  to the origin pivot; the editor was removed in v2.2.1, the guard stays.)
 
 ## Multiplayer and the steward
 
@@ -875,10 +860,11 @@ then read just that range.
   ported — the game itself is now the reference). File layout: `css/ui/kit.css` holds
   the shared primitives (`.uiStage`, `.mat` + color variants, `.uiPanel`,
   `.hdLine`, `.oBtn`), one CSS file per screen next to it
-  (`startScreen.css`, `setupModal.css`), all pulled in via `@import` at
-  the top of `css/style.css` so its `?v=` stays the only CSS
-  cache-busting literal (imported files are in `versionCheck.js#
-  MODULE_FILES` instead). The `.mat` grain is a static
+  (`startScreen.css`, `setupModal.css`), all linked from index.html's
+  `<head>` without a `?v=` of their own, so `css/style.css`'s stays the
+  only CSS cache-busting literal (they're in `versionCheck.js#
+  MODULE_FILES` instead). They used to be `@import`s inside style.css,
+  switched to parallel `<link>`s in v2.2.1 (see "Load order"). The `.mat` grain is a static
   `css/ui/grain.png` (regenerate with `tools/grainTexture.html`), not
   generated at runtime anymore (v2.1.3). JS side: `ui/banner.js` (start
   screen only),
@@ -942,8 +928,8 @@ then read just that range.
   `js/ui/windows/` is the same for the windows (`windows.js#
   initWindows/refreshWindows` + research, fleet, players, droneScript).
   CSS mirrors it one file per component in `css/ui/hud/` and
-  `css/ui/windows/`, each `@import`ed from css/style.css in cascade
-  order. `showToast()` lives in `ui/hud/eventLog.js` (it only feeds the
+  `css/ui/windows/`, each its own `<link>` in index.html's `<head>`, in
+  cascade order (style.css last). `showToast()` lives in `ui/hud/eventLog.js` (it only feeds the
   event log now); a new panel goes in as its own module + CSS file,
   wired through hud.js.
 - **The 3D view renders into the viewport rect only**
@@ -1012,3 +998,17 @@ then read just that range.
   a Polish player otherwise saw it flash. Measured locally (Chrome with
   GPU, returning Polish player): translated text 1457ms -> 318ms, fonts
   1535ms -> ~80ms, first frame already final.
+- **Parallel downloads (v2.2.1)**, measured on the live site: (1) the 22
+  UI kit stylesheets are plain `<link>`s in `<head>` rather than
+  `@import`s inside style.css — an `@import` is only discovered after its
+  parent file has arrived, which cost a whole extra round trip before
+  first paint; order is the cascade order, style.css's own rules last.
+  (2) three.js and supabase-js are `defer`: as plain classic scripts they
+  blocked the HTML parser, and since a module script's dependency graph
+  only starts downloading once the parser reaches it, `main.js`'s ~100
+  imports waited for the slower CDN script to arrive. Deferred classic
+  scripts and module scripts still execute in document order, so `THREE`
+  and `supabase` exist before `main.js`/`supabaseClient.js` evaluate.
+  (3) The inline pre-paint `<head>` script sits *above* the stylesheets —
+  an inline script after a stylesheet waits for that stylesheet (and
+  stalls the parser meanwhile).

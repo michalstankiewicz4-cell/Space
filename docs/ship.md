@@ -2,7 +2,7 @@
 
 A standalone, single-file preview page for procedurally built 3D
 spaceships. It isn't linked from the game and isn't loaded by it (so,
-like `shipEditor.html`, a change to it needs no version bump). Its ship
+like the other dev tools, a change to it needs no version bump). Its ship
 code is written so a ship can later be moved into the game with little
 work: see [Moving a ship into the game](#moving-a-ship-into-the-game).
 

@@ -1,4 +1,4 @@
-// Comet generation parameters (see js/content.js and planetEditor.html).
+// Comet generation parameters (see js/content.js).
 export const COMET = {
   kind: "comet",
   spawnWeight: 0.10,

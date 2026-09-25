@@ -153,8 +153,7 @@ then read just that range.
   `activity_rate` stays small regardless (one row per active actor per
   action, upserted in place), but an unconditional `activity_log` would
   grow without bound. No UI for this **in the game** — `admin.html`
-  (separate entry point, not linked from the game, same treatment as
-  `planetEditor.html`) is a read-only viewer for it, or query by hand
+  (separate entry point, not linked from the game) is a read-only viewer for it, or query by hand
   (Supabase SQL Editor, or the Management API via the `pass` file) when
   something looks worth investigating, e.g.:
   `select actor, event_type, count(*), max(created_at) from activity_log

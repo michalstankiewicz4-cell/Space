@@ -17,7 +17,8 @@ native ES modules under `js/`, loaded via
 `<script type="module" src="js/main.js">`:
 
 ```
-css/style.css        game styling (HUD, upgrade dock, Tech/Fleet modals); @imports the files below
+css/style.css        global base + overlays (tooltip, selection box, update notice); loaded after
+                     the UI kit files below, all linked from index.html
 css/fonts.css        self-hosted web fonts (@font-face for fonts/, latin + latin-ext subsets)
 css/ui/              the new-style UI kit: shared primitives (kit.css — scaled design stage,
                      full-width/full-window screens, "material" surfaces, panels), the start
@@ -46,10 +47,10 @@ js/
                      gravity-curved flight simulation), body mesh/lifecycle (bodies.js,
                      bodyParams.js, bodyMeshParts.js) — per-type data lives in js/bodies/
   bodies/            7 body types, one file each (sun.js, icePlanet.js, neutralPlanet.js,
-                     volcanicPlanet.js, comet.js, meteoroid.js, blackhole.js) — see "Object editor" below.
+                     volcanicPlanet.js, comet.js, meteoroid.js, blackhole.js).
                      Only comets are still randomly rolled; the other 6 are each one fixed,
                      hand-placed body in the solar system (see docs/architecture.md)
-  content.js         aggregates js/bodies/ into one place the game and the editor both read from
+  content.js         aggregates js/bodies/ into one place the game reads from
   fx/                particles, debris, shockwaves, dust — planet-breakup effects
   ships/             player's ship swarm (movement, eating, bite-beam)
   drone/             the programmable drone — its own DSL (dsl.js), a generator-based
@@ -76,12 +77,12 @@ js/
 supabase/schema.sql  database schema (tables, RLS, RPC functions) to paste into the Supabase SQL Editor
 ```
 
-`admin.html`/`css/admin.css`/`js/admin/`, `planetEditor.html`/`css/editor.css`/`js/editor/`,
-and `shipEditor.html` are separate developer-tool entry points, not part of
-the game's own module graph above — see "Object editor", "Admin panel" and
-"Ship editor" below. `ship.html` and `bodies.html` are standalone
+`admin.html`/`css/admin.css`/`css/devTheme.css`/`js/admin/` is a separate
+developer-tool entry point, not part of the game's own module graph above —
+see "Admin panel" below. `ship.html` and `bodies.html` are standalone
 single-file labs for procedural ships and celestial bodies, built to be
-ported into the game later — see [`docs/ship.md`](docs/ship.md) and
+ported into the game later (they replaced the older `planetEditor.html` and
+`shipEditor.html`, removed in v2.2.1) — see [`docs/ship.md`](docs/ship.md) and
 [`docs/bodies.md`](docs/bodies.md). `tools/` holds small standalone dev
 utilities (e.g. `grainTexture.html`, which regenerates `css/ui/grain.png`). `blog/` isn't part of the game at all — see "Devlog"
 below.
@@ -89,33 +90,6 @@ below.
 Adding a new mechanic (e.g. another upgrade type, a new kind of celestial
 body) usually means editing a single file in the right folder, without
 touching the rest.
-
-## Object editor
-
-[`planetEditor.html`](planetEditor.html) is a separate developer tool (not linked from
-the game itself) for tuning the look of the procedurally generated bodies —
-one tab and one slider per parameter for each of the 7 types in
-[`js/bodies/`](js/bodies), with a live 3D preview. The preview reuses the
-exact same functions as the game, so what you see in the editor looks
-identical in actual play.
-
-Since the site has no backend, the "Download" button produces a text file
-with ready-to-paste `export const ... = {...}` blocks — one per file in
-`js/bodies/` — which you then manually swap into the repo.
-
-## Ship editor
-
-[`shipEditor.html`](shipEditor.html) is an early, standalone prototype
-(not linked from the game, not yet integrated with anything) of a
-Space-Engineers-style modular ship builder: a 10x10x10 grid, block
-category/shape/color pickers, left-click to place and shift+left-click to
-remove. Three shapes per block category (cube/wedge/rounded corner), all
-built from plain Three.js primitives — no model files. "Download" exports
-the current build as JSON (grid position, category, shape, color, rotation
-per block) — there's no backend or persistence yet, so that JSON is the
-only way to keep a design between sessions. No hidden-face culling or any
-other rendering optimization yet either — deliberately deferred until
-there's an actual gameplay use for the format this produces.
 
 ## Admin panel
 
@@ -276,6 +250,6 @@ that case by blocking play with a "please refresh" prompt once it detects
 a newer version is live. Its "Refresh now" button force-refreshes every
 JS/CSS file's browser cache entry before navigating (a hand-maintained
 `MODULE_FILES` list in that file — needs updating whenever a file is
-added to `js/` or `css/`, including CSS pulled in via `@import`),
+added to `js/` or `css/`, including every stylesheet index.html links),
 plus an "or Ctrl+Shift+R" hint underneath either way, since a static
 site with no build step can't guarantee a clean cache bypass on its own.

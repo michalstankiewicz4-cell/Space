@@ -51,9 +51,8 @@ shared live via Supabase; a player's own points/upgrades stay local
   forget. **Explicitly excluded** (all explicit user calls, not
   oversights — the common thread is "doesn't change what a player's
   browser actually loads/runs"):
-  - `admin.html`/`planetEditor.html`/`shipEditor.html`, the `ship.html`/
-    `bodies.html` labs, and their own
-    `js/admin/`, `js/editor/`, `css/admin.css`, `css/editor.css`, plus
+  - `admin.html` (+ `js/admin/`, `css/admin.css`, `css/devTheme.css`),
+    the `ship.html`/`bodies.html` labs, plus
     `tools/` (e.g. `grainTexture.html`, regenerates `css/ui/grain.png`) —
     standalone dev tools with no version-check mechanism of their own
     (`js/versionCheck.js` only ever watches the *game's* `js/version.js`).
@@ -71,7 +70,7 @@ shared live via Supabase; a player's own points/upgrades stay local
   commit, not a changelog entry.
 
   **New `js/`/`css/` file → add it to `js/versionCheck.js#MODULE_FILES`**
-  (incl. `@import`ed CSS) — hand-maintained, easy to forget, and
+  (incl. every stylesheet index.html links) — hand-maintained, easy to forget, and
   forgetting silently breaks the "Refresh now" cache refresh for that
   file (see `docs/gotchas.md`).
 - **Testing before commit**: there's no test suite. Verify changes with a
@@ -118,15 +117,11 @@ the full detail behind each of these.
 - **Ships only ever move on an explicit order** (`commandTo()` in
   `scene/controls.js` → `commandedTarget`) — no automatic nearest-planet
   fallback. Don't reintroduce one; it was removed deliberately.
-- **Object editor** (`planetEditor.html`) reuses the game's own
-  `materializePlanet`/`materializeBlackHole` for its live preview.
 - **Camera has two modes** (top-center HUD toggle, `scene/controls.js#
   setCameraMode()`): "base" (default) orbits the player's own station,
   framed so the Sun sits behind and a bit above it; "system" orbits the
   Sun. Same spherical-orbit math either way (`camState.az/pol/radius`),
   just a different pivot — both stay fully player-controlled.
-  `planetEditor.html`'s own preview camera reuses this same module
-  unmodified; its missing `ctx.station` is what keeps it safe, not mode.
 - **The world is a fixed 9-orbit solar system** (`world/solarSystem.js`),
   not a random pool — Sun + 9 hand-placed orbit slots (2 volcanic, 2
   neutral, 2 ice, 1 meteoroid, 1 permanent black hole, orbit 4 = the

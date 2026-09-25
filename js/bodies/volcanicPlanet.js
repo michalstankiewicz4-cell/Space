@@ -1,4 +1,4 @@
-// Volcanic planet generation parameters (see js/content.js and planetEditor.html).
+// Volcanic planet generation parameters (see js/content.js).
 export const VOLCANIC_PLANET = {
   kind: "planet",
   spawnWeight: 0.28,

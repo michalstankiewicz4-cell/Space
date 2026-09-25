@@ -1,4 +1,4 @@
-// Sun generation parameters (see js/content.js and planetEditor.html).
+// Sun generation parameters (see js/content.js).
 export const SUN = {
   kind: "sun",
   spawnWeight: 0.05,

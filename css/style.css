@@ -1,32 +1,7 @@
-/* New-style UI kit and the screens built on it. Pulled in via @import
-   rather than separate <link>s in index.html so this file's ?v= param
-   stays the one cache-busting literal to bump (imported files are covered
-   by js/versionCheck.js#MODULE_FILES instead, same as JS imports). */
-@import url("fonts.css");
-@import url("ui/kit.css");
-@import url("ui/topBar.css");
-@import url("ui/startScreen.css");
-@import url("ui/setupModal.css");
-@import url("ui/hud/hud.css");
-@import url("ui/hud/topBar.css");
-@import url("ui/hud/nav.css");
-@import url("ui/hud/fleetList.css");
-@import url("ui/hud/unitPanel.css");
-@import url("ui/hud/viewport.css");
-@import url("ui/hud/commandBar.css");
-@import url("ui/hud/infoPanel.css");
-@import url("ui/hud/eventLog.css");
-@import url("ui/hud/minimap.css");
-@import url("ui/windows/window.css");
-@import url("ui/windows/research.css");
-@import url("ui/windows/fleet.css");
-@import url("ui/windows/players.css");
-@import url("ui/windows/planets.css");
-@import url("ui/windows/droneScript.css");
-@import url("ui/windows/about.css");
-
-/* Global base + the few overlays that live outside the UI kit's scaled
-   screens (they follow the mouse or cover the whole window). */
+/* Loaded last (see index.html's <head>, which links every UI kit file
+   before this one): the global base + the few overlays that live outside
+   the UI kit's scaled screens (they follow the mouse or cover the whole
+   window). */
 :root{
   --void: #05060a;
   --danger: #ff6b6e;
