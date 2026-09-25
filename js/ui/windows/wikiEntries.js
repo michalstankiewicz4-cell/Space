@@ -6,11 +6,17 @@
 //   "inspect"  the first time the player looks at that body (select/hover)
 //   "research" the first upgrade bought in it
 //   "script"   the first drone script run
+//   "use"      a drone program using that command/feature was run
+//              (drone/scriptFeatures.js reads it off the program itself)
+//   "blocks"   a program built from blocks was run
+//   "files"    a second file was made in the block editor
 //   "future"   not reachable yet — arrives with a future update
 // `meta` (optional) is a language-neutral fact line shown under the name:
 // elements, minerals and ores are real, so it carries their real data
-// (atomic number, symbol, standard atomic weight / chemical formula).
-export const WIKI_TABS = ["systems", "bodies", "elements", "minerals", "ores", "materials", "buildings", "ships", "tech", "races"];
+// (atomic number, symbol, standard atomic weight / chemical formula);
+// refined resources their real composition; programming entries the same
+// command written in the text script language.
+export const WIKI_TABS = ["systems", "bodies", "elements", "minerals", "ores", "resources", "materials", "buildings", "ships", "tech", "programming", "races"];
 
 export const WIKI_ENTRIES = {
   systems: [
@@ -54,6 +60,16 @@ export const WIKI_ENTRIES = {
     { id: "ore:pentlandite", unlock: "future", meta: "(Fe,Ni)₉S₈", art: { type: "mineral", shape: "nugget", colors: ["#f0dd9a", "#8a7430"] } },
     { id: "ore:sperrylite", unlock: "future", meta: "PtAs₂", art: { type: "mineral", shape: "cube", colors: ["#e8ecf2", "#7c8594"] } }
   ],
+  // Refined resources: the step between raw ore and a finished material.
+  resources: [
+    { id: "resource:pigiron", unlock: "future", meta: "Fe + 3.5–4.5% C", art: { type: "resource", shape: "ingot", colors: ["#8a8f99", "#3a3d44"] } },
+    { id: "resource:steel", unlock: "future", meta: "Fe + < 2.1% C", art: { type: "resource", shape: "ingot", colors: ["#dfe6f0", "#7d8a9c"] } },
+    { id: "resource:nickelrefined", unlock: "future", meta: "Ni ≥ 99.8%", art: { type: "resource", shape: "ingot", colors: ["#e6e0c6", "#8f8a70"] } },
+    { id: "resource:platinumrefined", unlock: "future", meta: "Pt ≥ 99.95%", art: { type: "resource", shape: "ingot", colors: ["#ffffff", "#9aa0aa"] } },
+    { id: "resource:mgsilicon", unlock: "future", meta: "Si 98–99%", art: { type: "resource", shape: "chunk", colors: ["#b9c9dc", "#4a5a70"] } },
+    { id: "resource:quartzsand", unlock: "future", meta: "SiO₂ ≥ 99%", art: { type: "resource", shape: "sand", colors: ["#f1e6cc", "#b8a57e"] } },
+    { id: "resource:water", unlock: "future", meta: "H₂O", art: { type: "resource", shape: "drop", colors: ["#d9f2ff", "#2f7fd0"] } }
+  ],
   materials: [
     { id: "material:hullplate", unlock: "future", art: { type: "material", shape: "plates" } },
     { id: "material:glass", unlock: "future", art: { type: "material", shape: "glass" } },
@@ -82,6 +98,26 @@ export const WIKI_ENTRIES = {
     { id: "tech:cold", unlock: "research", art: { type: "tech", icon: "❄️" } },
     { id: "tech:fleet", unlock: "research", art: { type: "tech", icon: "🚀" } },
     { id: "tech:droneScript", unlock: "script", art: { type: "tech", icon: "📜" } }
+  ],
+  // One entry per drone command/feature, discovered by using it.
+  programming: [
+    { id: "prog:cmdMove", unlock: "use", meta: "move(10)", art: { type: "code", op: "move", sample: { d: 10 } } },
+    { id: "prog:cmdTurn", unlock: "use", meta: "turn(90)", art: { type: "code", op: "turn", sample: { a: 90 } } },
+    { id: "prog:cmdWait", unlock: "use", meta: "wait(1)", art: { type: "code", op: "wait", sample: { s: 1 } } },
+    { id: "prog:cmdAttack", unlock: "use", meta: "attack()", art: { type: "code", op: "attack" } },
+    { id: "prog:cmdPrint", unlock: "use", meta: "print(\"Hello!\")", art: { type: "code", op: "print", sample: { m: "“…”" } } },
+    { id: "prog:cmdFuel", unlock: "use", meta: "fuel()  ·  maxFuel()", art: { type: "code", op: "fuel" } },
+    { id: "prog:cmdNear", unlock: "use", meta: "nearPlanet()", art: { type: "code", op: "nearPlanet" } },
+    { id: "prog:cmdRepeat", unlock: "use", meta: "repeat (4) { … }", art: { type: "code", op: "repeat", sample: { n: 4 } } },
+    { id: "prog:cmdWhile", unlock: "use", meta: "while (…) { … }", art: { type: "code", op: "forever" } },
+    { id: "prog:cmdIf", unlock: "use", meta: "if (…) { … } else { … }", art: { type: "code", op: "ifelse" } },
+    { id: "prog:cmdLogic", unlock: "use", meta: "<  >  ==  !=  &&  ||  !", art: { type: "code", op: "compare", sample: { a: "x", op: "<", b: 5 } } },
+    { id: "prog:cmdMath", unlock: "use", meta: "+  -  *  /", art: { type: "code", op: "math", sample: { a: "x", op: "×", b: 2 } } },
+    { id: "prog:cmdVars", unlock: "use", meta: "x = 5", art: { type: "code", op: "setvar", sample: { v: "x", x: 5 } } },
+    { id: "prog:cmdProc", unlock: "use", meta: "def side(length) { … }", art: { type: "code", op: "define" } },
+    { id: "prog:cmdFunc", unlock: "use", meta: "return x * x", art: { type: "code", op: "return", sample: { x: "x × x" } } },
+    { id: "prog:cmdBlocks", unlock: "blocks", art: { type: "code", special: "switch" } },
+    { id: "prog:cmdFiles", unlock: "files", art: { type: "code", special: "files" } }
   ],
   races: [
     { id: "race:swarm", unlock: "start", art: { type: "race", race: "swarm" } },

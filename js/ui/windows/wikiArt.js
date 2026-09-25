@@ -2,6 +2,9 @@
 // drawn from its `art` spec in wikiEntries.js — no image files. Every
 // gradient gets a unique id, since the same art can be on the page twice
 // (list thumbnail + detail view) and SVG ids are document-wide.
+import { SPECS, categoryOf } from "../../blocks/blockSpecs.js";
+import { t } from "../../i18n.js";
+
 let uid = 0;
 
 const PLANETS = {
@@ -232,6 +235,93 @@ function ship(a){
     '<path d="M70 72 L50 40 L96 70 Z M70 128 L50 160 L96 130 Z" fill="#f8bb56"/>');
 }
 
+// Refined resources: an ingot, a faceted chunk, a sand heap or a drop.
+function resource(a){
+  const id = "wa" + (++uid), lt = a.colors[0], dk = a.colors[1];
+  const grad = '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + lt + '"/><stop offset="1" stop-color="' + dk + '"/></linearGradient></defs>';
+  const f = 'fill="url(#' + id + ')"';
+  let out = "";
+  if(a.shape === "ingot"){
+    out = '<path d="M34 138 L58 94 L166 94 L142 138 Z" ' + f + '/><path d="M34 138 L142 138 L142 150 L34 150 Z" fill="' + dk + '"/>' +
+      '<path d="M142 138 L166 94 L166 106 L142 150 Z" fill="' + dk + '" opacity=".7"/>' +
+      '<path d="M70 70 L92 46 L164 46 L142 70 Z" ' + f + ' opacity=".85"/><path d="M70 70 L142 70 L142 80 L70 80 Z" fill="' + dk + '" opacity=".85"/>' +
+      '<path d="M64 102 L152 102" stroke="#fff" stroke-opacity=".45" stroke-width="3"/>';
+  } else if(a.shape === "chunk"){
+    out = '<path d="M50 120 L72 62 L128 48 L158 92 L140 146 L80 156 Z" ' + f + '/>' +
+      '<path d="M72 62 L104 100 L128 48 M104 100 L158 92 M104 100 L80 156 M104 100 L50 120" stroke="#fff" stroke-opacity=".35" stroke-width="2" fill="none"/>';
+  } else if(a.shape === "sand"){
+    out = '<path d="M26 150 Q100 40 174 150 Z" ' + f + '/>';
+    for(let i = 0; i < 40; i++){
+      const x = 40 + ((i * 37) % 120), y = 140 - ((i * 53) % 70) * (1 - Math.abs(x - 100) / 90);
+      out += '<circle cx="' + x + '" cy="' + y.toFixed(1) + '" r="1.8" fill="#fff" opacity=".5"/>';
+    }
+  } else {
+    out = '<path d="M100 34 C122 72 150 98 150 126 A50 50 0 0 1 50 126 C50 98 78 72 100 34 Z" ' + f + '/>' +
+      '<path d="M72 124 A28 28 0 0 0 92 150" stroke="#fff" stroke-opacity=".7" stroke-width="5" fill="none" stroke-linecap="round"/>';
+  }
+  return frame(grad + out);
+}
+
+function esc(s){ return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+// A block's label with sample values in its slots (empty slots as "…").
+function blockLabel(a){
+  if(a.op === "define") return t("blocks.kind.proc") + " " + ((t("blocks.examples.spiral.names") || {}).side || "side");
+  const sample = a.sample || {};
+  return t("blocks.op." + a.op).replace(/\{(\w+)\}/g, function(m, k){
+    const v = sample[k];
+    if(v === undefined) return "…";
+    return k === "op" && (v === "and" || v === "or") ? t("blocks.opt." + v) : String(v);
+  });
+}
+
+function labelText(x, y, s, ink, max){
+  const fit = s.length > 15 ? ' textLength="' + max + '" lengthAdjust="spacingAndGlyphs"' : "";
+  return '<text x="' + x + '" y="' + y + '" font-family="Oswald, sans-serif" font-size="17" font-weight="500" fill="' + ink + '"' + fit + ">" + esc(s) + "</text>";
+}
+
+// Programming entries: the block itself, drawn in its category's colors
+// (the same ones the block editor uses), or the SCRIPT/BLOCKS switch and
+// a pair of files for the two feature entries.
+function code(a){
+  const id = "wa" + (++uid);
+  if(a.special === "switch"){
+    return frame('<rect x="22" y="80" width="156" height="40" rx="20" fill="#040a26" stroke="#3c55d8" stroke-width="2.5"/>' +
+      '<path d="M100 82 H158 A18 18 0 0 1 158 118 H100 Z" fill="#f8bb56"/>' +
+      labelText(36, 106, t("blocks.mode.script"), "#93a6ff", 56) + labelText(110, 106, t("blocks.mode.blocks"), "#241404", 56));
+  }
+  if(a.special === "files"){
+    const file = function(y, c, name, star){
+      return '<rect x="30" y="' + y + '" width="140" height="42" rx="6" fill="#040a26" stroke="' + (star ? "#f5bd5c" : "#1d36a0") + '" stroke-width="2"/>' +
+        '<rect x="40" y="' + (y + 8) + '" width="10" height="26" rx="2" fill="' + c + '"/>' +
+        labelText(60, y + 27, name, "#fff", 70) + (star ? '<text x="150" y="' + (y + 28) + '" font-size="18" fill="#f8bb56" text-anchor="middle">★</text>' : "");
+    };
+    return frame(file(40, "#f8bb56", "main", true) + file(90, "#2fc79a", t("blocks.newFile")(2), false) + file(140, "#e0607a", t("blocks.newFile")(3), false));
+  }
+  const spec = SPECS[a.op], c = categoryOf(spec.cat), shape = spec.shape;
+  const grad = '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c.hi + '"/><stop offset=".45" stop-color="' + c.c + '"/><stop offset="1" stop-color="' + c.lo + '"/></linearGradient></defs>';
+  const f = 'fill="url(#' + id + ')"', label = blockLabel(a);
+  let out = "";
+  if(shape === "c" || shape === "cc"){
+    const elseRow = shape === "cc";
+    out = '<path d="M20 42 H160 A20 20 0 0 1 160 82 H44 V' + (elseRow ? 98 : 128) + ' H20 Z" ' + f + '/>' +
+      '<rect x="48" y="86" width="96" height="' + (elseRow ? 10 : 38) + '" rx="4" fill="#fff" opacity=".12"/>' +
+      (elseRow ? '<path d="M20 98 H44 H150 A14 14 0 0 1 150 126 H44 V144 H20 Z" ' + f + '/><rect x="48" y="130" width="96" height="12" rx="4" fill="#fff" opacity=".12"/>' : "") +
+      '<path d="M20 ' + (elseRow ? 144 : 128) + ' H44 V' + (elseRow ? 144 : 128) + ' H130 A12 12 0 0 1 130 ' + (elseRow ? 168 : 152) + ' H20 Z" ' + f + '/>' +
+      labelText(32, 68, label, c.ink, 130) + (elseRow ? labelText(52, 118, t("blocks.op.else"), c.ink, 100) : "");
+  } else if(shape === "bool"){
+    out = '<path d="M34 76 H166 L186 100 L166 124 H34 L14 100 Z" ' + f + '/>' + labelText(38, 106, label, c.ink, 124);
+  } else if(shape === "reporter"){
+    out = '<rect x="22" y="78" width="156" height="44" rx="22" ' + f + '/>' + labelText(40, 106, label, c.ink, 120);
+  } else {
+    const hat = shape === "hat", cap = shape === "cap";
+    out = '<path d="M' + (hat ? 40 : 26) + ' 76 H156 A24 24 0 0 1 156 124 H20 V' + (hat ? 96 : 82) + (hat ? " A20 20 0 0 1 40 76" : " A6 6 0 0 1 26 76") + ' Z" ' + f + '/>' +
+      (cap ? "" : '<rect x="34" y="122" width="24" height="7" rx="3" fill="' + c.lo + '"/>') +
+      labelText(32, 107, label, c.ink, 128);
+  }
+  return frame(grad + out);
+}
+
 function tech(a){
   const id = "wa" + (++uid);
   return frame('<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffda92"/><stop offset="1" stop-color="#d38b37"/></linearGradient></defs>' +
@@ -254,7 +344,7 @@ function race(a){
 
 const DRAW = { planet: planet, sun: sun, meteoroid: meteoroid, comet: comet, blackhole: blackhole,
   system: system, element: element, mineral: mineral, material: material,
-  building: building, ship: ship, tech: tech, race: race };
+  building: building, ship: ship, tech: tech, race: race, resource: resource, code: code };
 
 export function wikiArt(art){
   return DRAW[art.type](art);

@@ -4,6 +4,19 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.5.0]
+
+### Added
+- Wiki: a **Refined** tab (Surowce) between ores and materials — the
+  step from raw ore to a finished material: pig iron, steel, refined
+  nickel and platinum, metallurgical silicon, quartz sand and water,
+  with their real composition.
+- Wiki: a **Programming** tab with an entry for every drone command and
+  feature (movement, waiting, attack, show, fuel, loops, conditions,
+  logic, arithmetic, variables, procedures, functions, block programming,
+  files). Each shows its block and the same command as a script line,
+  and gets discovered the first time a program using it is run.
+
 ## [2.4.1]
 
 ### Changed

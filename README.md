@@ -56,7 +56,8 @@ js/
   ships/             player's ship swarm (movement, eating, bite-beam)
   drone/             the programmable drone — its own DSL (dsl.js), a generator-based
                      interpreter (interpreter.js), the entity/script driver (drone.js),
-                     which editor's program runs (droneMode.js) and the print()
+                     which editor's program runs (droneMode.js), which commands a
+                     program uses, for the Wiki (scriptFeatures.js), and the print()
                      gas+laser effect (dronePrintFx.js) — see "Programmable drone" below
   blocks/            the drone's block programs: block catalog (blockSpecs.js), the
                      project with its virtual files (blockProject.js), the compiler to

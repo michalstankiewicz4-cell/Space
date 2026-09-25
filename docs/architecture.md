@@ -1014,8 +1014,15 @@ then read just that range.
   text; the mineral is now `waterice`). `unlock` is `start` (always
   known), `inspect` (bodies: `planetPanel.js` / `tooltip.js` call
   `discover()`), `research` (`research.js` on purchase), `script`
-  (`droneScript.js` on run) or `future` (placeholder for features not
-  built yet — elements/minerals/ores/materials/most buildings and ships).
+  (`droneScript.js` on run), `use` (programming entries:
+  `drone/scriptFeatures.js` reads which commands a program contains off
+  its parsed AST, and `droneScript.js#runActive` discovers them once the
+  program actually starts), `blocks` (a block-mode run), `files` (a
+  second block-editor file) or `future` (placeholder for features not
+  built yet — elements/minerals/ores/refined resources/materials/most
+  buildings and ships). Programming entries' pictures are the real
+  blocks, drawn in SVG from the block editor's own category colors and
+  i18n labels (`wikiArt.js#code`).
   Discovery state is `core/discovery.js` (a Set persisted under
   localStorage `roj-discovered`, `onDiscover` listeners -> event-log
   toast). Elements/minerals/ores carry real data in `meta` (Z, symbol,

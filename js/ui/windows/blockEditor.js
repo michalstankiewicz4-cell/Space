@@ -7,6 +7,7 @@ import { renderPalette, resetPaletteForm } from "./blockPalette.js";
 import { initBlockDrag } from "./blockDrag.js";
 import { t, onLangChange } from "../../i18n.js";
 import { readStorage, writeStorage } from "../../core/utils.js";
+import { discover } from "../../core/discovery.js";
 
 // The drone's block editor window (#blocksModal): a visual way to write
 // the same drone programs the text editor does. Four columns — virtual
@@ -157,6 +158,7 @@ const paletteHooks = {
   },
   loadExample: function(key){
     const f = loadExample(key);
+    discover("prog:cmdFiles");
     curFileId = f.id;
     commit();
     tidy();
@@ -330,6 +332,7 @@ export function initBlockEditor(onRun, onStop){
   el("blkNewFile").addEventListener("click", function(){
     const p = getProject();
     const f = addFile(t("blocks.newFile")(p.files.length + 1), FILE_COLORS[p.files.length % FILE_COLORS.length]);
+    discover("prog:cmdFiles");
     curFileId = f.id;
     commit();
   });

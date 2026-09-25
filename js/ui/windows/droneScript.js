@@ -3,6 +3,7 @@ import { setDroneScript, runDroneScript, stopDroneScript } from "../../drone/dro
 import { getDroneMode, setDroneMode } from "../../drone/droneMode.js";
 import { isDronePanelOpen, closeDronePanel, updateUnitPanel } from "../hud/unitPanel.js";
 import { discover } from "../../core/discovery.js";
+import { scriptFeatures } from "../../drone/scriptFeatures.js";
 import { initBlockEditor, openBlockEditor, closeBlockEditor, refreshBlockEditor, compiledBlocks } from "./blockEditor.js";
 import { t, onLangChange } from "../../i18n.js";
 
@@ -68,9 +69,16 @@ function switchMode(mode){
 
 // Runs the program of the current mode — the text script as typed, or the
 // block project compiled to the same language.
+// Also fills in the Wiki: every command the program uses counts as
+// discovered once the program actually starts (not on a parse error).
 function runActive(drone){
-  runDroneScript(drone, getDroneMode() === "blocks" ? compiledBlocks() : undefined);
+  const blocks = getDroneMode() === "blocks";
+  const src = blocks ? compiledBlocks() : drone.script;
+  runDroneScript(drone, blocks ? src : undefined);
   discover("tech:droneScript");
+  if(drone.error && !drone.running) return;
+  scriptFeatures(src).forEach(function(k){ discover("prog:" + k); });
+  if(blocks) discover("prog:cmdBlocks");
 }
 
 function afterRunOrStop(drone){
