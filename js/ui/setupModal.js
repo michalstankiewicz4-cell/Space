@@ -1,6 +1,6 @@
 import { getLang, setLang, onLangChange, LANGS, t } from "../i18n.js";
 import { settings, saveSettings } from "../settings.js";
-import { gfxQuality, gfxDetail, setGraphics } from "../scene/graphics.js";
+import { gfxQuality, gfxDetail, setGraphics, gfxUnitLights, setUnitLights } from "../scene/graphics.js";
 
 // Setup modal (language / mouse / graphics / help tabs), opened from the
 // start screen. Tabs and panels are matched by their data-tab attribute.
@@ -92,5 +92,8 @@ function initGraphicsSliders(){
   q.addEventListener("input", function(){ paintGfx(); setGraphics(+q.value, gfxDetail()); });
   d.addEventListener("input", paintGfx);
   d.addEventListener("change", function(){ setGraphics(gfxQuality(), +d.value); });
+  const lights = document.getElementById("unitLightsCheck");
+  lights.checked = gfxUnitLights();
+  lights.addEventListener("change", function(){ setUnitLights(lights.checked); });
   onLangChange(paintGfx);
 }

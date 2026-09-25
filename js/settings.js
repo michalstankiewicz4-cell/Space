@@ -8,7 +8,8 @@ const DEFAULTS = {
   invertY: false,
   swapMouseButtons: false,
   gfxQuality: 3,  // render quality 0..4 (see scene/graphics.js)
-  gfxDetail: 1    // ship geometry detail 0.2..2
+  gfxDetail: 1,   // ship geometry detail 0.2..2
+  gfxUnitLights: false // a PointLight at every ship (costly; see scene/graphics.js)
 };
 
 function load(){

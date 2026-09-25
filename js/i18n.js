@@ -47,6 +47,7 @@ const STRINGS = {
       tabGraphics: "Graphics",
       renderQuality: "Render quality",
       geometryDetail: "Geometry detail (triangles)",
+      unitLights: "Ship glow lights (slower)",
       qualityLevels: ["LOW", "MED", "HIGH", "ULTRA", "MAX"],
       graphicsSoon: "Render quality sets the resolution and effects; geometry detail sets how finely the ships are built."
     },
@@ -391,6 +392,7 @@ const STRINGS = {
       tabGraphics: "Grafika",
       renderQuality: "Jakość renderowania",
       geometryDetail: "Szczegółowość geometrii (trójkąty)",
+      unitLights: "Światła punktowe statków (wolniej)",
       qualityLevels: ["NISKA", "ŚREDNIA", "WYSOKA", "ULTRA", "MAX"],
       graphicsSoon: "Jakość renderowania ustawia rozdzielczość i efekty; szczegółowość — jak dokładnie zbudowane są statki."
     },

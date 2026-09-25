@@ -35,6 +35,7 @@ export function applyStaticText(){
   document.querySelector('#setupTabs button[data-tab="graphics"]').textContent = t("setup.tabGraphics");
   document.getElementById("gfxQualityLabel").textContent = t("setup.renderQuality");
   document.getElementById("gfxDetailLabel").textContent = t("setup.geometryDetail");
+  document.getElementById("unitLightsLabel").textContent = t("setup.unitLights");
   document.querySelectorAll("#gfxQualityTicks span").forEach(function(s, i){ s.textContent = t("setup.qualityLevels")[i]; });
   document.getElementById("gfxSoon").textContent = t("setup.graphicsSoon");
 

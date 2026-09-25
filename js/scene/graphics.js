@@ -6,6 +6,11 @@ import { settings, saveSettings } from "../settings.js";
 //    run their particle effects (exhaust etc.). No shadows in the game.
 //  - Geometry detail: how finely ShipKit ships are built (0.2 .. 2, the
 //    lab's `detail`) — changing it rebuilds them.
+//  - Ship glow lights (off by default): a small PointLight at every ship.
+//    Each extra light makes every lit surface cost more to draw, and
+//    changing how many there are recompiles the shaders (a hitch when a
+//    ship is bought) — so it's opt-in. Such lights carry
+//    userData.unitLight; scene/lightsToggle.js shows/hides them.
 // Persisted with the other local preferences (settings.js).
 export const QUALITY = [
   { name: "LOW", particles: false },
@@ -29,6 +34,8 @@ export function gfxDetail(){
 
 export function gfxParticles(){ return QUALITY[gfxQuality()].particles; }
 
+export function gfxUnitLights(){ return settings.gfxUnitLights === true; }
+
 export function pixelRatioFor(level){
   const dpr = window.devicePixelRatio || 1;
   return [0.5, 0.75, 1, Math.max(1, Math.min(dpr, 2)), Math.min(Math.max(1, dpr) * 1.5, 3)][level];
@@ -36,10 +43,19 @@ export function pixelRatioFor(level){
 
 export function onGraphicsChange(fn){ listeners.push(fn); }
 
+function snapshot(){ return { quality: gfxQuality(), detail: gfxDetail(), unitLights: gfxUnitLights() }; }
+
 export function setGraphics(quality, detail){
-  const before = { quality: gfxQuality(), detail: gfxDetail() };
+  const before = snapshot();
   settings.gfxQuality = quality;
   settings.gfxDetail = detail;
+  saveSettings();
+  listeners.forEach(function(fn){ fn(before); });
+}
+
+export function setUnitLights(on){
+  const before = snapshot();
+  settings.gfxUnitLights = !!on;
   saveSettings();
   listeners.forEach(function(fn){ fn(before); });
 }

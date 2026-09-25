@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.8.2]
+
+### Added
+- Setup → Graphics: **Ship glow lights**, off by default — the small light
+  every ship carries. With many ships they cost a lot of drawing time
+  (and buying a ship caused a short hitch), so they're now optional.
+
 ## [2.8.1]
 
 ### Changed

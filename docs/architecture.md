@@ -1143,8 +1143,13 @@ then read just that range.
   quality 0..4 = pixel ratio 0.5 / 0.75 / 1 / device (1..2, default) /
   1.5x device (max 3), particles off at LOW; geometry detail 0.2..2
   rebuilds the drone model when the slider is released
-  (`onGraphicsChange`). Both persisted in `settings.js`
-  (`gfxQuality`, `gfxDetail`).
+  (`onGraphicsChange`); "Ship glow lights" (off by default) shows/hides
+  every ship's own PointLight (`userData.unitLight`, applied by
+  `scene/lightsToggle.js`, which also keeps the Dev Tools "all lights"
+  toggle from switching them back on). The lights stay in the ships —
+  hidden lights cost nothing, since three.js only counts visible ones.
+  All persisted in `settings.js` (`gfxQuality`, `gfxDetail`,
+  `gfxUnitLights`).
 - **Other players' drones** (`net/shipsBroadcast.js`): the same model at
   detail 0.4, no particles, **not tinted** (the user's call: owners are
   told apart by labels/markers, not by recoloring ships) — a name label

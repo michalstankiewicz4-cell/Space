@@ -50,5 +50,6 @@
   background:linear-gradient(180deg,#b8c5ff,#5f77f7 55%,#3a50d2); box-shadow:0 0 6px rgb(95 119 247 / .7), inset 0 1px 1px rgb(255 255 255 / .5); }
 .gfxSlider::-moz-range-thumb{ width:30px; height:20px; border-radius:4px 10px 10px 4px; border:0;
   background:linear-gradient(180deg,#b8c5ff,#5f77f7 55%,#3a50d2); box-shadow:0 0 6px rgb(95 119 247 / .7); }
-#gfxSoon{ left:0; width:428px; font-size:14px; line-height:19px; color:#93a6ff; }
+#setupModal #setupTabGraphics .setupCheckRow{ font-size:16px; }
+#gfxSoon{ left:0; width:428px; font-size:13px; line-height:17px; color:#93a6ff; }
 #setupHelpText{ left:0; top:4px; width:428px; font-size:17px; line-height:30px; color:#c7d0ff; }

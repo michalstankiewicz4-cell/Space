@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.8.1">
+<link rel="stylesheet" href="css/style.css?v=2.8.2">
 </head>
 <body>
 
@@ -232,7 +232,8 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
         <label class="gfxRow" style="top:72px"><span id="gfxDetailLabel">Geometry detail (triangles)</span><b id="gfxDetailVal">100%</b></label>
         <input type="range" class="gfxSlider" id="gfxDetailSlider" style="top:96px; --fill:44.4%" min="0.2" max="2" step="0.05" value="1">
         <div class="gfxTicks" style="top:120px"><span>20%</span><span>100%</span><span>200%</span></div>
-        <div id="gfxSoon" style="top:150px">Coming soon</div>
+        <label class="setupCheckRow" style="top:148px"><input type="checkbox" id="unitLightsCheck"><span class="chk"></span><span id="unitLightsLabel">Ship glow lights</span></label>
+        <div id="gfxSoon" style="top:184px">Coming soon</div>
       </div>
 
       <div id="setupTabHelp" class="setupTabPanel hidden" data-tab="help">
@@ -639,6 +640,6 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.8.1"></script>
+<script type="module" src="js/main.js?v=2.8.2"></script>
 </body>
 </html>

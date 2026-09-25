@@ -1,5 +1,6 @@
 import { ctx } from "../core/context.js";
 import { disposeMesh } from "../core/utils.js";
+import { gfxUnitLights } from "../scene/graphics.js";
 import { ORBIT_RADIUS } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { state, swarmStats, save } from "../core/gameState.js";
@@ -69,6 +70,8 @@ function makeShipMesh(){
   mesh.rotation.x = Math.PI/2;
   group.add(mesh);
   const glow = new THREE.PointLight(0x4fe3c6, 0.5, 6);
+  glow.userData.unitLight = true;     // Setup -> Graphics -> ship glow lights (off by default)
+  glow.visible = gfxUnitLights();
   group.add(glow);
 
   // selection ring (visible only when the ship is selected)
