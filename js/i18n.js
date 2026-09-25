@@ -355,7 +355,7 @@ const STRINGS = {
     },
     soon: "Wkrótce",
     hud: {
-      fleetList: "LISTA FLOTY", selectedUnit: "WYBRANA JEDNOSTKA", planetInfo: "INFO O PLANECIE",
+      fleetList: "LISTA FLOTY", selectedUnit: "JEDNOSTKA", planetInfo: "INFO O PLANECIE",
       station: "STACJA", eventLog: "DZIENNIK ZDARZEŃ", minimap: "MINIMAPA", close: "Zamknij",
       unitEmpty: "Nie wybrano jednostki. Kliknij statek, zaznacz kilka ramką albo wybierz z listy floty.",
       infoEmpty: "Nic nie zaznaczono. Kliknij planetę (w widoku albo na minimapie) lub swoją stację.",

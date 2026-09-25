@@ -4,6 +4,12 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.2.2]
+
+### Fixed
+- Polish HUD: the selected unit panel's header ("WYBRANA JEDNOSTKA") was
+  too long and ran under the panel's close button — now "JEDNOSTKA".
+
 ## [2.2.1]
 
 ### Changed
