@@ -25,6 +25,7 @@ const STRINGS = {
       setup: "⚙ Setup",
       language: "Language",
       nickRejected: "Please choose a different nickname.",
+      notice: "Game under construction — this is an early version and many options don't work yet.",
       playersOnline: function(n){ return n === 1 ? "player online" : "players online"; },
       playersRegistered: function(n){ return n === 1 ? "registered player" : "registered players"; }
     },
@@ -209,6 +210,7 @@ const STRINGS = {
       setup: "⚙ Ustawienia",
       language: "Język",
       nickRejected: "Wybierz inny nick.",
+      notice: "Gra w budowie — to wczesna wersja, wiele opcji nie jest jeszcze funkcjonalnych.",
       playersOnline: function(n){ return plPlural(n, "gracz", "gracze", "graczy") + " online"; },
       playersRegistered: function(n){ return plPlural(n, "zarejestrowany gracz", "zarejestrowanych graczy", "zarejestrowanych graczy"); }
     },

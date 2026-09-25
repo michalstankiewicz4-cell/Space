@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.2.3]
+
+### Added
+- Start screen: a notice under the game description that this is an
+  early version still under construction, and many options don't work
+  yet.
+
 ## [2.2.2]
 
 ### Fixed

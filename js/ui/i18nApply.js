@@ -6,6 +6,7 @@ export function applyStaticText(){
   // See css/ui/startScreen.css: the start panel stays hidden until now.
   delete document.documentElement.dataset.langPending;
   document.getElementById("bannerDesc").textContent = t("banner.desc");
+  document.getElementById("bannerNotice").textContent = t("banner.notice");
   document.getElementById("modeSingle").textContent = t("banner.modeSingle");
   document.getElementById("modeMulti").textContent = t("banner.modeMulti");
   document.getElementById("modeFriends").textContent = t("banner.modeFriends");
