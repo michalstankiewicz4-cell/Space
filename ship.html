@@ -6,11 +6,14 @@
 <title>Swarm Protocol // Ship lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@600&family=Oswald:wght@400;500;600&family=Roboto+Condensed:wght@400&display=swap" rel="stylesheet">
-<!-- Single-file procedural spaceship: Three.js r128 (inlined below, MIT)
-     + OrbitControls (inlined), every texture generated on canvases at load
-     time, custom shaders for the engine plumes and the core, and a small
-     overlay built with the same CSS "material" recipe as UI.html. Opens
-     straight from disk, no server needed. -->
+<!-- Single-file procedural spaceship preview. Script blocks, in order:
+       1. Three.js r128 (inlined, MIT)            – vendor
+       2. OrbitControls (inlined, MIT)            – vendor, viewer only
+       3. <script id="shipkit">                    – THE SHIP MODELS: the only
+          part a game needs; see its header for the API + extraction guide
+       4. <script id="viewer">                     – preview page (sky, lights,
+          camera, HUD, quality/detail sliders, performance counters)
+     Opens straight from disk, no server needed. -->
 <style>
 :root{
   --grain:none;
@@ -38,7 +41,8 @@ canvas#view{ position:fixed; inset:0; width:100%; height:100%; display:block; }
 .blue { --c:#5f77f7; --hi:#90a3ff; --lo:#3a50d2; }
 .lilac{ --c:#b07cb6; --hi:#d2a4d8; --lo:#8a5693; }
 
-#hud{ position:fixed; left:16px; top:16px; width:330px; pointer-events:none; }
+#hud{ position:fixed; left:16px; top:16px; width:330px; pointer-events:none;
+  transform:scale(var(--ui, 1)); transform-origin:top left; }
 #hud > *{ pointer-events:auto; }
 #hudTop{ position:relative; height:58px; }
 #hudBracket{ position:absolute; left:0; top:0; width:30px; height:58px;
@@ -49,18 +53,49 @@ canvas#view{ position:fixed; inset:0; width:100%; height:100%; display:block; }
   -webkit-text-fill-color:transparent; white-space:nowrap; }
 #hudSub{ position:absolute; left:89px; top:38px; font-family:var(--fontLabel); font-size:13px; letter-spacing:1.2px; color:#96a8ff; }
 #hudBar{ position:relative; height:9px; margin:6px 0 10px 34px; border-radius:0 5px 5px 0; }
-#hudPanel{ position:relative; margin-left:0; padding:12px 14px 14px 34px; border:1.5px solid #1c3bb4; border-radius:12px;
-  background:rgb(0 3 16 / .72); box-shadow:0 0 8px rgb(40 80 255 / .45), inset 0 0 8px rgb(40 80 255 / .18); backdrop-filter:blur(3px); }
-#hudSide{ position:absolute; left:8px; top:10px; bottom:10px; width:14px; border-radius:8px 0 0 8px; }
-.row{ display:flex; justify-content:space-between; font-size:15px; line-height:22px; color:#c7d0ff; }
-.row b{ font-weight:400; color:#fff; }
+.hudPanel{ position:relative; padding:10px 14px 14px 34px; border:1.5px solid #1c3bb4; border-radius:12px;
+  background:rgb(0 3 16 / .74); box-shadow:0 0 8px rgb(40 80 255 / .45), inset 0 0 8px rgb(40 80 255 / .18); backdrop-filter:blur(3px); }
+.hudPanel .side{ position:absolute; left:8px; top:10px; bottom:10px; width:14px; border-radius:8px 0 0 8px; }
+.secHd{ margin:10px 0 4px; padding-bottom:3px; border-bottom:1.5px solid #2c4bd8; font-family:var(--fontLabel);
+  font-size:15px; letter-spacing:.6px; color:#96a8ff; }
+.secHd.first{ margin-top:0; }
+.row{ display:flex; justify-content:space-between; gap:10px; font-size:14px; line-height:20px; color:#c7d0ff; }
+.row b{ font-weight:400; color:#fff; white-space:nowrap; }
+#shipNav{ display:flex; align-items:center; justify-content:space-between; }
+#shipIndex{ font-family:var(--fontLabel); font-size:16px; letter-spacing:1px; color:#f8bb56; }
+.navArrow{ width:46px; height:24px; border:0; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:filter .15s; }
+#prevShip{ border-radius:12px 4px 4px 12px; } #nextShip{ border-radius:4px 12px 12px 4px; }
+.navArrow svg{ width:10px; height:14px; } .navArrow path{ fill:none; stroke:#0c1440; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
+.navArrow:hover:not(:disabled){ filter:brightness(1.15); }
+.navArrow:disabled{ filter:saturate(.3) brightness(.5); cursor:default; }
+#figList{ list-style:none; margin:0; padding:0; columns:2; column-gap:14px; }
+#figList li{ display:flex; justify-content:space-between; font-size:13px; line-height:18px; color:#a9b8ff; break-inside:avoid; }
+#figList li b{ font-weight:400; color:#f8bb56; margin-left:6px; }
 #hudBtns{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
-.tBtn{ height:32px; border:1.5px solid #3c55d8; border-radius:7px; background:linear-gradient(180deg,#050a24,#00020c);
-  color:#e6ebff; font-family:var(--fontLabel); font-size:14px; letter-spacing:.4px; cursor:pointer;
+.tBtn{ height:30px; border:1.5px solid #3c55d8; border-radius:7px; background:linear-gradient(180deg,#050a24,#00020c);
+  color:#e6ebff; font-family:var(--fontLabel); font-size:13.5px; letter-spacing:.4px; cursor:pointer;
   transition:border-color .15s, box-shadow .15s; }
 .tBtn:hover{ border-color:#6f86ff; box-shadow:0 0 8px rgb(95 119 247 / .5); }
 .tBtn.on{ border-color:#f5bd5c; box-shadow:0 0 8px rgb(245 189 92 / .45), inset 0 0 8px rgb(245 189 92 / .12); color:#ffe2a8; }
-#hint{ margin-top:10px; font-size:13px; line-height:18px; color:#7f92e8; }
+#hint{ margin-top:10px; font-size:12.5px; line-height:18px; color:#7f92e8; }
+
+#opt{ position:fixed; right:16px; top:16px; width:330px;
+  transform:scale(var(--ui, 1)); transform-origin:top right; }
+.sl{ display:flex; justify-content:space-between; font-size:14px; color:#c7d0ff; margin-top:6px; }
+.sl b{ font-family:var(--fontLabel); font-weight:500; color:#f8bb56; letter-spacing:.6px; }
+input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:22px; margin:4px 0 0; background:none; cursor:pointer; --fill:50%; }
+input[type=range]::-webkit-slider-runnable-track{ height:10px; border-radius:5px; border:1.5px solid #3c55d8;
+  background:linear-gradient(90deg,#f8bb56 0,#d38b37 var(--fill),#050d33 var(--fill)); }
+input[type=range]::-moz-range-track{ height:10px; border-radius:5px; border:1.5px solid #3c55d8; background:#050d33; }
+input[type=range]::-moz-range-progress{ height:10px; border-radius:5px; background:linear-gradient(90deg,#f8bb56,#d38b37); }
+input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:30px; height:20px; margin-top:-6.5px; border-radius:4px 10px 10px 4px;
+  background:linear-gradient(180deg,#b8c5ff,#5f77f7 55%,#3a50d2); box-shadow:0 0 6px rgb(95 119 247 / .7), inset 0 1px 1px rgb(255 255 255 / .5); border:0; }
+input[type=range]::-moz-range-thumb{ width:30px; height:20px; border-radius:4px 10px 10px 4px; border:0;
+  background:linear-gradient(180deg,#b8c5ff,#5f77f7 55%,#3a50d2); box-shadow:0 0 6px rgb(95 119 247 / .7); }
+.ticks{ display:flex; justify-content:space-between; font-family:var(--fontLabel); font-size:11px; letter-spacing:.5px; color:#5f6fb8; margin-bottom:4px; }
+#fpsGraph{ display:block; width:100%; height:46px; margin-top:8px; border:1px solid #1a3099; border-radius:6px; background:#01030f; }
+.legend{ margin-top:5px; font-size:11.5px; color:#7f92e8; display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+.legend i{ display:inline-block; width:10px; height:10px; border-radius:2px; margin-left:4px; }
 #loading{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--fontLabel);
   font-size:20px; letter-spacing:2px; color:#96a8ff; background:#000; transition:opacity .6s; }
 </style>
@@ -79,16 +114,21 @@ canvas#view{ position:fixed; inset:0; width:100%; height:100%; display:block; }
       <path d="M16 8 L3 24 L16 40 M36 8 L49 24 L36 40" fill="none" stroke="url(#gLogoGold)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
       <circle cx="26" cy="15" r="3.6" fill="url(#gLogoBlue)"/><circle cx="20" cy="30" r="3.6" fill="url(#gLogoBlue)"/><circle cx="32" cy="30" r="3.6" fill="url(#gLogoBlue)"/>
     </svg>
-    <div id="hudTitle">SP-01 CODEWING</div>
+    <div id="hudTitle"></div>
     <div id="hudSub">SWARM PROTOCOL // SHIP LAB</div>
   </div>
   <div class="mat gold" id="hudBar"></div>
-  <div id="hudPanel">
-    <div class="mat blue" id="hudSide"></div>
-    <div class="row"><span>Class</span><b>Swarm carrier</b></div>
-    <div class="row"><span>Hull</span><b>Plated alloy</b></div>
-    <div class="row"><span>Core</span><b>Logic crystal</b></div>
-    <div class="row"><span>Drives</span><b>3 × plasma</b></div>
+  <div class="hudPanel">
+    <div class="mat blue side"></div>
+    <div id="shipNav">
+      <button class="mat blue navArrow" id="prevShip" aria-label="Previous ship"><svg viewBox="0 0 12 16"><path d="M9 2 L3 8 L9 14"/></svg></button>
+      <span id="shipIndex">1 / 1</span>
+      <button class="mat blue navArrow" id="nextShip" aria-label="Next ship"><svg viewBox="0 0 12 16"><path d="M3 2 L9 8 L3 14"/></svg></button>
+    </div>
+    <div class="secHd">MODEL</div>
+    <div id="infoRows"></div>
+    <div class="secHd">FIGURES</div>
+    <ul id="figList"></ul>
     <div id="hudBtns">
       <button class="tBtn on" id="btnRotate">AUTO-ROTATE</button>
       <button class="tBtn on" id="btnEngines">ENGINES</button>
@@ -96,6 +136,28 @@ canvas#view{ position:fixed; inset:0; width:100%; height:100%; display:block; }
       <button class="tBtn" id="btnWire">WIREFRAME</button>
     </div>
     <div id="hint">Left-drag: rotate · Right-drag: pan · Scroll: zoom</div>
+  </div>
+</div>
+
+<div id="opt">
+  <div class="hudPanel">
+    <div class="mat gold side"></div>
+    <div class="secHd first">OPTIMIZATION</div>
+    <label class="sl"><span>Render quality</span><b id="qVal">ULTRA</b></label>
+    <input type="range" id="qSlider" min="0" max="4" step="1" value="3">
+    <div class="ticks"><span>LOW</span><span>MED</span><span>HIGH</span><span>ULTRA</span><span>MAX</span></div>
+    <label class="sl"><span>Geometry detail (triangles)</span><b id="dVal">100%</b></label>
+    <input type="range" id="dSlider" min="0.2" max="2" step="0.05" value="1">
+    <div class="ticks"><span>20%</span><span>100%</span><span>200%</span></div>
+    <div class="secHd">PERFORMANCE</div>
+    <div class="row"><span>Frames per second</span><b id="statFps">–</b></div>
+    <div class="row"><span>Frame time</span><b id="statMs">–</b></div>
+    <div class="row"><span>CPU per frame (JS + draw submit)</span><b id="statCpu">–</b></div>
+    <div class="row"><span>Triangles drawn / frame</span><b id="statTris">–</b></div>
+    <div class="row"><span>Draw calls / frame</span><b id="statCalls">–</b></div>
+    <div class="row"><span>Render resolution</span><b id="statRes">–</b></div>
+    <canvas id="fpsGraph" width="270" height="46"></canvas>
+    <div class="legend"><i style="background:#f8bb56"></i>≥50 <i style="background:#8ea6fd"></i>30–50 <i style="background:#d05b69"></i>&lt;30 FPS · lines: 30 / 60</div>
   </div>
 </div>
 <div id="loading">GENERATING HULL…</div>
@@ -1158,8 +1220,89 @@ canvas#view{ position:fixed; inset:0; width:100%; height:100%; display:block; }
 } )();
 
 </script>
-<script>
-(() => {
+<script id="shipkit">
+/* =======================================================================
+   SHIPKIT — procedural spaceship models for Swarm Protocol
+   =======================================================================
+   Everything a game needs to build the ships lives in THIS <script>
+   block; the next block ("viewer") is only the preview page (sky, lights,
+   orbit camera, HUD, performance counters) and is NOT needed in the game.
+
+   Dependencies: the global THREE (r128, same as the game) and a DOM
+   (<canvas> for texture generation). No OrbitControls, no other libs.
+
+   -----------------------------------------------------------------------
+   API (window.ShipKit)
+   -----------------------------------------------------------------------
+   buildShipModel(id, { detail = 1 })  -> model
+       id      "codewing" (see SHIP_DEFS)
+       detail  0.2 .. 2, scales every segment count
+               (measured for "codewing": 0.2 ≈ 4.7k tris, 1 ≈ 70k, 2 ≈ 276k)
+       model = {
+         id, detail,
+         group,                 THREE.Group — add it to your scene
+         update(t, dt, opts),   call every frame; t = seconds since start,
+                                dt = frame delta (s),
+                                opts.power 0..1 engine throttle (smooth it
+                                yourself), opts.particles false = no exhaust
+                                particles (cheap mode for many ships)
+         setLights(on),         running/nav lights on/off
+         size,                  THREE.Vector3 size of the solid hull (units;
+                                plumes/glows/particles excluded)
+         radius,                half the size diagonal (units)
+       }
+   disposeShipModel(model)  removes the group from its parent and frees its
+                            geometries + per-model materials (shared cached
+                            materials and textures are kept for reuse)
+   modelStats(group)        object/figure/triangle/material/texture counts
+   SHIP_DEFS                registry; add a ship = push one more entry
+   allTextures              Set of every generated texture (anisotropy etc.)
+   makePlating / makeBrushed / makeGlow, util.{rng, valueNoise, fbm, ...}
+                            generators, reusable for other game objects
+
+   Model conventions: origin at the ship's center, nose along +X, up +Y,
+   "codewing" measures 12.06 × 5.78 × 9.76 units (length × height × span). Each model has its own shader uniforms,
+   so many instances can animate/throttle independently.
+
+   -----------------------------------------------------------------------
+   EXTRACTION GUIDE (moving this into the game repo)
+   -----------------------------------------------------------------------
+   1. Module: copy this block into e.g. js/ships/shipModels.js (follow the
+      js/station/stationModel.js pattern: buildStationMesh(opts) /
+      disposeStationMesh(scene, group)). Replace the
+      `window.ShipKit = (function () { ... return {...}; })();` wrapper
+      with top-level code + `export { buildShipModel, disposeShipModel, ... }`.
+      The game loads THREE r128 as a UMD global, like this file.
+   2. Orientation: game ships (js/ships/swarm.js) steer with
+      mesh.lookAt(target), i.e. forward = +Z. Wrap the model:
+        const holder = new THREE.Group();
+        model.group.rotation.y = -Math.PI / 2;   // +X nose -> +Z forward
+        holder.add(model.group);
+   3. Scale: the current game ship (a cone in makeShipMesh()) is 0.9 units
+      long; to match, holder.scale.setScalar(0.9 / model.size.x) (≈0.075).
+      The final size is a gameplay/design decision.
+   4. Renderer differences — IMPORTANT: this preview uses sRGB output,
+      ACES tone mapping, shadows and a PMREM environment map
+      (scene.environment). js/scene/setup.js in the game sets none of
+      these. Without an environment map the metal parts (metalness 0.7–1)
+      render almost black. Either add scene.environment in the game or
+      lower metalness when porting; colors will also shift without sRGB
+      output + tone mapping. Shadows are optional (shadowed() just sets
+      castShadow/receiveShadow flags).
+   5. Performance: the first build generates all textures on the CPU
+      (~1 s, 11 textures, ~39 MB GPU at 1024²) — build once during loading
+      (e.g. behind the start screen). Later builds reuse them (few ms).
+      For a swarm of many ships use a low detail (0.2–0.4), pass
+      { particles: false } to update(), and consider skipping update() for
+      ships far away; every model shares the cached materials/textures.
+   6. Picking/selection: the game uses an invisible pick sphere and a
+      selection ring per ship — keep those in the game's wrapper group;
+      model.radius helps size them.
+   7. Repo conventions (see CLAUDE.md): English comments, no trademarked
+      franchise names, bump js/version.js + CHANGELOG.md + the ?v= params
+      in index.html for a game change.
+   ======================================================================= */
+window.ShipKit = (function () {
 "use strict";
 
 // =====================================================================
@@ -1353,6 +1496,574 @@ function makeGlow(inner = "rgba(255,255,255,1)", mid = "rgba(255,200,120,0.5)") 
   return new THREE.CanvasTexture(c);
 }
 
+// =====================================================================
+// Shared resources (created lazily, cached for the whole page/game)
+// =====================================================================
+const GOLD = 0xf8bb56, BLUE = 0x5f77f7;
+const shadowed = (m) => { m.castShadow = m.receiveShadow = true; return m; };
+const allTextures = new Set();     // every generated texture (e.g. to set anisotropy)
+const sharedMaterials = new Set(); // cached per ship type, never disposed with a model
+const trackTextures = (...ts) => { for (const t of ts) if (t) allTextures.add(t); };
+let _glow = null;
+function glowTextures() {          // soft sprite textures shared by all ships
+  if (_glow) return _glow;
+  _glow = {
+    engine: makeGlow("rgba(255,255,255,1)", "rgba(140,170,255,0.55)"),
+    nav: makeGlow("rgba(255,255,255,1)", "rgba(255,255,255,0.35)"),
+    core: makeGlow("rgba(220,230,255,1)", "rgba(95,119,247,0.6)"),
+  };
+  trackTextures(_glow.engine, _glow.nav, _glow.core);
+  return _glow;
+}
+
+// Shader factories take U = { uTime, uPower } — one uniform set per built
+// model, so every ship instance animates / throttles independently.
+function makePlumeMaterial(color, U) {
+  return new THREE.ShaderMaterial({
+    uniforms: { uTime: U.uTime, uPower: U.uPower, uColor: { value: new THREE.Color(color) } },
+    vertexShader: `
+      varying vec2 vUv; varying vec3 vN; varying vec3 vView;
+      void main(){
+        vUv = uv;
+        vN = normalize(normalMatrix * normal);
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vView = normalize(-mv.xyz);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      uniform float uTime; uniform float uPower; uniform vec3 uColor;
+      varying vec2 vUv; varying vec3 vN; varying vec3 vView;
+      float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float noise(vec2 p){
+        vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+        return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y);
+      }
+      void main(){
+        float along = vUv.y;                       // 1 at the nozzle, 0 at the tail end
+        float flick = noise(vec2(vUv.x * 12.0, along * 6.0 - uTime * 9.0));
+        float shock = 0.5 + 0.5 * sin(along * 38.0 - uTime * 30.0);   // shock diamonds
+        float edge = pow(abs(dot(normalize(vN), normalize(vView))), 1.6); // bright core, soft rim
+        float a = pow(along, 1.8) * (0.55 + 0.45 * flick) * (0.75 + 0.25 * shock) * edge * uPower;
+        vec3 col = mix(uColor, vec3(1.0), pow(along, 5.0) * 0.8);
+        gl_FragColor = vec4(col * a * 2.6, 1.0);   // additive: alpha 1, brightness carried by rgb
+      }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+  });
+}
+
+function makeCoreMaterial(U) {
+  return new THREE.ShaderMaterial({
+    uniforms: { uTime: U.uTime },
+    vertexShader: `
+      varying vec3 vN; varying vec3 vView; varying vec3 vPos;
+      void main(){
+        vN = normalize(normalMatrix * normal); vPos = position;
+        vec4 mv = modelViewMatrix * vec4(position, 1.0); vView = normalize(-mv.xyz);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      uniform float uTime; varying vec3 vN; varying vec3 vView; varying vec3 vPos;
+      void main(){
+        float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vView))), 2.0);
+        float scan = 0.5 + 0.5 * sin(vPos.y * 40.0 - uTime * 6.0);           // scrolling "data" lines
+        float pulse = 0.75 + 0.25 * sin(uTime * 2.3);
+        vec3 base = vec3(0.23, 0.33, 0.95), hot = vec3(0.75, 0.85, 1.0);
+        vec3 col = mix(base, hot, fres) * (0.6 + 0.5 * scan) * pulse + fres * 0.6;
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+}
+
+function makeParticleMaterial(U) {
+  return new THREE.ShaderMaterial({
+    uniforms: { uPower: U.uPower },
+    vertexShader: `
+      attribute float life; varying float vLife; uniform float uPower;
+      void main(){
+        vLife = life;
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = (1.0 - life) * 70.0 * uPower / -mv.z;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      varying float vLife;
+      void main(){
+        float d = length(gl_PointCoord - 0.5);
+        float a = smoothstep(0.5, 0.0, d) * (1.0 - vLife) * 0.6;
+        vec3 col = mix(vec3(1.0, 0.85, 0.6), vec3(0.4, 0.5, 1.0), vLife);
+        gl_FragColor = vec4(col * a, a);
+      }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+}
+
+function additiveSprite(map, color = 0xffffff) {
+  return new THREE.Sprite(new THREE.SpriteMaterial({ map, color, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+}
+
+// =====================================================================
+// SHIP DEFINITIONS
+// One entry per ship type:
+//   id        stable key used by buildShipModel(id)
+//   name      display name
+//   camera    suggested viewer camera position (viewer only)
+//   assets()  creates + caches this type's textures/materials (once)
+//   build(detail) -> { group, update(t, dt, opts), setLights(on) }
+// `detail` (0.2 .. 2) scales every segment count through seg(), so the
+// same definition serves both a close-up hero model and cheap swarm LODs.
+// To add a ship: push another entry following the same shape.
+// =====================================================================
+const SHIP_DEFS = [];
+
+// ---------------------------------------------------------------------
+// SP-01 CODEWING
+// ---------------------------------------------------------------------
+SHIP_DEFS.push({
+  id: "codewing",
+  name: "SP-01 CODEWING",
+  camera: [9.5, 4.2, 11.5],
+  _assets: null,
+  assets() {
+    if (this._assets) return this._assets;
+    const hullTex = makePlating({
+      seed: 5, base: [156, 162, 176],
+      stripes: [{ y: 0.10, h: 0.028, color: "#f8bb56" }, { y: 0.142, h: 0.012, color: "#5f77f7" },
+                { y: 0.80, h: 0.02, color: "#5f77f7" }],
+      // rotation per side so the text reads upright from both flanks (+z / -z)
+      markings: [
+        { text: "SP-01", x: 0.07, y: 0.36, rot: -Math.PI / 2, size: 44, color: "#f8bb56" },
+        { text: "SP-01", x: 0.57, y: 0.36, rot: Math.PI / 2, size: 44, color: "#f8bb56" },
+        { text: "SWARM PROTOCOL", x: 0.93, y: 0.56, rot: -Math.PI / 2, size: 26, color: "#dfe6ff" },
+        { text: "SWARM PROTOCOL", x: 0.43, y: 0.56, rot: Math.PI / 2, size: 26, color: "#dfe6ff" },
+      ],
+      windows: [{ x: 0.0, y: 0.47, count: 9, gap: 0.022 }, { x: 0.5, y: 0.47, count: 9, gap: 0.022 },
+                { x: 0.99, y: 0.47, count: 9, gap: 0.022 }],
+    });
+    const wingTex = makePlating({ seed: 9, size: 1024, base: [118, 124, 140], minPanel: 60, maxPanel: 200,
+      stripes: [{ y: 0.0, h: 0.03, color: "#f8bb56" }] });
+    for (const k of ["map", "roughnessMap", "bumpMap"]) wingTex[k].repeat.set(0.16, 0.16);
+    const brushed = makeBrushed({ seed: 4 });
+    brushed.repeat.set(2, 1);
+    trackTextures(...Object.values(hullTex), ...Object.values(wingTex), brushed);
+
+    const a = {
+      hull: new THREE.MeshStandardMaterial({
+        map: hullTex.map, roughnessMap: hullTex.roughnessMap, bumpMap: hullTex.bumpMap, bumpScale: 0.018,
+        emissiveMap: hullTex.emissiveMap, emissive: 0xffffff, emissiveIntensity: 1.4,
+        metalness: 0.78, roughness: 0.62 }),
+      wing: new THREE.MeshStandardMaterial({
+        map: wingTex.map, roughnessMap: wingTex.roughnessMap, bumpMap: wingTex.bumpMap, bumpScale: 0.015,
+        metalness: 0.8, roughness: 0.6 }),
+      engine: new THREE.MeshStandardMaterial({ map: brushed, metalness: 1.0, roughness: 0.32 }),
+      dark: new THREE.MeshStandardMaterial({ color: 0x3a404d, metalness: 0.85, roughness: 0.42 }),
+      gold: new THREE.MeshStandardMaterial({ color: GOLD, metalness: 1.0, roughness: 0.28 }),
+      blueGlow: new THREE.MeshStandardMaterial({ color: 0x223066, emissive: BLUE, emissiveIntensity: 2.2, metalness: 0.3, roughness: 0.4 }),
+      glass: new THREE.MeshPhysicalMaterial({
+        color: 0x6f9dff, metalness: 0.1, roughness: 0.04, clearcoat: 1, clearcoatRoughness: 0.03,
+        transparent: true, opacity: 0.55, envMapIntensity: 2.2 }),
+      bell: new THREE.MeshStandardMaterial({ color: 0x2b2f38, metalness: 0.9, roughness: 0.35, side: THREE.DoubleSide }),
+      dish: new THREE.MeshStandardMaterial({ color: 0xd9dde6, metalness: 0.7, roughness: 0.3, side: THREE.DoubleSide }),
+      reactor: new THREE.MeshStandardMaterial({ color: 0x331a00, emissive: GOLD, emissiveIntensity: 2.4, metalness: 0.2, roughness: 0.3 }),
+      throat: new THREE.MeshBasicMaterial({ color: 0xbfd0ff }),
+    };
+    for (const m of Object.values(a)) sharedMaterials.add(m);
+    return (this._assets = a);
+  },
+
+  build(detail) {
+    const M = this.assets(), G = glowTextures();
+    const U = { uTime: { value: 0 }, uPower: { value: 1 } }; // per-model shader uniforms
+    const seg = (n, min = 3) => Math.max(min, Math.round(n * detail));
+    const ship = new THREE.Group();
+
+    // ---- 1. Fuselage: lathe of a smooth spline profile, axis along +X.
+    const profile = new THREE.SplineCurve([
+      new THREE.Vector2(0.001, -4.25), new THREE.Vector2(0.95, -4.1), new THREE.Vector2(1.18, -3.4),
+      new THREE.Vector2(1.24, -1.6), new THREE.Vector2(1.2, 0.4), new THREE.Vector2(1.02, 2.0),
+      new THREE.Vector2(0.72, 3.3), new THREE.Vector2(0.38, 4.35), new THREE.Vector2(0.1, 5.05),
+      new THREE.Vector2(0.001, 5.2),
+    ]).getSpacedPoints(seg(90, 12));
+    const fuselage = shadowed(new THREE.Mesh(new THREE.LatheGeometry(profile, seg(96, 8)), M.hull));
+    fuselage.rotation.z = -Math.PI / 2;
+    fuselage.scale.set(1, 1, 0.92); // slightly flattened sideways (local z = world z)
+    ship.add(fuselage);
+    const radiusAt = (y) => { // hull radius at lathe height y (for placing parts)
+      for (let i = 1; i < profile.length; i++) {
+        if (profile[i].y >= y) {
+          const a = profile[i - 1], b = profile[i], t = (y - a.y) / (b.y - a.y || 1);
+          return a.x + (b.x - a.x) * t;
+        }
+      }
+      return 0;
+    };
+
+    // ---- 2. Greebles: instanced boxes on the hull, aligned to its normal.
+    {
+      const rand = rng(21), count = Math.round(110 * Math.min(detail, 1.5));
+      const g = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), M.dark, count);
+      const m = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
+      let n = 0;
+      while (n < count) {
+        const y = -3.6 + rand() * 6.2, phi = rand() * Math.PI * 2;
+        // keep the flanks with windows/markings clean
+        if (Math.abs(Math.cos(phi)) > 0.85 && y > -1 && y < 2.2) continue;
+        const r = radiusAt(y);
+        const normal = new THREE.Vector3(Math.sin(phi), 0, Math.cos(phi));
+        q.setFromUnitVectors(up, normal);
+        const s = new THREE.Vector3(0.05 + rand() * 0.16, 0.02 + rand() * 0.05, 0.05 + rand() * 0.24);
+        m.compose(normal.clone().multiplyScalar(r + s.y * 0.4).add(new THREE.Vector3(0, y, 0)), q, s);
+        g.setMatrixAt(n++, m);
+      }
+      g.castShadow = g.receiveShadow = true;
+      fuselage.add(g);
+    }
+
+    // ---- 3. Cockpit canopy (glass half sphere) + gold frame.
+    {
+      const canopy = new THREE.Mesh(new THREE.SphereGeometry(0.62, seg(48, 8), seg(24, 4), 0, Math.PI * 2, 0, Math.PI / 2), M.glass);
+      canopy.scale.set(1.9, 0.75, 0.9);
+      canopy.position.set(2.55, 0.86, 0);
+      ship.add(canopy);
+      const frame = shadowed(new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.045, seg(12), seg(64, 8)), M.gold));
+      frame.rotation.x = Math.PI / 2; frame.scale.set(1.9, 0.9, 1); frame.position.copy(canopy.position);
+      ship.add(frame);
+      const spine = shadowed(new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.03, seg(8), seg(48, 6), Math.PI), M.gold));
+      spine.scale.set(1.9, 0.75, 1); spine.position.copy(canopy.position);
+      ship.add(spine);
+    }
+
+    // ---- 4. Wings: extruded swept shapes with bevels, mirrored.
+    const wingShape = (k) => {
+      const s = new THREE.Shape();
+      s.moveTo(1.2, 0.7 * k); s.lineTo(-1.3, 0.8 * k); s.lineTo(-3.2, 4.6 * k);
+      s.lineTo(-3.9, 4.75 * k); s.lineTo(-3.6, 1.0 * k); s.lineTo(-3.4, 0.7 * k); s.lineTo(1.2, 0.7 * k);
+      return s;
+    };
+    const bevel = (t, sz) => ({ bevelEnabled: true, bevelThickness: t, bevelSize: sz, bevelSegments: seg(3, 1) });
+    for (const side of [1, -1]) {
+      const wing = shadowed(new THREE.Mesh(new THREE.ExtrudeGeometry(wingShape(side), { depth: 0.14, steps: 1, ...bevel(0.05, 0.05) }), M.wing));
+      wing.rotation.x = Math.PI / 2; // shape y -> world z, extrusion -> world -y
+      wing.position.y = -0.08;
+      ship.add(wing);
+      const edge = new THREE.LineCurve3(new THREE.Vector3(-1.3, -0.15, 0.82 * side), new THREE.Vector3(-3.2, -0.15, 4.62 * side));
+      ship.add(shadowed(new THREE.Mesh(new THREE.TubeGeometry(edge, seg(20, 2), 0.05, seg(10), false), M.gold)));
+      // wingtip pod: cylinder + two hemispheres + cannon
+      const pod = new THREE.Group();
+      pod.add(shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.6, seg(24, 6)), M.engine)));
+      for (const e of [1, -1]) {
+        const cap = shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.16, seg(24, 6), seg(12, 3), 0, Math.PI * 2, 0, Math.PI / 2), M.engine));
+        cap.position.y = 0.8 * e; if (e < 0) cap.rotation.x = Math.PI;
+        pod.add(cap);
+      }
+      const barrel = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 1.1, seg(12)), M.dark));
+      barrel.position.y = 1.3; pod.add(barrel);
+      const muzzle = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.02, seg(8), seg(20, 6)), M.gold);
+      muzzle.position.y = 1.85; muzzle.rotation.x = Math.PI / 2; pod.add(muzzle);
+      pod.rotation.z = -Math.PI / 2;
+      pod.position.set(-3.35, -0.12, 4.72 * side);
+      ship.add(pod);
+      const fin = new THREE.Shape();
+      fin.moveTo(0, 0); fin.lineTo(-0.9, 0); fin.lineTo(-1.1, 0.75); fin.lineTo(-0.75, 0.75); fin.lineTo(0, 0);
+      const winglet = shadowed(new THREE.Mesh(new THREE.ExtrudeGeometry(fin, { depth: 0.05, ...bevel(0.02, 0.02) }), M.wing));
+      winglet.position.set(-2.75, -0.02, 4.4 * side - 0.025);
+      ship.add(winglet);
+    }
+
+    // ---- 5. Engines: nacelles + main drive, with lathed bells and shader plumes.
+    const glows = [];
+    const engine = (radius, length, pos, plumeColor) => {
+      const g = new THREE.Group();
+      g.add(shadowed(new THREE.Mesh(new THREE.CylinderGeometry(radius, radius * 1.08, length, seg(40, 8), 1), M.engine)));
+      const intake = shadowed(new THREE.Mesh(new THREE.TorusGeometry(radius * 0.98, radius * 0.12, seg(16, 4), seg(48, 8)), M.gold));
+      intake.rotation.x = Math.PI / 2; intake.position.y = length / 2; g.add(intake);
+      const cone = shadowed(new THREE.Mesh(new THREE.ConeGeometry(radius * 0.55, radius * 1.2, seg(32, 6)), M.dark));
+      cone.position.y = length / 2 + radius * 0.3; g.add(cone);
+      const bellPts = [], steps = seg(16, 3);
+      for (let i = 0; i <= steps; i++) { const t = i / steps; bellPts.push(new THREE.Vector2(radius * (0.72 + 0.42 * t * t), -t * radius * 1.2)); }
+      const bell = shadowed(new THREE.Mesh(new THREE.LatheGeometry(bellPts, seg(48, 8)), M.bell));
+      bell.position.y = -length / 2; g.add(bell);
+      const throat = new THREE.Mesh(new THREE.CircleGeometry(radius * 0.72, seg(40, 8)), M.throat);
+      throat.rotation.x = Math.PI / 2; throat.position.y = -length / 2 - 0.02; g.add(throat);
+      const heat = new THREE.Mesh(new THREE.TorusGeometry(radius * 1.05, radius * 0.05, seg(8), seg(48, 8)), M.blueGlow);
+      heat.rotation.x = Math.PI / 2; heat.position.y = -length / 2 - radius * 0.3; g.add(heat);
+      const plumeLen = radius * 7;
+      const plumeGeo = new THREE.CylinderGeometry(radius * 0.95, radius * 0.08, plumeLen, seg(32, 8), seg(24, 4), true); // wide at the nozzle
+      plumeGeo.translate(0, -plumeLen / 2, 0);
+      const plume = new THREE.Mesh(plumeGeo, makePlumeMaterial(plumeColor, U));
+      plume.position.y = -length / 2 - radius * 0.2; g.add(plume);
+      const glow = additiveSprite(G.engine, plumeColor);
+      glow.scale.setScalar(radius * 4.2); glow.position.y = -length / 2 - radius * 0.4; g.add(glow);
+      glows.push({ sprite: glow, plume, base: radius * 4.2 });
+      g.rotation.z = -Math.PI / 2; // local +y (intake) -> world +x (forward), exhaust toward -x
+      g.position.copy(pos);
+      ship.add(g);
+    };
+    engine(0.52, 2.8, new THREE.Vector3(-3.1, -0.15, 1.75), 0x7f9bff);
+    engine(0.52, 2.8, new THREE.Vector3(-3.1, -0.15, -1.75), 0x7f9bff);
+    engine(0.72, 1.2, new THREE.Vector3(-4.55, 0, 0), 0xffb45a);
+    for (const side of [1, -1]) {
+      const pylon = shadowed(new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.14, 0.9), M.dark));
+      pylon.position.set(-2.9, -0.15, 1.15 * side);
+      ship.add(pylon);
+    }
+
+    // ---- 6. Gyro ring with chase lights (instanced spheres, colors animated).
+    const gyro = new THREE.Group();
+    gyro.position.set(-0.9, 0, 0);
+    gyro.rotation.y = Math.PI / 2; // torus lies in the YZ plane, around the X axis
+    ship.add(gyro);
+    const spinner = new THREE.Group(); // everything that rotates with the ring
+    gyro.add(spinner);
+    const ringR = 2.25;
+    spinner.add(shadowed(new THREE.Mesh(new THREE.TorusGeometry(ringR, 0.11, seg(20, 4), seg(160, 16)), M.engine)));
+    for (const z of [0.11, -0.11]) {
+      const trim = new THREE.Mesh(new THREE.TorusGeometry(ringR, 0.035, seg(8), seg(160, 16)), M.gold);
+      trim.position.z = z; spinner.add(trim);
+    }
+    const LIGHTS = 48;
+    const chase = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, seg(10, 4), seg(8, 3)), new THREE.MeshBasicMaterial({ color: 0xffffff }), LIGHTS);
+    {
+      const m = new THREE.Matrix4();
+      for (let i = 0; i < LIGHTS; i++) {
+        const a = i / LIGHTS * Math.PI * 2;
+        m.makeTranslation(Math.cos(a) * (ringR + 0.12), Math.sin(a) * (ringR + 0.12), 0);
+        chase.setMatrixAt(i, m);
+        chase.setColorAt(i, new THREE.Color(0x000000));
+      }
+    }
+    spinner.add(chase);
+    for (let i = 0; i < 4; i++) {
+      const a = i / 4 * Math.PI * 2 + Math.PI / 4;
+      const strut = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, ringR - 1.05, seg(12)), M.dark));
+      const dir = new THREE.Vector3(0, Math.cos(a), Math.sin(a));
+      strut.position.copy(dir.clone().multiplyScalar((ringR + 1.1) / 2)).add(new THREE.Vector3(-0.9, 0, 0));
+      strut.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+      ship.add(strut);
+    }
+
+    // ---- 7. Logic core: icosahedron crystal + octahedron edge cage + cradle.
+    const coreGroup = new THREE.Group();
+    coreGroup.position.set(0.35, 1.72, 0);
+    ship.add(coreGroup);
+    const crystal = new THREE.Mesh(new THREE.IcosahedronGeometry(0.34, detail >= 1.5 ? 1 : 0), makeCoreMaterial(U));
+    coreGroup.add(crystal);
+    const cage = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(0.55, 0)), new THREE.LineBasicMaterial({ color: GOLD }));
+    coreGroup.add(cage);
+    const cradle = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.5, 0.35, 6), M.gold));
+    cradle.position.y = -0.5; coreGroup.add(cradle);
+    const coreGlow = additiveSprite(G.core);
+    coreGlow.scale.setScalar(1.8); coreGroup.add(coreGlow);
+
+    // ---- 8. Dorsal fin (extruded) + antenna mast (tube along a curve).
+    {
+      const s = new THREE.Shape();
+      s.moveTo(-1.6, 0); s.lineTo(-3.9, 0); s.lineTo(-4.4, 1.5); s.lineTo(-3.7, 1.55); s.lineTo(-1.6, 0);
+      const fin = shadowed(new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 0.12, ...bevel(0.04, 0.04) }), M.wing));
+      fin.position.set(0, 0.95, -0.06);
+      ship.add(fin);
+      const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-3.9, 2.45, 0), new THREE.Vector3(-4.3, 3.1, 0), new THREE.Vector3(-5.1, 3.35, 0),
+      ]);
+      ship.add(shadowed(new THREE.Mesh(new THREE.TubeGeometry(curve, seg(30, 4), 0.035, seg(8), false), M.dark)));
+    }
+    const antennaTip = new THREE.Mesh(new THREE.SphereGeometry(0.07, seg(16, 6), seg(12, 4)), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    antennaTip.position.set(-5.1, 3.35, 0);
+    ship.add(antennaTip);
+
+    // ---- 9. Sensor dish + torus-knot reactor in a glass bulb.
+    {
+      const mount = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, 0.5, seg(16, 6)), M.dark));
+      mount.position.set(1.2, -1.2, 0); ship.add(mount);
+      const dish = shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.75, seg(40, 8), seg(16, 3), 0, Math.PI * 2, 0, 0.62), M.dish));
+      dish.rotation.x = Math.PI; dish.position.set(1.2, -0.72, 0); ship.add(dish);
+      const horn = shadowed(new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.55, seg(12)), M.gold));
+      horn.position.set(1.2, -1.38, 0); horn.rotation.x = Math.PI; ship.add(horn);
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.42, seg(40, 8), seg(24, 4)), M.glass);
+      bulb.position.set(-1.9, -1.2, 0); ship.add(bulb);
+      const collar = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.42, 0.25, seg(32, 6)), M.engine));
+      collar.position.set(-1.9, -0.85, 0); ship.add(collar);
+    }
+    const reactor = new THREE.Mesh(new THREE.TorusKnotGeometry(0.17, 0.045, seg(128, 16), seg(12, 3), 2, 3), M.reactor);
+    reactor.position.set(-1.9, -1.22, 0);
+    ship.add(reactor);
+
+    // ---- 10. Nose: RCS blocks (dodecahedra) + sensor tip.
+    for (const side of [1, -1]) {
+      const rcs = shadowed(new THREE.Mesh(new THREE.DodecahedronGeometry(0.13, 0), M.dark));
+      rcs.position.set(3.7, 0.05, 0.52 * side); ship.add(rcs);
+    }
+    const noseTip = shadowed(new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.9, seg(12)), M.gold));
+    noseTip.rotation.z = -Math.PI / 2; noseTip.position.set(5.6, 0, 0); ship.add(noseTip);
+
+    // ---- 11. Navigation lights.
+    const navLight = (color, pos, size = 0.7) => {
+      const s = additiveSprite(G.nav, color);
+      s.position.copy(pos); s.scale.setScalar(size); ship.add(s);
+      return s;
+    };
+    const navLights = [
+      { s: navLight(0x33ff77, new THREE.Vector3(-3.95, -0.1, 4.85)), phase: 0, kind: "steady" },
+      { s: navLight(0xff3344, new THREE.Vector3(-3.95, -0.1, -4.85)), phase: 0, kind: "steady" },
+      { s: navLight(0xffffff, new THREE.Vector3(-5.1, 3.35, 0), 0.9), phase: 0, kind: "strobe" },
+      { s: navLight(0xffffff, new THREE.Vector3(5.2, 0, 0), 0.6), phase: 0.5, kind: "strobe" },
+    ];
+
+    // ---- 12. Exhaust particles (recycled Points with a custom shader).
+    const PCOUNT = 420;
+    const pGeo = new THREE.BufferGeometry();
+    const pPos = new Float32Array(PCOUNT * 3), pLife = new Float32Array(PCOUNT), pSeed = new Float32Array(PCOUNT);
+    const emitters = [[-4.6, -0.15, 1.75, 0.35], [-4.6, -0.15, -1.75, 0.35], [-5.4, 0, 0, 0.5]];
+    const prand = rng(77);
+    for (let i = 0; i < PCOUNT; i++) { pLife[i] = prand(); pSeed[i] = prand(); }
+    pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
+    pGeo.setAttribute("life", new THREE.BufferAttribute(pLife, 1));
+    const particles = new THREE.Points(pGeo, makeParticleMaterial(U));
+    particles.frustumCulled = false;
+    ship.add(particles);
+
+    // ---- animation
+    const tmpColor = new THREE.Color(), chaseBlue = new THREE.Color(0x7f95ff), chaseGold = new THREE.Color(GOLD);
+    // t: seconds since start, dt: frame delta (s),
+    // opts.power: engine throttle 0..1 (caller may smooth it),
+    // opts.particles: false to skip the exhaust particles (cheap LOD).
+    function update(t, dt, { power = 1, particles: particlesOn = true } = {}) {
+      U.uTime.value = t;
+      U.uPower.value = power * (0.92 + 0.08 * Math.sin(t * 37.0) * Math.sin(t * 11.0)); // flicker
+      spinner.rotation.z += dt * 0.5;
+      for (let i = 0; i < LIGHTS; i++) {
+        const p1 = ((i / LIGHTS - t * 0.35) % 1 + 1) % 1, p2 = ((i / LIGHTS - t * 0.35 + 0.5) % 1 + 1) % 1;
+        const k = Math.max(Math.pow(1 - p1, 10), Math.pow(1 - p2, 10));
+        tmpColor.copy(i % 6 === 0 ? chaseGold : chaseBlue).multiplyScalar(0.12 + 1.6 * k);
+        chase.setColorAt(i, tmpColor);
+      }
+      chase.instanceColor.needsUpdate = true;
+
+      crystal.rotation.y += dt * 0.8; crystal.rotation.x += dt * 0.3;
+      cage.rotation.y -= dt * 0.5; cage.rotation.z += dt * 0.2;
+      coreGlow.material.opacity = 0.7 + 0.3 * Math.sin(t * 2.3);
+      reactor.rotation.x += dt * 1.2; reactor.rotation.y += dt * 0.7;
+
+      for (const g of glows) {
+        g.sprite.scale.setScalar(g.base * (0.4 + 0.6 * power) * (0.95 + 0.05 * Math.sin(t * 40)));
+        g.plume.visible = power > 0.02;
+      }
+      for (const n of navLights) {
+        if (n.kind === "strobe") n.s.material.opacity = ((t * 0.8 + n.phase) % 1) < 0.06 ? 1 : 0.05;
+        else n.s.material.opacity = 0.75 + 0.25 * Math.sin(t * 3);
+      }
+      antennaTip.material.color.setScalar(((t * 0.8) % 1) < 0.06 ? 1 : 0.25);
+
+      particles.visible = particlesOn && power > 0.05;
+      if (!particles.visible) return;
+      for (let i = 0; i < PCOUNT; i++) {
+        pLife[i] += dt * (0.9 + pSeed[i] * 0.6);
+        if (pLife[i] >= 1) pLife[i] -= 1;
+        const e = emitters[i % 3], l = pLife[i], spread = e[3] * (0.3 + l * 1.4), a = pSeed[i] * 50 + i;
+        pPos[i * 3] = e[0] - l * (e[3] * 11) * (0.3 + 0.7 * power);
+        pPos[i * 3 + 1] = e[1] + Math.cos(a) * spread * pSeed[i];
+        pPos[i * 3 + 2] = e[2] + Math.sin(a) * spread * pSeed[i];
+      }
+      pGeo.attributes.position.needsUpdate = true;
+      pGeo.attributes.life.needsUpdate = true;
+    }
+    function setLights(on) { for (const n of navLights) n.s.visible = on; chase.visible = on; }
+    return { group: ship, update, setLights };
+  },
+});
+
+
+// =====================================================================
+// PUBLIC API
+// =====================================================================
+const FIGURE_NAMES = {
+  LatheGeometry: "Lathe (revolved)", BoxGeometry: "Box", SphereGeometry: "Sphere / segment",
+  TorusGeometry: "Torus", ExtrudeGeometry: "Extruded shape", TubeGeometry: "Tube along curve",
+  CylinderGeometry: "Cylinder", ConeGeometry: "Cone", CircleGeometry: "Circle",
+  IcosahedronGeometry: "Icosahedron", OctahedronGeometry: "Octahedron", DodecahedronGeometry: "Dodecahedron",
+  TorusKnotGeometry: "Torus knot", EdgesGeometry: "Edges (wire cage)",
+};
+
+// Build one ship model. Returns a model handle:
+//   { id, detail, group, update(t, dt, opts), setLights(on), size, radius }
+// group: THREE.Group, origin at the ship's center, nose along +X, up +Y.
+function buildShipModel(id, { detail = 1 } = {}) {
+  const def = SHIP_DEFS.find((d) => d.id === id);
+  if (!def) throw new Error("ShipKit: unknown ship id " + id);
+  const built = def.build(detail);
+  // Size of the solid hull only: engine plumes, glow sprites and particles
+  // are effects and would inflate the box.
+  built.group.updateMatrixWorld(true);
+  const box = new THREE.Box3();
+  built.group.traverse((o) => {
+    if (!o.isMesh || (o.material && o.material.blending === THREE.AdditiveBlending)) return;
+    box.union(new THREE.Box3().setFromObject(o));
+  });
+  const size = box.getSize(new THREE.Vector3());
+  return { id, detail, ...built, size, radius: size.length() / 2 };
+}
+
+// Free a model's GPU resources: all geometries + per-model materials.
+// Shared (cached) materials and all textures are kept for reuse.
+function disposeShipModel(model) {
+  if (model.group.parent) model.group.parent.remove(model.group);
+  model.group.traverse((o) => {
+    if (o.geometry) o.geometry.dispose();
+    const mats = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
+    for (const m of mats) if (!sharedMaterials.has(m)) m.dispose();
+  });
+}
+
+// Technical statistics of a built model (object / figure / triangle counts,
+// materials, shaders, textures + GPU memory estimate).
+function modelStats(root) {
+  const st = { objects: 0, meshes: 0, instanced: 0, copies: 0, sprites: 0, lines: 0, points: 0, particles: 0,
+               triangles: 0, vertices: 0, figures: {}, materials: new Set(), shaders: 0, textures: new Set() };
+  root.traverse((o) => {
+    if (o === root || o.type === "Group") return;
+    st.objects++;
+    const k = o.isInstancedMesh ? o.count : 1;
+    if (o.isInstancedMesh) { st.instanced++; st.copies += o.count; }
+    else if (o.isMesh) st.meshes++;
+    else if (o.isSprite) st.sprites++;
+    else if (o.isLineSegments || o.isLine) st.lines++;
+    else if (o.isPoints) { st.points++; st.particles += o.geometry.attributes.position.count; }
+    if (o.geometry && !o.isSprite && !o.isPoints) {
+      const g = o.geometry, name = FIGURE_NAMES[g.type] || g.type;
+      st.figures[name] = (st.figures[name] || 0) + k;
+      st.vertices += g.attributes.position.count * k;
+      if (o.isMesh) st.triangles += (g.index ? g.index.count / 3 : g.attributes.position.count / 3) * k;
+    }
+    for (const m of Array.isArray(o.material) ? o.material : o.material ? [o.material] : []) {
+      st.materials.add(m);
+      for (const key of ["map", "roughnessMap", "bumpMap", "emissiveMap", "metalnessMap", "normalMap"]) if (m[key]) st.textures.add(m[key]);
+    }
+  });
+  st.shaders = [...st.materials].filter((m) => m.isShaderMaterial).length;
+  const images = new Set([...st.textures].map((t) => t.image));
+  st.texCount = images.size;
+  st.texMB = [...images].reduce((a, im) => a + (im ? im.width * im.height * 4 * 4 / 3 : 0), 0) / 1048576; // RGBA8 + mips
+  return st;
+}
+
+return {
+  SHIP_DEFS, buildShipModel, disposeShipModel, modelStats,
+  allTextures,                      // Set of every generated texture
+  isSharedMaterial: (m) => sharedMaterials.has(m),
+  // lower-level generators, reusable for other game objects:
+  makePlating, makeBrushed, makeGlow,
+  util: { rng, valueNoise, fbm, canvas, paintPixels, clamp },
+};
+})();
+</script>
+<script id="viewer">
+/* =======================================================================
+   VIEWER — preview page only (not part of the game extraction).
+   Uses ShipKit's public API exclusively.
+   ======================================================================= */
+(() => {
+"use strict";
+const { rng, valueNoise, fbm, canvas, paintPixels, clamp } = ShipKit.util;
+
 // Equirectangular nebula sky (also used as the reflection environment).
 function makeSky(w = 2048, h = 1024) {
   const rand = rng(11);
@@ -1446,430 +2157,133 @@ scene.add(rim);
 scene.add(new THREE.HemisphereLight(0x9fb2ff, 0x1a1020, 0.35));
 
 // =====================================================================
-// Materials
+// Viewer: current ship, rebuild on detail change, disposal
 // =====================================================================
-const GOLD = 0xf8bb56, BLUE = 0x5f77f7;
+const state = { rotate: true, engines: true, lights: true, wire: false, quality: 3, detail: 1, shipIndex: 0 };
+let current = null;      // ShipKit model handle
+const holder = new THREE.Group();
+scene.add(holder);
 
-const hullTex = makePlating({
-  seed: 5, base: [156, 162, 176],
-  stripes: [{ y: 0.10, h: 0.028, color: "#f8bb56" }, { y: 0.142, h: 0.012, color: "#5f77f7" },
-            { y: 0.80, h: 0.02, color: "#5f77f7" }],
-  // rotation per side so the text reads upright from both flanks (+z / -z)
-  markings: [
-    { text: "SP-01", x: 0.07, y: 0.36, rot: -Math.PI / 2, size: 44, color: "#f8bb56" },
-    { text: "SP-01", x: 0.57, y: 0.36, rot: Math.PI / 2, size: 44, color: "#f8bb56" },
-    { text: "SWARM PROTOCOL", x: 0.93, y: 0.56, rot: -Math.PI / 2, size: 26, color: "#dfe6ff" },
-    { text: "SWARM PROTOCOL", x: 0.43, y: 0.56, rot: Math.PI / 2, size: 26, color: "#dfe6ff" },
-  ],
-  windows: [{ x: 0.0, y: 0.47, count: 9, gap: 0.022 }, { x: 0.5, y: 0.47, count: 9, gap: 0.022 },
-            { x: 0.99, y: 0.47, count: 9, gap: 0.022 }],
-});
-hullTex.map.repeat.set(1, 1);
-const hullMat = new THREE.MeshStandardMaterial({
-  map: hullTex.map, roughnessMap: hullTex.roughnessMap, bumpMap: hullTex.bumpMap, bumpScale: 0.018,
-  emissiveMap: hullTex.emissiveMap, emissive: 0xffffff, emissiveIntensity: 1.4,
-  metalness: 0.78, roughness: 0.62, envMapIntensity: 1.0,
-});
-
-const wingTex = makePlating({ seed: 9, size: 1024, base: [118, 124, 140], minPanel: 60, maxPanel: 200,
-  stripes: [{ y: 0.0, h: 0.03, color: "#f8bb56" }] });
-for (const k of ["map", "roughnessMap", "bumpMap"]) wingTex[k].repeat.set(0.16, 0.16);
-const wingMat = new THREE.MeshStandardMaterial({
-  map: wingTex.map, roughnessMap: wingTex.roughnessMap, bumpMap: wingTex.bumpMap, bumpScale: 0.015,
-  metalness: 0.8, roughness: 0.6,
-});
-
-const brushed = makeBrushed({ seed: 4 });
-brushed.repeat.set(2, 1);
-const engineMat = new THREE.MeshStandardMaterial({ map: brushed, metalness: 1.0, roughness: 0.32 });
-const darkMetal = new THREE.MeshStandardMaterial({ color: 0x3a404d, metalness: 0.85, roughness: 0.42 });
-const goldMat = new THREE.MeshStandardMaterial({ color: GOLD, metalness: 1.0, roughness: 0.28 });
-const blueGlow = new THREE.MeshStandardMaterial({ color: 0x223066, emissive: BLUE, emissiveIntensity: 2.2, metalness: 0.3, roughness: 0.4 });
-const glassMat = new THREE.MeshPhysicalMaterial({
-  color: 0x6f9dff, metalness: 0.1, roughness: 0.04, clearcoat: 1, clearcoatRoughness: 0.03,
-  transparent: true, opacity: 0.55, envMapIntensity: 2.2,
-});
-
-const allMaterials = [hullMat, wingMat, engineMat, darkMetal, goldMat, blueGlow, glassMat];
-
-// =====================================================================
-// Ship
-// =====================================================================
-const ship = new THREE.Group();
-scene.add(ship);
-const shadowed = (m) => { m.castShadow = m.receiveShadow = true; return m; };
-
-// ---- 1. Fuselage: lathe of a smooth spline profile (tail at y<0, nose y>0),
-//         rotated so its axis runs along world +X.
-const profile = new THREE.SplineCurve([
-  new THREE.Vector2(0.001, -4.25), new THREE.Vector2(0.95, -4.1), new THREE.Vector2(1.18, -3.4),
-  new THREE.Vector2(1.24, -1.6), new THREE.Vector2(1.2, 0.4), new THREE.Vector2(1.02, 2.0),
-  new THREE.Vector2(0.72, 3.3), new THREE.Vector2(0.38, 4.35), new THREE.Vector2(0.1, 5.05),
-  new THREE.Vector2(0.001, 5.2),
-]).getSpacedPoints(90);
-const fuselageGeo = new THREE.LatheGeometry(profile, 96);
-const fuselage = shadowed(new THREE.Mesh(fuselageGeo, hullMat));
-fuselage.rotation.z = -Math.PI / 2;
-fuselage.scale.set(1, 1, 0.92); // slightly flattened sideways (local z = world z)
-ship.add(fuselage);
-const radiusAt = (y) => { // hull radius at lathe height y (for placing parts)
-  for (let i = 1; i < profile.length; i++) {
-    if (profile[i].y >= y) {
-      const a = profile[i - 1], b = profile[i], t = (y - a.y) / (b.y - a.y || 1);
-      return a.x + (b.x - a.x) * t;
-    }
-  }
-  return 0;
-};
-
-// ---- 2. Greebles: instanced boxes scattered over the hull surface,
-//         each aligned to the local surface normal.
-{
-  const rand = rng(21), count = 110;
-  const g = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), darkMetal, count);
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
-  let n = 0;
-  while (n < count) {
-    const y = -3.6 + rand() * 6.2;
-    const phi = rand() * Math.PI * 2;
-    // keep the flanks with windows/markings clean and avoid the cockpit top
-    const sidey = Math.abs(Math.cos(phi));
-    if (sidey > 0.85 && y > -1 && y < 2.2) continue;
-    const r = radiusAt(y);
-    const normal = new THREE.Vector3(Math.sin(phi), 0, Math.cos(phi));
-    q.setFromUnitVectors(up, normal);
-    const s = new THREE.Vector3(0.05 + rand() * 0.16, 0.02 + rand() * 0.05, 0.05 + rand() * 0.24);
-    const p = normal.clone().multiplyScalar(r + s.y * 0.4).add(new THREE.Vector3(0, y, 0));
-    m.compose(p, q, s);
-    g.setMatrixAt(n++, m);
-  }
-  g.castShadow = g.receiveShadow = true;
-  fuselage.add(g);
-}
-
-// ---- 3. Cockpit canopy: half sphere, stretched, physical glass with a
-//         gold frame (torus) around its base.
-{
-  const canopy = new THREE.Mesh(new THREE.SphereGeometry(0.62, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2), glassMat);
-  canopy.scale.set(1.9, 0.75, 0.9);
-  canopy.position.set(2.55, 0.86, 0);
-  ship.add(canopy);
-  const frame = shadowed(new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.045, 12, 64), goldMat));
-  frame.rotation.x = Math.PI / 2;
-  frame.scale.set(1.9, 0.9, 1);
-  frame.position.copy(canopy.position);
-  ship.add(frame);
-  const spine = shadowed(new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.03, 8, 48, Math.PI), goldMat));
-  spine.scale.set(1.9, 0.75, 1);
-  spine.position.copy(canopy.position);
-  ship.add(spine);
-}
-
-// ---- 4. Wings: extruded swept shapes with bevels, mirrored.
-function wingShape(side) {
-  const s = new THREE.Shape(), k = side;
-  s.moveTo(1.2, 0.7 * k);
-  s.lineTo(-1.3, 0.8 * k);
-  s.lineTo(-3.2, 4.6 * k);
-  s.lineTo(-3.9, 4.75 * k);
-  s.lineTo(-3.6, 1.0 * k);
-  s.lineTo(-3.4, 0.7 * k);
-  s.lineTo(1.2, 0.7 * k);
-  return s;
-}
-const extrudeOpts = { depth: 0.14, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 3, steps: 1 };
-const wingParts = [];
-for (const side of [1, -1]) {
-  const wing = shadowed(new THREE.Mesh(new THREE.ExtrudeGeometry(wingShape(side), extrudeOpts), wingMat));
-  wing.rotation.x = Math.PI / 2; // shape y -> world z, extrusion -> world -y
-  wing.position.y = -0.08;
-  ship.add(wing);
-  // leading-edge gold strip: a tube along the swept edge
-  const edge = new THREE.LineCurve3(new THREE.Vector3(-1.3, -0.15, 0.82 * side), new THREE.Vector3(-3.2, -0.15, 4.62 * side));
-  ship.add(shadowed(new THREE.Mesh(new THREE.TubeGeometry(edge, 20, 0.05, 10, false), goldMat)));
-  // wingtip pod: capsule made of a cylinder + two hemispheres, with a cannon
-  const pod = new THREE.Group();
-  pod.add(shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.6, 24), engineMat)));
-  for (const e of [1, -1]) {
-    const cap = shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.16, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), engineMat));
-    cap.position.y = 0.8 * e; if (e < 0) cap.rotation.x = Math.PI;
-    pod.add(cap);
-  }
-  const barrel = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 1.1, 12), darkMetal));
-  barrel.position.y = 1.3; pod.add(barrel);
-  const muzzle = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.02, 8, 20), goldMat);
-  muzzle.position.y = 1.85; muzzle.rotation.x = Math.PI / 2; pod.add(muzzle);
-  pod.rotation.z = -Math.PI / 2;
-  pod.position.set(-3.35, -0.12, 4.72 * side);
-  ship.add(pod);
-  wingParts.push(pod);
-  // vertical winglet (extruded triangle)
-  const fin = new THREE.Shape();
-  fin.moveTo(0, 0); fin.lineTo(-0.9, 0); fin.lineTo(-1.1, 0.75); fin.lineTo(-0.75, 0.75); fin.lineTo(0, 0);
-  const winglet = shadowed(new THREE.Mesh(new THREE.ExtrudeGeometry(fin, { depth: 0.05, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 2 }), wingMat));
-  winglet.position.set(-2.75, -0.02, 4.4 * side - 0.025);
-  ship.add(winglet);
-}
-
-// ---- 5. Engines: two brushed-metal nacelles + a central main drive.
-//         Each has an intake ring, a lathed nozzle bell, a glowing throat
-//         and an animated shader plume.
-const plumeMats = [];
-const plumeUniforms = { uTime: { value: 0 }, uPower: { value: 1 } };
-function makePlume(radius, length, color) {
-  const geo = new THREE.CylinderGeometry(radius * 0.95, radius * 0.08, length, 32, 24, true); // wide at the nozzle
-  geo.translate(0, -length / 2, 0);
-  const mat = new THREE.ShaderMaterial({
-    uniforms: { uTime: plumeUniforms.uTime, uPower: plumeUniforms.uPower, uColor: { value: new THREE.Color(color) } },
-    vertexShader: `
-      varying vec2 vUv; varying vec3 vN; varying vec3 vView;
-      void main(){
-        vUv = uv;
-        vN = normalize(normalMatrix * normal);
-        vec4 mv = modelViewMatrix * vec4(position, 1.0);
-        vView = normalize(-mv.xyz);
-        gl_Position = projectionMatrix * mv;
-      }`,
-    fragmentShader: `
-      uniform float uTime; uniform float uPower; uniform vec3 uColor;
-      varying vec2 vUv; varying vec3 vN; varying vec3 vView;
-      float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-      float noise(vec2 p){
-        vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
-        return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y);
-      }
-      void main(){
-        float along = vUv.y;                       // 1 at the nozzle, 0 at the tail end
-        float flick = noise(vec2(vUv.x * 12.0, along * 6.0 - uTime * 9.0));
-        float shock = 0.5 + 0.5 * sin(along * 38.0 - uTime * 30.0);   // shock diamonds
-        float edge = pow(abs(dot(normalize(vN), normalize(vView))), 1.6); // bright core, soft rim
-        float a = pow(along, 1.8) * (0.55 + 0.45 * flick) * (0.75 + 0.25 * shock) * edge * uPower;
-        vec3 col = mix(uColor, vec3(1.0), pow(along, 5.0) * 0.8);
-        gl_FragColor = vec4(col * a * 2.6, 1.0);   // additive: alpha 1, brightness carried by rgb
-      }`,
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+function applyWire() {
+  holder.traverse((o) => {
+    const m = o.material;
+    if (m && (m.isMeshStandardMaterial || m.isMeshBasicMaterial) && !o.isSprite) m.wireframe = state.wire;
   });
-  plumeMats.push(mat);
-  return new THREE.Mesh(geo, mat);
 }
-const glowTex = makeGlow("rgba(255,255,255,1)", "rgba(140,170,255,0.55)");
-const glowSprites = [];
-function engine(radius, length, pos, plumeColor) {
-  const g = new THREE.Group();
-  const body = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(radius, radius * 1.08, length, 40, 1), engineMat));
-  g.add(body);
-  const intake = shadowed(new THREE.Mesh(new THREE.TorusGeometry(radius * 0.98, radius * 0.12, 16, 48), goldMat));
-  intake.rotation.x = Math.PI / 2; intake.position.y = length / 2; g.add(intake);
-  const cone = shadowed(new THREE.Mesh(new THREE.ConeGeometry(radius * 0.55, radius * 1.2, 32), darkMetal));
-  cone.position.y = length / 2 + radius * 0.3; g.add(cone);
-  // nozzle bell (lathe)
-  const bellPts = [];
-  for (let i = 0; i <= 16; i++) { const t = i / 16; bellPts.push(new THREE.Vector2(radius * (0.72 + 0.42 * t * t), -t * radius * 1.2)); }
-  const bell = shadowed(new THREE.Mesh(new THREE.LatheGeometry(bellPts, 48), new THREE.MeshStandardMaterial({
-    color: 0x2b2f38, metalness: 0.9, roughness: 0.35, side: THREE.DoubleSide })));
-  bell.position.y = -length / 2; g.add(bell);
-  const throat = new THREE.Mesh(new THREE.CircleGeometry(radius * 0.72, 40), new THREE.MeshBasicMaterial({ color: 0xbfd0ff }));
-  throat.rotation.x = Math.PI / 2; throat.position.y = -length / 2 - 0.02; g.add(throat);
-  // heat rings (emissive) around the bell
-  const heat = new THREE.Mesh(new THREE.TorusGeometry(radius * 1.05, radius * 0.05, 8, 48), blueGlow);
-  heat.rotation.x = Math.PI / 2; heat.position.y = -length / 2 - radius * 0.3; g.add(heat);
-  const plume = makePlume(radius * 1.0, radius * 7, plumeColor);
-  plume.position.y = -length / 2 - radius * 0.2; g.add(plume);
-  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: plumeColor, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
-  glow.scale.setScalar(radius * 4.2); glow.position.y = -length / 2 - radius * 0.4; g.add(glow);
-  glowSprites.push({ sprite: glow, base: radius * 4.2 });
-  g.rotation.z = -Math.PI / 2; // local +y (intake) -> world +x (forward), exhaust toward -x
-  g.position.copy(pos);
-  ship.add(g);
-  return g;
-}
-const engines = [
-  engine(0.52, 2.8, new THREE.Vector3(-3.1, -0.15, 1.75), 0x7f9bff),
-  engine(0.52, 2.8, new THREE.Vector3(-3.1, -0.15, -1.75), 0x7f9bff),
-  engine(0.72, 1.2, new THREE.Vector3(-4.55, 0, 0), 0xffb45a),
-];
-// pylons joining nacelles to the hull (boxes)
-for (const side of [1, -1]) {
-  const pylon = shadowed(new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.14, 0.9), darkMetal));
-  pylon.position.set(-2.9, -0.15, 1.15 * side);
-  ship.add(pylon);
+function loadShip(index, keepCamera) {
+  if (current) ShipKit.disposeShipModel(current);
+  const def = ShipKit.SHIP_DEFS[index];
+  const tb = performance.now();
+  current = ShipKit.buildShipModel(def.id, { detail: state.detail });
+  const buildMs = performance.now() - tb;
+  holder.add(current.group);
+  current.setLights(state.lights);
+  applyWire();
+  renderModelStats({ ...ShipKit.modelStats(current.group), buildMs });
+  if (typeof fitHud === "function") fitHud(); // panel height depends on the stats list
+  if (!keepCamera) camera.position.set(...def.camera);
+  // HUD
+  document.getElementById("hudTitle").textContent = def.name;
+  document.getElementById("shipIndex").textContent = `${index + 1} / ${ShipKit.SHIP_DEFS.length}`;
+  document.getElementById("prevShip").disabled = document.getElementById("nextShip").disabled = ShipKit.SHIP_DEFS.length < 2;
 }
 
-// ---- 6. Gyro ring: a torus around the hull, spinning, with chase lights
-//         (instanced spheres whose colors are animated every frame).
-const gyro = new THREE.Group();
-gyro.position.set(-0.9, 0, 0);
-gyro.rotation.y = Math.PI / 2; // torus lies in the YZ plane, around the X axis
-ship.add(gyro);
-const spinner = new THREE.Group(); // everything that rotates with the ring
-gyro.add(spinner);
-const ringR = 2.25;
-spinner.add(shadowed(new THREE.Mesh(new THREE.TorusGeometry(ringR, 0.11, 20, 160), engineMat)));
-const ringTrim = new THREE.Mesh(new THREE.TorusGeometry(ringR, 0.035, 8, 160), goldMat);
-ringTrim.position.z = 0.11; spinner.add(ringTrim);
-const ringTrim2 = ringTrim.clone(); ringTrim2.position.z = -0.11; spinner.add(ringTrim2);
-const LIGHTS = 48;
-const chase = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }), LIGHTS);
-{
-  const m = new THREE.Matrix4();
-  for (let i = 0; i < LIGHTS; i++) {
-    const a = i / LIGHTS * Math.PI * 2;
-    m.makeTranslation(Math.cos(a) * (ringR + 0.12), Math.sin(a) * (ringR + 0.12), 0);
-    chase.setMatrixAt(i, m);
-    chase.setColorAt(i, new THREE.Color(0x000000));
+function renderModelStats(st) {
+  const fmt = (n) => Math.round(n).toLocaleString("en-US");
+  const rows = [
+    ["3D objects", fmt(st.objects)],
+    ["Solid meshes", fmt(st.meshes)],
+    ["Instanced groups", `${st.instanced} (${fmt(st.copies)} copies)`],
+    ["Glow sprites", fmt(st.sprites)],
+    ["Wire / particle systems", `${st.lines} / ${st.points} (${fmt(st.particles)} pts)`],
+    ["Triangles", fmt(st.triangles)],
+    ["Vertices", fmt(st.vertices)],
+    ["Figure types", fmt(Object.keys(st.figures).length)],
+    ["Materials / custom shaders", `${st.materials.size} / ${st.shaders}`],
+    ["Textures", `${st.texCount} (≈${st.texMB.toFixed(0)} MB GPU)`],
+    ["Build time", st.buildMs.toFixed(0) + " ms"],
+  ];
+  const box = document.getElementById("infoRows");
+  box.textContent = "";
+  for (const [k, v] of rows) {
+    const r = document.createElement("div"); r.className = "row";
+    const a = document.createElement("span"); a.textContent = k;
+    const b = document.createElement("b"); b.textContent = v;
+    r.append(a, b); box.appendChild(r);
+  }
+  const list = document.getElementById("figList");
+  list.textContent = "";
+  for (const [name, n] of Object.entries(st.figures).sort((x, y) => y[1] - x[1])) {
+    const li = document.createElement("li");
+    const a = document.createElement("span"); a.textContent = name;
+    const b = document.createElement("b"); b.textContent = n;
+    li.append(a, b); list.appendChild(li);
   }
 }
-spinner.add(chase);
-// ring struts (cylinders) — static, attached to the hull, not the spinning ring
-for (let i = 0; i < 4; i++) {
-  const a = i / 4 * Math.PI * 2 + Math.PI / 4;
-  const strut = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, ringR - 1.05, 12), darkMetal));
-  const dir = new THREE.Vector3(0, Math.cos(a), Math.sin(a));
-  strut.position.copy(dir.clone().multiplyScalar((ringR + 1.1) / 2)).add(new THREE.Vector3(-0.9, 0, 0));
-  strut.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
-  ship.add(strut);
-}
 
-// ---- 7. Logic core: an icosahedron crystal in a gold cradle on the
-//         spine, with an edges-only cage (octahedron) spinning around it.
-const coreGroup = new THREE.Group();
-coreGroup.position.set(0.35, 1.72, 0);
-ship.add(coreGroup);
-const coreMat = new THREE.ShaderMaterial({
-  uniforms: { uTime: plumeUniforms.uTime },
-  vertexShader: `
-    varying vec3 vN; varying vec3 vView; varying vec3 vPos;
-    void main(){
-      vN = normalize(normalMatrix * normal); vPos = position;
-      vec4 mv = modelViewMatrix * vec4(position, 1.0); vView = normalize(-mv.xyz);
-      gl_Position = projectionMatrix * mv;
-    }`,
-  fragmentShader: `
-    uniform float uTime; varying vec3 vN; varying vec3 vView; varying vec3 vPos;
-    void main(){
-      float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vView))), 2.0);
-      float scan = 0.5 + 0.5 * sin(vPos.y * 40.0 - uTime * 6.0);           // scrolling "data" lines
-      float pulse = 0.75 + 0.25 * sin(uTime * 2.3);
-      vec3 base = vec3(0.23, 0.33, 0.95), hot = vec3(0.75, 0.85, 1.0);
-      vec3 col = mix(base, hot, fres) * (0.6 + 0.5 * scan) * pulse + fres * 0.6;
-      gl_FragColor = vec4(col, 1.0);
-    }`,
-});
-const crystal = new THREE.Mesh(new THREE.IcosahedronGeometry(0.34, 0), coreMat);
-coreGroup.add(crystal);
-const cage = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(0.55, 0)),
-  new THREE.LineBasicMaterial({ color: GOLD }));
-coreGroup.add(cage);
-const cradle = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.5, 0.35, 6), goldMat));
-cradle.position.y = -0.5; coreGroup.add(cradle);
-const coreGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: makeGlow("rgba(220,230,255,1)", "rgba(95,119,247,0.6)"),
-  blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
-coreGlow.scale.setScalar(1.8); coreGroup.add(coreGlow);
-
-// ---- 8. Dorsal fin (extruded) + antenna mast (tube along a curve).
-{
-  const s = new THREE.Shape();
-  s.moveTo(-1.6, 0); s.lineTo(-3.9, 0); s.lineTo(-4.4, 1.5); s.lineTo(-3.7, 1.55); s.lineTo(-1.6, 0);
-  const fin = shadowed(new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 0.12, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.04, bevelSegments: 3 }), wingMat));
-  fin.position.set(0, 0.95, -0.06);
-  ship.add(fin);
-  const curve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-3.9, 2.45, 0), new THREE.Vector3(-4.3, 3.1, 0), new THREE.Vector3(-5.1, 3.35, 0),
-  ]);
-  ship.add(shadowed(new THREE.Mesh(new THREE.TubeGeometry(curve, 30, 0.035, 8, false), darkMetal)));
-}
-const antennaTip = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-antennaTip.position.set(-5.1, 3.35, 0);
-ship.add(antennaTip);
-
-// ---- 9. Ventral sensor dish (sphere segment) with a feed horn, and a
-//         torus-knot reactor inside a glass sphere under the belly.
-{
-  const mount = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, 0.5, 16), darkMetal));
-  mount.position.set(1.2, -1.2, 0); ship.add(mount);
-  const dish = shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.75, 40, 16, 0, Math.PI * 2, 0, 0.62),
-    new THREE.MeshStandardMaterial({ color: 0xd9dde6, metalness: 0.7, roughness: 0.3, side: THREE.DoubleSide })));
-  dish.rotation.x = Math.PI; dish.position.set(1.2, -0.72, 0); ship.add(dish);
-  const horn = shadowed(new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.55, 12), goldMat));
-  horn.position.set(1.2, -1.38, 0); horn.rotation.x = Math.PI; ship.add(horn);
-
-  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.42, 40, 24), glassMat);
-  bulb.position.set(-1.9, -1.2, 0); ship.add(bulb);
-  const collar = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.42, 0.25, 32), engineMat));
-  collar.position.set(-1.9, -0.85, 0); ship.add(collar);
-}
-const reactor = new THREE.Mesh(new THREE.TorusKnotGeometry(0.17, 0.045, 128, 12, 2, 3),
-  new THREE.MeshStandardMaterial({ color: 0x331a00, emissive: GOLD, emissiveIntensity: 2.4, metalness: 0.2, roughness: 0.3 }));
-reactor.position.set(-1.9, -1.22, 0);
-ship.add(reactor);
-
-// ---- 10. Nose: RCS thruster blocks (dodecahedra) + a sensor tip.
-for (const side of [1, -1]) {
-  const rcs = shadowed(new THREE.Mesh(new THREE.DodecahedronGeometry(0.13, 0), darkMetal));
-  rcs.position.set(3.7, 0.05, 0.52 * side); ship.add(rcs);
-}
-const noseTip = shadowed(new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.9, 12), goldMat));
-noseTip.rotation.z = -Math.PI / 2; noseTip.position.set(5.6, 0, 0); ship.add(noseTip);
-
-// ---- 11. Navigation lights: red port, green starboard, white strobes.
-const navTex = makeGlow("rgba(255,255,255,1)", "rgba(255,255,255,0.35)");
-function navLight(color, pos, size = 0.7) {
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: navTex, color, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
-  s.position.copy(pos); s.scale.setScalar(size); ship.add(s);
-  return s;
-}
-const navLights = [
-  { s: navLight(0x33ff77, new THREE.Vector3(-3.95, -0.1, 4.85)), phase: 0, kind: "steady" },
-  { s: navLight(0xff3344, new THREE.Vector3(-3.95, -0.1, -4.85)), phase: 0, kind: "steady" },
-  { s: navLight(0xffffff, new THREE.Vector3(-5.1, 3.35, 0), 0.9), phase: 0, kind: "strobe" },
-  { s: navLight(0xffffff, new THREE.Vector3(5.2, 0, 0), 0.6), phase: 0.5, kind: "strobe" },
+// =====================================================================
+// Quality presets (render cost) — the geometry slider is separate.
+// =====================================================================
+const dpr = window.devicePixelRatio || 1;
+const maxAniso = renderer.capabilities.getMaxAnisotropy();
+const QUALITY = [
+  { name: "LOW",    pr: 0.5,                          shadow: 0,    aniso: 1,  particles: false },
+  { name: "MEDIUM", pr: 0.75,                         shadow: 1024, aniso: 2,  particles: true },
+  { name: "HIGH",   pr: 1,                            shadow: 2048, aniso: 4,  particles: true },
+  { name: "ULTRA",  pr: Math.max(1, Math.min(dpr, 2)), shadow: 2048, aniso: 8,  particles: true },
+  { name: "MAX",    pr: Math.min(Math.max(1, dpr) * 1.5, 3), shadow: 4096, aniso: 16, particles: true },
 ];
-
-// ---- 12. Exhaust particles (Points with a custom shader), recycled.
-const PCOUNT = 420;
-const pGeo = new THREE.BufferGeometry();
-const pPos = new Float32Array(PCOUNT * 3), pLife = new Float32Array(PCOUNT), pSeed = new Float32Array(PCOUNT);
-const emitters = [[-4.6, -0.15, 1.75, 0.35], [-4.6, -0.15, -1.75, 0.35], [-5.4, 0, 0, 0.5]];
-const prand = rng(77);
-for (let i = 0; i < PCOUNT; i++) { pLife[i] = prand(); pSeed[i] = prand(); }
-pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
-pGeo.setAttribute("life", new THREE.BufferAttribute(pLife, 1));
-const pMat = new THREE.ShaderMaterial({
-  uniforms: { uPower: plumeUniforms.uPower },
-  vertexShader: `
-    attribute float life; varying float vLife; uniform float uPower;
-    void main(){
-      vLife = life;
-      vec4 mv = modelViewMatrix * vec4(position, 1.0);
-      gl_PointSize = (1.0 - life) * 70.0 * uPower / -mv.z;
-      gl_Position = projectionMatrix * mv;
-    }`,
-  fragmentShader: `
-    varying float vLife;
-    void main(){
-      float d = length(gl_PointCoord - 0.5);
-      float a = smoothstep(0.5, 0.0, d) * (1.0 - vLife) * 0.6;
-      vec3 col = mix(vec3(1.0, 0.85, 0.6), vec3(0.4, 0.5, 1.0), vLife);
-      gl_FragColor = vec4(col * a, a);
-    }`,
-  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-});
-const particles = new THREE.Points(pGeo, pMat);
-particles.frustumCulled = false;
-ship.add(particles);
+function applyQuality(level) {
+  const q = QUALITY[level];
+  renderer.setPixelRatio(q.pr);
+  renderer.setSize(window.innerWidth, window.innerHeight, false);
+  const shadowsOn = q.shadow > 0;
+  if (renderer.shadowMap.enabled !== shadowsOn) {
+    renderer.shadowMap.enabled = shadowsOn;
+    scene.traverse((o) => { if (o.material) o.material.needsUpdate = true; }); // recompile with/without shadows
+  }
+  key.castShadow = shadowsOn;
+  if (shadowsOn && key.shadow.mapSize.x !== q.shadow) {
+    key.shadow.mapSize.set(q.shadow, q.shadow);
+    if (key.shadow.map) { key.shadow.map.dispose(); key.shadow.map = null; }
+  }
+  for (const t of ShipKit.allTextures) { t.anisotropy = Math.min(q.aniso, maxAniso); t.needsUpdate = true; }
+  document.getElementById("qVal").textContent = q.name;
+  document.getElementById("statRes").textContent =
+    `${Math.round(window.innerWidth * q.pr)}×${Math.round(window.innerHeight * q.pr)}`;
+}
 
 // =====================================================================
-// Overlay controls
+// HUD wiring
 // =====================================================================
-const state = { rotate: true, engines: true, lights: true, wire: false };
 function toggle(id, key, apply) {
   const b = document.getElementById(id);
   b.addEventListener("click", () => { state[key] = !state[key]; b.classList.toggle("on", state[key]); apply(state[key]); });
 }
 toggle("btnRotate", "rotate", (on) => { controls.autoRotate = on; });
 toggle("btnEngines", "engines", () => {});
-toggle("btnLights", "lights", (on) => { for (const n of navLights) n.s.visible = on; chase.visible = on; });
-toggle("btnWire", "wire", (on) => { for (const m of allMaterials) m.wireframe = on; });
+toggle("btnLights", "lights", (on) => current && current.setLights(on));
+toggle("btnWire", "wire", applyWire);
+
+const qSlider = document.getElementById("qSlider"), dSlider = document.getElementById("dSlider");
+const paintSlider = (s) => {
+  const p = (s.value - s.min) / (s.max - s.min) * 100;
+  s.style.setProperty("--fill", p + "%");
+};
+qSlider.addEventListener("input", () => { state.quality = +qSlider.value; paintSlider(qSlider); applyQuality(state.quality); });
+let rebuildQueued = false;
+dSlider.addEventListener("input", () => {
+  state.detail = +dSlider.value;
+  document.getElementById("dVal").textContent = Math.round(state.detail * 100) + "%";
+  paintSlider(dSlider);
+  if (!rebuildQueued) { // coalesce rebuilds to at most one per frame while dragging
+    rebuildQueued = true;
+    requestAnimationFrame(() => { rebuildQueued = false; loadShip(state.shipIndex, true); });
+  }
+});
+const step = (d) => { state.shipIndex = (state.shipIndex + d + ShipKit.SHIP_DEFS.length) % ShipKit.SHIP_DEFS.length; loadShip(state.shipIndex, false); };
+document.getElementById("prevShip").addEventListener("click", () => step(-1));
+document.getElementById("nextShip").addEventListener("click", () => step(1));
 
 // CSS grain texture for the overlay (same generator idea as UI.html).
 {
@@ -1883,76 +2297,92 @@ toggle("btnWire", "wire", (on) => { for (const m of allMaterials) m.wireframe = 
 }
 
 // =====================================================================
+// Performance counters: FPS, frame time, CPU time (JS update + render
+// submission), triangles and draw calls per frame, plus a FPS graph.
+// =====================================================================
+const perf = {
+  fpsEl: document.getElementById("statFps"), msEl: document.getElementById("statMs"), cpuEl: document.getElementById("statCpu"),
+  trisEl: document.getElementById("statTris"), callsEl: document.getElementById("statCalls"),
+  graph: document.getElementById("fpsGraph"), hist: new Array(90).fill(0),
+  frames: 0, acc: 0, cpuAcc: 0, last: performance.now(),
+};
+const gctx = perf.graph.getContext("2d");
+function drawGraph() {
+  const w = perf.graph.width, h = perf.graph.height;
+  gctx.clearRect(0, 0, w, h);
+  gctx.strokeStyle = "rgba(95,119,247,0.35)"; gctx.lineWidth = 1;
+  for (const f of [30, 60]) { const y = h - f / 75 * h; gctx.beginPath(); gctx.moveTo(0, y); gctx.lineTo(w, y); gctx.stroke(); }
+  const bw = w / perf.hist.length;
+  perf.hist.forEach((f, i) => {
+    const bh = Math.min(1, f / 75) * h;
+    gctx.fillStyle = f >= 50 ? "#f8bb56" : f >= 30 ? "#8ea6fd" : "#d05b69";
+    gctx.fillRect(i * bw, h - bh, Math.max(1, bw - 1), bh);
+  });
+}
+function updatePerf(now, cpuMs) {
+  perf.frames++; perf.cpuAcc += cpuMs;
+  const elapsed = now - perf.last;
+  if (elapsed < 250) return;
+  const fps = perf.frames * 1000 / elapsed;
+  perf.fpsEl.textContent = fps.toFixed(0);
+  perf.msEl.textContent = (elapsed / perf.frames).toFixed(1) + " ms";
+  perf.cpuEl.textContent = (perf.cpuAcc / perf.frames).toFixed(1) + " ms";
+  perf.trisEl.textContent = renderer.info.render.triangles.toLocaleString("en-US");
+  perf.callsEl.textContent = renderer.info.render.calls;
+  perf.hist.push(fps); perf.hist.shift(); drawGraph();
+  perf.frames = 0; perf.cpuAcc = 0; perf.last = now;
+}
+
+// =====================================================================
 // Animation
 // =====================================================================
 const clock = new THREE.Clock();
-const tmpColor = new THREE.Color();
-const chaseBlue = new THREE.Color(0x7f95ff), chaseGold = new THREE.Color(GOLD);
 let power = 1;
 function frame() {
+  const t0 = performance.now();
   const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
-  plumeUniforms.uTime.value = t;
   power += ((state.engines ? 1 : 0) - power) * Math.min(1, dt * 3);
-  plumeUniforms.uPower.value = power * (0.92 + 0.08 * Math.sin(t * 37.0) * Math.sin(t * 11.0));
 
-  // idle drift
-  ship.position.y = Math.sin(t * 0.7) * 0.12;
-  ship.rotation.x = Math.sin(t * 0.5) * 0.035;
-  ship.rotation.z = Math.sin(t * 0.37) * 0.02;
-
-  spinner.rotation.z += dt * 0.5; // ring spins; its lights ride with it
-
-  // chase lights: two bright "packets" running around the ring
-  for (let i = 0; i < LIGHTS; i++) {
-    const p1 = ((i / LIGHTS - t * 0.35) % 1 + 1) % 1, p2 = ((i / LIGHTS - t * 0.35 + 0.5) % 1 + 1) % 1;
-    const k = Math.max(Math.pow(1 - p1, 10), Math.pow(1 - p2, 10));
-    tmpColor.copy(i % 6 === 0 ? chaseGold : chaseBlue).multiplyScalar(0.12 + 1.6 * k);
-    chase.setColorAt(i, tmpColor);
-  }
-  chase.instanceColor.needsUpdate = true;
-
-  crystal.rotation.y += dt * 0.8; crystal.rotation.x += dt * 0.3;
-  cage.rotation.y -= dt * 0.5; cage.rotation.z += dt * 0.2;
-  coreGlow.material.opacity = 0.7 + 0.3 * Math.sin(t * 2.3);
-  reactor.rotation.x += dt * 1.2; reactor.rotation.y += dt * 0.7;
-
-  for (const g of glowSprites) g.sprite.scale.setScalar(g.base * (0.4 + 0.6 * power) * (0.95 + 0.05 * Math.sin(t * 40)));
-  for (const pm of plumeMats) pm.visible = power > 0.02;
-
-  for (const n of navLights) {
-    if (n.kind === "strobe") {
-      const ph = (t * 0.8 + n.phase) % 1;
-      n.s.material.opacity = ph < 0.06 ? 1 : 0.05;
-    } else n.s.material.opacity = 0.75 + 0.25 * Math.sin(t * 3);
-  }
-  antennaTip.material.color.setScalar(((t * 0.8) % 1) < 0.06 ? 1 : 0.25);
-
-  // particles: flow backward from the three nozzles
-  for (let i = 0; i < PCOUNT; i++) {
-    pLife[i] += dt * (0.9 + pSeed[i] * 0.6);
-    const e = emitters[i % 3];
-    if (pLife[i] >= 1) pLife[i] -= 1;
-    const l = pLife[i], spread = e[3] * (0.3 + l * 1.4);
-    const a = pSeed[i] * 50 + i;
-    pPos[i * 3] = e[0] - l * (e[3] * 11) * (0.3 + 0.7 * power);
-    pPos[i * 3 + 1] = e[1] + Math.cos(a) * spread * pSeed[i];
-    pPos[i * 3 + 2] = e[2] + Math.sin(a) * spread * pSeed[i];
-  }
-  pGeo.attributes.position.needsUpdate = true;
-  pGeo.attributes.life.needsUpdate = true;
-  particles.visible = power > 0.05;
+  // idle drift of the whole ship
+  holder.position.y = Math.sin(t * 0.7) * 0.12;
+  holder.rotation.x = Math.sin(t * 0.5) * 0.035;
+  holder.rotation.z = Math.sin(t * 0.37) * 0.02;
+  current.update(t, dt, { power, particles: QUALITY[state.quality].particles });
 
   controls.update();
   renderer.render(scene, camera);
+  updatePerf(performance.now(), performance.now() - t0);
   requestAnimationFrame(frame);
 }
 
+// HUD scaling: both panels share one scale factor (--ui) so they follow
+// the window: grow a little on big screens, shrink so they always fit
+// vertically and never overlap each other horizontally.
+const hudEl = document.getElementById("hud"), optEl = document.getElementById("opt");
+function fitHud() {
+  const w = window.innerWidth, h = window.innerHeight, margin = 16, gap = 24;
+  const tallest = Math.max(hudEl.offsetHeight, optEl.offsetHeight);   // unscaled layout sizes
+  const both = hudEl.offsetWidth + optEl.offsetWidth;
+  const s = Math.max(0.45, Math.min(
+    1.35,
+    Math.min(w / 1500, h / 900) * 1.05,       // follow the window size
+    (h - margin * 2) / tallest,               // fit vertically
+    (w - margin * 2 - gap) / both,            // keep the two panels apart
+  ));
+  document.documentElement.style.setProperty("--ui", s.toFixed(3));
+}
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight, false);
+  applyQuality(state.quality);
+  fitHud();
 });
+if (document.fonts) document.fonts.ready.then(fitHud); // text metrics change once web fonts load
 
+loadShip(0, false);
+paintSlider(qSlider); paintSlider(dSlider);
+applyQuality(state.quality);
+fitHud();
 frame();
 const loading = document.getElementById("loading");
 loading.style.opacity = "0";
