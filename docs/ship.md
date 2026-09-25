@@ -65,6 +65,7 @@ Model handle:
 | `offline` | `true` while the OFFLINE toggle is on |
 | `setDamage(d)` | Procedural damage, 0 (pristine) to 1 (wrecked) |
 | `damage`, `damageEnabled` | Current damage level; `false` if the ship opted out of damage |
+| `destroyed` | `true` once `act("destroy")` blew the ship apart; build a new model to get it back |
 | `size` | `THREE.Vector3` of the **solid hull only**. Engine plumes, glow sprites and particles are excluded, since they would inflate the box. |
 | `radius` | Half of `size`'s diagonal |
 
@@ -124,7 +125,10 @@ What's on it, front to back:
 - **Crown** on the top vertex: an open cylinder with an additive,
   horizontally scrolling band of the drone's own script language
   (`makeCodeBand`), between two gold rims, around a spinning emissive
-  crystal. Its texture offset is shared by every instance of the type.
+  crystal. Its texture offset is shared by every instance of the type, so it's
+  set from the clock (`-t * 0.06`), never incremented per frame — with
+  several drones on screen (every player's), `+= dt` would scroll it
+  that many times faster.
 - **Solar wing** on a mast: a hinge bar with two `PlaneGeometry` panels
   using a canvas solar-cell texture (`makeSolarCells`), slowly tracking.
 - **Fuel tanks**: lathed capsules under the waist with an emissive gauge
@@ -187,9 +191,23 @@ result), so a new ship gets them with no work:
   spark bursts fly out (additive points with drag), the lights flicker,
   and from 70% up small parts break off and drift away spinning. They're
   put back where they were when damage goes down again.
+- **DESTROY** (the fifth standard action, shared): the final destruction.
+  A flash, staggered fireballs, an orange shockwave and a spark burst
+  from every damage site (damage jumps to 100% and the ship powers
+  down). 0.12 s later the ship comes apart: its top-level parts
+  (engines, eye, crown, wings, rings… — for the drone the children of
+  its bobbing `body` group, found automatically as "the group holding
+  most of the meshes") fly off whole, spinning, with slight drag; its
+  big solid meshes (hull, wings) are first **fractured** by
+  `fractureMesh()` — triangles grouped around 6–9 random seed triangles,
+  each group its own mesh centered on itself. Burning damage sites move
+  onto the nearest chunk, so the wreckage trails smoke. After that the
+  model ignores every action; `model.destroyed` is true, and the viewer's
+  button turns into REBUILD, which simply builds a new model.
 - A definition can opt out of the shared features:
-  `features: { offline: false, damage: false }` (the button / slider then
-  show as disabled).
+  `features: { offline: false, damage: false, destroy: false }` (the
+  button / slider then show as disabled). DESTROY needs damage, since it
+  reuses its smoke and sparks.
 
 Helpers for writing actions (exported too):
 
@@ -328,6 +346,10 @@ The same guide is in the header comment of the `shipkit` block.
 - **Bounding box**: `Box3.setFromObject` on the whole group includes
   the ~5-unit engine plumes (16.4 instead of 12.06 units long).
   `buildShipModel` measures only non-additive meshes.
+- **Three.js r128 `BufferAttribute` has no `getComponent()`** (added in a
+  later release): `fractureMesh()` reads `attribute.array` directly
+  (`array[i * itemSize + k]`). The first version called
+  `getComponent()` and threw the moment DESTROY was pressed.
 - **Headless testing**: Playwright's Chromium renders WebGL through
   SwiftShader (`--use-gl=angle --use-angle=swiftshader
   --enable-unsafe-swiftshader`). It works, but at 1–8 FPS. Those FPS
