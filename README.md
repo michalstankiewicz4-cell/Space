@@ -56,8 +56,11 @@ js/
   ships/             player's ship swarm (movement, eating, bite-beam)
   drone/             the programmable drone — its own DSL (dsl.js), a generator-based
                      interpreter (interpreter.js), the entity/script driver (drone.js),
-                     and the print() gas+laser effect (dronePrintFx.js) — see
-                     "Programmable drone" below
+                     which editor's program runs (droneMode.js) and the print()
+                     gas+laser effect (dronePrintFx.js) — see "Programmable drone" below
+  blocks/            the drone's block programs: block catalog (blockSpecs.js), the
+                     project with its virtual files (blockProject.js), the compiler to
+                     the drone DSL (blockCompile.js) and the example programs
   station/           each player's static space station — the procedural mesh
                      (stationModel.js), the game-side entity (station.js), and its
                      containment field pulling stray ships back (stationField.js);
@@ -71,7 +74,8 @@ js/
                      infoPanel + planetPanel/stationPanel, eventLog, connectionStatus, minimap,
                      commandBar, devTools); hud.js is main.js's single entry point into it
     windows/         the windows opened from the HUD (windows.js entry point + research, fleet,
-                     players, droneScript, wiki + wikiEntries/wikiArt)
+                     players, droneScript, wiki + wikiEntries/wikiArt, and the block
+                     editor: blockEditor + blockPalette/blockRender/blockDrag)
   net/               multiplayer: identity, "steward" election, world sync, ship broadcast,
                      Realtime reconnect handling
   main.js            entry point — wires the modules together and runs the game loop
@@ -167,6 +171,15 @@ restart or stop the last saved script without reopening the editor. It's not Jav
 parses this tiny language into an AST, and `js/drone/interpreter.js` walks
 it as a generator, so a script's `move()`/`wait()` calls can pause
 execution for real time without blocking the game loop or the browser tab.
+
+The same programs can also be built from blocks: a SCRIPT/BLOCKS switch in
+the editor's header opens a visual block editor (categories Control,
+Engine, Logic, Variables, My blocks, Examples; your own variables,
+procedures and functions; programs split into virtual files with color
+markers, the ★ main file being the one that runs). The blocks compile to
+the very same script language (`js/blocks/blockCompile.js`), so there's
+still exactly one interpreter. Both programs are kept — the switch only
+picks which one START runs.
 
 ## Space station
 

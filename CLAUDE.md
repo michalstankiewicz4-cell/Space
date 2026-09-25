@@ -185,6 +185,10 @@ the full detail behind each of these.
   (`dsl.js`/`interpreter.js`, generator-based, not JS/eval). Full
   gotchas (runaway-script safety net, click-priority bug history, the
   `.hidden`/`display:none` CSS trap, `pointerdown` vs `click`) in the doc.
+  A visual **block editor** (`js/blocks/`, `ui/windows/block*.js`)
+  compiles to that same DSL — one interpreter only. Text script and
+  block program are both kept; `drone/droneMode.js` only picks which one
+  runs (never delete either on a mode switch — explicit user call).
 - **New-style UI kit** (`css/ui/`): start screen, setup modal and the
   whole in-game HUD (v2.2.0, ported from a standalone mockup since
   deleted — the game itself is now the reference). `.uiStage` (fixed 1536x1024),

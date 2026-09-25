@@ -710,6 +710,39 @@ then read just that range.
     own `#itsId.hidden{...}` override just to out-specificity its own base
     rule.
 
+- **Block editor** (v2.4.0; `js/blocks/*` = model + compiler, no DOM;
+  `ui/windows/blockEditor.js` + `blockPalette.js`/`blockRender.js`/
+  `blockDrag.js` = the window). **Blocks compile to the text DSL**
+  (`blockCompile.js#compileProject`) and run through the same
+  `runDroneScript(drone, src)` — never add a second interpreter.
+  - **Two programs, one switch**: `drone/droneMode.js` ("script" |
+    "blocks", localStorage `roj-drone-mode`) picks which one START runs
+    and which window SCRIPT opens; `drone.script` (text, `roj-drone-script`)
+    and the block project (`roj-drone-blocks`) are both always kept. The
+    user explicitly asked that switching must never delete either.
+    `ui/windows/droneScript.js#runActive` is the one place that decides.
+  - DSL additions for it: `repeat (n)`, `def name(params) { }` (hoisted
+    from the top level only), `return [expr]` (outside a function it ends
+    the script). Function params are locals, everything else is global
+    (`env.locals` vs `env.vars` in interpreter.js); `MAX_CALL_DEPTH` (100)
+    turns endless recursion into an error. `repeat` and every user call
+    yield a `__tick__` like `while` does — keep that, same runaway-script
+    reason as the `while` checkpoint above.
+  - **Project model** (`blockProject.js`): virtual files (`main` = the ★
+    one whose "when started" stacks run; any file may hold definitions,
+    callable from everywhere), global vars, defs. Ids (`b12`, `v3`,
+    `f7`, `p9`) are the identifiers in the compiled script, so player-typed
+    names (Polish letters, spaces) never reach the lexer. Deleting a
+    definition (hat dragged to the palette, or its file deleted) purges
+    every call to it (`purgeDef`) — a call to nothing can't compile.
+  - Rendering is plain DOM (not SVG/canvas) and fully re-rendered on
+    every structural change; typing into a field edits the model in place
+    without re-rendering, so the field keeps focus. `blockRender.js`
+    records every block's position in `ctx.map` (list+index, or owner
+    block+slot) — that map is what drag & drop uses to detach/insert.
+    Drag measures with `getBoundingClientRect` and divides by the window's
+    scale (`ratio()`), since the window is scaled by `--uiScale`.
+
 ## Space station
 
 - **Space station** (`js/station/*.js`): one static per-player landmark,
@@ -919,7 +952,8 @@ then read just that range.
   gradients live in one always-rendered `#uiDefs` block in index.html
   (a `url(#id)` paint server inside a `display:none` subtree stops
   rendering). Windows opened from the HUD (Research, Fleet,
-  Diplomacy, Wiki, drone script) share `.uiWindow` (css/ui/windows/).
+  Diplomacy, Wiki, drone script, drone blocks) share `.uiWindow`
+  (css/ui/windows/).
 - **File layout mirrors the UI**: `js/ui/hud/` has one module per HUD
   panel (topBar, nav, fleetList, unitPanel, infoPanel + planetPanel/
   stationPanel, eventLog, connectionStatus, minimap, commandBar,
@@ -928,7 +962,8 @@ then read just that range.
   `updateHud(dt)` (every frame; runs the ~0.1s/0.4s refresh timers).
   `js/ui/windows/` is the same for the windows (`windows.js#
   initWindows/refreshWindows` + research, fleet, players, droneScript,
-  wiki + wikiEntries/wikiArt).
+  wiki + wikiEntries/wikiArt, blockEditor + blockPalette/blockRender/
+  blockDrag).
   CSS mirrors it one file per component in `css/ui/hud/` and
   `css/ui/windows/`, each its own `<link>` in index.html's `<head>`, in
   cascade order (style.css last). `showToast()` lives in `ui/hud/eventLog.js` (it only feeds the

@@ -7,29 +7,55 @@
 // every yield (and the value sent back into it) up to whoever is driving
 // the top-level generator, so blocking a nested call blocks the whole
 // script exactly where you'd expect, without any special-casing here.
+//
+// env = { vars, funcs, locals, depth }: `vars` are the script's globals,
+// `funcs` the hoisted `def`s, `locals` the parameters of the user function
+// currently running (null at the top level). Statements return undefined,
+// or { ret: value } once a `return` ran, which every enclosing statement
+// passes straight up until the function call (or the program) ends.
+const MAX_CALL_DEPTH = 100;
+const has = Object.prototype.hasOwnProperty;
+
 function truthy(v){ return !!v; }
 
 export function* runProgram(node, env){
+  env.funcs = env.funcs || {};
+  env.locals = null;
+  env.depth = 0;
+  node.body.forEach(function(s){ if(s.type === "Def") env.funcs[s.name] = s; });
   yield* runBlock(node.body, env);
 }
 
 function* runBlock(body, env){
   for(let i=0; i<body.length; i++){
-    yield* runStatement(body[i], env);
+    const signal = yield* runStatement(body[i], env);
+    if(signal) return signal;
   }
 }
 
 function* runStatement(node, env){
   switch(node.type){
     case "Block":
-      yield* runBlock(node.body, env);
-      return;
+      return yield* runBlock(node.body, env);
     case "If": {
       const test = yield* evalExpr(node.test, env);
-      if(truthy(test)) yield* runStatement(node.consequent, env);
-      else if(node.alternate) yield* runStatement(node.alternate, env);
+      if(truthy(test)) return yield* runStatement(node.consequent, env);
+      if(node.alternate) return yield* runStatement(node.alternate, env);
       return;
     }
+    case "Repeat": {
+      const count = Math.floor(yield* evalExpr(node.count, env));
+      for(let i=0; i<count; i++){
+        yield { name: "__tick__", args: [] }; // same safety checkpoint as While
+        const signal = yield* runStatement(node.body, env);
+        if(signal) return signal;
+      }
+      return;
+    }
+    case "Def": // hoisted by runProgram, nothing to do where it stands
+      return;
+    case "Return":
+      return { ret: node.value ? yield* evalExpr(node.value, env) : 0 };
     case "While": {
       while(truthy(yield* evalExpr(node.test, env))){
         // A loop body with no function calls at all (e.g. `while(true){ x = 1 }`)
@@ -40,13 +66,15 @@ function* runStatement(node, env){
         // guarantees control always returns to the driver, so a runaway
         // loop is always caught within one frame instead of freezing the tab.
         yield { name: "__tick__", args: [] };
-        yield* runStatement(node.body, env);
+        const signal = yield* runStatement(node.body, env);
+        if(signal) return signal;
       }
       return;
     }
     case "Assign": {
       const v = yield* evalExpr(node.value, env);
-      env.vars[node.name] = v;
+      if(env.locals && has.call(env.locals, node.name)) env.locals[node.name] = v;
+      else env.vars[node.name] = v;
       return;
     }
     case "ExprStmt":
@@ -63,7 +91,8 @@ function* evalExpr(node, env){
     case "String": return node.value;
     case "Bool": return node.value ? 1 : 0;
     case "Ident":
-      return Object.prototype.hasOwnProperty.call(env.vars, node.name) ? env.vars[node.name] : 0;
+      if(env.locals && has.call(env.locals, node.name)) return env.locals[node.name];
+      return has.call(env.vars, node.name) ? env.vars[node.name] : 0;
     case "Unary": {
       const v = yield* evalExpr(node.arg, env);
       if(node.op === "!") return truthy(v) ? 0 : 1;
@@ -100,9 +129,22 @@ function* evalExpr(node, env){
     case "Call": {
       const args = [];
       for(let i=0; i<node.args.length; i++) args.push(yield* evalExpr(node.args[i], env));
+      if(has.call(env.funcs, node.name)) return yield* callUser(env.funcs[node.name], args, env);
       return yield { name: node.name, args: args };
     }
     default:
       throw new Error("Unknown expression type: " + node.type);
   }
+}
+
+// A user function: parameters become the new frame's locals (missing
+// arguments are 0), globals stay shared. The depth cap turns endless
+// recursion into a readable error instead of a stack overflow.
+function* callUser(fn, args, env){
+  if(env.depth >= MAX_CALL_DEPTH) throw new Error("Too many nested calls in '" + fn.name + "()' (recursion without an end?)");
+  const locals = {};
+  fn.params.forEach(function(p, i){ locals[p] = i < args.length ? args[i] : 0; });
+  yield { name: "__tick__", args: [] };
+  const signal = yield* runBlock(fn.body.body, { vars: env.vars, funcs: env.funcs, locals: locals, depth: env.depth + 1 });
+  return signal ? signal.ret : 0;
 }

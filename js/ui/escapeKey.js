@@ -3,6 +3,7 @@ import { isWikiOpen, closeWiki } from "./windows/wiki.js";
 import { isFleetModalOpen, closeFleetModal } from "./windows/fleet.js";
 import { isShipCamActive, clearShipCamTarget } from "../scene/shipcam.js";
 import { isDroneScriptModalOpen, closeDroneScriptModal } from "./windows/droneScript.js";
+import { isBlockEditorOpen, closeBlockEditor } from "./windows/blockEditor.js";
 import { isDronePanelOpen, closeDronePanel } from "./hud/unitPanel.js";
 import { isStationPanelOpen, closeStationPanel } from "./hud/stationPanel.js";
 import { isPlanetPanelOpen, closePlanetPanel } from "./hud/planetPanel.js";
@@ -10,12 +11,13 @@ import { isSetupModalOpen, closeSetupModal } from "./setupModal.js";
 import { toggleBanner } from "./banner.js";
 import { isAboutOpen, closeAbout } from "./about.js";
 
-// Escape closes whichever overlay is topmost first (drone script, then the
+// Escape closes whichever overlay is topmost first (drone script/blocks, then the
 // HUD windows, then setup, then the drone/station/planet selection or
 // ship cam), and only once nothing else is open does it reopen/close the
 // start screen itself (e.g. to change nickname or language mid-game).
 const ESCAPE_CHAIN = [
   [isDroneScriptModalOpen, closeDroneScriptModal],
+  [isBlockEditorOpen, closeBlockEditor],
   [isTechModalOpen, closeTechModal],
   [isFleetModalOpen, closeFleetModal],
   [isPlayersModalOpen, closePlayersModal],

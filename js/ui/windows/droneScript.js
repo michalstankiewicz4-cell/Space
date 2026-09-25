@@ -1,11 +1,18 @@
 import { ctx } from "../../core/context.js";
 import { setDroneScript, runDroneScript, stopDroneScript } from "../../drone/drone.js";
+import { getDroneMode, setDroneMode } from "../../drone/droneMode.js";
 import { isDronePanelOpen, closeDronePanel, updateUnitPanel } from "../hud/unitPanel.js";
 import { discover } from "../../core/discovery.js";
+import { initBlockEditor, openBlockEditor, closeBlockEditor, refreshBlockEditor, compiledBlocks } from "./blockEditor.js";
+import { t, onLangChange } from "../../i18n.js";
 
 // The drone script window (the DSL editor, its help, error and log) plus
 // the drone's Start/Stop/Script buttons in the HUD's SELECTED UNIT panel —
 // that panel itself (and "is the drone selected") is ui/hud/unitPanel.js.
+// Also owns the SCRIPT/BLOCKS switch shown in both editor windows: the
+// drone keeps a text script AND a block program, and the mode
+// (drone/droneMode.js) only decides which one START runs and which window
+// the SCRIPT button opens.
 export function isDroneScriptModalOpen(){
   return !document.getElementById("droneScriptModal").classList.contains("hidden");
 }
@@ -33,6 +40,45 @@ export function closeDroneScriptModal(){
   document.getElementById("droneScriptModal").classList.add("hidden");
 }
 
+// Opens whichever editor the current mode uses.
+function openDroneEditor(){
+  if(getDroneMode() === "blocks") openBlockEditor();
+  else openDroneScriptModal();
+}
+
+function paintModeSwitches(){
+  const mode = getDroneMode();
+  document.querySelectorAll(".droneModeSwitch").forEach(function(sw){
+    sw.title = t("blocks.modeTitle");
+    sw.querySelectorAll("button").forEach(function(b){
+      b.textContent = t("blocks.mode." + b.dataset.mode);
+      b.classList.toggle("on", b.dataset.mode === mode);
+    });
+  });
+}
+
+function switchMode(mode){
+  if(mode === getDroneMode()) return;
+  setDroneMode(mode);
+  paintModeSwitches();
+  closeDroneScriptModal();
+  closeBlockEditor();
+  openDroneEditor();
+}
+
+// Runs the program of the current mode — the text script as typed, or the
+// block project compiled to the same language.
+function runActive(drone){
+  runDroneScript(drone, getDroneMode() === "blocks" ? compiledBlocks() : undefined);
+  discover("tech:droneScript");
+}
+
+function afterRunOrStop(drone){
+  if(isDroneScriptModalOpen()) updateScriptStatus(drone);
+  refreshBlockEditor(drone);
+  updateUnitPanel(true);
+}
+
 // Called every ~0.4s alongside the other HUD refreshes (ui/hud/hud.js) —
 // the drone's stats themselves are shown by ui/hud/unitPanel.js.
 export function refreshDroneScript(){
@@ -42,10 +88,11 @@ export function refreshDroneScript(){
     return;
   }
   if(isDroneScriptModalOpen()) updateScriptStatus(drone);
+  refreshBlockEditor(drone);
 }
 
 export function initDroneScript(){
-  document.getElementById("droneScriptBtn").addEventListener("click", openDroneScriptModal);
+  document.getElementById("droneScriptBtn").addEventListener("click", openDroneEditor);
   document.getElementById("droneScriptCloseBtn").addEventListener("click", closeDroneScriptModal);
 
   // Save on every keystroke, not just on Run - closing the editor (or
@@ -66,39 +113,20 @@ export function initDroneScript(){
     if(e.target === modal) closeDroneScriptModal();
   });
 
-  document.getElementById("droneScriptRunBtn").addEventListener("click", function(){
-    const drone = ctx.drone;
-    if(!drone) return;
-    runDroneScript(drone);
-    discover("tech:droneScript");
-    updateScriptStatus(drone);
-  });
+  function run(){ const drone = ctx.drone; if(!drone) return; runActive(drone); afterRunOrStop(drone); }
+  function stop(){ const drone = ctx.drone; if(!drone) return; stopDroneScript(drone); afterRunOrStop(drone); }
 
-  document.getElementById("droneScriptStopBtn").addEventListener("click", function(){
-    const drone = ctx.drone;
-    if(!drone) return;
-    stopDroneScript(drone);
-    updateScriptStatus(drone);
-  });
+  // The editor windows' Run/Stop and the SELECTED UNIT panel's START/STOP
+  // shortcuts all do the same thing: run or stop the current mode's program.
+  document.getElementById("droneScriptRunBtn").addEventListener("click", run);
+  document.getElementById("droneScriptStopBtn").addEventListener("click", stop);
+  document.getElementById("droneRunBtn").addEventListener("click", run);
+  document.getElementById("droneStopBtn").addEventListener("click", stop);
+  initBlockEditor(run, stop);
 
-  // Side-panel shortcuts: re-run/stop the last saved script without
-  // opening the editor. Reuse the drone's already-stored .script (set the
-  // last time it was edited+run from the modal) — nothing to read from a
-  // textarea here.
-  document.getElementById("droneRunBtn").addEventListener("click", function(){
-    const drone = ctx.drone;
-    if(!drone) return;
-    runDroneScript(drone);
-    discover("tech:droneScript");
-    if(isDroneScriptModalOpen()) updateScriptStatus(drone);
-    updateUnitPanel(true);
+  document.querySelectorAll(".droneModeSwitch button").forEach(function(b){
+    b.addEventListener("click", function(){ switchMode(b.dataset.mode); });
   });
-
-  document.getElementById("droneStopBtn").addEventListener("click", function(){
-    const drone = ctx.drone;
-    if(!drone) return;
-    stopDroneScript(drone);
-    if(isDroneScriptModalOpen()) updateScriptStatus(drone);
-    updateUnitPanel(true);
-  });
+  paintModeSwitches();
+  onLangChange(paintModeSwitches);
 }

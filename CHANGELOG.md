@@ -4,6 +4,23 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.4.0]
+
+### Added
+- **Block programming for the drone**: a new editor where you build the
+  drone's program from colored blocks instead of typing it. Blocks are
+  grouped into Control, Engine, Logic, Variables, My blocks and
+  Examples; you can make your own variables, procedures and functions
+  (with parameters) and use them anywhere. Programs can be split into
+  several files, each with its own color marker; the main file (★) is
+  the one START runs. Five example programs to open and try, and a
+  "code" view showing the script your blocks turn into.
+- A **SCRIPT / BLOCKS switch** in both drone editors: the typed script
+  and the block program are both kept — the switch only chooses which
+  one START runs.
+- The drone's script language gained `repeat (n) { … }`, your own
+  functions (`def name(a, b) { … }`) and `return`.
+
 ## [2.3.0]
 
 ### Added

@@ -9,6 +9,9 @@
 //   program   := statement*
 //   statement := 'if' '(' expr ')' statement ('else' statement)?
 //              | 'while' '(' expr ')' statement
+//              | 'repeat' '(' expr ')' statement
+//              | 'def' IDENT '(' params? ')' block
+//              | 'return' expr?
 //              | '{' statement* '}'
 //              | IDENT '=' expr
 //              | expr
@@ -23,8 +26,15 @@
 //   primary   := NUMBER | STRING | 'true' | 'false' | IDENT '(' args? ')'
 //              | IDENT | '(' expr ')'
 //   args      := expr (',' expr)*
+//   params    := IDENT (',' IDENT)*
+//
+// `def` declares a user function (the block editor's procedures and
+// functions compile to it). Definitions are hoisted from the top level
+// only, so a call may come before its `def`. `return` without a value
+// (or a function that ends without one) gives 0; a `return` outside any
+// function ends the whole script.
 
-const KEYWORDS = new Set(["if", "else", "while", "true", "false"]);
+const KEYWORDS = new Set(["if", "else", "while", "repeat", "def", "return", "true", "false"]);
 
 function tokenize(src){
   const tokens = [];
@@ -107,6 +117,13 @@ function parse(src){
   function parseStatement(){
     if(at("if")) return parseIf();
     if(at("while")) return parseWhile();
+    if(at("repeat")) return parseRepeat();
+    if(at("def")) return parseDef();
+    if(at("return")){
+      advance();
+      const ends = at("}") || at(";") || at("eof");
+      return { type: "Return", value: ends ? null : parseExpr() };
+    }
     if(at("{")) return parseBlock();
     if(at("ident") && tokens[pos+1] && tokens[pos+1].type === "="){
       const name = advance().value;
@@ -147,6 +164,26 @@ function parse(src){
     expect(")");
     const body = parseStatement();
     return { type: "While", test: test, body: body };
+  }
+
+  function parseRepeat(){
+    expect("repeat"); expect("(");
+    const count = parseExpr();
+    expect(")");
+    return { type: "Repeat", count: count, body: parseStatement() };
+  }
+
+  function parseDef(){
+    expect("def");
+    const name = expect("ident").value;
+    expect("(");
+    const params = [];
+    if(!at(")")){
+      params.push(expect("ident").value);
+      while(at(",")){ advance(); params.push(expect("ident").value); }
+    }
+    expect(")");
+    return { type: "Def", name: name, params: params, body: parseBlock() };
   }
 
   function parseExpr(){ return parseOr(); }

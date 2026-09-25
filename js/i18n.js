@@ -135,7 +135,7 @@ const STRINGS = {
         attackFn: "Bite the nearest body in range for this drone's Attack stat",
         print: "Write x to the log below the buttons, and release a gas puff from the nose with a laser writing x into it — visible to other players too",
         syntaxTitle: "Syntax",
-        syntax: "if (…) { … } else { … } · while (…) { … } · x = 5 · \"text\" (print() only) · + - * / < > <= >= == != && || !",
+        syntax: "if (…) { … } else { … } · while (…) { … } · repeat (n) { … } · x = 5 · def name(a, b) { … return a + b } · \"text\" (print() only) · + - * / < > <= >= == != && || !",
         exampleTitle: "Example"
       }
     },
@@ -185,6 +185,52 @@ const STRINGS = {
     cmd: {
       tactical: "TACTICAL", movement: "MOVEMENT", build: "BUILD", special: "SPECIAL",
       attack: "ATTACK", move: "MOVE", formUp: "FORM UP", defend: "DEFEND", scan: "SCAN", cloak: "CLOAK"
+    },
+    blocks: {
+      title: "DRONE PROGRAMMING",
+      mode: { script: "SCRIPT", blocks: "BLOCKS" },
+      modeTitle: "Which program START runs — the other one is kept, not deleted",
+      run: "▶ START", stop: "■ STOP", code: "</> CODE", codeTitle: "Show the script the blocks turn into",
+      tidy: "Tidy up the blocks in this file",
+      files: "FILES", newFile: function(n){ return "file " + n; }, newFileTitle: "New file",
+      mainTitle: "Main file — START runs its ▶ blocks", makeMain: "Make this the main file",
+      colorTitle: "Change the color marker", renameTitle: "Double-click to rename",
+      deleteTitle: "Delete file", deleteAgain: "Click ✕ again to delete the file",
+      filesHint: "★ main file: START runs its ▶ when started blocks. Other files hold your procedures and functions — call them from anywhere.",
+      defsIn: function(n){ return n === 1 ? "1 block" : n + " blocks"; },
+      cats: { control: "Control", engine: "Engine", logic: "Logic", vars: "Variables", mine: "My blocks", examples: "Examples" },
+      op: {
+        start: "when started", wait: "wait {s} s", repeat: "repeat {n} times", forever: "forever",
+        while: "while {c}", if: "if {c}", ifelse: "if {c}", else: "else",
+        move: "fly forward {d}", turn: "turn {a}°", attack: "attack", print: "show {m}",
+        fuel: "fuel", maxFuel: "max fuel", nearPlanet: "near a planet?",
+        compare: "{a} {op} {b}", andor: "{a} {op} {b}", not: "not {a}", bool: "{v}",
+        setvar: "set {v} to {x}", changevar: "change {v} by {x}", math: "{a} {op} {b}",
+        return: "return {x}"
+      },
+      opt: { and: "and", or: "or", true: "true", false: "false" },
+      kind: { proc: "procedure", func: "function" },
+      newVar: "+ Variable", newProc: "+ Procedure", newFunc: "+ Function",
+      namePh: "name", paramsPh: "parameters, comma separated (optional)",
+      ok: "Create", varInUse: "This variable is still used by some blocks — remove them first.",
+      noVars: "No variables yet. A variable remembers a number while the program runs.",
+      noDefs: "No blocks of your own yet. A procedure is a named group of commands; a function also returns a value.",
+      mineHint: "Drag a parameter out of a definition header to use it inside. “return” ends a function with its value.",
+      dragParam: "Drag out to use this parameter",
+      defRemoved: function(name){ return "Removed “" + name + "” and every place it was used."; },
+      trash: "Drop here to delete",
+      workEmpty: "Drag blocks here from the left",
+      noStart: "The main file has no ▶ when started block — START won't do anything.",
+      running: "● RUNNING", idle: "○ STOPPED", error: "▲ ERROR",
+      exampleLoad: "Open",
+      exampleAdded: function(name){ return "“" + name + "” added as a new file and made the main one (★)."; },
+      examples: {
+        patrol: { name: "Square patrol", desc: "Flies around a square, forever. The simplest loop.", names: {} },
+        hunter: { name: "Planet hunter", desc: "Searches while it has fuel: attacks when next to a planet, otherwise turns and keeps looking.", names: { shout: "Attack!" } },
+        refuel: { name: "Round trip", desc: "Counts how far it flew in a variable, then turns around and flies the same distance back.", names: { dist: "distance", msg: "Back!" } },
+        spiral: { name: "Spiral (procedure)", desc: "A procedure “side” flies one side of the spiral; the main program calls it with an ever longer length.", names: { side: "side", len: "length", step: "step" } },
+        square: { name: "Squares (function)", desc: "A function returns x × x; the program shows the squares of 1 to 5.", names: { fn: "square", x: "x", i: "i" } }
+      }
     },
     wiki: {
       title: "WIKI",
@@ -379,7 +425,7 @@ const STRINGS = {
         attackFn: "Gryzie najbliższe ciało w zasięgu, siłą równą statystyce Atak drona",
         print: "Wypisuje x w logu pod przyciskami i wypuszcza obłok gazu z dzioba, w który laser wpisuje x — widoczne też dla innych graczy",
         syntaxTitle: "Składnia",
-        syntax: "if (…) { … } else { … } · while (…) { … } · x = 5 · \"tekst\" (tylko print()) · + - * / < > <= >= == != && || !",
+        syntax: "if (…) { … } else { … } · while (…) { … } · repeat (n) { … } · x = 5 · def nazwa(a, b) { … return a + b } · \"tekst\" (tylko print()) · + - * / < > <= >= == != && || !",
         exampleTitle: "Przykład"
       }
     },
@@ -429,6 +475,52 @@ const STRINGS = {
     cmd: {
       tactical: "TAKTYKA", movement: "RUCH", build: "BUDOWA", special: "SPECJALNE",
       attack: "ATAK", move: "RUCH", formUp: "SZYK", defend: "OBRONA", scan: "SKAN", cloak: "MASKOWANIE"
+    },
+    blocks: {
+      title: "PROGRAMOWANIE DRONA",
+      mode: { script: "SKRYPT", blocks: "KLOCKI" },
+      modeTitle: "Który program uruchamia START — drugi zostaje zachowany, nie jest usuwany",
+      run: "▶ START", stop: "■ STOP", code: "</> KOD", codeTitle: "Pokaż skrypt, w który zamieniają się klocki",
+      tidy: "Uporządkuj klocki w tym pliku",
+      files: "PLIKI", newFile: function(n){ return "plik " + n; }, newFileTitle: "Nowy plik",
+      mainTitle: "Plik główny — START uruchamia jego klocki ▶", makeMain: "Ustaw jako plik główny",
+      colorTitle: "Zmień znacznik koloru", renameTitle: "Kliknij dwukrotnie, aby zmienić nazwę",
+      deleteTitle: "Usuń plik", deleteAgain: "Kliknij ✕ jeszcze raz, aby usunąć plik",
+      filesHint: "★ plik główny: START uruchamia jego klocki ▶ po starcie. Pozostałe pliki trzymają Twoje procedury i funkcje — możesz je wywołać z każdego pliku.",
+      defsIn: function(n){ return n === 1 ? "1 blok" : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? n + " bloki" : n + " bloków"); },
+      cats: { control: "Sterowanie", engine: "Silnik", logic: "Logika", vars: "Zmienne", mine: "Moje bloki", examples: "Przykłady" },
+      op: {
+        start: "po starcie", wait: "czekaj {s} s", repeat: "powtórz {n} razy", forever: "zawsze",
+        while: "dopóki {c}", if: "jeżeli {c}", ifelse: "jeżeli {c}", else: "w przeciwnym razie",
+        move: "leć naprzód {d}", turn: "obróć o {a}°", attack: "atakuj", print: "wyświetl {m}",
+        fuel: "paliwo", maxFuel: "maks. paliwo", nearPlanet: "przy planecie?",
+        compare: "{a} {op} {b}", andor: "{a} {op} {b}", not: "nie {a}", bool: "{v}",
+        setvar: "ustaw {v} na {x}", changevar: "zmień {v} o {x}", math: "{a} {op} {b}",
+        return: "zwróć {x}"
+      },
+      opt: { and: "i", or: "lub", true: "prawda", false: "fałsz" },
+      kind: { proc: "procedura", func: "funkcja" },
+      newVar: "+ Zmienna", newProc: "+ Procedura", newFunc: "+ Funkcja",
+      namePh: "nazwa", paramsPh: "parametry po przecinku (opcjonalnie)",
+      ok: "Utwórz", varInUse: "Ta zmienna jest jeszcze używana w klockach — najpierw je usuń.",
+      noVars: "Nie masz jeszcze zmiennych. Zmienna zapamiętuje liczbę w trakcie działania programu.",
+      noDefs: "Nie masz jeszcze własnych bloków. Procedura to nazwana grupa poleceń; funkcja dodatkowo zwraca wartość.",
+      mineHint: "Przeciągnij parametr z nagłówka definicji, aby użyć go w środku. „zwróć” kończy funkcję z jej wartością.",
+      dragParam: "Przeciągnij, aby użyć tego parametru",
+      defRemoved: function(name){ return "Usunięto „" + name + "” i wszystkie miejsca, w których był użyty."; },
+      trash: "Upuść tutaj, aby usunąć",
+      workEmpty: "Przeciągnij tu klocki z lewej strony",
+      noStart: "Plik główny nie ma klocka ▶ po starcie — START nic nie zrobi.",
+      running: "● DZIAŁA", idle: "○ ZATRZYMANY", error: "▲ BŁĄD",
+      exampleLoad: "Otwórz",
+      exampleAdded: function(name){ return "„" + name + "” dodano jako nowy plik i ustawiono jako główny (★)."; },
+      examples: {
+        patrol: { name: "Patrol po kwadracie", desc: "Lata w kółko po kwadracie. Najprostsza pętla.", names: {} },
+        hunter: { name: "Łowca planet", desc: "Szuka, dopóki ma paliwo: przy planecie atakuje, a w przeciwnym razie skręca i szuka dalej.", names: { shout: "Atak!" } },
+        refuel: { name: "Tam i z powrotem", desc: "Liczy w zmiennej, jak daleko poleciał, potem zawraca i leci tyle samo z powrotem.", names: { dist: "dystans", msg: "Wróciłem!" } },
+        spiral: { name: "Spirala (procedura)", desc: "Procedura „bok” przelatuje jeden bok spirali; program główny wywołuje ją z coraz większą długością.", names: { side: "bok", len: "długość", step: "krok" } },
+        square: { name: "Kwadraty (funkcja)", desc: "Funkcja zwraca x × x; program wyświetla kwadraty liczb od 1 do 5.", names: { fn: "kwadrat", x: "x", i: "i" } }
+      }
     },
     wiki: {
       title: "WIKI",

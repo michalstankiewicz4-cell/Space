@@ -25,6 +25,9 @@
 (function(){
   function fitUiStage(){
     document.documentElement.style.setProperty("--uiScale", Math.min(innerWidth / 1536, innerHeight / 1024).toFixed(4));
+    // Physical screen pixels per CSS pixel (Windows display scaling, browser
+    // zoom) — for sizes meant in real screen pixels (css/ui/windows/blockEditor.css).
+    document.documentElement.style.setProperty("--dpr", (window.devicePixelRatio || 1).toFixed(4));
   }
   fitUiStage();
   addEventListener("resize", fitUiStage);
@@ -69,8 +72,9 @@
 <link rel="stylesheet" href="css/ui/windows/players.css">
 <link rel="stylesheet" href="css/ui/windows/wiki.css">
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
+<link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.3.0">
+<link rel="stylesheet" href="css/style.css?v=2.4.0">
 </head>
 <body>
 
@@ -534,6 +538,7 @@
   <section class="uiWindowBox" id="droneScriptModalBox">
     <div class="mat blueV uiWinSide"></div>
     <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="droneScriptModalTitle">Drone Script</h2>
+      <div class="droneModeSwitch"><button type="button" data-mode="script"></button><button type="button" data-mode="blocks"></button></div>
       <button type="button" class="oBtn" id="droneScriptHelpBtn" title="Functions &amp; examples">?</button>
       <button type="button" class="mat red closePill" id="droneScriptCloseBtn" aria-label="Close">✕</button></header>
     <div class="hdLine"></div>
@@ -577,6 +582,39 @@
   </section>
 </div>
 
+<div id="blocksModal" class="uiWindow hidden">
+  <section class="uiWindowBox" id="blocksModalBox">
+    <div class="mat blueV uiWinSide"></div>
+    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="blocksTitle">DRONE PROGRAMMING</h2>
+      <div class="droneModeSwitch"><button type="button" data-mode="script"></button><button type="button" data-mode="blocks"></button></div>
+      <button type="button" class="oBtn" id="blocksTidyBtn">⇅</button>
+      <button type="button" class="oBtn" id="blocksCodeBtn"></button>
+      <button type="button" class="mat gold" id="blocksRunBtn"></button>
+      <button type="button" class="oBtn" id="blocksStopBtn"></button>
+      <button type="button" class="mat red closePill" id="blocksCloseBtn" aria-label="Close">✕</button></header>
+    <div class="hdLine"></div>
+    <div class="uiWinBody" id="blocksBody">
+      <aside id="blkFiles">
+        <div class="blkColHead"><span id="blkFilesTitle"></span><button type="button" class="oBtn" id="blkNewFile">+</button></div>
+        <ul id="blkFileList"></ul>
+        <p id="blkFilesHint"></p>
+      </aside>
+      <nav id="blkCats"></nav>
+      <div id="blkPalWrap"><div id="blkPalette"></div><div id="blkTrash"></div></div>
+      <div id="blkWorkWrap">
+        <div id="blkFileTab"></div>
+        <div id="blkWorkRow">
+          <div id="blkWork"><div id="blkCanvas"></div><div id="blkWorkEmpty"></div></div>
+          <div id="blkSplit" class="hidden"></div>
+          <pre id="blkCode" class="hidden"></pre>
+        </div>
+        <div id="blkNoStart" class="hidden"></div>
+        <div id="blkStatus"><span id="blkState"></span><span id="blkLog"></span><span id="blkMsg"></span></div>
+      </div>
+    </div>
+  </section>
+</div>
+
 <div id="bodyTooltip" class="hidden">
   <div class="ttTitle" id="ttTitle"></div>
   <div class="ttRow"><span id="ttRow1Label"></span><b id="ttRow1Val"></b></div>
@@ -593,6 +631,6 @@
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.3.0"></script>
+<script type="module" src="js/main.js?v=2.4.0"></script>
 </body>
 </html>

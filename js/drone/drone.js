@@ -298,12 +298,15 @@ export function stopDroneScript(drone){
   drone.pending = null;
 }
 
-export function runDroneScript(drone){
+// `src` overrides the stored text script — the block editor passes its
+// compiled program here (see drone/droneMode.js), leaving drone.script as
+// the player last typed it.
+export function runDroneScript(drone, src){
   stopDroneScript(drone);
   drone.error = null;
   drone.logs = [];
   try{
-    const ast = parseDroneScript(drone.script || "");
+    const ast = parseDroneScript(src !== undefined ? src : (drone.script || ""));
     drone.gen = runProgram(ast, { vars: {} });
     drone.running = true;
     driveGenerator(drone, undefined);
