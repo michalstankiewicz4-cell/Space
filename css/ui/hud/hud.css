@@ -1,0 +1,11 @@
+/* In-game HUD (#hud, a .uiScreen — see css/ui/kit.css). Coordinates are
+   design pixels from the 1536x1024 mockup; each element is anchored to the
+   window edge it sits against, so on a wider/taller window the left column
+   stays left, the right column stays right, the bottom row stays at the
+   bottom, and the 3D viewport, fleet list and event log stretch. */
+#hud{ z-index:5; }
+/* No panel fill in the HUD: the full-window canvas underneath is already
+   cleared to black outside the 3D view (scene/viewRect.js), and the live
+   miniatures (unit/planet thumbnails) are drawn on that canvas *under* the
+   panels — a fill here would dim them. */
+#hud .uiPanel::before{ background:none; }

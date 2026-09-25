@@ -30,37 +30,75 @@ export function applyStaticText(){
   document.querySelector('#setupTabs button[data-tab="language"]').textContent = t("setup.tabLanguage");
   document.querySelector('#setupTabs button[data-tab="mouse"]').textContent = t("setup.tabMouse");
   document.querySelector('#setupTabs button[data-tab="help"]').textContent = t("setup.tabHelp");
+  document.querySelector('#setupTabs button[data-tab="graphics"]').textContent = t("setup.tabGraphics");
+  document.getElementById("gfxQualityLabel").textContent = t("setup.renderQuality");
+  document.getElementById("gfxDetailLabel").textContent = t("setup.geometryDetail");
+  document.querySelectorAll("#gfxQualityTicks span").forEach(function(s, i){ s.textContent = t("setup.qualityLevels")[i]; });
+  document.getElementById("gfxSoon").textContent = t("setup.graphicsSoon");
+
+  document.getElementById("aboutBtn").title = t("about.button");
+  document.getElementById("aboutTitle").textContent = t("about.title");
+  document.getElementById("aboutMade").textContent = t("about.made");
+  document.getElementById("aboutAuthorsHd").textContent = t("about.authors");
+  document.getElementById("aboutContactHd").textContent = t("about.contact");
+  document.getElementById("aboutPhoneLabel").textContent = t("about.phone");
+  document.getElementById("aboutCloseBtn").title = t("hud.close");
   document.getElementById("invertXLabel").textContent = t("setup.invertX");
   document.getElementById("invertYLabel").textContent = t("setup.invertY");
   document.getElementById("swapButtonsLabel").textContent = t("setup.swapButtons");
   document.getElementById("setupHelpText").innerHTML = t("hint");
 
-  document.getElementById("telemetryTitle").textContent = t("telemetry.title");
-  document.getElementById("labelPoints").textContent = t("telemetry.points");
-  document.getElementById("labelShips").textContent = t("telemetry.ships");
-  document.getElementById("labelEaten").textContent = t("telemetry.eaten");
-  document.getElementById("labelPlayers").textContent = t("telemetry.players");
+  // In-game HUD (index.html #hud) — static labels only; the panels'
+  // dynamic content re-derives its own text on every refresh.
+  const $ = function(id){ return document.getElementById(id); };
+  $("labelPoints").textContent = t("topbar.points");
+  $("labelShips").textContent = t("topbar.ships");
+  $("labelEaten").textContent = t("topbar.eaten");
+  $("labelPlayers").textContent = t("topbar.players");
+  $("resBox").title = [t("telemetry.points"), t("telemetry.ships"), t("telemetry.eaten"), t("telemetry.players")].join(" · ");
+  $("sdCycleLabel").textContent = t("topbar.cycle");
+  $("speedCtl").title = t("topbar.timeNote");
+  ["fleet", "planets", "research", "build", "diplomacy", "intel", "settings"].forEach(function(k){
+    const row = document.querySelector('#nav .navRow[data-nav="' + k + '"]');
+    row.querySelector(".navBtn").textContent = t("nav." + k);
+    row.querySelector(".navBtn").title = row.classList.contains("soon") ? t("soon") : "";
+  });
+  $("fleetHd").textContent = t("hud.fleetList");
+  $("unitHd").textContent = t("hud.selectedUnit");
+  $("evHd").textContent = t("hud.eventLog");
+  $("mmHd").textContent = t("hud.minimap");
+  $("mmIn").title = t("hud.zoomIn");
+  $("mmOut").title = t("hud.zoomOut");
+  ["unitCloseBtn", "infoCloseBtn", "shipCamCloseBtn"].forEach(function(id){ $(id).title = t("hud.close"); });
+  document.querySelectorAll("#unitBtns .uBtn").forEach(function(b){ b.title = t("cmd." + b.dataset.cmd) + " — " + t("soon"); });
+  $("unitCamBtn").title = t("hud.shipCam");
+  $("droneRunBtn").querySelector("span").textContent = t("hud.droneStart");
+  $("droneStopBtn").querySelector("span").textContent = t("hud.droneStop");
+  $("droneScriptBtn").querySelector("span").textContent = t("hud.droneScript");
+  ["Tactical", "Movement", "Build", "Special"].forEach(function(k){ $("tab" + k).textContent = t("cmd." + k.toLowerCase()); });
+  document.querySelectorAll("#cmdBtns .aBtn").forEach(function(b){
+    b.querySelector("span").textContent = t("cmd." + b.dataset.cmd);
+    b.title = t("soon");
+  });
+  // Empty-state hints (shown until something is selected).
+  $("unitEmpty").textContent = t("hud.unitEmpty");
+  $("infoEmpty").textContent = t("hud.infoEmpty");
+  if($("infoBody").classList.contains("hidden")) $("infoHd").textContent = t("hud.planetInfo");
 
-  document.getElementById("playersTitle").textContent = t("players.title");
+  $("playersTitle").textContent = t("players.title");
+  $("legendTitle").textContent = t("legend.title");
+  $("techModalTitle").textContent = t("tech.title");
+  $("fleetModalTitle").textContent = t("fleet.title");
+  $("shipCamLabel").textContent = t("fleet.shipCamLabel");
 
-  document.getElementById("techModalTitle").textContent = t("tech.title");
-  document.getElementById("fleetModalTitle").textContent = t("fleet.title");
-  document.getElementById("shipCamLabel").textContent = t("fleet.shipCamLabel");
+  $("legendIce").textContent = t("legend.ice");
+  $("legendNeutral").textContent = t("legend.neutral");
+  $("legendVolcanic").textContent = t("legend.volcanic");
+  $("legendSun").textContent = t("legend.sun");
+  $("legendComet").textContent = t("legend.comet");
+  $("legendMeteoroid").textContent = t("legend.meteoroid");
+  $("legendBlackhole").textContent = t("legend.blackhole");
 
-  document.getElementById("legendIce").textContent = t("legend.ice");
-  document.getElementById("legendNeutral").textContent = t("legend.neutral");
-  document.getElementById("legendVolcanic").textContent = t("legend.volcanic");
-  document.getElementById("legendSun").textContent = t("legend.sun");
-  document.getElementById("legendComet").textContent = t("legend.comet");
-  document.getElementById("legendMeteoroid").textContent = t("legend.meteoroid");
-  document.getElementById("legendBlackhole").textContent = t("legend.blackhole");
-
-  document.getElementById("dronePanelTitle").textContent = t("drone.title");
-  document.getElementById("droneStatusLabel").textContent = t("drone.status");
-  document.getElementById("droneFuelLabel").textContent = t("drone.fuel");
-  document.getElementById("droneAttackLabel").textContent = t("drone.attack");
-  document.getElementById("droneDefenseLabel").textContent = t("drone.defense");
-  document.getElementById("droneScriptBtn").textContent = t("drone.scriptBtn");
   document.getElementById("droneScriptModalTitle").textContent = t("drone.scriptTitle");
   document.getElementById("droneScriptRunBtn").textContent = t("drone.run");
   document.getElementById("droneScriptStopBtn").textContent = t("drone.stop");
@@ -79,18 +117,6 @@ export function applyStaticText(){
   document.getElementById("droneHelpSyntaxTitle").textContent = t("drone.help.syntaxTitle");
   document.getElementById("droneHelpSyntaxDesc").textContent = t("drone.help.syntax");
   document.getElementById("droneHelpExampleTitle").textContent = t("drone.help.exampleTitle");
-
-  document.getElementById("stationPanelTitle").textContent = t("station.title");
-  document.getElementById("stationFleetLabel").textContent = t("station.fleet");
-  document.getElementById("stationPointsLabel").textContent = t("telemetry.points");
-  document.getElementById("stationUpgradesLabel").textContent = t("station.upgrades");
-  document.getElementById("stationTechBtn").textContent = t("station.techBtn");
-  document.getElementById("stationFleetBtn").textContent = t("station.fleetBtn");
-
-  document.getElementById("planetHealthLabel").textContent = t("planet.health");
-  document.getElementById("planetRadiusLabel").textContent = t("planet.radius");
-  document.getElementById("planetSpinLabel").textContent = t("planet.spin");
-  document.getElementById("planetValueLabel").textContent = t("planet.value");
 
   document.getElementById("devToolsBtn").title = t("devTools.button");
   document.getElementById("devLightsLabel").textContent = t("devTools.lights");

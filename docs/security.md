@@ -18,6 +18,7 @@ then read just that range.
 - [activity_log audit trail](#activitylog-audit-trail)
 - [bite_body rate limit](#bitebody-rate-limit)
 - [Anonymous-auth spam](#anonymous-auth-spam)
+- [Public player counter](#public-player-counter)
 
 ## No client-writable UPDATE policy
 
@@ -305,3 +306,17 @@ then read just that range.
   same `pass` file also holds the Blogger API OAuth credentials (see
   [`docs/blogger.md`](blogger.md)) — unrelated service, same "don't commit
   this" treatment.
+
+## Public player counter
+
+- **`player_count()` is the one read path into `actor_nicks`, and it
+  returns only a number** (v2.2.0, for the start screen's "registered
+  players" counter). `actor_nicks` itself keeps RLS enabled with zero
+  client policies — nicks are self-reported and paired with actor ids
+  in the admin view, so they're never exposed row by row; the
+  `security definer` function is what lets this single aggregate reach
+  the table. It's read-only and a plain `count(*)` over a small table,
+  so unlike every write path here it has no rate limit. "Registered"
+  means every anonymous account that ever connected (one row per
+  actor, upserted by `set_my_nick()`), test sessions included — an
+  approximate public number, not an audited one.

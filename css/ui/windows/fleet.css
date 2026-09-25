@@ -1,0 +1,10 @@
+/* Fleet window (ui/windows/fleet.js). */
+#fleetModalBox{ width:340px; }
+#fleetListEl{ list-style:none; margin:0; padding:2px; max-height:calc(60vh / var(--uiScale)); overflow:auto; }
+#fleetListEl li{
+  display:flex; align-items:center; gap:10px; margin-bottom:5px; padding:8px 12px; cursor:pointer;
+  font-size:15.5px; color:#dfe5ff;
+  border:1.5px solid #1d36a0; border-radius:6px; background:linear-gradient(180deg,#040a26,#01030f);
+  transition:border-color .15s, box-shadow .15s;
+}
+#fleetListEl li:hover{ border-color:#f5bd5c; box-shadow:0 0 6px rgb(245 189 92 / .45); }

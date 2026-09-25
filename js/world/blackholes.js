@@ -1,11 +1,11 @@
 import { ctx } from "../core/context.js";
 import { removeItem, disposeMesh } from "../core/utils.js";
 import { makeAccretionTexture, makeHaloTexture } from "./textures.js";
-import { showToast } from "../ui/hud.js";
+import { showToast } from "../ui/hud/eventLog.js";
 import { spawnExplosionParticles } from "../fx/particles.js";
 import { spawnShockwave } from "../fx/breakup.js";
 import { disposeShip } from "../ships/swarm.js";
-import { refreshDock } from "../ui/dock.js";
+import { refreshResearch } from "../ui/windows/research.js";
 import { save } from "../core/gameState.js";
 import { stopDroneScript } from "../drone/drone.js";
 import { CONTENT } from "../content.js";
@@ -88,7 +88,7 @@ export function materializeBlackHole(radius, orbitSlot){
     flowSpeed: 0.05+Math.random()*0.06
   };
   ctx.blackholes.push(bh);
-  showToast(t("toast.blackholeDetected"));
+  showToast(t("toast.blackholeDetected"), "alert");
   return bh;
 }
 
@@ -158,7 +158,7 @@ export function updateBlackHoles(dt){
     spawnShockwave({ mesh:{ position: sh.pos, material:{ color:new THREE.Color(0x6a3fb0) } }, radius: 0.7 });
     disposeShip(sh);
     removeItem(ctx.ships, sh);
-    showToast(t("toast.shipConsumed"));
+    showToast(t("toast.shipConsumed"), "alert");
   });
   // Deliberately NOT calling reconcileFleetSize() here. That function's
   // only job is "top ctx.ships back up to the upgrade-derived target" (see
@@ -169,8 +169,8 @@ export function updateBlackHoles(dt){
   // avoid" with zero actual gameplay cost. Losing a ship now lasts for the
   // rest of the session (until the next reconcile - a reload or a new
   // fleet-level purchase, both of which re-derive the count from the
-  // upgrade level, not from what was lost - see ui/dock.js/main.js).
-  if(toConsume.length>0){ refreshDock(); save(); }
+  // upgrade level, not from what was lost - see ui/windows/research.js/main.js).
+  if(toConsume.length>0){ refreshResearch(); save(); }
 
   // The drone isn't in ctx.ships (it never auto-moves, so it isn't part of
   // the swarm loop above) — handled separately here, with its `defense`
@@ -191,14 +191,14 @@ export function updateBlackHoles(dt){
           pushDir.normalize();
           drone.pos.copy(hole.group.position).addScaledVector(pushDir, hole.killRadius*1.4);
           drone.fuel = Math.max(0, drone.fuel - 15);
-          showToast(t("toast.droneSurvived"));
+          showToast(t("toast.droneSurvived"), "alert");
         } else {
           spawnExplosionParticles(drone.pos, new THREE.Color(0xb98cff), 26);
           spawnShockwave({ mesh:{ position: drone.pos, material:{ color:new THREE.Color(0x6a3fb0) } }, radius: 0.7 });
           stopDroneScript(drone);
           disposeMesh(ctx.scene, drone.mesh);
           ctx.drone = null;
-          showToast(t("toast.shipConsumed"));
+          showToast(t("toast.shipConsumed"), "alert");
         }
         break;
       }

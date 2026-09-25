@@ -4,6 +4,13 @@ import { readStorage, writeStorage } from "./core/utils.js";
 // t("a.b.c") looks up a dotted path in the current language, falling back to
 // English if missing. For strings with a variable, the value is a function
 // the caller invokes with the argument(s), e.g. t("toast.eaten")(gained).
+// Polish plural forms: 1 -> one, 2-4 (but not 12-14) -> few, else many.
+function plPlural(n, one, few, many){
+  if(n === 1) return one;
+  const d = n % 10, dd = n % 100;
+  return (d >= 2 && d <= 4 && !(dd >= 12 && dd <= 14)) ? few : many;
+}
+
 const STRINGS = {
   en: {
     banner: {
@@ -17,7 +24,9 @@ const STRINGS = {
       start: "ENTER ORBIT",
       setup: "⚙ Setup",
       language: "Language",
-      nickRejected: "Please choose a different nickname."
+      nickRejected: "Please choose a different nickname.",
+      playersOnline: function(n){ return n === 1 ? "player online" : "players online"; },
+      playersRegistered: function(n){ return n === 1 ? "registered player" : "registered players"; }
     },
     outdated: {
       title: "⚠ Update available",
@@ -32,7 +41,20 @@ const STRINGS = {
       tabHelp: "Help",
       invertX: "Invert X (right-drag)",
       invertY: "Invert Y (right-drag)",
-      swapButtons: "Swap left/right mouse button"
+      swapButtons: "Swap left/right mouse button",
+      tabGraphics: "Graphics",
+      renderQuality: "Render quality",
+      geometryDetail: "Geometry detail (triangles)",
+      qualityLevels: ["LOW", "MED", "HIGH", "ULTRA", "MAX"],
+      graphicsSoon: "Coming soon — these arrive together with importing ships from the ship lab."
+    },
+    about: {
+      button: "About the game",
+      title: "About",
+      made: "Created with vibe coding.",
+      authors: "Authors",
+      contact: "Contact",
+      phone: "Phone"
     },
     telemetry: {
       title: "SWARM PROTOCOL // TELEMETRY",
@@ -44,7 +66,8 @@ const STRINGS = {
     hint: "Right button + drag = rotate camera · scroll = zoom<br>Left click / box select = select ships<br>Click a planet = course order for selected (or whole swarm)",
     legend: {
       ice: "Ice planets", neutral: "Neutral planets", volcanic: "Volcanic planets",
-      sun: "☀ Suns", comet: "☄ Comets", meteoroid: "🪨 Meteoroids", blackhole: "🌀 Black holes (hazard!)"
+      sun: "☀ Suns", comet: "☄ Comets", meteoroid: "🪨 Meteoroids", blackhole: "🌀 Black holes (hazard!)",
+      title: "Body types"
     },
     players: { title: "PLAYERS", you: " (You)", defaultName: "Player" },
     tech: { title: "Tech Tree" },
@@ -85,8 +108,8 @@ const STRINGS = {
       reconnecting: "⚠ Reconnecting to server…"
     },
     camera: {
-      base: "🏠 Base",
-      system: "☀ System"
+      base: "BASE",
+      system: "SYSTEM"
     },
     drone: {
       title: "DRONE",
@@ -128,13 +151,49 @@ const STRINGS = {
       fleetBtn: "🚀 Fleet"
     },
     planet: {
-      health: "Health", radius: "Radius", spin: "Spin", value: "Value"
+      health: "Health", radius: "Radius", spin: "Spin", value: "Value",
+      waypoint: "SET WAYPOINT", scan: "SCAN", colonize: "COLONIZE"
     },
     devTools: {
       button: "Dev Tools",
       lights: "Show light sources",
       distance: "Connect selected planets",
       noLights: "Turn off lights"
+    },
+    topbar: {
+      points: "Points", ships: "Units", eaten: "Devoured", players: "Online",
+      cycle: "Cycle",
+      timeNote: "Game time runs live for everyone — it can't be paused in multiplayer"
+    },
+    nav: {
+      fleet: "FLEET", planets: "PLANETS", research: "RESEARCH", build: "BUILD",
+      diplomacy: "DIPLOMACY", intel: "INTEL", settings: "SETTINGS"
+    },
+    soon: "Coming soon",
+    hud: {
+      fleetList: "FLEET LIST", selectedUnit: "SELECTED UNIT", planetInfo: "PLANET INFO",
+      station: "STATION", eventLog: "EVENT LOG", minimap: "MINIMAP", close: "Close",
+      unitEmpty: "No unit selected. Click a ship, drag a box around several, or pick one from the fleet list.",
+      infoEmpty: "Nothing selected. Click a planet (in the view or on the minimap) or your station.",
+      shipClass: "Swarm ship", droneClass: "Programmable drone",
+      group: function(n){ return n + " units"; }, groupClass: "Group selection", mixed: "Various",
+      idle: "Idle", enRoute: "En route", feeding: "Feeding",
+      status: "Status", target: "Target", velocity: "Velocity", bite: "Bite/s", selected: "Selected",
+      speedLvl: "Speed", biteLvl: "Bite", heatLvl: "Heat res.",
+      value: function(n){ return "Value ~" + n + " pts"; },
+      yourBase: "Your base", sun: "Sun",
+      zoomIn: "Zoom in", zoomOut: "Zoom out",
+      droneStart: "START", droneStop: "STOP", droneScript: "SCRIPT",
+      shipCam: "Ship cam (cockpit view) on/off"
+    },
+    cmd: {
+      tactical: "TACTICAL", movement: "MOVEMENT", build: "BUILD", special: "SPECIAL",
+      attack: "ATTACK", move: "MOVE", formUp: "FORM UP", defend: "DEFEND", scan: "SCAN", cloak: "CLOAK"
+    },
+    event: {
+      welcome: function(nick){ return "Commander " + nick + " entered orbit"; },
+      connectionLost: "Connection to the server lost — reconnecting…",
+      connectionBack: "Reconnected to the server"
     }
   },
   pl: {
@@ -149,7 +208,9 @@ const STRINGS = {
       start: "WEJDŹ NA ORBITĘ",
       setup: "⚙ Ustawienia",
       language: "Język",
-      nickRejected: "Wybierz inny nick."
+      nickRejected: "Wybierz inny nick.",
+      playersOnline: function(n){ return plPlural(n, "gracz", "gracze", "graczy") + " online"; },
+      playersRegistered: function(n){ return plPlural(n, "zarejestrowany gracz", "zarejestrowanych graczy", "zarejestrowanych graczy"); }
     },
     outdated: {
       title: "⚠ Dostępna aktualizacja",
@@ -164,7 +225,20 @@ const STRINGS = {
       tabHelp: "Pomoc",
       invertX: "Odwróć X (obrót PPM)",
       invertY: "Odwróć Y (obrót PPM)",
-      swapButtons: "Zamień lewy/prawy przycisk myszy"
+      swapButtons: "Zamień lewy/prawy przycisk myszy",
+      tabGraphics: "Grafika",
+      renderQuality: "Jakość renderowania",
+      geometryDetail: "Szczegółowość geometrii (trójkąty)",
+      qualityLevels: ["NISKA", "ŚREDNIA", "WYSOKA", "ULTRA", "MAX"],
+      graphicsSoon: "Wkrótce — pojawią się razem z importem statków z laboratorium statków."
+    },
+    about: {
+      button: "O grze",
+      title: "O grze",
+      made: "Stworzone przy pomocy vibecodingu.",
+      authors: "Autorzy",
+      contact: "Kontakt",
+      phone: "Tel."
     },
     telemetry: {
       title: "SWARM PROTOCOL // TELEMETRIA",
@@ -176,7 +250,8 @@ const STRINGS = {
     hint: "Prawy przycisk + przeciąg = obrót kamery · scroll = zoom<br>Lewy klik / zaznaczenie ramką = wybór statków<br>Klik na planetę = rozkaz kursu dla wybranych (lub całego roju)",
     legend: {
       ice: "Planety lodowe", neutral: "Planety neutralne", volcanic: "Planety wulkaniczne",
-      sun: "☀ Słońca", comet: "☄ Komety", meteoroid: "🪨 Meteoryty", blackhole: "🌀 Czarne dziury (hazard!)"
+      sun: "☀ Słońca", comet: "☄ Komety", meteoroid: "🪨 Meteoryty", blackhole: "🌀 Czarne dziury (hazard!)",
+      title: "Typy ciał"
     },
     players: { title: "GRACZE", you: " (Ty)", defaultName: "Gracz" },
     tech: { title: "Drzewo rozwoju" },
@@ -217,8 +292,8 @@ const STRINGS = {
       reconnecting: "⚠ Ponowne łączenie z serwerem…"
     },
     camera: {
-      base: "🏠 Baza",
-      system: "☀ Układ"
+      base: "BAZA",
+      system: "UKŁAD"
     },
     drone: {
       title: "DRON",
@@ -260,13 +335,49 @@ const STRINGS = {
       fleetBtn: "🚀 Flota"
     },
     planet: {
-      health: "Zdrowie", radius: "Promień", spin: "Obrót", value: "Wartość"
+      health: "Zdrowie", radius: "Promień", spin: "Obrót", value: "Wartość",
+      waypoint: "USTAW PUNKT", scan: "SKANUJ", colonize: "KOLONIZUJ"
     },
     devTools: {
       button: "Dev Tools",
       lights: "Pokaż źródła światła",
       distance: "Połącz zaznaczone planety",
       noLights: "Wyłącz światła"
+    },
+    topbar: {
+      points: "Punkty", ships: "Jednostki", eaten: "Pochłonięte", players: "Online",
+      cycle: "Cykl",
+      timeNote: "Czas gry płynie na żywo dla wszystkich — w multiplayerze nie da się go zatrzymać"
+    },
+    nav: {
+      fleet: "FLOTA", planets: "PLANETY", research: "BADANIA", build: "BUDOWA",
+      diplomacy: "DYPLOMACJA", intel: "WYWIAD", settings: "USTAWIENIA"
+    },
+    soon: "Wkrótce",
+    hud: {
+      fleetList: "LISTA FLOTY", selectedUnit: "WYBRANA JEDNOSTKA", planetInfo: "INFO O PLANECIE",
+      station: "STACJA", eventLog: "DZIENNIK ZDARZEŃ", minimap: "MINIMAPA", close: "Zamknij",
+      unitEmpty: "Nie wybrano jednostki. Kliknij statek, zaznacz kilka ramką albo wybierz z listy floty.",
+      infoEmpty: "Nic nie zaznaczono. Kliknij planetę (w widoku albo na minimapie) lub swoją stację.",
+      shipClass: "Statek roju", droneClass: "Dron programowalny",
+      group: function(n){ return "Grupa: " + n; }, groupClass: "Zaznaczenie grupowe", mixed: "Różne",
+      idle: "Bezczynny", enRoute: "W drodze", feeding: "Żeruje",
+      status: "Status", target: "Cel", velocity: "Prędkość", bite: "Gryz/s", selected: "Zaznaczone",
+      speedLvl: "Prędkość", biteLvl: "Gryz", heatLvl: "Ciepło",
+      value: function(n){ return "Wartość ~" + n + " pkt"; },
+      yourBase: "Twoja baza", sun: "Słońce",
+      zoomIn: "Przybliż", zoomOut: "Oddal",
+      droneStart: "START", droneStop: "STOP", droneScript: "SKRYPT",
+      shipCam: "Kamera statku (widok z kokpitu) wł./wył."
+    },
+    cmd: {
+      tactical: "TAKTYKA", movement: "RUCH", build: "BUDOWA", special: "SPECJALNE",
+      attack: "ATAK", move: "RUCH", formUp: "SZYK", defend: "OBRONA", scan: "SKAN", cloak: "MASKOWANIE"
+    },
+    event: {
+      welcome: function(nick){ return "Dowódca " + nick + " wszedł na orbitę"; },
+      connectionLost: "Utracono połączenie z serwerem — ponowne łączenie…",
+      connectionBack: "Połączono ponownie z serwerem"
     }
   }
 };

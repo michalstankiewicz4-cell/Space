@@ -1,0 +1,30 @@
+/* HUD planet info panel: a planet or the station (ui/hud/infoPanel.js). */
+#infoPanel{ right:16px; top:88px; width:307px; height:333px; }
+#plTopBar{ left:12px; top:6px; width:16px; height:24px; border-radius:9px 0 0 0; }
+#infoHd{ left:37px; top:3px; }
+#infoCloseBtn{ right:10px; top:5px; z-index:1; }
+#plHdLine{ left:37px; right:10px; top:33px; }
+#plSide{ left:12px; top:42px; width:16px; height:236px; }
+#plSideBottom{ left:12px; top:283px; width:16px; height:40px; border-radius:0 0 0 12px; }
+#infoEmpty{ left:40px; top:46px; right:14px; }
+#infoBody{ left:0; top:0; right:0; bottom:0; }
+#infoBody > *{ position:absolute; }
+/* Live 3D render target (scene/infoThumb.js). */
+#infoThumb{ left:37px; top:40px; width:100px; height:100px; }
+#infoName{ left:145px; right:12px; top:43px; font-size:20px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#infoType{ left:145px; right:12px; top:69px; font-size:15px; line-height:19px; color:#dbe1ff; }
+#plMidLine{ left:37px; right:14px; top:146px; }
+#plRows{ left:40px; top:150px; width:257px; }
+.plRow{ position:relative; height:27px; font-size:15px; line-height:27px; color:#c7d0ff; }
+.plRow span{ position:absolute; left:0; white-space:nowrap; }
+.plRow > b{ position:absolute; left:84px; right:0; font-weight:400; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.plRow .bar.def{ position:absolute; left:84px; top:9px; width:128px; height:10px; background:#06185c; }
+.plRow.hasBar > b{ left:auto; right:0; color:#b7c4ff; }
+#infoBtnA{ left:40px; top:244px; width:127px; height:30px; font-size:14px; }
+#infoBtnB{ left:176px; top:244px; width:115px; height:30px; font-size:14px; }
+#infoBtnC{ left:40px; top:283px; width:251px; height:32px; border-radius:5px;
+  font-family:var(--uiFontLabel); font-weight:600; font-size:17.5px; color:#241404; letter-spacing:.3px; transition:filter .15s; }
+#infoBtnC:hover{ filter:brightness(1.08); }
+#infoBody .soon{ cursor:not-allowed; }
+#infoBody .oBtn.soon:hover{ border-color:#3c55d8; box-shadow:none; }
+#infoBody #infoBtnC.soon:hover{ filter:none; }

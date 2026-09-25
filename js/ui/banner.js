@@ -1,6 +1,7 @@
 import { hasConfirmedNick, confirmNick, randomNickSuggestion, myIdentity } from "../net/identity.js";
 import { t, onLangChange } from "../i18n.js";
 import { openSetupModal } from "./setupModal.js";
+import { showToast } from "./hud/eventLog.js";
 
 // Start screen: the player must give a nickname before "ENTER ORBIT"
 // unlocks. If a nick was already confirmed in this browser, the field is
@@ -14,6 +15,8 @@ function updateStartEnabled(){
   const nickInput = document.getElementById("nickInput");
   document.getElementById("startBtn").disabled = nickInput.value.trim().length === 0;
 }
+
+let welcomed = false;
 
 export function isBannerOpen(){
   return !document.getElementById("banner").classList.contains("hidden");
@@ -53,6 +56,12 @@ export function initBanner(){
     }
     nickError.classList.add("hidden");
     banner.classList.add("hidden");
+    // First entry only, not every time the start screen is reopened with
+    // Escape mid-game.
+    if(!welcomed){
+      welcomed = true;
+      showToast(t("event.welcome")(myIdentity.nick), "arrive");
+    }
   });
 
   document.getElementById("nickRandomBtn").addEventListener("click", function(){

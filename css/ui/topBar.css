@@ -1,0 +1,21 @@
+/* The part of the top bar shared by the start screen and the in-game HUD:
+   left bracket, logo, title, the four short segments under it, the gold
+   swoosh, and the right end cap. Everything between the swoosh and the cap
+   differs per screen (startScreen.css, hud.css). Positions are design
+   pixels inside a .uiBar/.uiScreen; the cap is anchored to the right edge. */
+.tbBracket{ left:8px; top:9px; width:38px; height:66px;
+  clip-path:path("M38 0 H32 C12 0 0 16 0 34 C0 52 10 66 30 66 H38 Z"); }
+.tbInsignia{ left:59px; top:12px; width:46px; height:42.5px; filter:drop-shadow(0 0 4px rgb(255 190 90 / .35)); }
+.tbTitle{ left:111px; top:4px; margin:0; font-family:var(--uiFontHead); font-weight:600;
+  font-size:37px; line-height:56px; letter-spacing:.2px; white-space:nowrap; }
+.tbTitle .t{ background:linear-gradient(180deg,#ffd88f 0%,#f8bb56 50%,#dd9540 100%);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 5px rgb(255 180 80 / .25)); }
+.tb1{ left:49px;  top:63px; width:61px; height:11px; border-radius:5px 0 0 5px; }
+.tb2{ left:112px; top:63px; width:74px; height:11px; clip-path:polygon(0 0, 88% 0, 100% 50%, 88% 100%, 0 100%); }
+.tb3{ left:186px; top:63px; width:34px; height:11px; }
+.tb4{ left:226px; top:63px; width:95px; height:11px; }
+.tbGold{ left:326px; top:8px; width:135px; height:67px;
+  clip-path:path("M0 51 H46 C64 51 72 44 78 30 C85 12 93 0 112 0 H124 Q135 0 135 10 L128 67 H0 Z"); }
+.tbCap{ right:16px; top:9px; width:42px; height:65px;
+  clip-path:path("M0 0 H14 C32 0 42 14 42 32 C42 52 32 65 14 65 H0 Z"); }

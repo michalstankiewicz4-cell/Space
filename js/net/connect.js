@@ -1,7 +1,8 @@
 import { supabase } from "../supabaseClient.js";
 import { clientId, joinedAt, myIdentity } from "./identity.js";
 import { setPresenceState } from "./presence.js";
-import { updatePlayersHud, setConnectionStatus } from "../ui/hud.js";
+import { updatePlayersHud } from "../ui/hud/topBar.js";
+import { setConnectionStatus } from "../ui/hud/connectionStatus.js";
 import { materializeBody, onBodyUpdated, onBodyDeleted, bootstrapWorld } from "./bodiesSync.js";
 import { onSolarBodyUpdated, bootstrapSolarSystem } from "./solarBodiesSync.js";
 import { handleRemoteShips, handleRemoteDronePrint } from "./shipsBroadcast.js";

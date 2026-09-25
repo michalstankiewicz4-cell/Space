@@ -1,15 +1,16 @@
 import { ctx } from "../core/context.js";
 import { removeItem } from "../core/utils.js";
-import { showToast } from "../ui/hud.js";
+import { showToast } from "../ui/hud/eventLog.js";
 import { setShipSelected } from "../ships/swarm.js";
 import { setPlanetSelected } from "../world/bodyMeshParts.js";
-import { openDronePanel, closeDronePanel } from "../ui/dronePanel.js";
+import { openDronePanel, closeDronePanel } from "../ui/hud/unitPanel.js";
 import { setDroneSelected } from "../drone/drone.js";
-import { openStationPanel, closeStationPanel } from "../ui/stationPanel.js";
+import { openStationPanel, closeStationPanel } from "../ui/hud/stationPanel.js";
 import { setStationSelected } from "../station/station.js";
-import { openPlanetPanel, closePlanetPanel } from "../ui/planetPanel.js";
+import { openPlanetPanel, closePlanetPanel } from "../ui/hud/planetPanel.js";
 import { pickShipAt, pickDroneAt, pickStationAt, pickPlanetAt, pickBlackHoleAt } from "./picking.js";
 import { initTooltip, showTooltip, showBlackHoleTooltip, hideTooltip } from "./tooltip.js";
+import { getViewRect, isInViewRect } from "./viewRect.js";
 import { t } from "../i18n.js";
 import { settings } from "../settings.js";
 
@@ -102,7 +103,7 @@ let leftDown = false, leftStartX = 0, leftStartY = 0, leftIsDrag = false;
 
 function screenPos(vec3){
   const v = vec3.clone().project(ctx.camera);
-  const rect = ctx.renderer.domElement.getBoundingClientRect();
+  const rect = getViewRect();
   return {
     x: rect.left + (v.x*0.5+0.5)*rect.width,
     y: rect.top + (-v.y*0.5+0.5)*rect.height,
@@ -136,7 +137,7 @@ function deselectAllPlanets(){
   closePlanetPanel();
 }
 
-// Exported so other selection entry points (e.g. ui/fleet.js's ship-list
+// Exported so other selection entry points (e.g. ui/windows/fleet.js's ship-list
 // clicks) can match exactly what a plain click in the world does, instead
 // of duplicating this clear-everything-first logic.
 export function clearSelection(){
@@ -161,7 +162,9 @@ function selectSingleton(obj, setSelectedFn, openPanelFn){
   openPanelFn();
 }
 
-function commandTo(planet, list, cmdFlashEl){
+let cmdFlashEl = null;
+
+function commandTo(planet, list){
   if(!planet || list.length===0) return;
   list.forEach(function(sh){ sh.commandedTarget = planet; sh.target = planet; });
   const sp = screenPos(planet.mesh.position);
@@ -173,11 +176,54 @@ function commandTo(planet, list, cmdFlashEl){
   showToast(list.length===ctx.ships.length ? t("toast.orderAll") : t("toast.orderSome")(list.length));
 }
 
+// A plain (non-drag) click on a planet — shared by the 3D view below and
+// the HUD minimap (ui/hud/minimap.js), so both behave exactly alike: with
+// ships selected it's a course order, otherwise it selects the planet;
+// shift+click toggles it in/out of the multi-select either way.
+export function clickPlanet(hitPlanet, shiftKey){
+  if(shiftKey){
+    // Shift+click a planet always toggles it in/out of the
+    // multi-select (for Dev Tools' distance line) and never
+    // commands the fleet — decoupled from plain-click's
+    // command-if-ships-selected behavior below, so there's no
+    // ambiguity between "order ships here" and "add to selection".
+    if(ctx.drone && ctx.drone.selected) closeDronePanel();
+    if(ctx.station && ctx.station.selected) closeStationPanel();
+    if(hitPlanet.selected){
+      setPlanetSelected(hitPlanet, false);
+      removeItem(planetSelectionOrder, hitPlanet);
+    } else {
+      setPlanetSelected(hitPlanet, true);
+      planetSelectionOrder.push(hitPlanet);
+    }
+    if(planetSelectionOrder.length > 0) openPlanetPanel(planetSelectionOrder[planetSelectionOrder.length-1]);
+    else closePlanetPanel();
+  } else {
+    const sel = selectedShips();
+    if(sel.length>0){
+      commandTo(hitPlanet, sel);
+    } else {
+      clearSelection();
+      setPlanetSelected(hitPlanet, true);
+      planetSelectionOrder.push(hitPlanet);
+      openPlanetPanel(hitPlanet);
+    }
+  }
+}
+
+// Selecting the station from outside the 3D view (the minimap) — same as
+// clicking it in the world.
+export function clickStation(shiftKey){
+  if(!ctx.station) return;
+  if(!shiftKey) clearSelection();
+  selectSingleton(ctx.station, setStationSelected, openStationPanel);
+}
+
 // Wires up mouse handling (camera, ship selection, course orders).
 // Call once, after initScene().
 export function initControls(){
   const selectBoxEl = document.getElementById("selectBox");
-  const cmdFlashEl = document.getElementById("cmdFlash");
+  cmdFlashEl = document.getElementById("cmdFlash");
   const dom = ctx.renderer.domElement;
 
   initTooltip();
@@ -194,8 +240,12 @@ export function initControls(){
   dom.addEventListener("contextmenu", function(e){ e.preventDefault(); });
   dom.addEventListener("pointerleave", hideTooltip);
 
+  // The canvas covers the whole window but the 3D view is only the HUD's
+  // viewport rect (scene/viewRect.js) — presses/scrolls in the black gaps
+  // between HUD panels land on the canvas too and are ignored here.
   dom.addEventListener("wheel", function(e){
     e.preventDefault();
+    if(!isInViewRect(e.clientX, e.clientY)) return;
     // Multiplicative, not additive - an additive step sized for the old
     // 14-140 range would take hundreds of scroll ticks to cross the new
     // 20-2500 one. Same shape test.html's own free-camera zoom uses for
@@ -209,6 +259,7 @@ export function initControls(){
 
   dom.addEventListener("pointerdown", function(e){
     hideTooltip();
+    if(!isInViewRect(e.clientX, e.clientY)) return;
     if(e.button === rotateButton()){
       camDragging = true; camState.autoSpin = false; camLastX=e.clientX; camLastY=e.clientY;
     } else if(e.button === selectButton()){
@@ -238,7 +289,9 @@ export function initControls(){
       }
       return;
     }
-    // hover cursor feedback (not while dragging)
+    // hover cursor feedback (not while dragging) — only over the 3D view
+    // itself, not over HUD panels or the gaps between them
+    if(e.target !== dom || !isInViewRect(e.clientX, e.clientY)){ hideTooltip(); return; }
     const overShip = pickShipAt(e);
     const overDrone = overShip ? null : pickDroneAt(e);
     const overStation = (overShip || overDrone) ? null : pickStationAt(e);
@@ -282,7 +335,7 @@ export function initControls(){
         if(!e.shiftKey) clearSelection();
         within.forEach(function(sh){ setShipSelected(sh, true); });
         // Drone/station and the planet panel share the same right-side HUD
-        // slot (see ui/planetPanel.js) — selecting either one always closes
+        // slot (see ui/hud/planetPanel.js) — selecting either one always closes
         // a still-open planet selection, even with shift held (clearSelection()
         // above only runs without shift).
         if(droneHit) selectSingleton(ctx.drone, setDroneSelected, openDronePanel);
@@ -311,34 +364,7 @@ export function initControls(){
       } else {
         const hitPlanet = pickPlanetAt(e);
         if(hitPlanet){
-          if(e.shiftKey){
-            // Shift+click a planet always toggles it in/out of the
-            // multi-select (for Dev Tools' distance line) and never
-            // commands the fleet — decoupled from plain-click's
-            // command-if-ships-selected behavior below, so there's no
-            // ambiguity between "order ships here" and "add to selection".
-            if(ctx.drone && ctx.drone.selected) closeDronePanel();
-            if(ctx.station && ctx.station.selected) closeStationPanel();
-            if(hitPlanet.selected){
-              setPlanetSelected(hitPlanet, false);
-              removeItem(planetSelectionOrder, hitPlanet);
-            } else {
-              setPlanetSelected(hitPlanet, true);
-              planetSelectionOrder.push(hitPlanet);
-            }
-            if(planetSelectionOrder.length > 0) openPlanetPanel(planetSelectionOrder[planetSelectionOrder.length-1]);
-            else closePlanetPanel();
-          } else {
-            const sel = selectedShips();
-            if(sel.length>0){
-              commandTo(hitPlanet, sel, cmdFlashEl);
-            } else {
-              clearSelection();
-              setPlanetSelected(hitPlanet, true);
-              planetSelectionOrder.push(hitPlanet);
-              openPlanetPanel(hitPlanet);
-            }
-          }
+          clickPlanet(hitPlanet, e.shiftKey);
         } else if(!e.shiftKey){
           clearSelection();
         }

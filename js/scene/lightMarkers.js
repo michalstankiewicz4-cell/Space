@@ -1,6 +1,6 @@
 import { ctx } from "../core/context.js";
 
-// Dev Tools debug visualization (see ui/devTools.js) — a small "light bulb"
+// Dev Tools debug visualization (see ui/hud/devTools.js) — a small "light bulb"
 // icon at every light's world position, game-engine-editor style (Unity/
 // Unreal-esque light gizmos): always drawn on top (depthTest:false), tinted
 // to that light's own color, and kept at a constant apparent size on screen

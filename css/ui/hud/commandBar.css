@@ -1,0 +1,31 @@
+/* HUD command bar, bottom-left of the viewport (ui/hud/commandBar.js). */
+#cmdBar{ left:246px; bottom:30px; width:680px; height:136px; pointer-events:auto; }
+#cmdBar > *{ position:absolute; }
+#cmdFrame{ left:0; top:0; width:680px; height:136px; overflow:visible; }
+#cmdFrame path{ fill:rgb(0 2 10 / .92); stroke:var(--uiFrame); stroke-width:1.5;
+  filter:drop-shadow(0 0 4px var(--uiFrameGlow)); }
+#cmdSide{ left:10px; top:8px; width:17px; height:117px; border-radius:12px 0 0 6px; }
+#cmdTabs{ left:34px; top:8px; width:610px; height:29px; }
+.cTab{ position:absolute; top:0; height:29px; font-family:var(--uiFontLabel); font-weight:500;
+  font-size:17px; letter-spacing:.3px; color:#0c1440; transition:filter .15s; }
+.cTab:hover{ filter:brightness(1.12); }
+#tabTactical{ left:0;   width:141px; border-radius:8px 8px 3px 8px; }
+#tabMovement{ left:147px; width:154px; border-radius:8px 8px 3px 8px; }
+#tabBuild   { left:307px; width:136px; border-radius:8px 8px 3px 8px; }
+#tabSpecial { left:449px; width:152px; border-radius:8px 14px 3px 8px; }
+.cTab.on{ border-radius:3px 20px 0 0; }
+#cmdBtns{ left:0; top:48px; width:680px; height:71px; }
+.aBtn{ position:absolute; top:0; height:71px; border-radius:8px; border:1.5px solid;
+  background:linear-gradient(180deg,#050a22,#00020c);
+  font-family:var(--uiFontLabel); font-size:14px; letter-spacing:.2px;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding-bottom:5px;
+  transition:box-shadow .15s, filter .15s; }
+.aBtn svg{ position:absolute; left:50%; top:10px; width:38px; height:38px; transform:translateX(-50%); }
+.aBtn.red { border-color:#e04b50; color:#ff6b6e; }
+.aBtn.gold{ border-color:#d9a75a; color:#a9b8ff; }
+.aBtn.blue{ border-color:#7282e8; color:#a9b8ff; }
+.aBtn:hover{ filter:brightness(1.2); }
+.aBtn.red:hover { box-shadow:0 0 10px rgb(224 75 80 / .55), inset 0 0 10px rgb(224 75 80 / .15); }
+.aBtn.gold:hover{ box-shadow:0 0 10px rgb(245 189 92 / .5), inset 0 0 10px rgb(245 189 92 / .12); }
+.aBtn.blue:hover{ box-shadow:0 0 10px rgb(95 119 247 / .55), inset 0 0 10px rgb(95 119 247 / .15); }
+.aBtn.soon{ cursor:not-allowed; }

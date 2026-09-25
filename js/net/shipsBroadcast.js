@@ -1,12 +1,9 @@
 import { ctx } from "../core/context.js";
 import { disposeMesh } from "../core/utils.js";
-import {
-  NET_SHIP_BROADCAST_MS, NET_REMOTE_PLAYER_TIMEOUT_MS, NET_GHOST_LERP_SPEED,
-  NET_MAX_REMOTE_SHIPS, NET_MAX_REMOTE_PLAYERS, NET_MAX_NICK_LENGTH, DRONE_PRINT_MAX_LEN
-} from "../config.js";
+import { NET_SHIP_BROADCAST_MS, NET_REMOTE_PLAYER_TIMEOUT_MS, NET_GHOST_LERP_SPEED, NET_MAX_REMOTE_SHIPS, NET_MAX_REMOTE_PLAYERS, NET_MAX_NICK_LENGTH, DRONE_PRINT_MAX_LEN } from "../config.js";
 import { clientId, myIdentity } from "./identity.js";
 import { state } from "../core/gameState.js";
-import { updatePlayersHud } from "../ui/hud.js";
+import { updatePlayersHud } from "../ui/hud/topBar.js";
 import { roomChannel } from "./connect.js";
 import { containsProfanity } from "../moderation.js";
 import { t } from "../i18n.js";

@@ -5,7 +5,7 @@ import { materializeBlackHole } from "../world/blackholes.js";
 import { bodyValueEstimate } from "../world/bodyParams.js";
 import { SOLAR_BODY_BY_SLOT, bodyPosAt, nowSimTime } from "../world/solarSystem.js";
 import { state, save } from "../core/gameState.js";
-import { showToast } from "../ui/hud.js";
+import { showToast } from "../ui/hud/eventLog.js";
 import { t } from "../i18n.js";
 
 // The fixed 9 solar bodies + sun — a permanent set, seeded once by the
@@ -76,7 +76,7 @@ export function flushSolarDamage(){
         const gained = bodyValueEstimate(p);
         state.points += gained;
         state.eaten += 1;
-        showToast(t("toast.eaten")(gained));
+        showToast(t("toast.eaten")(gained), "arrive");
         save();
       }
       p.healthBase = row.health;

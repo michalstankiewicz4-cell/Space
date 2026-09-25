@@ -30,6 +30,7 @@ then read just that range.
 - [Programmable drone](#programmable-drone)
 - [Space station](#space-station)
 - [UI kit (start screen and setup modal)](#ui-kit-start-screen-and-setup-modal)
+- [In-game HUD](#in-game-hud)
 - [Load order and first paint](#load-order-and-first-paint)
 
 ## Body types
@@ -570,7 +571,9 @@ then read just that range.
     (ideally in isolated Node against `dsl.js`/`interpreter.js` directly,
     not a live browser tab, if you don't fully trust a change here).
   - Selection is purely visual (a ring, like ships) and drives the side
-    panel's open/closed state (`ui/dronePanel.js`) — it never touches
+    panel's open/closed state (`ui/dronePanel.js` back then; since v2.2.0
+    the HUD's SELECTED UNIT panel, `ui/hud/unitPanel.js#openDronePanel`/
+    `closeDronePanel`) — it never touches
     `camState`/`ctx.camera`. Keep it that way; RTS-style "select a unit,
     camera stays put" was an explicit requirement.
   - Fuel only refills by proximity-docking near a planet/sun (no passive
@@ -736,7 +739,8 @@ then read just that range.
   back toward the Sun. Selecting it (same
   drone-style pick-priority-before-ships/planets treatment in
   `scene/controls.js`, checked right after the drone) opens a docking panel
-  (`ui/stationPanel.js`, `#stationPanel`) that's read-only for now — fleet
+  (originally its own `#stationPanel`; since v2.2.0 it fills the HUD's
+  PLANET INFO slot, `ui/hud/stationPanel.js`) that's read-only for now — fleet
   count, evolution points, a compact icon+level upgrade summary reusing
   `TREE`'s own icons — plus shortcuts into the *existing* Tech/Fleet
   modals. No new resource economy was introduced; "manage resources" here
@@ -895,14 +899,98 @@ then read just that range.
   stretch with the window. Gotchas: the
   kit's button reset is wrapped in `:where(.uiStage)` on purpose — at
   normal `.uiStage button` specificity its `background:none` beats `.mat`
-  and every material button renders transparent. The game's own `.panel`
-  class (HUD) is unrelated — the kit uses `.uiPanel` to avoid colliding
+  and every material button renders transparent. The old HUD's `.panel`
+  class (removed in v2.2.0) was unrelated — the kit uses `.uiPanel` to avoid colliding
   with it. The start screen is translucent over the live scene, so the
   HUD is hidden while it's open via `body:has(#banner:not(.hidden))` in
   CSS, no JS. `.setupCheckRow` is shared with the dev tools menu, so the
   kit's toggle-switch styling is scoped to `#setupModal`. The in-game HUD
-  itself still uses the old style; `UI-standalone.html` is the mockup for
-  porting it next.
+  was ported onto the same kit in v2.2.0 — see the next section.
+
+- **Start screen extras (v2.2.0)**: live player counters centered on
+  the top bar's rails (`ui/playerCounts.js` — online = this client +
+  `ctx.remotePlayers`, same as the HUD's slot; registered = the public
+  `player_count()` RPC, see docs/security.md; both only refreshed while
+  the start screen is open, "—" until known, hidden in offline mode), a
+  [?] button opening the About window (`ui/about.js`, a `.uiWindow`),
+  and a Graphics tab in Setup holding the ship lab's two sliders, inert
+  for now (setup tabs and panels are matched by `data-tab`, so a new tab
+  is markup + one i18n key, no JS change).
+
+## In-game HUD
+
+- **Ported from `UI-standalone.html` (v2.2.0)** — the mockup's layout 1:1
+  (top bar, left nav, fleet list, selected unit, 3D viewport frame,
+  command bar, planet info, event log, minimap), wired to every feature
+  the old HUD had. `#hud` is a **`.uiScreen`** (css/ui/kit.css): like
+  `.uiBar` but in both axes — the whole window in design pixels (never
+  less than 1536x1024), so each element anchors to the edge it sits
+  against (css/ui/hud/): left column left, right column right, bottom
+  row bottom, and the viewport, fleet list and event log stretch.
+  Shared top-bar pieces (logo, title, end cap) are classes in
+  css/ui/topBar.css used by both the start screen and the HUD; SVG
+  gradients live in one always-rendered `#uiDefs` block in index.html
+  (a `url(#id)` paint server inside a `display:none` subtree stops
+  rendering). Windows opened from the HUD (Research, Fleet, Intel,
+  Planets, drone script) share `.uiWindow` (css/ui/windows/).
+- **File layout mirrors the UI**: `js/ui/hud/` has one module per HUD
+  panel (topBar, nav, fleetList, unitPanel, infoPanel + planetPanel/
+  stationPanel, eventLog, connectionStatus, minimap, commandBar,
+  devTools) plus `hud.js`, the HUD's only entry points for main.js —
+  `initHudShell()` (before the scene), `initHudWorld()` (after it) and
+  `updateHud(dt)` (every frame; runs the ~0.1s/0.4s refresh timers).
+  `js/ui/windows/` is the same for the windows (`windows.js#
+  initWindows/refreshWindows` + research, fleet, players, droneScript).
+  CSS mirrors it one file per component in `css/ui/hud/` and
+  `css/ui/windows/`, each `@import`ed from css/style.css in cascade
+  order. `showToast()` lives in `ui/hud/eventLog.js` (it only feeds the
+  event log now); a new panel goes in as its own module + CSS file,
+  wired through hud.js.
+- **The 3D view renders into the viewport rect only**
+  (`scene/viewRect.js`): the canvas still covers the whole window, but
+  `renderMainView()` clears it black and draws the scene with
+  viewport/scissor set to `#viewport`'s box (the whole window while the
+  start screen is open, so the scene still shows behind it), keeping
+  `camera.aspect` in sync. Picking (`scene/picking.js`) and
+  `controls.js#screenPos` use the same rect; presses/scrolls/hover
+  outside it are ignored (the gaps between panels are still canvas).
+  Miniatures (`scene/unitThumb.js`, `scene/infoThumb.js`) and the ship
+  cam render into their own elements' boxes via `renderIntoElement()`.
+  **HUD panels have no fill** (`#hud .uiPanel::before{background:none}`)
+  because those miniatures are drawn on the canvas *underneath* the
+  panels — a 90% fill made them look nearly black (found by testing,
+  not an obvious one). Miniatures also get a "studio" PointLight at the
+  camera, permanently in the scene with only its intensity toggled per
+  pass (adding/removing a light would recompile every shader), and a
+  raised near plane so station struts between camera and ship get
+  clipped.
+- **Where every old HUD feature went** (so nothing got lost): telemetry
+  -> the top bar's four slots; players list -> INTEL window; Wiki/legend
+  -> PLANETS window; Tech -> RESEARCH window (also the station's Tech
+  button); Fleet window -> FLEET nav + station's Fleet button (plus the
+  always-visible FLEET LIST panel, same click behavior); Setup ->
+  SETTINGS; camera Base/System toggle -> top-center of the viewport; Dev
+  Tools -> wrench in the viewport's bottom-right; ship cam -> the
+  viewport's top-right, toggled by the fleet-list card or the CAM button
+  in SELECTED UNIT; drone panel -> SELECTED UNIT in drone mode
+  (Start/Stop/Script buttons, `ui/windows/droneScript.js` keeps its old open/close
+  API on top of `ui/hud/unitPanel.js`); station and planet panels -> the
+  shared PLANET INFO slot (`ui/hud/infoPanel.js`, owner-tracked so a late
+  "close planet" can't blank the station); toasts -> EVENT LOG
+  (`showToast(msg, kind)` still the one entry point). BUILD/DIPLOMACY
+  nav, the command bar's orders, the planet's Waypoint/Scan/Colonize and
+  the ship quick buttons are deliberately inert ("Coming soon"), as are
+  the top bar's time controls (multiplayer can't pause).
+- **Minimap** (`ui/hud/minimap.js`) is schematic, not to scale: 9 evenly
+  spaced rings, each body on its own ring at its real angle; the comet
+  and ships are mapped piecewise-linearly between rings. A click goes
+  through `scene/controls.js#clickPlanet`/`clickStation` — the exact
+  code path of a click in the 3D view (course order if ships are
+  selected, otherwise select; shift toggles multi-select).
+- **SELECTED UNIT** (`ui/hud/unitPanel.js`) watches selection instead of
+  being told about it: `updateUnitPanel()` runs every frame but only
+  touches the DOM when *which* unit is shown changes (drone > single
+  ship > group > empty), plus a forced stats refresh every ~0.4s.
 
 ## Load order and first paint
 

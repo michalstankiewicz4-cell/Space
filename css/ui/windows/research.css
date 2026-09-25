@@ -1,0 +1,24 @@
+/* Research window: the upgrade tree (ui/windows/research.js). */
+#techModalBox{ width:660px; }
+#dock{ display:flex; flex-wrap:wrap; gap:10px; padding:2px; }
+.node{
+  width:140px; padding:10px 12px 11px; cursor:pointer; user-select:none;
+  border:1.5px solid #1d36a0; border-radius:8px;
+  background:linear-gradient(180deg,#040a26,#01030f);
+  transition:border-color .15s, box-shadow .15s, transform .12s;
+}
+.node:hover{ border-color:#f5bd5c; box-shadow:0 0 8px rgb(245 189 92 / .45); transform:translateY(-2px); }
+.node:active{ transform:none; }
+.node.disabled{ opacity:.45; cursor:not-allowed; }
+.node.disabled:hover{ border-color:#1d36a0; box-shadow:none; transform:none; }
+.node .icon{ font-size:20px; line-height:1; }
+.node .name{ font-family:var(--uiFontLabel); font-size:15px; letter-spacing:.3px; margin:7px 0 1px; color:#fff; }
+.node .lvl{ font-size:13px; color:var(--uiText2); }
+.node .cost{ font-family:var(--uiFontLabel); font-size:15px; margin-top:6px; color:#ffd98f; }
+.node.disabled .cost{ color:#7f8fd6; }
+.node .bar{ height:6px; margin-top:7px; background:#0b1a5c; border-radius:3px; overflow:hidden; }
+.node .bar i{ position:static; display:block; height:100%; border-radius:3px;
+  background:linear-gradient(180deg,#ffda92,#f8bb56 55%,#d38b37); }
+.node.node-reset{ border-color:#a83a48; }
+.node.node-reset:hover{ border-color:#f08995; box-shadow:0 0 8px rgb(224 75 80 / .5); }
+.node.node-reset .name, .node.node-reset .icon{ color:#ff8a8d; }

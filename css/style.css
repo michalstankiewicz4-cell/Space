@@ -4,59 +4,56 @@
    by js/versionCheck.js#MODULE_FILES instead, same as JS imports). */
 @import url("fonts.css");
 @import url("ui/kit.css");
+@import url("ui/topBar.css");
 @import url("ui/startScreen.css");
 @import url("ui/setupModal.css");
+@import url("ui/hud/hud.css");
+@import url("ui/hud/topBar.css");
+@import url("ui/hud/nav.css");
+@import url("ui/hud/fleetList.css");
+@import url("ui/hud/unitPanel.css");
+@import url("ui/hud/viewport.css");
+@import url("ui/hud/commandBar.css");
+@import url("ui/hud/infoPanel.css");
+@import url("ui/hud/eventLog.css");
+@import url("ui/hud/minimap.css");
+@import url("ui/windows/window.css");
+@import url("ui/windows/research.css");
+@import url("ui/windows/fleet.css");
+@import url("ui/windows/players.css");
+@import url("ui/windows/planets.css");
+@import url("ui/windows/droneScript.css");
+@import url("ui/windows/about.css");
 
+/* Global base + the few overlays that live outside the UI kit's scaled
+   screens (they follow the mouse or cover the whole window). */
 :root{
   --void: #05060a;
-  --panel: rgba(12,18,32,0.82);
-  --panel-edge: rgba(79,227,198,0.35);
-  --teal: #4fe3c6;
-  --ember: #ff7a45;
-  --ice: #4fa8ff;
-  --ink: #e8ecf3;
-  --ink-dim: #8a93a8;
-  --danger: #ff4f81;
-  --font-head: 'Space Grotesk', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
-}
-@media (prefers-color-scheme: light){
-  :root:not([data-theme="dark"]){
-    --ink: #eef1f6;
-  }
+  --danger: #ff6b6e;
 }
 *{ box-sizing: border-box; }
 html,body{
   margin:0; padding:0; width:100%; height:100%; overflow:hidden;
-  background: var(--void);
-  font-family: var(--font-head);
-  color: var(--ink);
+  background: #000;
+  font-family: var(--uiFontBody);
+  color: var(--uiText);
 }
+/* Full-window canvas; the main scene only renders into the HUD's viewport
+   rect (scene/viewRect.js), the rest stays black behind the panels. */
 #stage{ position:fixed; inset:0; }
 canvas{ display:block; touch-action:none; cursor: grab; }
 
-/* Themed scrollbar for scrollable UI (modals, drone log, admin panel, ...) — Firefox */
-*{ scrollbar-width: thin; scrollbar-color: rgba(79,227,198,0.55) rgba(255,255,255,0.05); }
+/* Themed scrollbar for scrollable UI (fleet list, event log, windows) — Firefox */
+*{ scrollbar-width: thin; scrollbar-color: #3c55d8 rgb(255 255 255 / .04); }
 /* Themed scrollbar — Chromium/WebKit */
 *::-webkit-scrollbar{ width: 10px; height: 10px; }
-*::-webkit-scrollbar-track{ background: rgba(255,255,255,0.05); }
+*::-webkit-scrollbar-track{ background: rgb(255 255 255 / .04); }
 *::-webkit-scrollbar-thumb{
-  background-color: rgba(79,227,198,0.55); border-radius: 6px;
+  background-color: #3c55d8; border-radius: 6px;
   border: 2px solid transparent; background-clip: padding-box;
 }
-*::-webkit-scrollbar-thumb:hover{ background-color: rgba(79,227,198,0.85); }
+*::-webkit-scrollbar-thumb:hover{ background-color: #6f86ff; }
 *::-webkit-scrollbar-corner{ background: transparent; }
-
-.hud{
-  position:fixed; z-index:5; pointer-events:none;
-}
-.panel{
-  background: var(--panel);
-  border: 1px solid var(--panel-edge);
-  backdrop-filter: blur(6px);
-  clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
-  box-shadow: 0 0 24px rgba(79,227,198,0.06), inset 0 0 20px rgba(79,227,198,0.04);
-}
 
 /* One generic "is this hidden" rule instead of ~15 separate `#id.hidden{
    display:none; }` rules (one per panel/overlay), each of which had to be
@@ -64,387 +61,40 @@ canvas{ display:block; touch-action:none; cursor: grab; }
    #dronePanel's was missing for a long time, which meant the class was
    toggled correctly by JS the whole time but visually did nothing (see
    docs/architecture.md's drone-panel bullets). `!important` is deliberate, not
-   incidental: several base rules this overrides (#legend, #banner,
-   #outdatedOverlay, .modal) set their own `display` directly, at higher
-   specificity than a plain `.hidden` class alone could beat — `!important`
-   sidesteps that comparison entirely instead of requiring every future
-   hideable element to remember to write `#itsOwnId.hidden{...}` just to
-   out-specificity its own base rule. */
+   incidental: several base rules this overrides (#banner, #outdatedOverlay,
+   .uiWindow, the HUD's absolutely-positioned children) set their own
+   `display` directly, at higher specificity than a plain `.hidden` class
+   alone could beat — `!important` sidesteps that comparison entirely
+   instead of requiring every future hideable element to remember to write
+   `#itsOwnId.hidden{...}` just to out-specificity its own base rule. */
 .hidden{ display:none !important; }
 
-#telemetry{
-  top: 18px; left: 18px;
-  padding: 14px 20px 12px 18px;
-  min-width: 190px;
-}
-#telemetry .row{
-  display:flex; justify-content:space-between; align-items:baseline;
-  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.03em;
-  color: var(--ink-dim); margin: 3px 0;
-  gap: 18px;
-}
-#telemetry .row b{
-  color: var(--teal); font-size: 15px; font-weight:600;
-}
-#telemetry .title{
-  font-family: var(--font-head); font-weight:700; font-size: 13px;
-  letter-spacing: 0.08em; color: var(--ink);
-}
-#telemetry .title span{ color: var(--teal); }
-
-.panelTitleBar{
-  display:flex; align-items:center; justify-content:space-between; gap: 10px;
-  margin-bottom: 8px; border-bottom: 1px solid rgba(79,227,198,0.2); padding-bottom: 6px;
-}
-.collapseBtn{
-  pointer-events:auto; flex:none;
-  background: rgba(255,255,255,0.05); border: 1px solid var(--panel-edge); color: var(--ink-dim);
-  font-size: 16px; line-height:1; cursor:pointer;
-  width: 26px; height: 26px; padding:0;
-  display:flex; align-items:center; justify-content:center;
-  border-radius: 3px;
-}
-.collapseBtn:hover{ color: var(--ink); border-color: var(--teal); }
-.panel.collapsed .panelBody{ display:none; }
-
-#playersPanel{
-  top: 18px; right: 18px;
-  padding: 12px 16px 10px;
-  min-width: 190px; max-width: 220px;
-  pointer-events:auto;
-}
-#playersPanel .title{
-  font-family: var(--font-head); font-weight:700; font-size: 12px;
-  letter-spacing: 0.08em; color: var(--ink);
-}
-#playersPanel ul{ list-style:none; margin:0; padding:0; }
-#playersPanel li{
-  display:flex; align-items:center; gap:7px;
-  font-family: var(--font-mono); font-size: 12px; color: var(--ink-dim);
-  margin: 5px 0;
-}
-#playersPanel li .dot{ width:8px; height:8px; border-radius:50%; flex:none; }
-#playersPanel li .name{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-#playersPanel li b{ color: var(--teal); font-weight:600; }
-#playersPanel li.me .name{ color: var(--ink); font-weight:600; }
-
-#dronePanel{
-  top: 50%; right: 18px; transform: translateY(-50%);
-  padding: 12px 16px 14px;
-  width: 200px;
-  /* Same recipe as #shipCam: the panel itself doesn't catch clicks, only
-     its actual controls do (see the pointer-events:auto overrides below).
-     Unlike shipCam, this panel's whole body used to be clickable, which
-     meant a mousedown/mouseup pair that drifted a couple pixels near the
-     close button could land on the panel background instead and never
-     reach the button at all - shipCam's close button never had that
-     competing surface to begin with, which is why it "just worked". */
-  pointer-events:none;
-  /* .panel's backdrop-filter blur would also smear the live 3D thumbnail
-     rendered behind #droneThumbWrap (it's the same WebGL canvas, just a
-     second viewport) into a hazy blob — the panel's own background is
-     already opaque enough (82%) to stay readable without it. */
-  backdrop-filter: none;
-}
-#droneCloseBtn, #droneScriptBtn, #droneRunBtn, #droneStopBtn{ pointer-events:auto; }
-
-/* Mirrors #dronePanel's own recipe exactly (left side instead of right, so
-   both could in principle be open at once without overlapping — selecting
-   one already closes the other via scene/controls.js#clearSelection, but
-   there's no need to depend on that for the layout to hold up). */
-#stationPanel{
-  top: 50%; left: 18px; transform: translateY(-50%);
-  padding: 12px 16px 14px;
-  width: 200px;
-  pointer-events:none;
-}
-#stationCloseBtn, #stationTechBtn, #stationFleetBtn{ pointer-events:auto; }
-#stationPanel .row{
-  display:flex; justify-content:space-between; align-items:baseline;
-  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.03em;
-  color: var(--ink-dim); margin: 5px 0; gap: 12px;
-}
-#stationPanel .row b{ color: var(--teal); font-weight:600; }
-#stationPanelButtons{ display:flex; gap:8px; margin-top: 10px; }
-#stationPanelButtons button{
-  flex:1;
-  font-family: var(--font-mono); font-size: 12px !important; letter-spacing:0.03em;
-  background: rgba(255,255,255,0.06) !important; color: var(--ink) !important;
-  border: 1px solid var(--panel-edge) !important; cursor:pointer;
-  padding: 9px 0 !important;
-  clip-path: polygon(0 6px, 6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
-}
-#stationPanelButtons button:hover{ border-color: var(--teal) !important; filter:none !important; }
-/* The actual bug behind every "won't close" report used to live right here:
-   JS always correctly toggled this class (openDronePanel/closeDronePanel in
-   ui/dronePanel.js), but no rule ever mapped it to display:none, so the
-   panel was visually on-screen 100% of the time regardless of selection
-   state — every earlier fix (selection reliability, the close button
-   itself, spawn separation) was real but could never have fixed this,
-   since hiding it was never wired up in CSS to begin with. Now covered by
-   the single generic `.hidden` rule near the top of this file instead of a
-   rule that had to be added per element (see its own comment for why). */
-#dronePanel .row{
-  display:flex; justify-content:space-between; align-items:baseline;
-  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.03em;
-  color: var(--ink-dim); margin: 5px 0; gap: 12px;
-}
-#dronePanel .row b{ color: var(--teal); font-weight:600; }
-#droneThumbWrap{
-  width: 100%; height: 110px; margin-bottom: 10px;
-  /* This box only ever shows a placeholder color for a single frame before
-     the live WebGL viewport (see drone/droneThumb.js) is drawn into this
-     exact screen rect on top of it every frame after — a strong tint here
-     was permanently darkening/muddying that render, on top of the panel's
-     own blur (already fixed separately), reading as "behind tinted glass". */
-  background: rgba(0,0,0,0.15); border: 1px solid var(--panel-edge);
-}
-#droneScriptBtn{
-  width:100%; margin-top: 10px; padding: 9px 0 !important;
-  font-family: var(--font-mono); font-size: 12px !important; letter-spacing:0.03em;
-  background: rgba(255,255,255,0.06) !important; color: var(--ink) !important;
-  border: 1px solid var(--panel-edge) !important; cursor:pointer;
-  clip-path: polygon(0 6px, 6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
-}
-#droneScriptBtn:hover{ border-color: var(--teal) !important; filter:none !important; }
-
-/* Shares #dronePanel's exact right-side slot — never shown at the same
-   time (see scene/controls.js's deselectAllPlanets/clearSelection, called
-   whenever the drone/station get selected and vice versa). */
-#planetPanel{
-  top: 50%; right: 18px; transform: translateY(-50%);
-  padding: 12px 16px 14px;
-  width: 200px;
-  pointer-events:none;
-  backdrop-filter: none; /* same reason as #dronePanel: don't blur the live thumbnail behind #planetThumbWrap */
-}
-#planetCloseBtn{ pointer-events:auto; }
-#planetPanel .row{
-  display:flex; justify-content:space-between; align-items:baseline;
-  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.03em;
-  color: var(--ink-dim); margin: 5px 0; gap: 12px;
-}
-#planetPanel .row b{ color: var(--teal); font-weight:600; }
-#planetThumbWrap{
-  width: 100%; height: 110px; margin-bottom: 10px;
-  background: rgba(0,0,0,0.15); border: 1px solid var(--panel-edge);
-}
-
-/* Dev Tools: small corner button (bottom-right) + its popup menu. Anchored
-   above #shipCam's own reserved rect (bottom:18px, 150px tall) so the two
-   never overlap regardless of whether the ship cam PIP is active. */
-#devToolsBtn{
-  position:fixed; z-index:6; right: 18px; bottom: 186px;
-  width: 36px; height: 36px;
-  display:flex; align-items:center; justify-content:center;
-  pointer-events:auto; cursor:pointer;
-  background: var(--panel); border: 1px solid var(--panel-edge); color: var(--ink-dim);
-  font-size: 16px; padding:0;
-  clip-path: polygon(0 6px, 6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
-}
-#devToolsBtn:hover{ color: var(--ink); border-color: var(--teal); }
-#devToolsMenu{
-  position:fixed; z-index:6; right: 18px; bottom: 230px;
-  background: var(--panel); border: 1px solid var(--panel-edge);
-  padding: 8px 14px; pointer-events:auto;
-  clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
-}
-#devToolsMenu .setupCheckRow{ margin: 8px 0; white-space:nowrap; }
-
-#droneScriptModalBox{ width: 480px; max-height: 82vh; overflow:auto; }
-#droneScriptHeaderBtns{ display:flex; align-items:center; gap: 6px; }
-#droneScriptHelpBtn{
-  background: rgba(255,255,255,0.06) !important; color: var(--ink-dim) !important;
-  border: 1px solid var(--panel-edge) !important; cursor:pointer;
-  width: 24px; height: 24px; padding:0 !important; font-size: 13px !important;
-  font-family: var(--font-head); font-weight:700; border-radius: 3px;
-}
-#droneScriptHelpBtn:hover{ color: var(--ink) !important; border-color: var(--teal) !important; filter:none !important; }
-#droneScriptHelpBtn.active{ color: var(--teal) !important; border-color: var(--teal) !important; }
-
-#droneScriptHelp{
-  background: rgba(255,255,255,0.03); border: 1px solid var(--panel-edge);
-  padding: 10px 12px; margin-bottom: 12px;
-  max-height: 260px; overflow:auto;
-}
-.droneHelpTitle{
-  font-family: var(--font-head); font-weight:700; font-size: 11px;
-  letter-spacing: 0.06em; text-transform: uppercase; color: var(--teal);
-  margin: 10px 0 5px;
-}
-.droneHelpTitle:first-child{ margin-top:0; }
-.droneHelpTable{ width:100%; border-collapse: collapse; }
-.droneHelpTable td{
-  font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-dim);
-  padding: 2px 0; vertical-align: top;
-}
-.droneHelpTable td:first-child{ color: var(--ink); white-space:nowrap; padding-right: 10px; }
-.droneHelpText{
-  font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-dim); line-height:1.6;
-}
-#droneHelpExample{
-  font-family: var(--font-mono); font-size: 11.5px; color: var(--ink);
-  background: rgba(0,0,0,0.35); padding: 8px 10px; margin: 4px 0 0;
-  white-space: pre-wrap; overflow-x:auto;
-}
-#droneScriptInput{
-  width: 100%; height: 220px; resize: vertical;
-  background: rgba(0,0,0,0.4); border: 1px solid var(--panel-edge); color: var(--ink);
-  font-family: var(--font-mono); font-size: 12.5px; line-height:1.5;
-  padding: 10px; box-sizing:border-box;
-}
-/* Shared by the script modal's own Run/Stop and the side panel's shortcut
-   pair (#droneRunButtons) - the side panel's are a plain, always-visible
-   way to start/stop the last-saved script without opening the editor. */
-#droneScriptButtons, #droneRunButtons{ display:flex; gap:8px; margin: 10px 0; }
-#droneScriptButtons button, #droneRunButtons button{
-  flex:1;
-  font-family: var(--font-head); font-weight:600; font-size: 13px;
-  padding: 9px 0; cursor:pointer; border:none;
-  clip-path: polygon(0 6px, 6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
-}
-.droneRunBtn{ background: var(--teal); color: #04211c; }
-.droneRunBtn:hover{ filter: brightness(1.08); }
-.droneStopBtn{ background: rgba(255,79,129,0.18); color: var(--danger); border: 1px solid rgba(255,79,129,0.4) !important; }
-.droneStopBtn:hover{ background: rgba(255,79,129,0.28); }
-#droneScriptError{
-  font-family: var(--font-mono); font-size: 12px; color: var(--danger);
-  background: rgba(255,79,129,0.1); border: 1px solid rgba(255,79,129,0.3);
-  padding: 8px 10px; margin-bottom: 8px;
-}
-#droneScriptLog{
-  font-family: var(--font-mono); font-size: 11px; color: var(--ink-dim);
-  max-height: 90px; overflow:auto; white-space:pre-wrap;
-  border-top: 1px solid rgba(79,227,198,0.15); padding-top: 6px;
-}
-
-#dock{
-  display:flex; flex-wrap:wrap; gap:12px; justify-content:center;
-  max-width: 560px;
-}
-.node{
-  background: var(--panel);
-  border: 1px solid var(--panel-edge);
-  clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
-  width: 128px;
-  padding: 10px 12px 11px;
-  cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
-  user-select:none;
-}
-.node:hover{ transform: translateY(-3px); box-shadow: 0 6px 20px rgba(79,227,198,0.15); }
-.node:active{ transform: translateY(0px); }
-.node.disabled{ opacity: 0.45; cursor: not-allowed; }
-.node.disabled:hover{ transform:none; box-shadow:none; }
-.node .icon{ font-size: 18px; line-height:1; }
-.node .name{
-  font-size: 11px; font-weight:600; letter-spacing:0.02em;
-  margin: 6px 0 2px; color: var(--ink);
-}
-.node .lvl{
-  font-family: var(--font-mono); font-size: 10px; color: var(--ink-dim);
-}
-.node .cost{
-  font-family: var(--font-mono); font-size: 12px; margin-top: 6px;
-  color: var(--teal); font-weight:600;
-}
-.node.disabled .cost{ color: var(--ink-dim); }
-.node .bar{
-  height: 3px; background: rgba(255,255,255,0.08); margin-top:7px; overflow:hidden;
-}
-.node .bar i{
-  display:block; height:100%; background: var(--teal);
-}
-.node.node-reset{
-  border-color: rgba(255,122,69,0.4);
-  background: rgba(32,14,10,0.82);
-}
-.node.node-reset:hover{ box-shadow: 0 6px 20px rgba(255,122,69,0.2); }
-.node.node-reset .name{ color: var(--ember); }
-.node.node-reset .icon{ color: var(--ember); }
-.node.node-reset .lvl{ color: var(--ink-dim); }
-
-#hudButtonsRow{
-  left: 18px; bottom: 18px;
-  display:flex; gap:8px;
-  pointer-events:auto;
-}
-#hudButtonsRow button{
-  cursor:pointer;
-  background: var(--panel); border: 1px solid var(--panel-edge); color: var(--ink-dim);
-  font-family: var(--font-mono); font-size: 11px; letter-spacing:0.03em;
-  padding: 8px 14px;
-  clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
-}
-#hudButtonsRow button:hover{ color: var(--ink); border-color: var(--teal); }
-
-#legend{
-  position:fixed; z-index:5; left: 18px; bottom: 58px;
-  font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-dim);
-  display:flex; flex-direction:column; gap:4px;
-  pointer-events:none;
-}
-#legend .lg{ display:flex; align-items:center; gap:7px; }
-#legend .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; flex:none; }
-
+/* Hover tooltip over a planet/black hole (scene/tooltip.js). */
 #bodyTooltip{
   position:fixed; z-index:6; pointer-events:none;
-  padding: 9px 14px 10px;
-  min-width: 150px;
+  padding: 8px 14px 9px; min-width: 160px;
+  background: rgb(0 2 12 / .92); border: 1.5px solid var(--uiFrame); border-radius: 8px;
+  box-shadow: 0 0 8px var(--uiFrameGlow);
 }
 #bodyTooltip .ttTitle{
-  font-family: var(--font-head); font-weight:700; font-size: 12.5px;
-  letter-spacing: 0.03em; color: var(--ink); margin-bottom: 6px;
+  font-family: var(--uiFontLabel); font-size: 15px; letter-spacing: .3px;
+  color: #ffd98f; margin-bottom: 4px;
 }
 #bodyTooltip .ttRow{
   display:flex; justify-content:space-between; align-items:baseline;
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.03em;
-  color: var(--ink-dim); margin: 2px 0; gap: 16px;
+  font-size: 13.5px; color: #c7d0ff; margin: 1px 0; gap: 16px;
 }
-#bodyTooltip .ttRow b{ color: var(--teal); font-weight:600; }
+#bodyTooltip .ttRow b{ color: #fff; font-weight:500; }
 
-#connectionStatus{
-  position:fixed; z-index:8; top: 18px; left:50%; transform: translateX(-50%);
-  background: rgba(32,20,10,0.85); border: 1px solid var(--ember);
-  color: var(--ember); font-family: var(--font-mono); font-size: 11px;
-  letter-spacing: 0.03em; padding: 6px 14px;
-  clip-path: polygon(0 6px, 6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
-  pointer-events:none;
-}
-#cameraModeToggle{
-  top: 60px; left:50%; transform: translateX(-50%);
-  display:flex; gap:8px; pointer-events:auto;
-}
-#cameraModeToggle button{
-  cursor:pointer;
-  background: var(--panel); border: 1px solid var(--panel-edge); color: var(--ink-dim);
-  font-family: var(--font-mono); font-size: 11px; letter-spacing:0.03em;
-  padding: 7px 14px;
-  clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
-}
-#cameraModeToggle button:hover{ color: var(--ink); border-color: var(--teal); }
-#cameraModeToggle button.camModeActive{
-  background: rgba(79,227,198,0.18); color: var(--ink); border-color: var(--teal);
-}
-#toast{
-  position:fixed; z-index:8; top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  text-align:center;
-  font-family: var(--font-mono); font-size: 12px; color: var(--teal);
-  opacity:0; transition: opacity 0.4s ease;
-  pointer-events:none;
-}
-#toast.show{ opacity:1; }
-
+/* Drag-select rectangle and the course-order pulse (scene/controls.js). */
 #selectBox{
-  position:fixed; z-index:7; border: 1px solid rgba(79,227,198,0.85);
-  background: rgba(79,227,198,0.12);
+  position:fixed; z-index:7; border: 1px solid rgb(245 189 92 / .9);
+  background: rgb(245 189 92 / .1);
   display:none; pointer-events:none;
 }
-
 #cmdFlash{
   position:fixed; z-index:7; width:34px; height:34px; margin:-17px 0 0 -17px;
-  border: 2px solid var(--teal); border-radius:50%;
+  border: 2px solid #f5bd5c; border-radius:50%;
   pointer-events:none; opacity:0;
   transform: scale(0.4);
 }
@@ -456,118 +106,34 @@ canvas{ display:block; touch-action:none; cursor: grab; }
   100%{ opacity:0; transform:scale(1.6); }
 }
 
-/* Blocks all interaction, above every other overlay (setup/tech/fleet
-   modals included) — deliberately not dismissible except by reloading. */
+/* Blocks all interaction, above every other overlay (windows included) —
+   deliberately not dismissible except by reloading. */
 #outdatedOverlay{
   position:fixed; inset:0; z-index:100; display:flex;
   align-items:center; justify-content:center;
-  background: rgba(2,4,8,0.9);
+  background: rgb(0 0 8 / .9);
 }
 #outdatedBox{
-  max-width: 360px; text-align:center;
-  background: #0c1220; border: 1px solid var(--danger);
+  max-width: 380px; text-align:center;
+  background: rgb(0 2 12 / .95); border: 1.5px solid #d05b69; border-radius: 12px;
+  box-shadow: 0 0 10px rgb(208 91 105 / .45);
   padding: 26px 24px;
-  clip-path: polygon(0 10px, 10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
 }
 #outdatedTitle{
-  font-family: var(--font-head); font-weight:700; font-size: 17px;
+  font-family: var(--uiFontLabel); font-size: 21px; letter-spacing: .4px;
   color: var(--danger); margin-bottom: 12px;
 }
 #outdatedText{
-  font-family: var(--font-mono); font-size: 13px; color: var(--ink-dim);
-  line-height:1.6; margin: 0 0 20px;
+  font-size: 16px; color: #c7d0ff;
+  line-height:1.5; margin: 0 0 20px;
 }
 #outdatedReloadBtn{
-  font-family: var(--font-head); font-weight:600; font-size: 14px;
-  background: var(--danger); color: #240613; border:none;
-  padding: 12px 28px; cursor:pointer;
-  clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+  font-family: var(--uiFontLabel); font-weight:600; font-size: 17px; letter-spacing: .5px;
+  background: linear-gradient(180deg,#f08995,#d05b69 55%,#a83a48); color: #2a0508; border:none;
+  padding: 11px 28px; cursor:pointer; border-radius: 6px 20px 20px 6px;
 }
 #outdatedReloadBtn:hover{ filter: brightness(1.1); }
 #outdatedHint{
-  font-family: var(--font-mono); font-size: 11px; color: var(--ink-dim);
+  font-size: 13px; color: var(--uiText2);
   margin-top: 10px;
-}
-
-/* Shared centered-modal chrome: setup/tech/fleet all use this same box */
-.modal{
-  position:fixed; inset:0; z-index:10; display:flex;
-  align-items:center; justify-content:center;
-  background: rgba(2,4,8,0.65);
-}
-.modalBox{
-  max-width: 92vw; max-height: 86vh; overflow:auto;
-  background: #0c1220; border: 1px solid var(--panel-edge);
-  padding: 18px 20px 22px;
-  clip-path: polygon(0 10px, 10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
-  text-align:left;
-}
-.modalHeader{
-  display:flex; justify-content:space-between; align-items:center;
-  gap: 20px; margin-bottom: 16px;
-}
-.modalTitle{
-  font-family: var(--font-head); font-weight:700; font-size: 15px;
-  letter-spacing: 0.04em; color: var(--ink);
-}
-.modalCloseBtn{
-  background:none !important; border:none !important; color: var(--ink-dim) !important;
-  font-size: 16px !important; padding: 0 4px !important; cursor:pointer;
-}
-.modalCloseBtn:hover{ color: var(--ink) !important; filter:none !important; }
-
-#techModalBox{ width: 620px; }
-#fleetModalBox{ width: 300px; }
-
-.setupCheckRow{
-  display:flex; align-items:center; gap:9px; cursor:pointer;
-  font-family: var(--font-mono); font-size: 12.5px; color: var(--ink);
-  margin: 12px 0;
-}
-.setupCheckRow input{ accent-color: var(--teal); width:15px; height:15px; cursor:pointer; }
-
-#fleetListEl{
-  list-style:none; margin:0; padding:0;
-  max-height: 50vh; overflow:auto; min-width: 200px;
-}
-#fleetListEl li{
-  display:flex; align-items:center; gap:8px;
-  font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-dim);
-  padding: 9px 10px; cursor:pointer; border: 1px solid transparent;
-}
-#fleetListEl li:hover{ color: var(--ink); border-color: var(--panel-edge); }
-#fleetListEl li.active{ color: var(--ink); border-color: var(--teal); background: rgba(79,227,198,0.1); }
-
-#shipCam{
-  position:fixed; z-index:6; right: 18px; bottom: 18px;
-  width: 220px; height: 150px;
-  border: 1px solid var(--teal);
-  box-shadow: 0 0 18px rgba(79,227,198,0.25);
-  pointer-events:none;
-}
-#shipCamLabel{
-  position:absolute; top:0; left:0;
-  background: rgba(2,4,8,0.75); color: var(--teal);
-  font-family: var(--font-mono); font-size: 10px; letter-spacing:0.05em;
-  padding: 3px 7px;
-}
-#shipCamCloseBtn{
-  position:absolute; top:0; right:0;
-  pointer-events:auto; cursor:pointer;
-  background: rgba(2,4,8,0.75) !important; border:none !important; color: var(--ink-dim) !important;
-  font-size: 12px !important; padding: 3px 7px !important;
-}
-#shipCamCloseBtn:hover{ color: var(--ink) !important; filter:none !important; }
-
-@media (max-width: 720px){
-  #playersPanel{ display:none; }
-  .node{ width: 96px; padding: 8px 9px 9px; }
-  #legend{ display:none; }
-  #hudButtonsRow{ display:none; }
-  #shipCam{ display:none; }
-  #dronePanel{ display:none; }
-  #stationPanel{ display:none; }
-  #planetPanel{ display:none; }
-  #devToolsBtn{ display:none; }
-  #devToolsMenu{ display:none; }
 }

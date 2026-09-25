@@ -3,15 +3,12 @@ import { removeItem } from "../core/utils.js";
 import { COMET_RESPAWN_DELAY_MS, NET_PLANET_TOPUP_S } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
-import {
-  materializePlanet, requestSpawnComet, spawnCometLocalOnly,
-  despawnLocalOnly, applyHealthVisual, destroyPlanet, pendingSpawnCount
-} from "../world/bodies.js";
+import { materializePlanet, requestSpawnComet, spawnCometLocalOnly, despawnLocalOnly, applyHealthVisual, destroyPlanet, pendingSpawnCount } from "../world/bodies.js";
 import { bodyValueEstimate } from "../world/bodyParams.js";
-import { refreshDock } from "../ui/dock.js";
+import { refreshResearch } from "../ui/windows/research.js";
 import { triggerBreakup } from "../fx/breakup.js";
 import { state, save } from "../core/gameState.js";
-import { showToast } from "../ui/hud.js";
+import { showToast } from "../ui/hud/eventLog.js";
 import { createStalenessGate } from "./stewardFallback.js";
 import { t } from "../i18n.js";
 
@@ -63,7 +60,7 @@ export function onBodyDeleted(oldRow){
     // only to the client that got killed:true from bite_body (see flushDamage)
     triggerBreakup(obj);
     destroyPlanet(obj);
-    refreshDock();
+    refreshResearch();
   } else {
     // just flew out of the field - no points
     despawnLocalOnly(obj);
@@ -98,7 +95,7 @@ export function flushDamage(){
           const gained = bodyValueEstimate(p);
           state.points += gained;
           state.eaten += 1;
-          showToast(t("toast.eaten")(gained));
+          showToast(t("toast.eaten")(gained), "arrive");
           save();
         } else {
           p.health = Math.min(p.health, row.health);

@@ -1,20 +1,25 @@
-import { isTechModalOpen, closeTechModal } from "./panels.js";
-import { isFleetModalOpen, closeFleetModal } from "./fleet.js";
+import { isTechModalOpen, closeTechModal, isLegendOpen, closeLegend, isPlayersModalOpen, closePlayersModal } from "./windows/windows.js";
+import { isFleetModalOpen, closeFleetModal } from "./windows/fleet.js";
 import { isShipCamActive, clearShipCamTarget } from "../scene/shipcam.js";
-import { isDroneScriptModalOpen, closeDroneScriptModal, isDronePanelOpen, closeDronePanel } from "./dronePanel.js";
-import { isStationPanelOpen, closeStationPanel } from "./stationPanel.js";
-import { isPlanetPanelOpen, closePlanetPanel } from "./planetPanel.js";
+import { isDroneScriptModalOpen, closeDroneScriptModal } from "./windows/droneScript.js";
+import { isDronePanelOpen, closeDronePanel } from "./hud/unitPanel.js";
+import { isStationPanelOpen, closeStationPanel } from "./hud/stationPanel.js";
+import { isPlanetPanelOpen, closePlanetPanel } from "./hud/planetPanel.js";
 import { isSetupModalOpen, closeSetupModal } from "./setupModal.js";
 import { toggleBanner } from "./banner.js";
+import { isAboutOpen, closeAbout } from "./about.js";
 
-// Escape closes whichever overlay is topmost first (drone script, then
-// tech/fleet modals, then setup, then the drone/station/planet panel or
+// Escape closes whichever overlay is topmost first (drone script, then the
+// HUD windows, then setup, then the drone/station/planet selection or
 // ship cam), and only once nothing else is open does it reopen/close the
 // start screen itself (e.g. to change nickname or language mid-game).
 const ESCAPE_CHAIN = [
   [isDroneScriptModalOpen, closeDroneScriptModal],
   [isTechModalOpen, closeTechModal],
   [isFleetModalOpen, closeFleetModal],
+  [isPlayersModalOpen, closePlayersModal],
+  [isLegendOpen, closeLegend],
+  [isAboutOpen, closeAbout],
   [isSetupModalOpen, closeSetupModal],
   [isDronePanelOpen, closeDronePanel],
   [isStationPanelOpen, closeStationPanel],

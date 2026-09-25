@@ -1,0 +1,40 @@
+/* HUD top bar: the readouts box and the cycle/clock box (ui/hud/topBar.js).
+   The logo/title/end cap shared with the start screen are in ../topBar.css. */
+#resFrame{ left:455px; top:8px; width:658px; height:62px;
+  clip-path:path("M30 0 H658 V20 Q658 31 647 31 H632 V62 H30 C12 62 0 48 0 31 C0 14 12 0 30 0 Z"); }
+#resBox{ left:469px; top:16px; width:618px; height:50px;
+  background:linear-gradient(180deg,#02030a,#000 60%,#03050f);
+  border-radius:22px 14px 14px 22px; }
+#resBox > *{ position:absolute; }
+#resGoldLine{ left:482px; top:66px; width:640px; height:9px; border-radius:5px 0 0 5px; }
+/* Stretches toward the right group on wide windows (left + right anchors). */
+#resGoldBlock{ left:1087px; right:356px; top:40px; height:35px;
+  border-radius:24px 0 9px 0 / 26px 0 9px 0; }
+.res{ top:4px; height:44px; width:136px; }
+.res > *{ position:absolute; }
+.resIcon{ left:0; top:6px; width:26px; height:30px; }
+.resIcon svg{ width:100%; height:100%; }
+.res .rl{ left:32px; top:1px; font-size:17px; color:#c0cbff; white-space:nowrap; }
+.res .rv{ left:32px; top:20px; font-size:22px; font-weight:500; color:#fff; white-space:nowrap; }
+.resSep{ top:6px; width:2px; height:38px; background:linear-gradient(180deg,transparent,#3b4a8a 30%,#3b4a8a 70%,transparent); }
+
+#hudLilac{ right:328px; top:9px; width:50px; height:32px;
+  clip-path:path("M0 32 C9 32 12 24 14 14 C16 4 22 0 32 0 H50 V32 Z"); }
+#hudSdTop{ right:52px; top:9px; width:280px; height:8px; }
+#hudSdBottom{ right:52px; top:67px; width:280px; height:7px; }
+#hudSdBox{ right:56px; top:17px; width:290px; height:50px; background:#000; border-radius:20px 0 0 20px; }
+#hudSdBox > *{ position:absolute; }
+#sdDate{ left:20px; top:6px; font-size:18px; color:#c2cdff; white-space:nowrap; }
+#sdTime{ left:20px; top:29px; font-size:15px; color:#9fb1ff; }
+#speedCtl{ left:164px; top:4px; height:42px; width:126px; }
+#speedCtl > *{ position:absolute; }
+.sBracket{ left:0; top:4px; width:8px; height:34px; border-left:2px solid #5f77f7; border-radius:10px 0 0 10px; }
+.sSep{ top:6px; width:2px; height:30px; background:#2a3c96; }
+.sBtn{ top:8px; height:26px; }
+#btnPause{ left:15px; width:22px; }
+#btnPlay { left:56px; width:22px; }
+#btnFast { left:96px; width:28px; }
+.sBtn svg{ width:100%; height:100%; overflow:visible; }
+.fBlue{ fill:url(#gBlueIcon); } .fGold{ fill:url(#gGoldIcon); }
+.sBtn:not(.on){ opacity:.8; }
+.sBtn.on{ filter:drop-shadow(0 0 4px rgb(255 200 100 / .55)); }

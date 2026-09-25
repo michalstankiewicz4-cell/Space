@@ -1,0 +1,44 @@
+/* HUD 3D viewport frame and what sits in its corners: camera mode toggle,
+   connection status, ship cam, Dev Tools (scene/viewRect.js, ui/hud/devTools.js). */
+/* The scene renders into this rect on the full-window canvas underneath
+   (scene/viewRect.js); the frame itself lets clicks through. */
+#viewport{ left:246px; top:89px; right:334px; bottom:33px; pointer-events:none; }
+#viewport::after{ content:""; position:absolute; inset:-3px; border-radius:10px;
+  border:1px solid #0f1f66; pointer-events:none; }
+#viewport > *{ position:absolute; pointer-events:auto; }
+
+#cameraModeToggle{ left:50%; top:10px; width:232px; height:28px; transform:translateX(-50%); }
+#cameraModeToggle button{ position:absolute; top:0; height:28px; width:112px;
+  font-family:var(--uiFontLabel); font-weight:500; font-size:15.5px; letter-spacing:.3px; color:#0c1440; transition:filter .15s; }
+#camModeBaseBtn{ left:0; border-radius:8px 3px 3px 8px; }
+#camModeSystemBtn{ left:120px; border-radius:3px 8px 8px 3px; }
+#cameraModeToggle button:hover{ filter:brightness(1.12); }
+#cameraModeToggle button.camModeActive{ --c:#f8bb56; --hi:#ffda92; --lo:#d38b37; }
+#cameraModeToggle button:not(.camModeActive){ --c:#5c6ff1; --hi:#8b9bff; --lo:#4155d6; }
+
+#connectionStatus{ left:50%; top:46px; transform:translateX(-50%); white-space:nowrap;
+  padding:5px 14px; border-radius:6px; border:1.5px solid #e04b50; background:rgb(20 2 6 / .88);
+  color:#ff8a8d; font-family:var(--uiFontLabel); font-size:14.5px; letter-spacing:.3px; pointer-events:none; }
+
+/* Ship cam picture-in-picture (scene/shipcam.js renders into this rect). */
+#shipCam{ right:12px; top:12px; width:250px; height:168px; pointer-events:none;
+  border:1.5px solid #f5bd5c; border-radius:6px; box-shadow:0 0 8px rgb(245 189 92 / .45); }
+#shipCamLabel{ position:absolute; left:0; top:0; padding:2px 9px; border-radius:4px 0 7px 0;
+  background:rgb(0 2 12 / .82); color:#ffd98f; font-family:var(--uiFontLabel); font-size:13px; letter-spacing:.4px; }
+#shipCamCloseBtn{ position:absolute; right:4px; top:4px; width:36px; height:22px; font-size:12px; pointer-events:auto; }
+
+/* Dev Tools: small button in the viewport's bottom-right corner + its menu. */
+#devToolsBtn{ right:12px; bottom:12px; width:40px; height:36px; display:flex; align-items:center; justify-content:center; }
+#devToolsBtn svg{ width:22px; height:22px; }
+#devToolsMenu{ right:12px; bottom:56px; padding:10px 14px 4px; border-radius:10px;
+  background:rgb(0 2 12 / .92); border:1.5px solid var(--uiFrame); box-shadow:0 0 8px var(--uiFrameGlow); }
+#devToolsMenu .setupCheckRow{ display:flex; align-items:center; gap:10px; margin:0 0 8px; white-space:nowrap;
+  font-size:15px; color:#c7d0ff; cursor:pointer; }
+#devToolsMenu .setupCheckRow input{ position:absolute; opacity:0; pointer-events:none; }
+#devToolsMenu .chk{ width:40px; height:22px; border-radius:4px 11px 11px 4px; border:1.5px solid #3c55d8;
+  background:#030820; position:relative; flex:none; transition:border-color .15s; }
+#devToolsMenu .chk::after{ content:""; position:absolute; left:3px; top:3px; width:13px; height:13px; border-radius:3px;
+  background:#2a3c96; transition:left .15s, background .15s; }
+#devToolsMenu input:checked + .chk{ border-color:#f5bd5c; }
+#devToolsMenu input:checked + .chk::after{ left:21px; background:linear-gradient(180deg,#ffda92,#f8bb56 55%,#d38b37); }
+#devToolsMenu input:focus-visible + .chk{ box-shadow:0 0 0 2px #6f86ff; }

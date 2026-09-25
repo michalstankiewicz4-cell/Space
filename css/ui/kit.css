@@ -1,6 +1,7 @@
-/* UI kit: shared primitives for the new-style UI (start screen and setup
-   modal so far). Screen-specific layout lives in its own file next to this
-   one (startScreen.css, setupModal.css). */
+/* UI kit: shared primitives for the new-style UI — the start screen, the
+   setup modal, the in-game HUD and its windows. Screen-specific layout
+   lives in its own file next to this one (startScreen.css, setupModal.css,
+   hud/, windows/). */
 :root{
   /* Tileable grain blended into every .mat surface (regenerate with
      tools/grainTexture.html). Preloaded from index.html's <head>. */
@@ -10,6 +11,7 @@
   --uiFrameGlow: rgb(40 80 255 / .45);
   --uiHdText: #96a8ff;
   --uiText: #eef1ff;
+  --uiText2: #93a6ff;
   --uiFontHead: "Antonio", "Arial Narrow", sans-serif;
   --uiFontLabel: "Oswald", "Arial Narrow", sans-serif;
   --uiFontBody: "Roboto Condensed", "Arial Narrow", sans-serif;
@@ -41,11 +43,23 @@
   font-family:var(--uiFontBody); color:var(--uiText);
   pointer-events:none;
 }
-.uiStage > *, .uiBar > *, .uiPanel > *{ position:absolute; }
+/* .uiBar in both axes: the whole window in design pixels (never smaller
+   than 1536x1024), for full-screen layouts like the in-game HUD. Children
+   anchor to any edge (left/right/top/bottom); a pair of opposite anchors
+   stretches that child with the window. */
+.uiScreen{
+  position:fixed; left:0; top:0;
+  width:calc(100% / var(--uiScale)); height:calc(100% / var(--uiScale));
+  transform-origin:top left;
+  transform:scale(var(--uiScale));
+  font-family:var(--uiFontBody); color:var(--uiText);
+  pointer-events:none;
+}
+.uiStage > *, .uiBar > *, .uiScreen > *, .uiPanel > *{ position:absolute; }
 /* :where() keeps this reset at plain-element specificity, so .mat/.oBtn
    backgrounds still win over it. */
-:where(.uiStage, .uiBar) button{ font:inherit; color:inherit; border:0; padding:0; background:none; cursor:pointer; }
-:where(.uiStage, .uiBar) button:disabled{ cursor:default; }
+:where(.uiStage, .uiBar, .uiScreen, .uiWindow) button{ font:inherit; color:inherit; border:0; padding:0; background:none; cursor:pointer; }
+:where(.uiStage, .uiBar, .uiScreen, .uiWindow) button:disabled{ cursor:default; }
 
 /* Material: grain + highlight/shade gradients, color set per variant. */
 .mat{
@@ -62,13 +76,20 @@
   background-blend-mode:soft-light, normal, normal;
   box-shadow: inset 0 1px 1px rgb(255 255 255 / .35), inset 0 -2px 3px rgb(0 0 0 / .28);
 }
-.mat.gold  { --c:#f8bb56; --hi:#ffda92; --lo:#d38b37; }
-.mat.blue  { --c:#5f77f7; --hi:#90a3ff; --lo:#3a50d2; }
-.mat.blue3 { --c:#8ea6fd; --hi:#b7c6ff; --lo:#687fe6; }
-.mat.lilac { --c:#b07cb6; --hi:#d2a4d8; --lo:#8a5693; }
-.mat.red   { --c:#d05b69; --hi:#f08995; --lo:#a83a48; }
-.mat.blueV { --c:#6f86fa; --hi:#6078f5; --lo:#9aadff; }
-.mat.blueT { --c:#5c6ff1; --hi:#8b9bff; --lo:#4155d6; }
+.mat.gold   { --c:#f8bb56; --hi:#ffda92; --lo:#d38b37; }
+.mat.blue   { --c:#5f77f7; --hi:#90a3ff; --lo:#3a50d2; }
+.mat.blue2  { --c:#7788f4; --hi:#a2b0ff; --lo:#5163d6; }
+.mat.blue3  { --c:#8ea6fd; --hi:#b7c6ff; --lo:#687fe6; }
+.mat.blue4  { --c:#a8b8ff; --hi:#cfd8ff; --lo:#8093ee; }
+.mat.lilac  { --c:#b07cb6; --hi:#d2a4d8; --lo:#8a5693; }
+.mat.red    { --c:#d05b69; --hi:#f08995; --lo:#a83a48; }
+.mat.green  { --c:#0bd99a; --hi:#6cf5c6; --lo:#049a6c; }
+.mat.cyan   { --c:#3aa8e0; --hi:#7fd2ff; --lo:#1f7cb4; }
+.mat.blueBar{ --c:#7b8df8; --hi:#aab8ff; --lo:#5668dc; }
+/* vertical side bars get lighter toward the bottom */
+.mat.blueV  { --c:#6f86fa; --hi:#6078f5; --lo:#9aadff; }
+.mat.blueT  { --c:#5c6ff1; --hi:#8b9bff; --lo:#4155d6; }
+.mat.blueL  { --c:#8697fb; --hi:#b1bdff; --lo:#6477ea; }
 
 .uiPanel{ pointer-events:auto; }
 .uiPanel::before{
@@ -78,11 +99,29 @@
   background:rgb(0 2 12 / .9);
   pointer-events:none;
 }
+/* Panel header text, the small colored square before it, and the rule
+   under it. */
+.hd{ margin:0; font-family:var(--uiFontLabel); font-weight:400; font-size:19.5px;
+  line-height:26px; letter-spacing:.4px; color:var(--uiHdText); white-space:nowrap; }
+.hd.small{ font-size:17.5px; }
+.hdSq{ width:21px; height:21px; border-radius:10px 3px 3px 9px; }
 .hdLine{ height:1.5px; background:linear-gradient(90deg,#2c4bd8,#1f3bb5 70%,#1a2f95); }
-.uiStage .oBtn{ height:44px; border:1.5px solid #3c55d8; border-radius:7px;
+.sideBar{ width:14px; }
+/* Progress bar: .bar is the track, its <i> the (usually .mat) fill. */
+.bar{ height:8px; background:#0b1a5c; border-radius:2px; overflow:hidden; position:relative; }
+.bar i{ position:absolute; left:0; top:0; bottom:0; border-radius:2px; }
+
+/* Outlined dark button. */
+.oBtn{ height:44px; border:1.5px solid #3c55d8; border-radius:7px;
   background:linear-gradient(180deg,#050a24,#00020c); font-family:var(--uiFontLabel);
   font-size:17px; color:#e6ebff; letter-spacing:.3px; transition:box-shadow .15s, border-color .15s, filter .15s; }
-.uiStage .oBtn:not(:disabled):hover{ border-color:#6f86ff; box-shadow:0 0 8px rgb(95 119 247 / .5); }
-.uiStage .oBtn.gold{ border-color:#d9a75a; }
-.uiStage .oBtn.gold:not(:disabled):hover{ box-shadow:0 0 8px rgb(245 189 92 / .5); border-color:#f5bd5c; }
-.uiStage .oBtn:disabled{ opacity:.45; }
+.oBtn:not(:disabled):hover{ border-color:#6f86ff; box-shadow:0 0 8px rgb(95 119 247 / .5); }
+.oBtn.gold{ border-color:#d9a75a; }
+.oBtn.gold:not(:disabled):hover{ box-shadow:0 0 8px rgb(245 189 92 / .5); border-color:#f5bd5c; }
+.oBtn.active{ border-color:#f5bd5c; box-shadow:0 0 8px rgb(245 189 92 / .45), inset 0 0 8px rgb(245 189 92 / .12); }
+.oBtn:disabled{ opacity:.45; }
+
+/* Small red close pill (panel/window headers). */
+.closePill{ width:44px; height:26px; border-radius:4px 13px 13px 4px;
+  font-family:var(--uiFontLabel); font-size:15px; color:#2a0508; transition:filter .15s; }
+.closePill:hover{ filter:brightness(1.12); }

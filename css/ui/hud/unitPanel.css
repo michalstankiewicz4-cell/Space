@@ -1,0 +1,41 @@
+/* HUD selected unit panel: ship, group or drone (ui/hud/unitPanel.js). */
+#unitPanel{ left:8px; bottom:30px; width:229px; height:364px; }
+#unitSide{ left:3px; top:3px; bottom:4px; border-radius:10px 0 0 8px; }
+#unitHd{ left:27px; top:3px; }
+#unitCloseBtn{ right:8px; top:4px; z-index:1; }
+#unitHdLine{ left:22px; right:6px; top:31px; }
+#unitEmpty, #infoEmpty{ font-size:15px; line-height:20px; color:#7f8fd6; }
+#unitEmpty{ left:27px; top:44px; right:12px; }
+#unitBody{ left:0; top:0; right:0; bottom:0; }
+#unitBody > *{ position:absolute; }
+#unitName{ left:27px; right:10px; top:37px; font-size:16px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#unitClass{ left:27px; right:10px; top:55px; font-size:14.5px; color:var(--uiText2); white-space:nowrap; }
+#unitCamBtn{ right:10px; top:39px; width:64px; height:28px; display:flex; align-items:center; justify-content:center; gap:5px;
+  font-size:13.5px; }
+#unitCamBtn svg{ width:18px; height:18px; }
+/* Live 3D render target (scene/unitThumb.js). */
+#unitThumb{ left:27px; top:74px; width:194px; height:66px; }
+#unitBars{ left:27px; top:145px; width:198px; }
+.barRow{ position:relative; height:18px; font-size:14px; color:#c7d0ff; }
+.barRow span{ position:absolute; left:0; top:0; }
+.barRow .bar{ position:absolute; left:62px; top:5px; width:104px; }
+.barRow b{ position:absolute; left:171px; top:3px; font-weight:400; font-size:11px; color:#c7d0ff; }
+#unitMidLine{ left:22px; right:6px; top:204px; }
+#unitStats{ left:27px; top:212px; width:194px; margin:0;
+  display:grid; grid-template-columns:auto 1fr; column-gap:10px; row-gap:1px; font-size:15px; line-height:18.5px; }
+#unitStats dt{ color:#c7d0ff; white-space:nowrap; }
+#unitStats dd{ margin:0; text-align:right; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#unitBtns, #droneBtns{ left:27px; top:302px; width:199px; height:41px; display:flex; gap:5px; }
+.uBtn{ flex:1; height:41px; border-radius:6px; border:1.5px solid; background:linear-gradient(180deg,#050a22,#00020c);
+  display:flex; align-items:center; justify-content:center; gap:4px;
+  font-family:var(--uiFontLabel); font-size:13.5px; letter-spacing:.3px; color:#dfe5ff;
+  transition:box-shadow .15s, filter .15s; }
+.uBtn svg{ width:26px; height:26px; flex:none; }
+#droneBtns .uBtn svg{ width:16px; height:16px; }
+.uBtn.gold{ border-color:#e7ad52; } .uBtn.blue{ border-color:#5d71e8; } .uBtn.red{ border-color:#e04b50; color:#ff8a8d; }
+.uBtn:hover{ filter:brightness(1.25); }
+.uBtn.gold:hover{ box-shadow:0 0 8px rgb(245 189 92 / .5); }
+.uBtn.blue:hover{ box-shadow:0 0 8px rgb(95 119 247 / .55); }
+.uBtn.red:hover{ box-shadow:0 0 8px rgb(224 75 80 / .5); }
+.uBtn.soon{ cursor:not-allowed; }
+.uBtn.soon:hover{ filter:none; box-shadow:none; }

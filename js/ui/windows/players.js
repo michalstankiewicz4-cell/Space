@@ -1,7 +1,7 @@
-import { ctx } from "../core/context.js";
-import { state } from "../core/gameState.js";
-import { myIdentity } from "../net/identity.js";
-import { t } from "../i18n.js";
+import { ctx } from "../../core/context.js";
+import { state } from "../../core/gameState.js";
+import { myIdentity } from "../../net/identity.js";
+import { t } from "../../i18n.js";
 
 // Builds the list purely through the DOM API (textContent/style.background),
 // never through innerHTML — another player's nick and color are data from an

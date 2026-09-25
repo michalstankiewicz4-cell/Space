@@ -2,8 +2,8 @@ import { ctx } from "../core/context.js";
 import { readStorage, writeStorage } from "../core/utils.js";
 import { NET_ENABLED } from "../env.js";
 import { state, save } from "../core/gameState.js";
-import { showToast } from "../ui/hud.js";
-import { refreshDock } from "../ui/dock.js";
+import { showToast } from "../ui/hud/eventLog.js";
+import { refreshResearch } from "../ui/windows/research.js";
 import { triggerBreakup } from "../fx/breakup.js";
 import { spawnBiteParticles } from "../fx/particles.js";
 import { applyHealthVisual, destroyPlanet, paintScorch } from "../world/bodies.js";
@@ -14,11 +14,7 @@ import { parseDroneScript } from "./dsl.js";
 import { runProgram } from "./interpreter.js";
 import { spawnPrintEffect } from "./dronePrintFx.js";
 import { broadcastDronePrint } from "../net/shipsBroadcast.js";
-import {
-  DRONE_MAX_FUEL, DRONE_FUEL_PER_MOVE_UNIT, DRONE_MOVE_SPEED, DRONE_TURN_SPEED,
-  DRONE_BASE_ATTACK, DRONE_BASE_DEFENSE, DRONE_DOCK_RANGE_MULT, DRONE_REFUEL_RATE,
-  DRONE_PRINT_MAX_LEN, DRONE_PRINT_COOLDOWN_S
-} from "../config.js";
+import { DRONE_MAX_FUEL, DRONE_FUEL_PER_MOVE_UNIT, DRONE_MOVE_SPEED, DRONE_TURN_SPEED, DRONE_BASE_ATTACK, DRONE_BASE_DEFENSE, DRONE_DOCK_RANGE_MULT, DRONE_REFUEL_RATE, DRONE_PRINT_MAX_LEN, DRONE_PRINT_COOLDOWN_S } from "../config.js";
 
 // Runaway-script guard: a script with no move()/turn()/wait() in a while
 // loop (e.g. `while(true){ attack() }`) would otherwise resolve instant
@@ -75,7 +71,7 @@ function makeDroneMesh(){
 }
 
 // Purely a selection indicator (ring), like ships — never moves the camera.
-// The drone's info panel tracks this same flag (see ui/dronePanel.js) so
+// The drone's info panel tracks this same flag (see ui/hud/unitPanel.js) so
 // opening/closing it and selecting/deselecting the drone stay in sync,
 // RTS-style: the camera is completely independent of what's selected.
 export function setDroneSelected(drone, val){
@@ -222,9 +218,9 @@ function applyAttack(drone){
         const gained = bodyValueEstimate(body);
         state.points += gained;
         state.eaten += 1;
-        showToast(t("toast.eaten")(gained));
+        showToast(t("toast.eaten")(gained), "arrive");
         triggerBreakup(body);
-        refreshDock();
+        refreshResearch();
         save();
       }
       // else: net/solarBodiesSync.js#flushSolarDamage awards points once
@@ -236,10 +232,10 @@ function applyAttack(drone){
     const gained = bodyValueEstimate(body);
     state.points += gained;
     state.eaten += 1;
-    showToast(t("toast.eaten")(gained));
+    showToast(t("toast.eaten")(gained), "arrive");
     triggerBreakup(body);
     destroyPlanet(body);
-    refreshDock();
+    refreshResearch();
     save();
   }
   return 1;

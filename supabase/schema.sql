@@ -356,6 +356,23 @@ begin
 end;
 $$;
 
+-- Public player counter for the start screen's top bar (js/ui/playerCounts.js):
+-- how many distinct players have ever connected — one actor_nicks row per
+-- anonymous account, upserted by set_my_nick() on every connection.
+-- Returns ONLY the number: actor_nicks itself stays unreadable to clients
+-- (zero policies, see above), and security definer is what lets this one
+-- aggregate reach it. Read-only and a single count over a small table, so
+-- unlike the write paths here it needs no rate limit.
+create or replace function player_count()
+returns bigint
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select count(*) from actor_nicks;
+$$;
+
 -- Best-effort request metadata (IP, browser, country) for whoever's
 -- calling right now — pulled from the HTTP request PostgREST exposes to
 -- every function/trigger invocation as a session GUC, nothing the client

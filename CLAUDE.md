@@ -9,7 +9,9 @@ architecture and security bullet below (why a design was chosen, live bugs
 found and fixed, exact function names) lives in `docs/`:
 [`docs/architecture.md`](docs/architecture.md),
 [`docs/security.md`](docs/security.md),
-[`docs/gotchas.md`](docs/gotchas.md), [`docs/blogger.md`](docs/blogger.md).
+[`docs/gotchas.md`](docs/gotchas.md), [`docs/blogger.md`](docs/blogger.md);
+the standalone ship/body labs are documented in [`docs/ship.md`](docs/ship.md)
+and [`docs/bodies.md`](docs/bodies.md).
 Read the relevant one with the Read tool before modifying that subsystem —
 the summaries here are for orientation, not enough detail to safely change
 the code. Don't read the long ones whole: `docs/architecture.md` and
@@ -49,7 +51,8 @@ shared live via Supabase; a player's own points/upgrades stay local
   forget. **Explicitly excluded** (all explicit user calls, not
   oversights — the common thread is "doesn't change what a player's
   browser actually loads/runs"):
-  - `admin.html`/`planetEditor.html`/`shipEditor.html` and their own
+  - `admin.html`/`planetEditor.html`/`shipEditor.html`, the `ship.html`/
+    `bodies.html` labs, and their own
     `js/admin/`, `js/editor/`, `css/admin.css`, `css/editor.css`, plus
     `tools/` (e.g. `grainTexture.html`, regenerates `css/ui/grain.png`) —
     standalone dev tools with no version-check mechanism of their own
@@ -187,16 +190,23 @@ the full detail behind each of these.
   (`dsl.js`/`interpreter.js`, generator-based, not JS/eval). Full
   gotchas (runaway-script safety net, click-priority bug history, the
   `.hidden`/`display:none` CSS trap, `pointerdown` vs `click`) in the doc.
-- **New-style UI kit** (`css/ui/`, start screen + setup modal so far;
-  in-game HUD still old-style, `UI-standalone.html` is its untracked
-  mockup): fixed 1536x1024 `.uiStage` + full-width `.uiBar`, both
-  scaled by `--uiScale` set in an inline `<head>` script. `main.js`
-  inits and paints the start screen *before* `initScene()` (which
-  blocks the main thread); fonts are self-hosted + preloaded. Full
-  detail and gotchas (`:where()` button reset, `.uiPanel` vs the HUD's
-  `.panel`, `data-lang-pending`) in docs/architecture.md.
+- **New-style UI kit** (`css/ui/`): start screen, setup modal and the
+  whole in-game HUD (v2.2.0, ported from the untracked
+  `UI-standalone.html` mockup). `.uiStage` (fixed 1536x1024),
+  `.uiBar`/`.uiScreen` (stretch with the window), all scaled by
+  `--uiScale` set in an inline `<head>` script. `main.js` inits and
+  paints the start screen *before* `initScene()` (which blocks the main
+  thread); fonts are self-hosted + preloaded. **The 3D scene renders
+  only into the HUD's `#viewport` rect** (`scene/viewRect.js` — picking,
+  miniatures and ship cam all go through it); HUD panels have no fill
+  because miniatures are drawn on the canvas under them. Files mirror the
+  UI: `js/ui/hud/` + `css/ui/hud/` one per panel (`hud/hud.js` is
+  main.js's only entry point), `js/ui/windows/` + `css/ui/windows/` the
+  same for windows. Full detail,
+  gotchas and where every old HUD feature went: docs/architecture.md's
+  "UI kit" and "In-game HUD" sections.
 - **Space station** (`js/station/*.js`): one static per-player landmark,
-  read-only docking panel, mesh shared between local + ghost rendering
+  read-only info in the HUD's PLANET INFO slot, mesh shared between local + ghost rendering
   via `buildStationMesh(opts)`. Ships spawn arranged around it on a
   golden-angle spiral (`ships/swarm.js#shipSpawnPosition()`), inside a
   gravity-free containment field (`STATION_FIELD_RADIUS`) —
@@ -229,6 +239,8 @@ post-mortems and live-verification detail behind each:
 - **Anonymous-auth**: `initNet()` calls `getSession()` before
   `signInAnonymously()` — reusing an existing session, not minting a new
   anon user on every page load (this was a real bug, fixed).
+- **`player_count()`** (start screen counter) is the only client read
+  path into `actor_nicks` and returns just a number — keep it that way.
 - **`admin.html`** renders every cell with `textContent`, never
   `innerHTML` — nickname/IP/browser are all client-controlled data (a
   stored-XSS hole here was found and fixed before ever shipping).
@@ -257,10 +269,6 @@ workflow/gotchas (image hosting, OAuth redirect URI, the
   token / DB password — never commit it. The Supabase **anon key** in
   `js/env.js`, by contrast, is meant to be public and safe to commit (RLS
   policies in `supabase/schema.sql` are what actually protect the data).
-- CSS specificity: `#banner button` (id+type) beats a plain `#id`
-  selector of equal id-specificity-count but lower total specificity —
-  new ghost/secondary buttons inside `#banner` need `#banner button#id`
-  or `!important` to not inherit the primary CTA style.
 - GitHub Pages deploys can look "errored" when they were actually just
   **cancelled** by a rapid second push (check `gh run list`, not the
   legacy Pages Builds API); `?v=`/`versionCheck.js` cache-busting isn't

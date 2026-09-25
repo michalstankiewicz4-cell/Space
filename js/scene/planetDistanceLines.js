@@ -1,7 +1,7 @@
 import { ctx } from "../core/context.js";
 import { getSelectedPlanetsOrdered } from "./controls.js";
 
-// Dev Tools debug visualization (see ui/devTools.js) — a single polyline
+// Dev Tools debug visualization (see ui/hud/devTools.js) — a single polyline
 // through the currently multi-selected planets (scene/controls.js's
 // planetSelectionOrder, built by shift-clicking planets, in click order),
 // with a distance label at the midpoint of each segment. "Connect ... with

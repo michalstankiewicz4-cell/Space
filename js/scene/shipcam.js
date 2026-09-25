@@ -1,11 +1,10 @@
 import { ctx } from "../core/context.js";
+import { renderIntoElement } from "./viewRect.js";
 
 // Picture-in-picture "cockpit" camera for a single ship, rendered as a
-// second pass into a small corner rectangle of the SAME canvas/renderer
-// (via setViewport/setScissor) right after the main full-screen render —
-// see renderShipCamPIP() and its call site in main.js. Keep PIP_WIDTH/
-// PIP_HEIGHT/PIP_MARGIN in sync with #shipCam's CSS size/position.
-const PIP_WIDTH = 220, PIP_HEIGHT = 150, PIP_MARGIN = 18;
+// second pass into #shipCam's on-screen box (a corner of the HUD's 3D
+// viewport) on the SAME canvas/renderer, right after the main render — see
+// renderShipCamPIP() and its call site in main.js.
 
 let shipCamera = null;
 let target = null;
@@ -23,7 +22,7 @@ const UP = new THREE.Vector3();
 const FLIP_Y180 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
 
 export function initShipCam(){
-  shipCamera = new THREE.PerspectiveCamera(65, PIP_WIDTH / PIP_HEIGHT, 0.05, 300);
+  shipCamera = new THREE.PerspectiveCamera(65, 1.5, 0.05, 300);
   pipEl = document.getElementById("shipCam");
   document.getElementById("shipCamCloseBtn").addEventListener("click", clearShipCamTarget);
 }
@@ -42,6 +41,10 @@ export function isShipCamActive(){
   return !!target;
 }
 
+export function getShipCamTarget(){
+  return target;
+}
+
 // Sits just ahead of and slightly above the ship's own origin, facing the
 // same way the ship's mesh does (see the FLIP_Y180 note above for why the
 // mesh's quaternion isn't used as-is).
@@ -56,11 +59,5 @@ export function updateShipCam(){
 
 export function renderShipCamPIP(){
   if(!target) return;
-  const x = window.innerWidth - PIP_WIDTH - PIP_MARGIN;
-  const y = PIP_MARGIN;
-  ctx.renderer.setViewport(x, y, PIP_WIDTH, PIP_HEIGHT);
-  ctx.renderer.setScissor(x, y, PIP_WIDTH, PIP_HEIGHT);
-  ctx.renderer.setScissorTest(true);
-  ctx.renderer.render(ctx.scene, shipCamera);
-  ctx.renderer.setScissorTest(false);
+  renderIntoElement(pipEl, shipCamera);
 }

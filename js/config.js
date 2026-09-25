@@ -82,7 +82,7 @@ export const STATION_MODEL_SCALE = 0.16; // shrinks stationModel.js's native pro
 export const STATION_FIELD_RADIUS = 11;
 export const STATION_FIELD_STRENGTH = 4;
 
-// Planet selection (see world/bodies.js#setPlanetSelected, ui/planetPanel.js)
+// Planet selection (see world/bodies.js#setPlanetSelected, ui/hud/planetPanel.js)
 export const PLANET_BRACKET_SCALE = 2.6; // corner-bracket sprite size, x radius
 
 // Multiplayer: intervals and time limits

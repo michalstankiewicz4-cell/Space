@@ -4,6 +4,46 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.2.0]
+
+### Changed
+- **New in-game HUD** in the same style as the start screen, laid out
+  like the UI mockup and adapting to the window size (the side columns
+  stick to the edges, the 3D view, fleet list and event log stretch):
+  - **Top bar**: points, units, planets devoured and players online,
+    plus a cycle counter and clock.
+  - **Left menu**: FLEET, PLANETS (body type guide), RESEARCH (upgrade
+    tree), INTEL (players online) and SETTINGS open their windows;
+    BUILD and DIPLOMACY are placeholders for now.
+  - **Fleet list**: every ship and the drone with their status and
+    target — click one to select it (ships also open the ship cam).
+  - **Selected unit**: a live miniature and stats of the selected ship
+    (with a CAM button for the ship cam), a summary of a group, or the
+    drone with its START / STOP / SCRIPT buttons.
+  - **Planet info**: a live miniature and stats of the selected planet,
+    or of your station (with its Tech/Fleet shortcuts).
+  - **Event log**: every in-game message, timestamped, newest on top.
+  - **Minimap**: a schematic of the solar system with zoom and
+    panning; clicking a planet there works exactly like clicking it in
+    the 3D view (select it, or send the selected ships there).
+  - **Command bar**: laid out, not wired up yet.
+  - The 3D view now sits in the middle frame; the camera Base/System
+    switch, ship cam and Dev Tools moved into its corners.
+- Windows (research, fleet, players, body types, drone script) restyled
+  to match.
+- Start screen: live counters in the top bar — players online right now
+  and registered players (everyone who has ever played) — and a **[?]**
+  button next to Setup with an About window (authors and contact).
+- Setup: new **Graphics** tab with the ship lab's render quality and
+  geometry detail sliders, inactive for now — they'll arrive together
+  with importing ships from the ship lab.
+
+### Database
+- New `player_count()` RPC (`supabase/schema.sql`): returns only the
+  number of registered players for the start screen's counter; the
+  underlying `actor_nicks` table stays unreadable to clients.
+- Favicon: the game's logo.
+
 ## [2.1.4]
 
 ### Changed

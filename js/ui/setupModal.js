@@ -1,7 +1,8 @@
 import { getLang, setLang, onLangChange, LANGS } from "../i18n.js";
 import { settings, saveSettings } from "../settings.js";
 
-// Setup modal (language / mouse / help tabs), opened from the start screen.
+// Setup modal (language / mouse / graphics / help tabs), opened from the
+// start screen. Tabs and panels are matched by their data-tab attribute.
 
 function updateLangButtons(){
   document.querySelectorAll("#setupLangButtons button").forEach(function(btn){
@@ -17,9 +18,9 @@ function switchSetupTab(tab){
     btn.classList.toggle("gold", on);
     btn.classList.toggle("blueT", !on);
   });
-  document.getElementById("setupTabLanguage").classList.toggle("hidden", tab !== "language");
-  document.getElementById("setupTabMouse").classList.toggle("hidden", tab !== "mouse");
-  document.getElementById("setupTabHelp").classList.toggle("hidden", tab !== "help");
+  document.querySelectorAll("#setupModal .setupTabPanel").forEach(function(panel){
+    panel.classList.toggle("hidden", panel.dataset.tab !== tab);
+  });
 }
 
 export function isSetupModalOpen(){

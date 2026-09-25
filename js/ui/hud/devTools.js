@@ -1,14 +1,16 @@
-import { setLightMarkersVisible } from "../scene/lightMarkers.js";
-import { setDistanceLinesVisible } from "../scene/planetDistanceLines.js";
-import { setLightsDisabled } from "../scene/lightsToggle.js";
+import { setLightMarkersVisible } from "../../scene/lightMarkers.js";
+import { setDistanceLinesVisible } from "../../scene/planetDistanceLines.js";
+import { setLightsDisabled } from "../../scene/lightsToggle.js";
+import { svgIcon } from "../icons.js";
 
-// Small always-available debug menu (bottom-right) — see scene/lightMarkers.js,
+// Small always-available debug menu (the wrench in the 3D viewport's
+// bottom-right corner) — see scene/lightMarkers.js,
 // scene/planetDistanceLines.js and scene/lightsToggle.js for what each
-// checkbox actually does. Same "small button toggles a popup via classList"
-// shape as the Wiki button/#legend (see ui/panels.js#initPanels).
+// toggle actually does.
 export function initDevTools(){
   const btn = document.getElementById("devToolsBtn");
   const menu = document.getElementById("devToolsMenu");
+  btn.innerHTML = svgIcon("wrench");
   btn.addEventListener("click", function(){
     menu.classList.toggle("hidden");
   });

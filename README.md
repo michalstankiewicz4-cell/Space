@@ -20,8 +20,10 @@ native ES modules under `js/`, loaded via
 css/style.css        game styling (HUD, upgrade dock, Tech/Fleet modals); @imports the files below
 css/fonts.css        self-hosted web fonts (@font-face for fonts/, latin + latin-ext subsets)
 css/ui/              the new-style UI kit: shared primitives (kit.css — scaled design stage,
-                     full-width bars, "material" surfaces, panels) + one file per screen built
-                     on it (startScreen.css, setupModal.css); grain.png is the material's texture
+                     full-width/full-window screens, "material" surfaces, panels), the start
+                     screen/setup modal (topBar.css, startScreen.css, setupModal.css), and one
+                     file per component in hud/ and windows/ (mirroring js/ui/);
+                     grain.png is the material's texture
 fonts/               the .woff2 font files (SIL Open Font License, originally from Google Fonts)
 js/
   version.js         current version number (shown next to the title) — bump on every meaningful release
@@ -33,7 +35,9 @@ js/
   env.js             Supabase URL/key (anon key — safe to commit, see below)
   supabaseClient.js  Supabase client singleton
   core/              shared game state (scene/entity collections, player points) + small utilities
-  scene/             camera, renderer, mouse controls/selection, hover tooltip, ship cam (picture-in-picture cockpit view),
+  scene/             camera, renderer, the 3D view's rect inside the HUD + miniature render passes
+                     (viewRect.js, unitThumb.js, infoThumb.js), mouse controls/selection, hover tooltip,
+                     ship cam (picture-in-picture cockpit view),
                      nebula skybox (skybox.js), background pulsars (pulsars.js),
                      the 9 fixed orbit lines + each comet's own trajectory line (orbitLines.js)
   world/             celestial body logic — the 9-orbit solar system's fixed bodies
@@ -50,17 +54,22 @@ js/
   ships/             player's ship swarm (movement, eating, bite-beam)
   drone/             the programmable drone — its own DSL (dsl.js), a generator-based
                      interpreter (interpreter.js), the entity/script driver (drone.js),
-                     its live thumbnail camera (droneThumb.js), and the print() gas+laser
-                     effect (dronePrintFx.js) — see "Programmable drone" below
+                     and the print() gas+laser effect (dronePrintFx.js) — see
+                     "Programmable drone" below
   station/           each player's static space station — the procedural mesh
                      (stationModel.js), the game-side entity (station.js), and its
                      containment field pulling stray ships back (stationField.js);
                      ships/the drone also spawn arranged around it, inside a
                      gravity-free zone (world/solarGravity.js) — see "Space station" below
-  ui/                HUD (telemetry, players list, collapsible panels, Wiki/Tech/Fleet buttons and modals,
-                     legend, upgrade dock, drone/station/planet panels), the start screen (banner.js),
-                     the Setup modal (setupModal.js), the global Escape-key chain (escapeKey.js)
-                     and all static UI text per language (i18nApply.js)
+  ui/                the start screen (banner.js, its live player counters in playerCounts.js,
+                     the About window in about.js), the Setup modal (setupModal.js), the global
+                     Escape-key chain (escapeKey.js), all static UI text (i18nApply.js), HUD icons
+                     (icons.js), and:
+    hud/             the in-game HUD, one module per panel (topBar, nav, fleetList, unitPanel,
+                     infoPanel + planetPanel/stationPanel, eventLog, connectionStatus, minimap,
+                     commandBar, devTools); hud.js is main.js's single entry point into it
+    windows/         the windows opened from the HUD (windows.js entry point + research, fleet,
+                     players, droneScript)
   net/               multiplayer: identity, "steward" election, world sync, ship broadcast,
                      Realtime reconnect handling
   main.js            entry point — wires the modules together and runs the game loop
@@ -70,8 +79,11 @@ supabase/schema.sql  database schema (tables, RLS, RPC functions) to paste into 
 `admin.html`/`css/admin.css`/`js/admin/`, `planetEditor.html`/`css/editor.css`/`js/editor/`,
 and `shipEditor.html` are separate developer-tool entry points, not part of
 the game's own module graph above — see "Object editor", "Admin panel" and
-"Ship editor" below. `tools/` holds small standalone dev utilities (e.g.
-`grainTexture.html`, which regenerates `css/ui/grain.png`). `blog/` isn't part of the game at all — see "Devlog"
+"Ship editor" below. `ship.html` and `bodies.html` are standalone
+single-file labs for procedural ships and celestial bodies, built to be
+ported into the game later — see [`docs/ship.md`](docs/ship.md) and
+[`docs/bodies.md`](docs/bodies.md). `tools/` holds small standalone dev
+utilities (e.g. `grainTexture.html`, which regenerates `css/ui/grain.png`). `blog/` isn't part of the game at all — see "Devlog"
 below.
 
 Adding a new mechanic (e.g. another upgrade type, a new kind of celestial
@@ -169,15 +181,14 @@ token) rather than the Blogger web UI.
 
 Every player also has one drone (a distinct gold octahedron, spawned next
 to the player's own station, offset above the ship swarm's own formation
-there) that never moves on its own — select it and open
-its Script button to write a small program for it (`if`/`while`/variables,
+there) that never moves on its own — select it (it shows up in the HUD's
+SELECTED UNIT panel) and press SCRIPT to write a small program for it (`if`/`while`/variables,
 plus `move()`, `turn()`, `wait()`, `attack()`, `fuel()`, `nearPlanet()`,
 `print("text")` — the in-game `[?]` button lists all of them with
 examples). `print()` doesn't just log the text — it puffs gas from the
 drone's nose and writes the message into it with a laser, visible to
-other players too, not just you. Its side panel also has Run/Stop
-shortcuts to restart or stop the last saved script without reopening the
-editor. It's not JavaScript: `js/drone/dsl.js`
+other players too, not just you. The panel's START/STOP buttons
+restart or stop the last saved script without reopening the editor. It's not JavaScript: `js/drone/dsl.js`
 parses this tiny language into an AST, and `js/drone/interpreter.js` walks
 it as a generator, so a script's `move()`/`wait()` calls can pause
 execution for real time without blocking the game loop or the browser tab.
@@ -186,17 +197,33 @@ execution for real time without blocking the game loop or the browser tab.
 
 Every player also has one static space station (a ring-and-hub structure,
 built entirely from primitive geometry — no model files) that
-spawns once and never moves. Select it to open its docking panel: a
-read-only overview (fleet size, evolution points, upgrade levels) with
-shortcuts into the existing Tech/Fleet modals — no separate resource
+spawns once and never moves. Select it (in the view or on the minimap)
+and the HUD's PLANET INFO panel shows a read-only overview (fleet size,
+evolution points, upgrade levels) with shortcuts into the Research and
+Fleet windows — no separate resource
 economy, just a window onto the same points/upgrades everything else
 already uses. The ship swarm and drone both spawn arranged around it,
 inside a small zone where ambient gravity doesn't apply, so a fresh
 fleet doesn't immediately start drifting toward the Sun.
 
+## Game UI
+
+The in-game HUD is laid out in a fixed style that scales with the window
+(the side columns stick to the edges, the middle stretches): a top bar
+with points / units / planets devoured / players online; a left menu
+(FLEET, PLANETS — body types, RESEARCH — upgrades, INTEL — players online,
+SETTINGS); the fleet list and the selected unit (a ship with a ship-cam
+toggle, a group, or the drone with START/STOP/SCRIPT) on the left; the 3D
+view with the camera switch, ship cam and Dev Tools in its corners and
+the command bar under it; planet info (a planet or your station), the
+event log (every in-game message) and a clickable minimap on the right.
+Some controls are placeholders for now (BUILD, DIPLOMACY, the command
+bar's orders, a planet's Waypoint/Scan/Colonize). Details in
+docs/architecture.md's "In-game HUD" section.
+
 ## Camera
 
-Top-center in the HUD, a toggle switches between two fully mouse-
+Top-center of the 3D view, a toggle switches between two fully mouse-
 controlled camera modes (drag to rotate, scroll to zoom either way):
 **Base** (the default) orbits the player's own station, framed so the
 Sun sits behind and a little above it; **System** orbits the Sun,

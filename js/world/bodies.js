@@ -4,9 +4,7 @@ import { SOLAR_REGEN_RATE } from "../config.js";
 import { CONTENT } from "../content.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
-import {
-  generateCrackTexture, makeRockGeometry, makeSunHaloTexture, makePlanetSurfaceTexture
-} from "./textures.js";
+import { generateCrackTexture, makeRockGeometry, makeSunHaloTexture, makePlanetSurfaceTexture } from "./textures.js";
 import { hideBolt } from "../ships/swarm.js";
 import { bodyParams, tempColor, randomPlanetSpawnData, contentKindFor } from "./bodyParams.js";
 import { buildSunRays, buildCometTail, updateCometTailDirection, buildSelectionBracket } from "./bodyMeshParts.js";

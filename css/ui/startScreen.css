@@ -1,27 +1,14 @@
-/* Start screen (#banner): top bar + start panel. Built on css/ui/kit.css. */
+/* Start screen (#banner): top bar + start panel. Built on css/ui/kit.css;
+   the top bar's shared left part and end cap are in topBar.css. */
 /* Full-viewport overlay; the live 3D scene shows through the shade. */
 #banner{
   position:fixed; z-index:9; inset:0;
   background:radial-gradient(60% 60% at 50% 52%, rgb(0 0 0 / .45), rgb(0 0 0 / .85));
 }
 /* The in-game HUD would otherwise show through the translucent shade. */
-body:has(#banner:not(.hidden)) :is(.hud, #devToolsBtn, #devToolsMenu){ visibility:hidden; }
+body:has(#banner:not(.hidden)) #hud{ visibility:hidden; }
 
-#tlBracket{ left:8px; top:9px; width:38px; height:66px;
-  clip-path:path("M38 0 H32 C12 0 0 16 0 34 C0 52 10 66 30 66 H38 Z"); }
-#insignia{ left:59px; top:12px; width:46px; height:42.5px; filter:drop-shadow(0 0 4px rgb(255 190 90 / .35)); }
-#title{ left:111px; top:4px; margin:0; font-family:var(--uiFontHead); font-weight:600;
-  font-size:37px; line-height:56px; letter-spacing:.2px; white-space:nowrap; }
-#title .t{ background:linear-gradient(180deg,#ffd88f 0%,#f8bb56 50%,#dd9540 100%);
-  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
-  filter:drop-shadow(0 0 5px rgb(255 180 80 / .25)); }
 #versionTag{ font-family:var(--uiFontBody); font-size:14px; font-weight:400; color:#93a6ff; margin-left:6px; }
-#tb1{ left:49px;  top:63px; width:61px; height:11px; border-radius:5px 0 0 5px; }
-#tb2{ left:112px; top:63px; width:74px; height:11px; clip-path:polygon(0 0, 88% 0, 100% 50%, 88% 100%, 0 100%); }
-#tb3{ left:186px; top:63px; width:34px; height:11px; }
-#tb4{ left:226px; top:63px; width:95px; height:11px; }
-#goldSwoosh{ left:326px; top:8px; width:135px; height:67px;
-  clip-path:path("M0 51 H46 C64 51 72 44 78 30 C85 12 93 0 112 0 H124 Q135 0 135 10 L128 67 H0 Z"); }
 /* The two rails are the stretchy middle of the bar (see .uiBar); everything
    right of them is anchored to the right edge. */
 #topRail{ left:465px; right:201px; top:8px; height:8px; border-radius:0 4px 4px 0; }
@@ -35,9 +22,24 @@ body:has(#banner:not(.hidden)) :is(.hud, #devToolsBtn, #devToolsMenu){ visibilit
   background:linear-gradient(180deg,#050a24,#00020c); font-family:var(--uiFontLabel); font-size:14px;
   color:#e6ebff; letter-spacing:.3px; text-decoration:none; display:flex; align-items:center; justify-content:center;
   pointer-events:auto; transition:box-shadow .15s, border-color .15s; }
+/* Player counters, centered on the stretchy part between the gold and
+   lilac swooshes (the rails run from 465px to 201px short of the right
+   edge, see #topRail). */
+#playerCounts{ left:calc((465px + 100% - 201px) / 2); top:23px; height:36px; transform:translateX(-50%);
+  display:flex; align-items:center; gap:18px; padding:0 20px; white-space:nowrap;
+  border-radius:18px; background:linear-gradient(180deg,#02030a,#000 60%,#03050f);
+  border:1.5px solid #1d36a0; box-shadow:0 0 6px rgb(40 80 255 / .3); }
+#playerCounts .pc{ display:flex; align-items:baseline; gap:7px; }
+#playerCounts .pcVal{ font-family:var(--uiFontLabel); font-size:21px; font-weight:500; color:#fff; }
+#playerCounts .pcLbl{ font-size:15px; color:#c0cbff; }
+#playerCounts .pcSep{ width:2px; height:24px; background:linear-gradient(180deg,transparent,#3b4a8a 30%,#3b4a8a 70%,transparent); }
+#playerCounts .pcDot{ width:9px; height:9px; border-radius:50%; align-self:center; background:#0bd99a;
+  box-shadow:0 0 6px #0bd99a; animation:pcPulse 2s ease-in-out infinite; }
+#playerCounts .pcDot.off{ background:#5f6fb8; box-shadow:none; animation:none; }
+#playerCounts .pcIcon{ width:20px; height:20px; align-self:center; }
+#playerCounts .pcIcon svg{ width:100%; height:100%; }
+@keyframes pcPulse{ 0%, 100%{ opacity:1; } 50%{ opacity:.35; } }
 #devBlogBtn:hover{ border-color:#6f86ff; box-shadow:0 0 8px rgb(95 119 247 / .5); }
-#trCap{ right:16px; top:9px; width:42px; height:65px;
-  clip-path:path("M0 0 H14 C32 0 42 14 42 32 C42 52 32 65 14 65 H0 Z"); }
 
 /* Set by index.html's <head> script when the saved language isn't the
    HTML's built-in English, cleared by js/ui/i18nApply.js once the panel is
@@ -81,8 +83,9 @@ html[data-lang-pending] #box{ visibility:hidden; }
 #nickError{ left:48px; top:280px; font-size:16px; color:#ff6b6e; }
 
 #bannerButtons{ left:48px; top:316px; width:590px; height:52px; }
-#startBtn{ position:absolute; left:0; top:0; width:420px; height:52px; border-radius:6px 24px 24px 6px;
+#startBtn{ position:absolute; left:0; top:0; width:360px; height:52px; border-radius:6px 24px 24px 6px;
   font-family:var(--uiFontLabel); font-weight:600; font-size:22px; letter-spacing:.8px; color:#241404; transition:filter .15s; }
 #startBtn:not(:disabled):hover{ filter:brightness(1.08); }
 #startBtn:disabled{ filter:saturate(.25) brightness(.5); cursor:not-allowed; }
-#setupBtn{ position:absolute; left:430px; top:0; width:160px; height:52px; }
+#setupBtn{ position:absolute; left:370px; top:0; width:166px; height:52px; }
+#aboutBtn{ position:absolute; left:546px; top:0; width:44px; height:52px; font-size:22px; font-weight:600; color:#ffd98f; }

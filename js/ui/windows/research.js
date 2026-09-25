@@ -1,8 +1,9 @@
-import { TREE } from "../config.js";
-import { state, cost, save } from "../core/gameState.js";
-import { reconcileFleetSize } from "../ships/swarm.js";
-import { showToast, updateTelemetry } from "./hud.js";
-import { t } from "../i18n.js";
+import { TREE } from "../../config.js";
+import { state, cost, save } from "../../core/gameState.js";
+import { reconcileFleetSize } from "../../ships/swarm.js";
+import { showToast } from "../hud/eventLog.js";
+import { updateTelemetry } from "../hud/topBar.js";
+import { t } from "../../i18n.js";
 
 function totalSpentOn(node, level){
   if(level<=0) return 0;
@@ -18,7 +19,7 @@ function resetUpgrades(){
   });
   state.points += refund;
   reconcileFleetSize();
-  refreshDock();
+  refreshResearch();
   save();
   showToast(t("upgrades.resetToast")(refund));
 }
@@ -41,7 +42,7 @@ function renderNode(node){
     state.points -= c2;
     state.levels[node.key] += 1;
     if(node.key === "fleet") reconcileFleetSize();
-    refreshDock();
+    refreshResearch();
     save();
   });
   return div;
@@ -58,7 +59,7 @@ function renderResetButton(){
   return div;
 }
 
-export function refreshDock(){
+export function refreshResearch(){
   const dock = document.getElementById("dock");
   dock.innerHTML = "";
   Object.keys(TREE).forEach(function(k){ dock.appendChild(renderNode(TREE[k])); });

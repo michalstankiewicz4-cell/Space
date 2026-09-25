@@ -1,24 +1,10 @@
-import { ctx } from "../core/context.js";
-import { setDroneScript, runDroneScript, stopDroneScript, setDroneSelected } from "../drone/drone.js";
-import { t } from "../i18n.js";
+import { ctx } from "../../core/context.js";
+import { setDroneScript, runDroneScript, stopDroneScript } from "../../drone/drone.js";
+import { isDronePanelOpen, closeDronePanel, updateUnitPanel } from "../hud/unitPanel.js";
 
-export function isDronePanelOpen(){
-  return !document.getElementById("dronePanel").classList.contains("hidden");
-}
-
-// Panel visibility tracks selection, RTS-style: selecting the drone (see
-// scene/controls.js) opens it, deselecting — via the close button, Escape,
-// or selecting/clicking something else — closes it. The camera never
-// reacts to any of this; only the ring + this panel do.
-export function openDronePanel(){
-  document.getElementById("dronePanel").classList.remove("hidden");
-}
-
-export function closeDronePanel(){
-  document.getElementById("dronePanel").classList.add("hidden");
-  if(ctx.drone) setDroneSelected(ctx.drone, false);
-}
-
+// The drone script window (the DSL editor, its help, error and log) plus
+// the drone's Start/Stop/Script buttons in the HUD's SELECTED UNIT panel —
+// that panel itself (and "is the drone selected") is ui/hud/unitPanel.js.
 export function isDroneScriptModalOpen(){
   return !document.getElementById("droneScriptModal").classList.contains("hidden");
 }
@@ -46,38 +32,18 @@ export function closeDroneScriptModal(){
   document.getElementById("droneScriptModal").classList.add("hidden");
 }
 
-// Called every ~0.4s from main.js's tick alongside the other HUD refreshes
-// (telemetry, players list) — not on every frame, a stats panel doesn't
-// need 60fps updates.
-export function refreshDronePanel(){
+// Called every ~0.4s alongside the other HUD refreshes (ui/hud/hud.js) —
+// the drone's stats themselves are shown by ui/hud/unitPanel.js.
+export function refreshDroneScript(){
   const drone = ctx.drone;
   if(!drone){
-    closeDronePanel();
+    if(isDronePanelOpen()) closeDronePanel();
     return;
   }
-  document.getElementById("droneFuelVal").textContent = Math.round(drone.fuel) + " / " + drone.maxFuel;
-  document.getElementById("droneAttackVal").textContent = String(drone.attackPower);
-  document.getElementById("droneDefenseVal").textContent = String(drone.defense);
-  document.getElementById("droneStatusVal").textContent =
-    drone.error ? t("drone.error") : (drone.running ? t("drone.running") : t("drone.idle"));
   if(isDroneScriptModalOpen()) updateScriptStatus(drone);
 }
 
-export function initDronePanel(){
-  // Confirmed by direct A/B testing, not a guess: matching shipCam's exact
-  // recipe (plain "click" + pointer-events:none on the container, kept in
-  // style.css) still fails the same way — press on the button, release a
-  // few px outside it, and "click" silently never fires, because it
-  // requires mouseup to land back on a target compatible with mousedown.
-  // shipCam's close button almost certainly has this same latent bug; it
-  // just hasn't been hit/reported there. pointerdown reacts at press time
-  // instead, on whatever's actually under the cursor, so release drift
-  // can't affect it — verified this survives the exact drift that broke
-  // the "click" version.
-  document.getElementById("droneCloseBtn").addEventListener("pointerdown", function(e){
-    e.stopPropagation();
-    closeDronePanel();
-  });
+export function initDroneScript(){
   document.getElementById("droneScriptBtn").addEventListener("click", openDroneScriptModal);
   document.getElementById("droneScriptCloseBtn").addEventListener("click", closeDroneScriptModal);
 
@@ -122,6 +88,7 @@ export function initDronePanel(){
     if(!drone) return;
     runDroneScript(drone);
     if(isDroneScriptModalOpen()) updateScriptStatus(drone);
+    updateUnitPanel(true);
   });
 
   document.getElementById("droneStopBtn").addEventListener("click", function(){
@@ -129,5 +96,6 @@ export function initDronePanel(){
     if(!drone) return;
     stopDroneScript(drone);
     if(isDroneScriptModalOpen()) updateScriptStatus(drone);
+    updateUnitPanel(true);
   });
 }

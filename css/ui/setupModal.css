@@ -1,4 +1,4 @@
-/* Setup modal (language / mouse / help). Built on css/ui/kit.css. */
+/* Setup modal (language / mouse / graphics / help). Built on css/ui/kit.css. */
 #setupModal{ position:fixed; inset:0; z-index:10; background:rgb(0 0 8 / .6); }
 #setupModalBox{ left:528px; top:318px; width:480px; height:330px; }
 #smSq{ left:12px; top:12px; width:22px; height:22px; border-radius:10px 3px 3px 9px; }
@@ -9,9 +9,10 @@
 #smLine{ left:12px; right:12px; top:44px; }
 #smSide{ left:12px; top:54px; width:18px; height:264px; border-radius:0 0 0 12px; }
 #setupTabs{ left:40px; top:56px; width:428px; height:30px; }
-#setupTabs button{ position:absolute; top:0; height:30px; width:138px; font-family:var(--uiFontLabel); font-weight:500;
+#setupTabs button{ position:absolute; top:0; height:30px; width:101px; font-family:var(--uiFontLabel); font-weight:500;
   font-size:16px; color:#0c1440; border-radius:8px 8px 3px 8px; transition:filter .15s; }
-#setupTabs button:nth-child(1){ left:0; } #setupTabs button:nth-child(2){ left:145px; } #setupTabs button:nth-child(3){ left:290px; }
+#setupTabs button:nth-child(1){ left:0; } #setupTabs button:nth-child(2){ left:109px; }
+#setupTabs button:nth-child(3){ left:218px; } #setupTabs button:nth-child(4){ left:327px; }
 #setupTabs button:hover{ filter:brightness(1.12); }
 #setupTabs button.active{ border-radius:3px 18px 0 0; }
 .setupTabPanel{ left:40px; top:100px; width:428px; height:210px; }
@@ -35,4 +36,20 @@
 #setupModal .setupCheckRow input:checked + .chk{ border-color:#f5bd5c; }
 #setupModal .setupCheckRow input:checked + .chk::after{ left:23px; background:linear-gradient(180deg,#ffda92,#f8bb56 55%,#d38b37); }
 #setupModal .setupCheckRow input:focus-visible + .chk{ box-shadow:0 0 0 2px #6f86ff; }
+/* Graphics tab: the ship lab's two sliders (ship.html), shown inert for now. */
+#setupTabGraphics .gfxRow{ left:0; width:428px; display:flex; justify-content:space-between; font-size:16px; color:#c7d0ff; }
+#setupTabGraphics .gfxRow b{ font-family:var(--uiFontLabel); font-weight:500; color:#f8bb56; letter-spacing:.6px; }
+#setupTabGraphics .gfxTicks{ left:0; width:428px; display:flex; justify-content:space-between;
+  font-family:var(--uiFontLabel); font-size:11.5px; letter-spacing:.5px; color:#5f6fb8; }
+#setupTabGraphics .gfxRow, #setupTabGraphics .gfxSlider, #setupTabGraphics .gfxTicks{ opacity:.5; }
+.gfxSlider{ left:0; width:428px; height:22px; margin:0; -webkit-appearance:none; appearance:none; background:none; cursor:not-allowed; }
+.gfxSlider::-webkit-slider-runnable-track{ height:10px; border-radius:5px; border:1.5px solid #3c55d8;
+  background:linear-gradient(90deg,#f8bb56 0,#d38b37 var(--fill),#050d33 var(--fill)); }
+.gfxSlider::-moz-range-track{ height:10px; border-radius:5px; border:1.5px solid #3c55d8; background:#050d33; }
+.gfxSlider::-moz-range-progress{ height:10px; border-radius:5px; background:linear-gradient(90deg,#f8bb56,#d38b37); }
+.gfxSlider::-webkit-slider-thumb{ -webkit-appearance:none; width:30px; height:20px; margin-top:-6.5px; border-radius:4px 10px 10px 4px; border:0;
+  background:linear-gradient(180deg,#b8c5ff,#5f77f7 55%,#3a50d2); box-shadow:0 0 6px rgb(95 119 247 / .7), inset 0 1px 1px rgb(255 255 255 / .5); }
+.gfxSlider::-moz-range-thumb{ width:30px; height:20px; border-radius:4px 10px 10px 4px; border:0;
+  background:linear-gradient(180deg,#b8c5ff,#5f77f7 55%,#3a50d2); box-shadow:0 0 6px rgb(95 119 247 / .7); }
+#gfxSoon{ left:0; width:428px; font-size:15px; line-height:20px; color:#ffd98f; }
 #setupHelpText{ left:0; top:4px; width:428px; font-size:17px; line-height:30px; color:#c7d0ff; }

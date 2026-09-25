@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Swarm Protocol</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <!-- Start-screen fonts and grain, preloaded so they're fetched right away
      instead of only once the browser restyles text using them (which on
      page load waits for main.js to finish building the 3D scene). -->
@@ -11,7 +12,7 @@
 <link rel="preload" href="fonts/oswald-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/roboto-condensed-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="css/ui/grain.png" as="image">
-<link rel="stylesheet" href="css/style.css?v=2.1.4">
+<link rel="stylesheet" href="css/style.css?v=2.2.0">
 <!-- Runs before first paint. Inline and in <head> on purpose: as a module it
      would only run once main.js and all its imports have loaded.
      1. UI kit stage scaling (css/ui/kit.css#.uiStage): fits the fixed
@@ -44,6 +45,35 @@
 </head>
 <body>
 
+<!-- Shared SVG gradients (logo + icons). Kept in an always-rendered
+     zero-size <svg> rather than inside a component: url(#id) paint servers
+     defined inside a display:none subtree stop rendering. -->
+<svg id="uiDefs" width="0" height="0" aria-hidden="true">
+  <defs>
+    <linearGradient id="gLogoGold" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#ffe0a0"/><stop offset=".5" stop-color="#f8bb56"/><stop offset="1" stop-color="#cf8a35"/>
+    </linearGradient>
+    <linearGradient id="gLogoBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b8c5ff"/><stop offset="1" stop-color="#6d82f5"/>
+    </linearGradient>
+    <linearGradient id="gBlueIcon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b8c5ff"/><stop offset="1" stop-color="#6d82f5"/>
+    </linearGradient>
+    <linearGradient id="gGoldIcon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd98f"/><stop offset="1" stop-color="#e79e3e"/>
+    </linearGradient>
+    <linearGradient id="gRedIcon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff6f73"/><stop offset="1" stop-color="#d63b43"/>
+    </linearGradient>
+    <linearGradient id="gTealIcon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b9ecff"/><stop offset=".6" stop-color="#58b8f0"/><stop offset="1" stop-color="#1f8a4d"/>
+    </linearGradient>
+    <radialGradient id="gSun" cx=".45" cy=".4" r=".6">
+      <stop offset="0" stop-color="#fff6b0"/><stop offset=".6" stop-color="#ffd21f"/><stop offset="1" stop-color="#f0a400"/>
+    </radialGradient>
+  </defs>
+</svg>
+
 <div id="stage"></div>
 
 <div id="outdatedOverlay" class="hidden">
@@ -59,25 +89,17 @@
 <div id="banner">
   <!-- Top bar: full window width, the two middle rails stretch. -->
   <div class="uiBar" id="topBar">
-    <div class="mat blue" id="tlBracket"></div>
-    <svg id="insignia" viewBox="0 0 52 48" aria-hidden="true">
-      <defs>
-        <linearGradient id="gLogoGold" x1="0" y1="0" x2="0.4" y2="1">
-          <stop offset="0" stop-color="#ffe0a0"/><stop offset=".5" stop-color="#f8bb56"/><stop offset="1" stop-color="#cf8a35"/>
-        </linearGradient>
-        <linearGradient id="gLogoBlue" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#b8c5ff"/><stop offset="1" stop-color="#6d82f5"/>
-        </linearGradient>
-      </defs>
+    <div class="mat blue tbBracket"></div>
+    <svg class="tbInsignia" viewBox="0 0 52 48" aria-hidden="true">
       <path d="M16 8 L3 24 L16 40 M36 8 L49 24 L36 40" fill="none" stroke="url(#gLogoGold)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
       <circle cx="26" cy="15" r="3.6" fill="url(#gLogoBlue)"/><circle cx="20" cy="30" r="3.6" fill="url(#gLogoBlue)"/><circle cx="32" cy="30" r="3.6" fill="url(#gLogoBlue)"/>
     </svg>
-    <h1 id="title"><span class="t">SWARM PROTOCOL</span><small id="versionTag"></small></h1>
-    <div class="mat blue" id="tb1"></div>
-    <div class="mat blue" id="tb2"></div>
-    <div class="mat blue" id="tb3"></div>
-    <div class="mat blue" id="tb4"></div>
-    <div class="mat gold" id="goldSwoosh"></div>
+    <h1 class="tbTitle"><span class="t">SWARM PROTOCOL</span><small id="versionTag"></small></h1>
+    <div class="mat blue tb1"></div>
+    <div class="mat blue tb2"></div>
+    <div class="mat blue tb3"></div>
+    <div class="mat blue tb4"></div>
+    <div class="mat gold tbGold"></div>
     <div class="mat blue" id="topRail"></div>
     <div class="mat gold" id="bottomRail"></div>
     <div class="mat lilac" id="lilacSwoosh"></div>
@@ -85,7 +107,13 @@
     <div class="mat blue" id="sdBottom"></div>
     <div id="sdBox"></div>
     <a id="devBlogBtn" href="https://swarmprotocol.blogspot.com/" target="_blank" rel="noopener noreferrer">DEV Blog.PL</a>
-    <div class="mat blue" id="trCap"></div>
+    <div class="mat blue tbCap"></div>
+    <!-- Live player counters, centered on the rails (ui/playerCounts.js). -->
+    <div id="playerCounts">
+      <div class="pc"><span class="pcDot"></span><span class="pcVal" id="pcOnline">—</span><span class="pcLbl" id="pcOnlineLbl">players online</span></div>
+      <span class="pcSep"></span>
+      <div class="pc"><span class="pcIcon" data-icon="players"></span><span class="pcVal" id="pcRegistered">—</span><span class="pcLbl" id="pcRegisteredLbl">registered players</span></div>
+    </div>
   </div>
 
   <div class="uiStage">
@@ -125,6 +153,7 @@
       <div id="bannerButtons">
         <button id="startBtn" class="mat gold" disabled>ENTER ORBIT</button>
         <button id="setupBtn" class="oBtn" type="button">⚙ Setup</button>
+        <button id="aboutBtn" class="oBtn" type="button" title="About the game">?</button>
       </div>
     </section>
   </div>
@@ -141,10 +170,11 @@
       <div id="setupTabs">
         <button type="button" data-tab="language" class="mat gold active">Language</button>
         <button type="button" data-tab="mouse" class="mat blueT">Mouse</button>
+        <button type="button" data-tab="graphics" class="mat blueT">Graphics</button>
         <button type="button" data-tab="help" class="mat blueT">Help</button>
       </div>
 
-      <div id="setupTabLanguage" class="setupTabPanel">
+      <div id="setupTabLanguage" class="setupTabPanel" data-tab="language">
         <div id="setupLangLabel">Language</div>
         <div id="setupLangButtons">
           <button type="button" class="oBtn" data-lang="en">English</button>
@@ -152,13 +182,25 @@
         </div>
       </div>
 
-      <div id="setupTabMouse" class="setupTabPanel hidden">
+      <div id="setupTabMouse" class="setupTabPanel hidden" data-tab="mouse">
         <label class="setupCheckRow"><input type="checkbox" id="invertXCheck"><span class="chk"></span><span id="invertXLabel">Invert X (right-drag)</span></label>
         <label class="setupCheckRow"><input type="checkbox" id="invertYCheck"><span class="chk"></span><span id="invertYLabel">Invert Y (right-drag)</span></label>
         <label class="setupCheckRow"><input type="checkbox" id="swapButtonsCheck"><span class="chk"></span><span id="swapButtonsLabel">Swap left/right mouse button</span></label>
       </div>
 
-      <div id="setupTabHelp" class="setupTabPanel hidden">
+      <!-- Not wired up yet: these arrive together with importing ships from
+           the ship lab (ship.html has the same two sliders). -->
+      <div id="setupTabGraphics" class="setupTabPanel hidden" data-tab="graphics">
+        <label class="gfxRow" id="gfxQualityRow" style="top:0"><span id="gfxQualityLabel">Render quality</span><b>ULTRA</b></label>
+        <input type="range" class="gfxSlider" style="top:24px; --fill:75%" min="0" max="4" step="1" value="3" disabled>
+        <div class="gfxTicks" id="gfxQualityTicks" style="top:48px"><span>LOW</span><span>MED</span><span>HIGH</span><span>ULTRA</span><span>MAX</span></div>
+        <label class="gfxRow" style="top:72px"><span id="gfxDetailLabel">Geometry detail (triangles)</span><b>100%</b></label>
+        <input type="range" class="gfxSlider" style="top:96px; --fill:44.4%" min="0.2" max="2" step="0.05" value="1" disabled>
+        <div class="gfxTicks" style="top:120px"><span>20%</span><span>100%</span><span>200%</span></div>
+        <div id="gfxSoon" style="top:150px">Coming soon</div>
+      </div>
+
+      <div id="setupTabHelp" class="setupTabPanel hidden" data-tab="help">
         <div id="setupHelpText">
           Right button + drag = rotate camera · scroll = zoom<br>
           Left click / box select = select ships<br>
@@ -169,160 +211,308 @@
   </div>
 </div>
 
-<div class="hud panel" id="telemetry">
-  <div class="panelTitleBar">
-    <div class="title" id="telemetryTitle">SWARM PROTOCOL // TELEMETRY</div>
-    <button class="collapseBtn" id="telemetryCollapseBtn" type="button">▾</button>
-  </div>
-  <div class="panelBody" id="telemetryBody">
-    <div class="row"><span id="labelPoints">Evolution points</span><b id="statPoints">0</b></div>
-    <div class="row"><span id="labelShips">Units</span><b id="statShips">0</b></div>
-    <div class="row"><span id="labelEaten">Planets devoured</span><b id="statEaten">0</b></div>
-    <div class="row"><span id="labelPlayers">Players online</span><b id="statPlayers">1</b></div>
-  </div>
-</div>
+<!-- In-game HUD, built on the UI kit (css/ui/hud/). A .uiScreen: the
+     whole window in design pixels, so the left column sticks to the left
+     edge, the right column to the right edge, and the 3D viewport, the
+     fleet list and the event log stretch with the window. -->
+<div id="hud" class="uiScreen">
+  <!-- Top bar -->
+  <div class="mat blue tbBracket"></div>
+  <svg class="tbInsignia" viewBox="0 0 52 48" aria-hidden="true">
+    <path d="M16 8 L3 24 L16 40 M36 8 L49 24 L36 40" fill="none" stroke="url(#gLogoGold)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="26" cy="15" r="3.6" fill="url(#gLogoBlue)"/><circle cx="20" cy="30" r="3.6" fill="url(#gLogoBlue)"/><circle cx="32" cy="30" r="3.6" fill="url(#gLogoBlue)"/>
+  </svg>
+  <div class="tbTitle"><span class="t">SWARM PROTOCOL</span></div>
+  <div class="mat blue tb1"></div>
+  <div class="mat blue tb2"></div>
+  <div class="mat blue tb3"></div>
+  <div class="mat blue tb4"></div>
+  <div class="mat gold tbGold"></div>
 
-<div class="hud panel" id="playersPanel">
-  <div class="panelTitleBar">
-    <div class="title" id="playersTitle">PLAYERS</div>
-    <button class="collapseBtn" id="playersCollapseBtn" type="button">▾</button>
+  <div class="mat blue" id="resFrame"></div>
+  <div class="mat gold" id="resGoldLine"></div>
+  <div class="mat gold" id="resGoldBlock"></div>
+  <div id="resBox">
+    <div class="res" style="left:10px"><span class="resIcon" data-icon="points"></span><span class="rl" id="labelPoints">Points</span><span class="rv" id="statPoints">0</span></div>
+    <div class="resSep" style="left:146px"></div>
+    <div class="res" style="left:156px"><span class="resIcon" data-icon="units"></span><span class="rl" id="labelShips">Units</span><span class="rv" id="statShips">0</span></div>
+    <div class="resSep" style="left:292px"></div>
+    <div class="res" style="left:302px"><span class="resIcon" data-icon="planet"></span><span class="rl" id="labelEaten">Devoured</span><span class="rv" id="statEaten">0</span></div>
+    <div class="resSep" style="left:448px"></div>
+    <div class="res" style="left:458px"><span class="resIcon" data-icon="players"></span><span class="rl" id="labelPlayers">Online</span><span class="rv" id="statPlayers">1</span></div>
   </div>
-  <ul id="playersListEl" class="panelBody"></ul>
-</div>
 
-<div id="hudButtonsRow" class="hud">
-  <button id="wikiBtn" type="button">📖 Wiki</button>
-  <button id="techBtn" type="button">🛠 Tech</button>
-  <button id="fleetBtn" type="button">🚀 Fleet</button>
-</div>
-
-<div id="techModal" class="modal hidden">
-  <div id="techModalBox" class="modalBox">
-    <div class="modalHeader">
-      <span id="techModalTitle" class="modalTitle">Tech Tree</span>
-      <button id="techCloseBtn" class="modalCloseBtn" type="button">✕</button>
+  <div class="mat lilac" id="hudLilac"></div>
+  <div class="mat blue" id="hudSdTop"></div>
+  <div class="mat blue" id="hudSdBottom"></div>
+  <div id="hudSdBox">
+    <div id="sdDate"><span id="sdCycleLabel">Cycle</span> <span id="sdCycleVal">0.0</span></div>
+    <div id="sdTime">00:00</div>
+    <!-- Decorative: game time can't be paused/sped up in multiplayer. -->
+    <div id="speedCtl">
+      <span class="sBracket"></span>
+      <span class="sBtn" id="btnPause"><svg viewBox="0 0 22 26"><rect class="fBlue" x="1" y="1" width="8" height="24" rx="2"/><rect class="fBlue" x="13" y="1" width="8" height="24" rx="2"/></svg></span>
+      <span class="sSep" style="left:47px"></span>
+      <span class="sBtn on" id="btnPlay"><svg viewBox="0 0 22 26"><path class="fGold" d="M2 1 L21 13 L2 25 Z"/></svg></span>
+      <span class="sSep" style="left:87px"></span>
+      <span class="sBtn" id="btnFast"><svg viewBox="0 0 28 26"><path class="fBlue" d="M1 1 L14 13 L1 25 Z M13 1 L27 13 L13 25 Z"/></svg></span>
     </div>
-    <div id="dock"></div>
   </div>
-</div>
+  <div class="mat blue tbCap"></div>
 
-<div id="fleetModal" class="modal hidden">
-  <div id="fleetModalBox" class="modalBox">
-    <div class="modalHeader">
-      <span id="fleetModalTitle" class="modalTitle">Fleet</span>
-      <button id="fleetCloseBtn" class="modalCloseBtn" type="button">✕</button>
-    </div>
-    <ul id="fleetListEl"></ul>
-  </div>
-</div>
+  <!-- Left navigation -->
+  <nav id="nav">
+    <div class="navRow" data-nav="fleet"><span class="mat gold navSq"></span><button type="button" class="mat navBtn" id="navFleet">FLEET</button></div>
+    <div class="navRow" data-nav="planets"><span class="mat lilac navSq"></span><button type="button" class="mat navBtn" id="navPlanets">PLANETS</button></div>
+    <div class="navRow" data-nav="research"><span class="mat lilac navSq"></span><button type="button" class="mat navBtn" id="navResearch">RESEARCH</button></div>
+    <div class="navRow soon" data-nav="build"><span class="mat blue navSq"></span><button type="button" class="mat navBtn" id="navBuild">BUILD</button></div>
+    <div class="navRow soon" data-nav="diplomacy"><span class="mat blue2 navSq"></span><button type="button" class="mat navBtn" id="navDiplomacy">DIPLOMACY</button></div>
+    <div class="navRow" data-nav="intel"><span class="mat lilac navSq"></span><button type="button" class="mat navBtn" id="navIntel">INTEL</button></div>
+    <div class="navRow" data-nav="settings"><span class="mat red navSq"></span><button type="button" class="mat navBtn" id="navSettings">SETTINGS</button></div>
+  </nav>
 
-<div id="shipCam" class="hidden">
-  <div id="shipCamLabel">SHIP CAM</div>
-  <button id="shipCamCloseBtn" type="button">✕</button>
-</div>
+  <!-- Fleet list -->
+  <section class="uiPanel" id="fleetPanel">
+    <span class="mat lilac hdSq" id="fleetHdSq"></span>
+    <h2 class="hd" id="fleetHd">FLEET LIST</h2>
+    <div class="hdLine" id="fleetHdLine"></div>
+    <div class="mat blueV sideBar" id="fleetSide"></div>
+    <div id="fleetList"></div>
+  </section>
 
-<div id="legend" class="hidden">
-  <div class="lg"><span class="dot" style="background:#4fa8ff"></span><span id="legendIce">Ice planets</span></div>
-  <div class="lg"><span class="dot" style="background:#8fd88f"></span><span id="legendNeutral">Neutral planets</span></div>
-  <div class="lg"><span class="dot" style="background:#ff7a45"></span><span id="legendVolcanic">Volcanic planets</span></div>
-  <div class="lg" style="margin-top:4px;" id="legendSun">☀ Suns</div>
-  <div class="lg" id="legendComet">☄ Comets</div>
-  <div class="lg" id="legendMeteoroid">🪨 Meteoroids</div>
-  <div class="lg" id="legendBlackhole">🌀 Black holes (hazard!)</div>
-</div>
-
-<div id="bodyTooltip" class="hud panel hidden">
-  <div class="ttTitle" id="ttTitle"></div>
-  <div class="ttRow"><span id="ttRow1Label"></span><b id="ttRow1Val"></b></div>
-  <div class="ttRow"><span id="ttRow2Label"></span><b id="ttRow2Val"></b></div>
-</div>
-
-<div id="connectionStatus" class="hidden">⚠ Reconnecting to server…</div>
-
-<div id="cameraModeToggle" class="hud">
-  <button type="button" id="camModeBaseBtn" class="camModeActive">🏠 Base</button>
-  <button type="button" id="camModeSystemBtn">☀ System</button>
-</div>
-
-<div id="dronePanel" class="hud panel hidden">
-  <div class="panelTitleBar">
-    <div class="title" id="dronePanelTitle">DRONE</div>
-    <button class="collapseBtn" id="droneCloseBtn" type="button">✕</button>
-  </div>
-  <div id="droneThumbWrap"></div>
-  <div class="row"><span id="droneStatusLabel">Status</span><b id="droneStatusVal">Idle</b></div>
-  <div class="row"><span id="droneFuelLabel">Fuel</span><b id="droneFuelVal">100 / 100</b></div>
-  <div class="row"><span id="droneAttackLabel">Attack</span><b id="droneAttackVal">6</b></div>
-  <div class="row"><span id="droneDefenseLabel">Defense</span><b id="droneDefenseVal">1</b></div>
-  <div id="droneRunButtons">
-    <button id="droneRunBtn" class="droneRunBtn" type="button">▶ Run</button>
-    <button id="droneStopBtn" class="droneStopBtn" type="button">■ Stop</button>
-  </div>
-  <button id="droneScriptBtn" type="button">📜 Script</button>
-</div>
-
-<div id="stationPanel" class="hud panel hidden">
-  <div class="panelTitleBar">
-    <div class="title" id="stationPanelTitle">STATION</div>
-    <button class="collapseBtn" id="stationCloseBtn" type="button">✕</button>
-  </div>
-  <div class="row"><span id="stationFleetLabel">Fleet</span><b id="stationFleetVal">0</b></div>
-  <div class="row"><span id="stationPointsLabel">Evolution points</span><b id="stationPointsVal">0</b></div>
-  <div class="row"><span id="stationUpgradesLabel">Upgrades</span><b id="stationUpgradesVal">—</b></div>
-  <div id="stationPanelButtons">
-    <button id="stationTechBtn" type="button">🛠 Tech</button>
-    <button id="stationFleetBtn" type="button">🚀 Fleet</button>
-  </div>
-</div>
-
-<div id="planetPanel" class="hud panel hidden">
-  <div class="panelTitleBar">
-    <div class="title" id="planetPanelTitle">PLANET</div>
-    <button class="collapseBtn" id="planetCloseBtn" type="button">✕</button>
-  </div>
-  <div id="planetThumbWrap"></div>
-  <div class="row"><span id="planetHealthLabel">Health</span><b id="planetHealthVal">— / —</b></div>
-  <div class="row"><span id="planetRadiusLabel">Radius</span><b id="planetRadiusVal">—</b></div>
-  <div class="row"><span id="planetSpinLabel">Spin</span><b id="planetSpinVal">—</b></div>
-  <div class="row"><span id="planetValueLabel">Value</span><b id="planetValueVal">—</b></div>
-</div>
-
-<button id="devToolsBtn" type="button" title="Dev Tools">🛠</button>
-<div id="devToolsMenu" class="hidden">
-  <label class="setupCheckRow"><input type="checkbox" id="devLightsCheck"><span id="devLightsLabel">Show light sources</span></label>
-  <label class="setupCheckRow"><input type="checkbox" id="devDistanceCheck"><span id="devDistanceLabel">Connect selected planets</span></label>
-  <label class="setupCheckRow"><input type="checkbox" id="devNoLightsCheck"><span id="devNoLightsLabel">Turn off lights</span></label>
-</div>
-
-<div id="droneScriptModal" class="modal hidden">
-  <div id="droneScriptModalBox" class="modalBox">
-    <div class="modalHeader">
-      <span class="modalTitle" id="droneScriptModalTitle">Drone Script</span>
-      <div id="droneScriptHeaderBtns">
-        <button id="droneScriptHelpBtn" type="button" title="Functions &amp; examples">?</button>
-        <button class="modalCloseBtn" id="droneScriptCloseBtn" type="button">✕</button>
+  <!-- Selected unit: one ship, a group of ships, or the drone -->
+  <section class="uiPanel" id="unitPanel">
+    <div class="mat blueV sideBar" id="unitSide"></div>
+    <h2 class="hd small" id="unitHd">SELECTED UNIT</h2>
+    <button type="button" class="mat red closePill hidden" id="unitCloseBtn" aria-label="Close">✕</button>
+    <div class="hdLine" id="unitHdLine"></div>
+    <div id="unitEmpty"></div>
+    <div id="unitBody" class="hidden">
+      <div id="unitName"></div>
+      <div id="unitClass"></div>
+      <!-- Ship cam toggle for the selected ship (scene/shipcam.js). -->
+      <button type="button" class="oBtn" id="unitCamBtn" data-icon="camera"><span>CAM</span></button>
+      <div id="unitThumb"></div>
+      <div id="unitBars">
+        <div class="barRow" id="unitBar1"><span></span><div class="bar"><i class="mat green"></i></div><b></b></div>
+        <div class="barRow" id="unitBar2"><span></span><div class="bar"><i class="mat blueBar"></i></div><b></b></div>
+        <div class="barRow" id="unitBar3"><span></span><div class="bar"><i class="mat blueBar"></i></div><b></b></div>
+      </div>
+      <div class="hdLine" id="unitMidLine"></div>
+      <dl id="unitStats">
+        <dt id="unitStat1L"></dt><dd id="unitStat1V"></dd>
+        <dt id="unitStat2L"></dt><dd id="unitStat2V"></dd>
+        <dt id="unitStat3L"></dt><dd id="unitStat3V"></dd>
+        <dt id="unitStat4L"></dt><dd id="unitStat4V"></dd>
+      </dl>
+      <!-- Ship quick orders: not wired up yet (see the command bar). -->
+      <div id="unitBtns">
+        <button type="button" class="uBtn gold soon" data-icon="target" data-cmd="attack"></button>
+        <button type="button" class="uBtn blue soon" data-icon="formup" data-cmd="formUp"></button>
+        <button type="button" class="uBtn gold soon" data-icon="shield" data-cmd="defend"></button>
+        <button type="button" class="uBtn blue soon" data-icon="scan2" data-cmd="scan"></button>
+      </div>
+      <!-- Drone script controls (live). -->
+      <div id="droneBtns" class="hidden">
+        <button type="button" class="uBtn gold" id="droneRunBtn" data-icon="play"><span></span></button>
+        <button type="button" class="uBtn red" id="droneStopBtn" data-icon="stop"><span></span></button>
+        <button type="button" class="uBtn blue" id="droneScriptBtn" data-icon="script"><span></span></button>
       </div>
     </div>
+  </section>
 
-    <div id="droneScriptHelp" class="hidden">
-      <div class="droneHelpTitle" id="droneHelpMovementTitle">Movement</div>
-      <table class="droneHelpTable">
-        <tr><td><code>move(n)</code></td><td id="droneHelpMoveDesc"></td></tr>
-        <tr><td><code>turn(deg)</code></td><td id="droneHelpTurnDesc"></td></tr>
-        <tr><td><code>wait(s)</code></td><td id="droneHelpWaitDesc"></td></tr>
-      </table>
-      <div class="droneHelpTitle" id="droneHelpSensorsTitle">Sensors &amp; actions</div>
-      <table class="droneHelpTable">
-        <tr><td><code>fuel()</code></td><td id="droneHelpFuelDesc"></td></tr>
-        <tr><td><code>maxFuel()</code></td><td id="droneHelpMaxFuelDesc"></td></tr>
-        <tr><td><code>nearPlanet()</code></td><td id="droneHelpNearDesc"></td></tr>
-        <tr><td><code>attack()</code></td><td id="droneHelpAttackDesc"></td></tr>
-        <tr><td><code>print(x)</code></td><td id="droneHelpPrintDesc"></td></tr>
-      </table>
-      <div class="droneHelpTitle" id="droneHelpSyntaxTitle">Syntax</div>
-      <div id="droneHelpSyntaxDesc" class="droneHelpText"></div>
-      <div class="droneHelpTitle" id="droneHelpExampleTitle">Example</div>
-      <pre id="droneHelpExample">while (fuel() > 10) {
+  <!-- 3D viewport frame: the scene renders into this rect (scene/viewRect.js);
+       the frame itself lets clicks through to the canvas underneath. -->
+  <div id="viewport">
+    <div id="cameraModeToggle">
+      <button type="button" id="camModeBaseBtn" class="mat gold camModeActive">Base</button>
+      <button type="button" id="camModeSystemBtn" class="mat blueT">System</button>
+    </div>
+    <div id="connectionStatus" class="hidden">⚠ Reconnecting to server…</div>
+    <div id="shipCam" class="hidden">
+      <div id="shipCamLabel">SHIP CAM</div>
+      <button type="button" class="mat red closePill" id="shipCamCloseBtn" aria-label="Close">✕</button>
+    </div>
+    <button type="button" class="oBtn" id="devToolsBtn" title="Dev Tools"></button>
+    <div id="devToolsMenu" class="hidden">
+      <label class="setupCheckRow"><input type="checkbox" id="devLightsCheck"><span class="chk"></span><span id="devLightsLabel">Show light sources</span></label>
+      <label class="setupCheckRow"><input type="checkbox" id="devDistanceCheck"><span class="chk"></span><span id="devDistanceLabel">Connect selected planets</span></label>
+      <label class="setupCheckRow"><input type="checkbox" id="devNoLightsCheck"><span class="chk"></span><span id="devNoLightsLabel">Turn off lights</span></label>
+    </div>
+  </div>
+
+  <!-- Command bar: not wired up yet, tabs only switch visually. -->
+  <section id="cmdBar">
+    <svg id="cmdFrame" viewBox="0 0 680 136" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M10 1 H636 L679 44 V126 Q679 135 670 135 H10 Q1 135 1 126 V10 Q1 1 10 1 Z"/>
+    </svg>
+    <div class="mat blueV" id="cmdSide"></div>
+    <div id="cmdTabs">
+      <button type="button" class="mat cTab gold on" id="tabTactical" data-color="blueT">TACTICAL</button>
+      <button type="button" class="mat cTab blueT" id="tabMovement" data-color="blueT">MOVEMENT</button>
+      <button type="button" class="mat cTab blueT" id="tabBuild" data-color="blueT">BUILD</button>
+      <button type="button" class="mat cTab blueL" id="tabSpecial" data-color="blueL">SPECIAL</button>
+    </div>
+    <div id="cmdBtns">
+      <button type="button" class="aBtn red soon" style="left:41px;width:94px" data-icon="target" data-cmd="attack"><span></span></button>
+      <button type="button" class="aBtn gold soon" style="left:148px;width:92px" data-icon="move" data-cmd="move"><span></span></button>
+      <button type="button" class="aBtn gold soon" style="left:254px;width:107px" data-icon="formup" data-cmd="formUp"><span></span></button>
+      <button type="button" class="aBtn blue soon" style="left:375px;width:92px" data-icon="shield" data-cmd="defend"><span></span></button>
+      <button type="button" class="aBtn gold soon" style="left:481px;width:86px" data-icon="scan" data-cmd="scan"><span></span></button>
+      <button type="button" class="aBtn gold soon" style="left:580px;width:85px" data-icon="cloak" data-cmd="cloak"><span></span></button>
+    </div>
+  </section>
+
+  <!-- Planet info: the selected planet (or the player's station) -->
+  <section class="uiPanel" id="infoPanel">
+    <div class="mat blue" id="plTopBar"></div>
+    <h2 class="hd small" id="infoHd">PLANET INFO</h2>
+    <button type="button" class="mat red closePill hidden" id="infoCloseBtn" aria-label="Close">✕</button>
+    <div class="hdLine" id="plHdLine"></div>
+    <div class="mat blueV" id="plSide"></div>
+    <div class="mat lilac" id="plSideBottom"></div>
+    <div id="infoEmpty"></div>
+    <div id="infoBody" class="hidden">
+      <div id="infoThumb"></div>
+      <div id="infoName"></div>
+      <div id="infoType"></div>
+      <div class="hdLine" id="plMidLine"></div>
+      <div id="plRows">
+        <div class="plRow" id="infoRow1"><span></span><b></b><div class="bar def hidden"><i class="mat cyan"></i></div></div>
+        <div class="plRow" id="infoRow2"><span></span><b></b></div>
+        <div class="plRow" id="infoRow3"><span></span><b></b></div>
+      </div>
+      <button type="button" class="oBtn" id="infoBtnA"></button>
+      <button type="button" class="oBtn" id="infoBtnB"></button>
+      <button type="button" class="mat gold" id="infoBtnC"></button>
+    </div>
+  </section>
+
+  <!-- Event log: every in-game message (ui/hud/eventLog.js) -->
+  <section class="uiPanel" id="eventPanel">
+    <span class="mat gold hdSq" id="evHdSq"></span>
+    <h2 class="hd" id="evHd">EVENT LOG</h2>
+    <div class="hdLine" id="evHdLine"></div>
+    <div id="evBars">
+      <span class="mat blue3" style="flex:32"></span>
+      <span class="mat blue4" style="flex:56"></span>
+      <span class="mat blue" style="flex:44"></span>
+      <span class="mat blue3" style="flex:38"></span>
+      <span class="mat lilac" style="flex:56;border-bottom-left-radius:14px"></span>
+    </div>
+    <ul id="evList"></ul>
+  </section>
+
+  <!-- Minimap: schematic, not to scale (ui/hud/minimap.js) -->
+  <section class="uiPanel" id="miniPanel">
+    <span class="mat gold hdSq" id="mmHdSq"></span>
+    <h2 class="hd" id="mmHd">MINIMAP</h2>
+    <div class="hdLine" id="mmHdLine"></div>
+    <div id="mmBox">
+      <svg id="mmSvg" viewBox="0 0 295 206"></svg>
+      <div id="mmZoom">
+        <button type="button" id="mmIn" aria-label="Zoom in">+</button>
+        <span></span>
+        <button type="button" id="mmOut" aria-label="Zoom out">&minus;</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- About window, opened from the start screen's [?] (ui/about.js) -->
+<div id="aboutModal" class="uiWindow hidden">
+  <section class="uiWindowBox" id="aboutModalBox">
+    <div class="mat blueV uiWinSide"></div>
+    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="aboutTitle">About</h2><button type="button" class="mat red closePill" id="aboutCloseBtn" aria-label="Close">✕</button></header>
+    <div class="hdLine"></div>
+    <div class="uiWinBody">
+      <p id="aboutMade">Created with vibe coding</p>
+      <div class="aboutHd" id="aboutAuthorsHd">Authors</div>
+      <ul class="aboutList">
+        <li>Michał Stankiewicz</li>
+        <li>Claude</li>
+      </ul>
+      <div class="aboutHd" id="aboutContactHd">Contact</div>
+      <ul class="aboutList">
+        <li><span id="aboutPhoneLabel">Tel.</span>: <a href="tel:+48797486355">+48 797 486 355</a></li>
+        <li>GH: <a href="https://github.com/michalstankiewicz4-cell/Space/discussions" target="_blank" rel="noopener noreferrer">github.com/michalstankiewicz4-cell/Space/discussions</a></li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<!-- Windows opened from the HUD (css/ui/windows/) -->
+<div id="techModal" class="uiWindow hidden">
+  <section class="uiWindowBox" id="techModalBox">
+    <div class="mat blueV uiWinSide"></div>
+    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="techModalTitle">Tech Tree</h2><button type="button" class="mat red closePill" id="techCloseBtn" aria-label="Close">✕</button></header>
+    <div class="hdLine"></div>
+    <div class="uiWinBody"><div id="dock"></div></div>
+  </section>
+</div>
+
+<div id="fleetModal" class="uiWindow hidden">
+  <section class="uiWindowBox" id="fleetModalBox">
+    <div class="mat blueV uiWinSide"></div>
+    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="fleetModalTitle">Fleet</h2><button type="button" class="mat red closePill" id="fleetCloseBtn" aria-label="Close">✕</button></header>
+    <div class="hdLine"></div>
+    <div class="uiWinBody"><ul id="fleetListEl"></ul></div>
+  </section>
+</div>
+
+<div id="playersModal" class="uiWindow hidden">
+  <section class="uiWindowBox" id="playersModalBox">
+    <div class="mat blueV uiWinSide"></div>
+    <header class="uiWinHead"><span class="mat lilac hdSq"></span><h2 class="hd" id="playersTitle">PLAYERS</h2><button type="button" class="mat red closePill" id="playersCloseBtn" aria-label="Close">✕</button></header>
+    <div class="hdLine"></div>
+    <div class="uiWinBody"><ul id="playersListEl"></ul></div>
+  </section>
+</div>
+
+<div id="legendModal" class="uiWindow hidden">
+  <section class="uiWindowBox" id="legendModalBox">
+    <div class="mat blueV uiWinSide"></div>
+    <header class="uiWinHead"><span class="mat lilac hdSq"></span><h2 class="hd" id="legendTitle">Body types</h2><button type="button" class="mat red closePill" id="legendCloseBtn" aria-label="Close">✕</button></header>
+    <div class="hdLine"></div>
+    <div class="uiWinBody" id="legend">
+      <div class="lg"><span class="dot" style="background:#4fa8ff"></span><span id="legendIce">Ice planets</span></div>
+      <div class="lg"><span class="dot" style="background:#8fd88f"></span><span id="legendNeutral">Neutral planets</span></div>
+      <div class="lg"><span class="dot" style="background:#ff7a45"></span><span id="legendVolcanic">Volcanic planets</span></div>
+      <div class="lg" id="legendSun">☀ Suns</div>
+      <div class="lg" id="legendComet">☄ Comets</div>
+      <div class="lg" id="legendMeteoroid">🪨 Meteoroids</div>
+      <div class="lg" id="legendBlackhole">🌀 Black holes (hazard!)</div>
+    </div>
+  </section>
+</div>
+
+<div id="droneScriptModal" class="uiWindow hidden">
+  <section class="uiWindowBox" id="droneScriptModalBox">
+    <div class="mat blueV uiWinSide"></div>
+    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="droneScriptModalTitle">Drone Script</h2>
+      <button type="button" class="oBtn" id="droneScriptHelpBtn" title="Functions &amp; examples">?</button>
+      <button type="button" class="mat red closePill" id="droneScriptCloseBtn" aria-label="Close">✕</button></header>
+    <div class="hdLine"></div>
+    <div class="uiWinBody">
+      <div id="droneScriptHelp" class="hidden">
+        <div class="droneHelpTitle" id="droneHelpMovementTitle">Movement</div>
+        <table class="droneHelpTable">
+          <tr><td><code>move(n)</code></td><td id="droneHelpMoveDesc"></td></tr>
+          <tr><td><code>turn(deg)</code></td><td id="droneHelpTurnDesc"></td></tr>
+          <tr><td><code>wait(s)</code></td><td id="droneHelpWaitDesc"></td></tr>
+        </table>
+        <div class="droneHelpTitle" id="droneHelpSensorsTitle">Sensors &amp; actions</div>
+        <table class="droneHelpTable">
+          <tr><td><code>fuel()</code></td><td id="droneHelpFuelDesc"></td></tr>
+          <tr><td><code>maxFuel()</code></td><td id="droneHelpMaxFuelDesc"></td></tr>
+          <tr><td><code>nearPlanet()</code></td><td id="droneHelpNearDesc"></td></tr>
+          <tr><td><code>attack()</code></td><td id="droneHelpAttackDesc"></td></tr>
+          <tr><td><code>print(x)</code></td><td id="droneHelpPrintDesc"></td></tr>
+        </table>
+        <div class="droneHelpTitle" id="droneHelpSyntaxTitle">Syntax</div>
+        <div id="droneHelpSyntaxDesc" class="droneHelpText"></div>
+        <div class="droneHelpTitle" id="droneHelpExampleTitle">Example</div>
+        <pre id="droneHelpExample">while (fuel() > 10) {
   move(5)
   if (nearPlanet()) {
     print("attacking!")
@@ -331,25 +521,29 @@
     turn(30)
   }
 }</pre>
+      </div>
+      <textarea id="droneScriptInput" spellcheck="false"></textarea>
+      <div id="droneScriptButtons">
+        <button type="button" class="mat gold" id="droneScriptRunBtn">▶ Run</button>
+        <button type="button" class="oBtn" id="droneScriptStopBtn">■ Stop</button>
+      </div>
+      <div id="droneScriptError" class="hidden"></div>
+      <div id="droneScriptLog"></div>
     </div>
-
-    <textarea id="droneScriptInput" spellcheck="false"></textarea>
-    <div id="droneScriptButtons">
-      <button id="droneScriptRunBtn" class="droneRunBtn" type="button">▶ Run</button>
-      <button id="droneScriptStopBtn" class="droneStopBtn" type="button">■ Stop</button>
-    </div>
-    <div id="droneScriptError" class="hidden"></div>
-    <div id="droneScriptLog"></div>
-  </div>
+  </section>
 </div>
 
-<div id="toast"></div>
+<div id="bodyTooltip" class="hidden">
+  <div class="ttTitle" id="ttTitle"></div>
+  <div class="ttRow"><span id="ttRow1Label"></span><b id="ttRow1Val"></b></div>
+  <div class="ttRow"><span id="ttRow2Label"></span><b id="ttRow2Val"></b></div>
+</div>
 
 <div id="selectBox"></div>
 <div id="cmdFlash"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script type="module" src="js/main.js?v=2.1.4"></script>
+<script type="module" src="js/main.js?v=2.2.0"></script>
 </body>
 </html>

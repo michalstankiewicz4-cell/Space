@@ -7,8 +7,8 @@ import { paintScorch, destroyPlanet } from "../world/bodies.js";
 import { bodyValueEstimate } from "../world/bodyParams.js";
 import { spawnBiteParticles } from "../fx/particles.js";
 import { triggerBreakup } from "../fx/breakup.js";
-import { showToast } from "../ui/hud.js";
-import { refreshDock } from "../ui/dock.js";
+import { showToast } from "../ui/hud/eventLog.js";
+import { refreshResearch } from "../ui/windows/research.js";
 import { t } from "../i18n.js";
 
 // Reused every frame across every ship in updateShips() instead of several
@@ -364,9 +364,9 @@ export function updateShips(dt){
             const gained = bodyValueEstimate(deadBody);
             state.points += gained;
             state.eaten += 1;
-            showToast(t("toast.eaten")(gained));
+            showToast(t("toast.eaten")(gained), "arrive");
             triggerBreakup(deadBody);
-            refreshDock();
+            refreshResearch();
             save();
           }
           // Reset the health checkpoint to exactly 0 right now, in both
@@ -384,11 +384,11 @@ export function updateShips(dt){
           const gained = bodyValueEstimate(sh.target);
           state.points += gained;
           state.eaten += 1;
-          showToast(t("toast.eaten")(gained));
+          showToast(t("toast.eaten")(gained), "arrive");
           const deadPlanet = sh.target;
           triggerBreakup(deadPlanet);
           destroyPlanet(deadPlanet);
-          refreshDock();
+          refreshResearch();
           save();
         } else {
           // networked mode: the server (bite_body RPC) decides who gets the

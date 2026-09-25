@@ -44,7 +44,7 @@ function angleFromClientId(id){
 // same "singleton, not an array" shape as ctx.drone — not part of
 // ctx.ships. Unlike the drone/ships it never moves once spawned: no
 // fuel, no commands, just a landmark with a selectable docking panel
-// (see ui/stationPanel.js). If it ever needs to move/rotate, give it an
+// (see ui/hud/stationPanel.js). If it ever needs to move/rotate, give it an
 // updateStation(dt) wired into main.js's tick() the same way updateDrone()
 // is — deliberately skipped for now, no per-frame work needed yet.
 export function spawnStation(){

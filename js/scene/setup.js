@@ -45,9 +45,9 @@ export function initScene(){
   addPulsars(scene);
   addOrbitLines(scene);
 
+  // The canvas always covers the whole window; the camera's aspect follows
+  // the 3D view's own rect instead (scene/viewRect.js#renderMainView).
   window.addEventListener("resize", function(){
-    camera.aspect = window.innerWidth/window.innerHeight;
-    camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 

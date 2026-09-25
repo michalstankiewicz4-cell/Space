@@ -1,4 +1,5 @@
 import { ctx } from "../core/context.js";
+import { getViewRect } from "./viewRect.js";
 
 // Raycasting hit-tests for everything clickable in the world — split out
 // of scene/controls.js (which had grown crowded after ships/drone/station/
@@ -9,8 +10,10 @@ import { ctx } from "../core/context.js";
 // single-threaded, so there's never a need for more than one at a time.
 const raycaster = new THREE.Raycaster();
 
+// Relative to the 3D view's own rect (the HUD viewport), not the
+// full-window canvas — see scene/viewRect.js.
 function ndcFromEvent(e){
-  const rect = ctx.renderer.domElement.getBoundingClientRect();
+  const rect = getViewRect();
   return {
     x: ((e.clientX-rect.left)/rect.width)*2 - 1,
     y: -((e.clientY-rect.top)/rect.height)*2 + 1
