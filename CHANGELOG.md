@@ -4,6 +4,15 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.6.1]
+
+### Changed
+- Start screen: a story intro instead of the old gameplay summary — a
+  terminal-style boot line ("REBOOT… MEMORY: 11%…") and two short
+  paragraphs: you wake on a ruined station on the fourth orbit, the
+  humans are gone, and there's a whole system to explore. The start
+  panel grew a little to fit it.
+
 ## [2.6.0]
 
 ### Added

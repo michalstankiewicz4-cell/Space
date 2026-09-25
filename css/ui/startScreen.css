@@ -45,10 +45,10 @@ body:has(#banner:not(.hidden)) #hud{ visibility:hidden; }
    HTML's built-in English, cleared by js/ui/i18nApply.js once the panel is
    translated — so a Polish player never sees the English text flash. */
 html[data-lang-pending] #box{ visibility:hidden; }
-#box{ left:438px; top:287px; width:660px; height:440px; }
-#boxSide{ left:10px; top:10px; width:18px; height:300px; border-radius:12px 0 0 0; }
-#boxSide2{ left:10px; top:316px; width:18px; height:50px; }
-#boxSide3{ left:10px; top:372px; width:18px; height:58px; border-radius:0 0 0 12px; }
+#box{ left:438px; top:267px; width:660px; height:480px; }
+#boxSide{ left:10px; top:10px; width:18px; height:340px; border-radius:12px 0 0 0; }
+#boxSide2{ left:10px; top:356px; width:18px; height:50px; }
+#boxSide3{ left:10px; top:412px; width:18px; height:58px; border-radius:0 0 0 12px; }
 
 #modeRow{ left:36px; top:10px; width:612px; height:34px; }
 #modeRow button{ position:absolute; top:0; height:34px; font-family:var(--uiFontLabel); font-weight:500;
@@ -61,14 +61,19 @@ html[data-lang-pending] #box{ visibility:hidden; }
 #modeRow .modeDisabled::after{ content:attr(title); display:block; font-family:var(--uiFontBody);
   font-size:11px; font-weight:400; letter-spacing:.4px; line-height:12px; color:#0c1440; opacity:.85; }
 
-#bannerDesc{ left:48px; top:62px; width:590px; margin:0; font-size:18px; line-height:26px; color:#c7d0ff; }
+/* Story intro: a terminal-style boot line, then two short paragraphs
+   (one 
+ between them, kept by pre-line). */
+#bannerBoot{ left:48px; top:58px; width:590px; margin:0; font-family:"IBM Plex Mono", "Courier New", monospace;
+  font-size:13px; line-height:18px; letter-spacing:.6px; color:#4fe3c6; text-shadow:0 0 6px rgb(79 227 198 / .45); }
+#bannerDesc{ white-space:pre-line; left:48px; top:82px; width:590px; margin:0; font-size:18px; line-height:26px; color:#c7d0ff; }
 /* Early-version notice under the description (always a single line). */
-#bannerNotice{ left:48px; top:176px; width:590px; margin:0; font-size:15.5px; line-height:20px; color:#f8bb56; }
+#bannerNotice{ left:48px; top:216px; width:590px; margin:0; font-size:15.5px; line-height:20px; color:#f8bb56; }
 #bannerNotice::before{ content:"⚠"; margin-right:7px; }
-#descLine{ left:48px; right:22px; top:214px; }
+#descLine{ left:48px; right:22px; top:254px; }
 
-#nickLabel{ left:48px; top:226px; font-family:var(--uiFontLabel); font-size:17px; color:var(--uiHdText); letter-spacing:.3px; }
-#nickRow{ left:48px; top:256px; width:590px; height:48px; }
+#nickLabel{ left:48px; top:266px; font-family:var(--uiFontLabel); font-size:17px; color:var(--uiHdText); letter-spacing:.3px; }
+#nickRow{ left:48px; top:296px; width:590px; height:48px; }
 #nickRow > *{ position:absolute; top:0; }
 /* Not wired up yet — Google sign-in is a future addition, grayed out
    like every other not-yet-available control (#modeSingle/#modeFriends). */
@@ -83,9 +88,9 @@ html[data-lang-pending] #box{ visibility:hidden; }
 #nickInput:focus{ border-color:#f5bd5c; box-shadow:0 0 8px rgb(245 189 92 / .45), inset 0 0 8px rgb(245 189 92 / .1); }
 #nickRandomBtn{ left:542px; width:48px; height:48px; display:flex; align-items:center; justify-content:center; }
 #nickRandomBtn svg{ width:26px; height:26px; }
-#nickError{ left:48px; top:310px; font-size:16px; color:#ff6b6e; }
+#nickError{ left:48px; top:350px; font-size:16px; color:#ff6b6e; }
 
-#bannerButtons{ left:48px; top:346px; width:590px; height:52px; }
+#bannerButtons{ left:48px; top:386px; width:590px; height:52px; }
 #startBtn{ position:absolute; left:0; top:0; width:360px; height:52px; border-radius:6px 24px 24px 6px;
   font-family:var(--uiFontLabel); font-weight:600; font-size:22px; letter-spacing:.8px; color:#241404; transition:filter .15s; }
 #startBtn:not(:disabled):hover{ filter:brightness(1.08); }

@@ -5,6 +5,7 @@ import { t } from "../i18n.js";
 export function applyStaticText(){
   // See css/ui/startScreen.css: the start panel stays hidden until now.
   delete document.documentElement.dataset.langPending;
+  document.getElementById("bannerBoot").textContent = t("banner.boot");
   document.getElementById("bannerDesc").textContent = t("banner.desc");
   document.getElementById("bannerNotice").textContent = t("banner.notice");
   document.getElementById("modeSingle").textContent = t("banner.modeSingle");
