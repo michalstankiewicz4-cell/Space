@@ -186,8 +186,8 @@ the full detail behind each of these.
   gotchas (runaway-script safety net, click-priority bug history, the
   `.hidden`/`display:none` CSS trap, `pointerdown` vs `click`) in the doc.
 - **New-style UI kit** (`css/ui/`): start screen, setup modal and the
-  whole in-game HUD (v2.2.0, ported from the untracked
-  `UI-standalone.html` mockup). `.uiStage` (fixed 1536x1024),
+  whole in-game HUD (v2.2.0, ported from a standalone mockup since
+  deleted — the game itself is now the reference). `.uiStage` (fixed 1536x1024),
   `.uiBar`/`.uiScreen` (stretch with the window), all scaled by
   `--uiScale` set in an inline `<head>` script. `main.js` inits and
   paints the start screen *before* `initScene()` (which blocks the main

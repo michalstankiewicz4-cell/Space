@@ -905,7 +905,8 @@ then read just that range.
 
 ## In-game HUD
 
-- **Ported from `UI-standalone.html` (v2.2.0)** — the mockup's layout 1:1
+- **Ported from the `UI-standalone.html` mockup (v2.2.0; the mockup was
+  deleted afterwards, the game is now the reference)** — its layout 1:1
   (top bar, left nav, fleet list, selected unit, 3D viewport frame,
   command bar, planet info, event log, minimap), wired to every feature
   the old HUD had. `#hud` is a **`.uiScreen`** (css/ui/kit.css): like
