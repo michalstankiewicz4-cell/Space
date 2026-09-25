@@ -1,4 +1,4 @@
-/* Centered windows opened from the HUD (Research/Tech, Fleet, Intel/players,
+/* Centered windows opened from the HUD (Research/Tech, Fleet, Diplomacy/players,
    Planets/body types, drone script). Same look as the setup modal, but a
    normal flow layout sized by its content, scaled by --uiScale like the
    rest of the kit. The setup modal itself keeps its own fixed-coordinate

@@ -2,13 +2,14 @@ import { renderPlayersList } from "./players.js";
 import { initFleet } from "./fleet.js";
 import { initDroneScript, refreshDroneScript } from "./droneScript.js";
 import { refreshResearch } from "./research.js";
+import { initWiki } from "./wiki.js";
 import { onLangChange } from "../../i18n.js";
 
 // The windows opened from the HUD (css/ui/windows/). This file owns the
-// three simple ones — Research (the upgrade tree, filled by research.js),
-// Planets (the body type legend) and Intel (the players online, filled by
-// players.js) — and is the one init/refresh entry point for all of them,
-// including the Fleet window (fleet.js) and the drone script window
+// two simple ones — Research (the upgrade tree, filled by research.js) and
+// the players online (opened from the DIPLOMACY nav, filled by players.js)
+// — and is the one init/refresh entry point for all of them, including the
+// Fleet window (fleet.js), the Wiki (wiki.js) and the drone script window
 // (droneScript.js). Each closes via its red ✕, a click on the backdrop, or
 // Escape (ui/escapeKey.js).
 function makeWindow(id, closeBtnId, onOpen){
@@ -26,15 +27,11 @@ function makeWindow(id, closeBtnId, onOpen){
 }
 
 const tech = makeWindow("techModal", "techCloseBtn");
-const legend = makeWindow("legendModal", "legendCloseBtn");
 const players = makeWindow("playersModal", "playersCloseBtn", renderPlayersList);
 
 export const isTechModalOpen = tech.isOpen;
 export const openTechModal = tech.open;
 export const closeTechModal = tech.close;
-export const isLegendOpen = legend.isOpen;
-export const openLegend = legend.open;
-export const closeLegend = legend.close;
 export const isPlayersModalOpen = players.isOpen;
 export const openPlayersModal = players.open;
 export const closePlayersModal = players.close;
@@ -43,10 +40,10 @@ export const closePlayersModal = players.close;
 // the drone script window the drone).
 export function initWindows(){
   tech.init();
-  legend.init();
   players.init();
   initFleet();
   initDroneScript();
+  initWiki();
   refreshResearch();
   onLangChange(refreshResearch);
 }

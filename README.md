@@ -35,7 +35,8 @@ js/
   i18n.js            UI text (English by default, Polish toggle — see the start screen)
   env.js             Supabase URL/key (anon key — safe to commit, see below)
   supabaseClient.js  Supabase client singleton
-  core/              shared game state (scene/entity collections, player points) + small utilities
+  core/              shared game state (scene/entity collections, player points), Wiki discovery
+                     state (discovery.js) + small utilities
   scene/             camera, renderer, the 3D view's rect inside the HUD + miniature render passes
                      (viewRect.js, unitThumb.js, infoThumb.js), mouse controls/selection, hover tooltip,
                      ship cam (picture-in-picture cockpit view),
@@ -70,7 +71,7 @@ js/
                      infoPanel + planetPanel/stationPanel, eventLog, connectionStatus, minimap,
                      commandBar, devTools); hud.js is main.js's single entry point into it
     windows/         the windows opened from the HUD (windows.js entry point + research, fleet,
-                     players, droneScript)
+                     players, droneScript, wiki + wikiEntries/wikiArt)
   net/               multiplayer: identity, "steward" election, world sync, ship broadcast,
                      Realtime reconnect handling
   main.js            entry point — wires the modules together and runs the game loop

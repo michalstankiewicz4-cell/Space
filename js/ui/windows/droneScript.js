@@ -1,6 +1,7 @@
 import { ctx } from "../../core/context.js";
 import { setDroneScript, runDroneScript, stopDroneScript } from "../../drone/drone.js";
 import { isDronePanelOpen, closeDronePanel, updateUnitPanel } from "../hud/unitPanel.js";
+import { discover } from "../../core/discovery.js";
 
 // The drone script window (the DSL editor, its help, error and log) plus
 // the drone's Start/Stop/Script buttons in the HUD's SELECTED UNIT panel —
@@ -69,6 +70,7 @@ export function initDroneScript(){
     const drone = ctx.drone;
     if(!drone) return;
     runDroneScript(drone);
+    discover("tech:droneScript");
     updateScriptStatus(drone);
   });
 
@@ -87,6 +89,7 @@ export function initDroneScript(){
     const drone = ctx.drone;
     if(!drone) return;
     runDroneScript(drone);
+    discover("tech:droneScript");
     if(isDroneScriptModalOpen()) updateScriptStatus(drone);
     updateUnitPanel(true);
   });

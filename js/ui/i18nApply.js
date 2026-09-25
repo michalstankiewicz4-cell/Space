@@ -59,7 +59,7 @@ export function applyStaticText(){
   $("resBox").title = [t("telemetry.points"), t("telemetry.ships"), t("telemetry.eaten"), t("telemetry.players")].join(" · ");
   $("sdCycleLabel").textContent = t("topbar.cycle");
   $("speedCtl").title = t("topbar.timeNote");
-  ["fleet", "planets", "research", "build", "diplomacy", "intel", "settings"].forEach(function(k){
+  ["fleet", "planets", "research", "build", "diplomacy", "wiki", "settings"].forEach(function(k){
     const row = document.querySelector('#nav .navRow[data-nav="' + k + '"]');
     row.querySelector(".navBtn").textContent = t("nav." + k);
     row.querySelector(".navBtn").title = row.classList.contains("soon") ? t("soon") : "";
@@ -87,18 +87,13 @@ export function applyStaticText(){
   if($("infoBody").classList.contains("hidden")) $("infoHd").textContent = t("hud.planetInfo");
 
   $("playersTitle").textContent = t("players.title");
-  $("legendTitle").textContent = t("legend.title");
+  $("wikiTitle").textContent = t("wiki.title");
+  document.querySelectorAll("#wikiTabs button").forEach(function(b){ b.textContent = t("wiki.tabs." + b.dataset.tab); });
+  $("wikiCloseBtn").title = t("hud.close");
   $("techModalTitle").textContent = t("tech.title");
   $("fleetModalTitle").textContent = t("fleet.title");
   $("shipCamLabel").textContent = t("fleet.shipCamLabel");
 
-  $("legendIce").textContent = t("legend.ice");
-  $("legendNeutral").textContent = t("legend.neutral");
-  $("legendVolcanic").textContent = t("legend.volcanic");
-  $("legendSun").textContent = t("legend.sun");
-  $("legendComet").textContent = t("legend.comet");
-  $("legendMeteoroid").textContent = t("legend.meteoroid");
-  $("legendBlackhole").textContent = t("legend.blackhole");
 
   document.getElementById("droneScriptModalTitle").textContent = t("drone.scriptTitle");
   document.getElementById("droneScriptRunBtn").textContent = t("drone.run");

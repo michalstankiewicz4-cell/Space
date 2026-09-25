@@ -918,8 +918,8 @@ then read just that range.
   css/ui/topBar.css used by both the start screen and the HUD; SVG
   gradients live in one always-rendered `#uiDefs` block in index.html
   (a `url(#id)` paint server inside a `display:none` subtree stops
-  rendering). Windows opened from the HUD (Research, Fleet, Intel,
-  Planets, drone script) share `.uiWindow` (css/ui/windows/).
+  rendering). Windows opened from the HUD (Research, Fleet,
+  Diplomacy, Wiki, drone script) share `.uiWindow` (css/ui/windows/).
 - **File layout mirrors the UI**: `js/ui/hud/` has one module per HUD
   panel (topBar, nav, fleetList, unitPanel, infoPanel + planetPanel/
   stationPanel, eventLog, connectionStatus, minimap, commandBar,
@@ -927,7 +927,8 @@ then read just that range.
   `initHudShell()` (before the scene), `initHudWorld()` (after it) and
   `updateHud(dt)` (every frame; runs the ~0.1s/0.4s refresh timers).
   `js/ui/windows/` is the same for the windows (`windows.js#
-  initWindows/refreshWindows` + research, fleet, players, droneScript).
+  initWindows/refreshWindows` + research, fleet, players, droneScript,
+  wiki + wikiEntries/wikiArt).
   CSS mirrors it one file per component in `css/ui/hud/` and
   `css/ui/windows/`, each its own `<link>` in index.html's `<head>`, in
   cascade order (style.css last). `showToast()` lives in `ui/hud/eventLog.js` (it only feeds the
@@ -952,8 +953,8 @@ then read just that range.
   raised near plane so station struts between camera and ship get
   clipped.
 - **Where every old HUD feature went** (so nothing got lost): telemetry
-  -> the top bar's four slots; players list -> INTEL window; Wiki/legend
-  -> PLANETS window; Tech -> RESEARCH window (also the station's Tech
+  -> the top bar's four slots; players list -> DIPLOMACY window; body
+  legend -> the Wiki's Planets tab (PLANETS nav); Tech -> RESEARCH window (also the station's Tech
   button); Fleet window -> FLEET nav + station's Fleet button (plus the
   always-visible FLEET LIST panel, same click behavior); Setup ->
   SETTINGS; camera Base/System toggle -> top-center of the viewport; Dev
@@ -964,10 +965,26 @@ then read just that range.
   API on top of `ui/hud/unitPanel.js`); station and planet panels -> the
   shared PLANET INFO slot (`ui/hud/infoPanel.js`, owner-tracked so a late
   "close planet" can't blank the station); toasts -> EVENT LOG
-  (`showToast(msg, kind)` still the one entry point). BUILD/DIPLOMACY
-  nav, the command bar's orders, the planet's Waypoint/Scan/Colonize and
+  (`showToast(msg, kind)` still the one entry point). BUILD nav, the command bar's orders, the planet's Waypoint/Scan/Colonize and
   the ship quick buttons are deliberately inert ("Coming soon"), as are
   the top bar's time controls (multiplayer can't pause).
+- **Wiki** (`ui/windows/wiki.js`, v2.3.0; WIKI nav, and PLANETS opens it
+  on the Planets tab) is read-only: tabs -> entry list -> picture +
+  description. Entries live in `wikiEntries.js` (`{id, unlock, meta?,
+  art}`, id = `"tab-kind:key"`), pictures are inline SVG drawn by
+  `wikiArt.js` (each gradient gets a unique id, since the same art shows
+  as both thumbnail and big picture), texts in i18n
+  `wiki.entries.<key>` — **the key after the colon must be unique across
+  all tabs** (`body:ice` and a `mineral:ice` once silently shared one
+  text; the mineral is now `waterice`). `unlock` is `start` (always
+  known), `inspect` (bodies: `planetPanel.js` / `tooltip.js` call
+  `discover()`), `research` (`research.js` on purchase), `script`
+  (`droneScript.js` on run) or `future` (placeholder for features not
+  built yet — elements/minerals/ores/materials/most buildings and ships).
+  Discovery state is `core/discovery.js` (a Set persisted under
+  localStorage `roj-discovered`, `onDiscover` listeners -> event-log
+  toast). Elements/minerals/ores carry real data in `meta` (Z, symbol,
+  standard atomic weight; chemical formulas) — keep them factual.
 - **Minimap** (`ui/hud/minimap.js`) is schematic, not to scale: 9 evenly
   spaced rings, each body on its own ring at its real angle; the comet
   and ships are mapped piecewise-linearly between rings. A click goes

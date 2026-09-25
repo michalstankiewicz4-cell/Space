@@ -1,6 +1,0 @@
-/* Planets window: the body type legend. */
-#legendModalBox{ width:330px; }
-#legend .lg{ display:flex; align-items:center; gap:10px; padding:6px 4px; font-size:16px; color:#c7d0ff;
-  border-top:1px solid #132a86; }
-#legend .lg:first-child{ border-top:0; }
-#legend .dot{ width:10px; height:10px; border-radius:50%; flex:none; }

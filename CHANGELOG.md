@@ -4,6 +4,25 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.3.0]
+
+### Added
+- **Wiki** (replaces INTEL in the left menu): a read-only encyclopedia
+  you fill in by playing. Ten tabs — Systems, Planets, Elements,
+  Minerals, Ores, Materials, Buildings, Ships, Technologies, Races —
+  each entry a picture and a description. Entries you haven't found yet
+  show as a dark silhouette with a hint on how to discover them; a new
+  entry is announced in the event log and remembered between visits.
+  Planets are discovered by selecting or hovering them, technologies by
+  buying the upgrade (or running a drone script); elements, minerals and
+  ores use real data (atomic number and mass, chemical formulas). Many
+  entries are placeholders for features still to come.
+
+### Changed
+- DIPLOMACY now opens the player list (it used to be under INTEL).
+- PLANETS opens the Wiki on its Planets tab, replacing the old body
+  legend window.
+
 ## [2.2.3]
 
 ### Added

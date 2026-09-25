@@ -1,6 +1,7 @@
 import { bodyVariantKey, bodyValueEstimate } from "../../world/bodyParams.js";
 import { t } from "../../i18n.js";
 import { showInfo, hideInfo, getInfoOwner, setInfoRow, setInfoButtons } from "./infoPanel.js";
+import { discover } from "../../core/discovery.js";
 
 // Which planet the PLANET INFO panel is currently showing — module-local,
 // not on ctx, since (unlike the drone/station) this is transient UI focus
@@ -15,6 +16,7 @@ export function isPlanetPanelOpen(){
 
 export function openPlanetPanel(p){
   currentPlanet = p;
+  discover("body:" + bodyVariantKey(p));
   showInfo("planet", {
     thumbTarget: function(){
       return currentPlanet && !currentPlanet.dying ? { pos: currentPlanet.mesh.position, radius: currentPlanet.radius } : null;

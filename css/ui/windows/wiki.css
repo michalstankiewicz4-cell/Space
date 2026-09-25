@@ -1,0 +1,31 @@
+/* Wiki window (ui/windows/wiki.js): vertical tabs | entry list | detail. */
+#wikiModalBox{ width:1040px; }
+#wikiProgress{ font-family:var(--uiFontLabel); font-size:15px; letter-spacing:.3px; color:#ffd98f; white-space:nowrap; }
+#wikiBody{ display:grid; grid-template-columns:170px 250px 1fr; gap:14px; height:calc(min(560px, 70vh / var(--uiScale))); overflow:hidden; }
+
+#wikiTabs{ display:flex; flex-direction:column; gap:6px; }
+#wikiTabs button{ height:34px; text-align:left; padding-left:12px; border-radius:4px 16px 16px 4px;
+  font-family:var(--uiFontLabel); font-weight:500; font-size:15.5px; letter-spacing:.3px; color:#0c1440; transition:filter .15s; }
+#wikiTabs button:hover{ filter:brightness(1.12); }
+
+#wikiList{ list-style:none; margin:0; padding:0 6px 0 0; overflow-y:auto; }
+.wikiItem{ display:flex; align-items:center; gap:10px; width:100%; margin-bottom:6px; padding:5px 8px; text-align:left;
+  border:1.5px solid #1d36a0; border-radius:6px; background:linear-gradient(180deg,#040a26,#01030f);
+  font-size:15px; color:#dfe5ff; transition:border-color .15s, box-shadow .15s; }
+.wikiItem:hover{ border-color:#3552d6; }
+.wikiItem.sel{ border-color:#f5bd5c; box-shadow:0 0 6px rgb(245 189 92 / .45), inset 0 0 8px rgb(245 189 92 / .12); }
+.wikiThumb{ width:42px; height:42px; flex:none; }
+.wikiThumb svg, #wikiArt svg{ width:100%; height:100%; display:block; }
+.wikiItem.locked{ color:#5f6fb8; }
+.wikiItem.locked .wikiThumb, #wikiArt.locked svg{ filter:grayscale(1) brightness(.22) blur(1.5px); }
+
+#wikiDetail{ overflow-y:auto; padding-right:6px; }
+#wikiArt{ position:relative; width:230px; height:230px; margin:4px auto 10px; border-radius:12px;
+  border:1.5px solid #1a3099; background:radial-gradient(80% 80% at 50% 45%, #0a1646, #000 80%); padding:16px; }
+.wikiQ{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-family:var(--uiFontHead); font-size:110px; color:#3c55d8; text-shadow:0 0 18px rgb(95 119 247 / .6); }
+#wikiCat{ font-family:var(--uiFontLabel); font-size:13.5px; letter-spacing:.6px; text-transform:uppercase; color:var(--uiText2); }
+#wikiName{ margin:2px 0 2px; font-family:var(--uiFontLabel); font-weight:500; font-size:26px; letter-spacing:.3px; color:#fff; }
+#wikiMeta{ font-family:"IBM Plex Mono", "Courier New", monospace; font-size:14px; color:#ffd98f; min-height:18px; }
+#wikiDesc{ margin:10px 0 0; font-size:16.5px; line-height:1.55; color:#c7d0ff; }
+#wikiDesc.locked{ color:#7f8fd6; font-style:italic; }

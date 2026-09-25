@@ -1,4 +1,5 @@
-import { isTechModalOpen, closeTechModal, isLegendOpen, closeLegend, isPlayersModalOpen, closePlayersModal } from "./windows/windows.js";
+import { isTechModalOpen, closeTechModal, isPlayersModalOpen, closePlayersModal } from "./windows/windows.js";
+import { isWikiOpen, closeWiki } from "./windows/wiki.js";
 import { isFleetModalOpen, closeFleetModal } from "./windows/fleet.js";
 import { isShipCamActive, clearShipCamTarget } from "../scene/shipcam.js";
 import { isDroneScriptModalOpen, closeDroneScriptModal } from "./windows/droneScript.js";
@@ -18,7 +19,7 @@ const ESCAPE_CHAIN = [
   [isTechModalOpen, closeTechModal],
   [isFleetModalOpen, closeFleetModal],
   [isPlayersModalOpen, closePlayersModal],
-  [isLegendOpen, closeLegend],
+  [isWikiOpen, closeWiki],
   [isAboutOpen, closeAbout],
   [isSetupModalOpen, closeSetupModal],
   [isDronePanelOpen, closeDronePanel],

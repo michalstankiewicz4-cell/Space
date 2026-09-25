@@ -4,6 +4,7 @@ import { reconcileFleetSize } from "../../ships/swarm.js";
 import { showToast } from "../hud/eventLog.js";
 import { updateTelemetry } from "../hud/topBar.js";
 import { t } from "../../i18n.js";
+import { discover } from "../../core/discovery.js";
 
 function totalSpentOn(node, level){
   if(level<=0) return 0;
@@ -41,6 +42,7 @@ function renderNode(node){
     if(c2===null || state.points < c2) return;
     state.points -= c2;
     state.levels[node.key] += 1;
+    discover("tech:" + node.key);
     if(node.key === "fleet") reconcileFleetSize();
     refreshResearch();
     save();

@@ -67,10 +67,10 @@
 <link rel="stylesheet" href="css/ui/windows/research.css">
 <link rel="stylesheet" href="css/ui/windows/fleet.css">
 <link rel="stylesheet" href="css/ui/windows/players.css">
-<link rel="stylesheet" href="css/ui/windows/planets.css">
+<link rel="stylesheet" href="css/ui/windows/wiki.css">
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.2.3">
+<link rel="stylesheet" href="css/style.css?v=2.3.0">
 </head>
 <body>
 
@@ -296,8 +296,8 @@
     <div class="navRow" data-nav="planets"><span class="mat lilac navSq"></span><button type="button" class="mat navBtn" id="navPlanets">PLANETS</button></div>
     <div class="navRow" data-nav="research"><span class="mat lilac navSq"></span><button type="button" class="mat navBtn" id="navResearch">RESEARCH</button></div>
     <div class="navRow soon" data-nav="build"><span class="mat blue navSq"></span><button type="button" class="mat navBtn" id="navBuild">BUILD</button></div>
-    <div class="navRow soon" data-nav="diplomacy"><span class="mat blue2 navSq"></span><button type="button" class="mat navBtn" id="navDiplomacy">DIPLOMACY</button></div>
-    <div class="navRow" data-nav="intel"><span class="mat lilac navSq"></span><button type="button" class="mat navBtn" id="navIntel">INTEL</button></div>
+    <div class="navRow" data-nav="diplomacy"><span class="mat blue2 navSq"></span><button type="button" class="mat navBtn" id="navDiplomacy">DIPLOMACY</button></div>
+    <div class="navRow" data-nav="wiki"><span class="mat lilac navSq"></span><button type="button" class="mat navBtn" id="navWiki">WIKI</button></div>
     <div class="navRow" data-nav="settings"><span class="mat red navSq"></span><button type="button" class="mat navBtn" id="navSettings">SETTINGS</button></div>
   </nav>
 
@@ -499,19 +499,33 @@
   </section>
 </div>
 
-<div id="legendModal" class="uiWindow hidden">
-  <section class="uiWindowBox" id="legendModalBox">
+<!-- Wiki: a read-only encyclopedia filled in by playing (ui/windows/wiki.js) -->
+<div id="wikiModal" class="uiWindow hidden">
+  <section class="uiWindowBox" id="wikiModalBox">
     <div class="mat blueV uiWinSide"></div>
-    <header class="uiWinHead"><span class="mat lilac hdSq"></span><h2 class="hd" id="legendTitle">Body types</h2><button type="button" class="mat red closePill" id="legendCloseBtn" aria-label="Close">✕</button></header>
+    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="wikiTitle">WIKI</h2><span id="wikiProgress"></span><button type="button" class="mat red closePill" id="wikiCloseBtn" aria-label="Close">✕</button></header>
     <div class="hdLine"></div>
-    <div class="uiWinBody" id="legend">
-      <div class="lg"><span class="dot" style="background:#4fa8ff"></span><span id="legendIce">Ice planets</span></div>
-      <div class="lg"><span class="dot" style="background:#8fd88f"></span><span id="legendNeutral">Neutral planets</span></div>
-      <div class="lg"><span class="dot" style="background:#ff7a45"></span><span id="legendVolcanic">Volcanic planets</span></div>
-      <div class="lg" id="legendSun">☀ Suns</div>
-      <div class="lg" id="legendComet">☄ Comets</div>
-      <div class="lg" id="legendMeteoroid">🪨 Meteoroids</div>
-      <div class="lg" id="legendBlackhole">🌀 Black holes (hazard!)</div>
+    <div class="uiWinBody" id="wikiBody">
+      <nav id="wikiTabs">
+        <button type="button" class="mat blueT" data-tab="systems"></button>
+        <button type="button" class="mat blueT" data-tab="bodies"></button>
+        <button type="button" class="mat blueT" data-tab="elements"></button>
+        <button type="button" class="mat blueT" data-tab="minerals"></button>
+        <button type="button" class="mat blueT" data-tab="ores"></button>
+        <button type="button" class="mat blueT" data-tab="materials"></button>
+        <button type="button" class="mat blueT" data-tab="buildings"></button>
+        <button type="button" class="mat blueT" data-tab="ships"></button>
+        <button type="button" class="mat blueT" data-tab="tech"></button>
+        <button type="button" class="mat blueT" data-tab="races"></button>
+      </nav>
+      <ul id="wikiList"></ul>
+      <article id="wikiDetail">
+        <div id="wikiArt"></div>
+        <div id="wikiCat"></div>
+        <h3 id="wikiName"></h3>
+        <div id="wikiMeta"></div>
+        <p id="wikiDesc"></p>
+      </article>
     </div>
   </section>
 </div>
@@ -579,6 +593,6 @@
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.2.3"></script>
+<script type="module" src="js/main.js?v=2.3.0"></script>
 </body>
 </html>

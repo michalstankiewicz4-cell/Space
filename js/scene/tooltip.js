@@ -1,5 +1,6 @@
 import { bodyVariantKey, bodyValueEstimate } from "../world/bodyParams.js";
 import { t } from "../i18n.js";
+import { discover } from "../core/discovery.js";
 
 // The hover tooltip shown over a planet/black hole — split out of
 // scene/controls.js, which only ever reaches this via showTooltip/
@@ -29,6 +30,7 @@ function positionTooltip(clientX, clientY){
 
 export function showTooltip(p, clientX, clientY){
   if(!tooltipEl) return;
+  discover("body:" + bodyVariantKey(p)); // looking closely counts (Wiki)
   ttTitleEl.textContent = t("body." + bodyVariantKey(p));
   ttRow1LabelEl.textContent = t("tooltip.health");
   ttRow1ValEl.textContent = Math.max(0, Math.round(p.health)) + " / " + Math.round(p.maxHealth);
@@ -39,6 +41,7 @@ export function showTooltip(p, clientX, clientY){
 
 export function showBlackHoleTooltip(bh, clientX, clientY){
   if(!tooltipEl) return;
+  discover("body:blackhole");
   ttTitleEl.textContent = t("body.blackhole");
   ttRow1LabelEl.textContent = t("tooltip.timeLeft");
   ttRow1ValEl.textContent = Math.max(0, Math.round(bh.maxLife-bh.life)) + "s";
