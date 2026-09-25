@@ -89,6 +89,16 @@ textures are cached per ship type and shared by all instances.
 | Textures | 11 canvas-generated textures, ≈39 MB GPU (1024² hull and wing sets: color, roughness, bump, emissive; brushed metal; 3 glow sprites) |
 | Build time | ≈1.1 s the first time (texture generation), then a few ms |
 
+### "swarmer" (SW-01 SWARMER, the swarm ship)
+
+The game's swarm ship, built for numbers: 6.06 × 0.92 × 3.66 units,
+≈12.9k triangles at `detail` 1 (5.8k at 0.2). Teal plated dart hull,
+two gold-tipped "mandibles" (bite emitters, where its BITE bolts start),
+swept fins with glowing edges, canopy and sensor strip, a main engine
+and two side thrusters — everything but the hull, mandibles, fins and
+strip comes from the building blocks. Actions: BITE, SCAN (+ the shared
+OFFLINE/DESTROY).
+
 ### "scribe" (DR-01 SCRIBE, the drone), measured
 
 The first ship meant for the game: a replacement for the drone's plain

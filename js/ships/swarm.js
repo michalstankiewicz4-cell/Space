@@ -1,6 +1,8 @@
 import { ctx } from "../core/context.js";
 import { disposeMesh } from "../core/utils.js";
 import { gfxUnitLights } from "../scene/graphics.js";
+import { makeShipVisual } from "./shipVisual.js";
+import { getShipCamTarget } from "../scene/shipcam.js";
 import { ORBIT_RADIUS } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { state, swarmStats, save } from "../core/gameState.js";
@@ -62,13 +64,13 @@ function shipSpawnPosition(index){
   );
 }
 
+// The ship's look (ShipKit model up close, the light cone far away) is
+// ships/shipVisual.js; this group adds the game's own light, selection
+// ring and pick sphere around it.
 function makeShipMesh(){
   const group = new THREE.Group();
-  const body = new THREE.ConeGeometry(0.28, 0.9, 8);
-  const mat = new THREE.MeshStandardMaterial({ color:0x4fe3c6, emissive:0x1fae95, emissiveIntensity:0.9, roughness:0.35, metalness:0.4 });
-  const mesh = new THREE.Mesh(body, mat);
-  mesh.rotation.x = Math.PI/2;
-  group.add(mesh);
+  const visual = makeShipVisual();
+  group.add(visual.root);
   const glow = new THREE.PointLight(0x4fe3c6, 0.5, 6);
   glow.userData.unitLight = true;     // Setup -> Graphics -> ship glow lights (off by default)
   glow.visible = gfxUnitLights();
@@ -88,7 +90,7 @@ function makeShipMesh(){
   const pickMesh = new THREE.Mesh(pickGeo, pickMat);
   group.add(pickMesh);
 
-  return { group: group, ring: ring, pickMesh: pickMesh };
+  return { group: group, ring: ring, pickMesh: pickMesh, visual: visual, light: glow };
 }
 
 export function setShipSelected(sh, val){
@@ -103,6 +105,8 @@ export function spawnShip(){
   ctx.scene.add(built.group);
   const ship = {
     mesh: built.group,
+    visual: built.visual,
+    light: built.light,
     selectionRing: built.ring,
     pickMesh: built.pickMesh,
     pos: startPos,
@@ -236,8 +240,11 @@ export function updateShips(dt){
   const baseSpeed = 6.5 * stats.speed;
   const basePower = 5.5 * stats.power;
 
+  const camTarget = getShipCamTarget();
   for(let i=0;i<ctx.ships.length;i++){
     const sh = ctx.ships[i];
+    // the model: full detail whenever it's looked at up close (miniature, ship cam)
+    sh.visual.forceDetail = sh.selected || camTarget === sh;
 
     // Ships only ever move on an explicit player order (commandTo() in
     // scene/controls.js) — no automatic nearest-planet targeting.
@@ -253,6 +260,7 @@ export function updateShips(dt){
       hideBolt(sh);
       sh.pos.addScaledVector(sh.vel, dt);
       sh.mesh.position.copy(sh.pos);
+      sh.visual.power = 0.1;                       // idling
       continue;
     }
 
@@ -271,6 +279,7 @@ export function updateShips(dt){
       // orient towards the direction of travel
       const lookTarget = lookTargetScratch.addVectors(sh.pos, sh.vel);
       sh.mesh.lookAt(lookTarget);
+      sh.visual.power = 1;                         // cruising
     } else {
       // orbit gently around the planet while eating
       sh.eatPulse += dt*4;
@@ -279,6 +288,7 @@ export function updateShips(dt){
       sh.pos.lerp(orbitPos, 0.12);
       sh.mesh.position.copy(sh.pos);
       sh.mesh.lookAt(sh.target.mesh.position);
+      sh.visual.power = 0.35;                      // orbiting while it eats
 
       const healthBeforeDamage = sh.target.health;
       const eff = eatEfficiency(stats, sh.target);
@@ -416,6 +426,7 @@ export function updateShips(dt){
 
 export function disposeShip(sh){
   setShipSelected(sh, false);
+  sh.visual.dispose();
   disposeMesh(ctx.scene, sh.mesh);
   hideBolt(sh);
   if(sh.boltCore){ ctx.scene.remove(sh.boltCore); sh.boltCore.geometry.dispose(); sh.boltCore.material.dispose(); }
@@ -435,4 +446,16 @@ export function reconcileFleetSize(){
 export function spawnInitialFleet(){
   const initialFleet = Math.max(3, Math.round(swarmStats().fleetTarget));
   for(let s=0;s<initialFleet;s++) spawnShip();
+}
+
+// A ship swallowed by a black hole: its model blows apart (the shared
+// ShipKit destroy effect) and the wreck is cleaned up a few seconds later
+// by ships/shipVisual.js. Far away (no model built) it just goes, as before.
+export function destroyShip(sh){
+  setShipSelected(sh, false);
+  hideBolt(sh);
+  if(sh.boltCore){ ctx.scene.remove(sh.boltCore); sh.boltCore.geometry.dispose(); sh.boltCore.material.dispose(); }
+  if(sh.boltGlow){ ctx.scene.remove(sh.boltGlow); sh.boltGlow.geometry.dispose(); sh.boltGlow.material.dispose(); }
+  sh.mesh.remove(sh.pickMesh); sh.mesh.remove(sh.selectionRing); sh.mesh.remove(sh.light);
+  if(!sh.visual.explode(sh.mesh)){ sh.visual.dispose(); disposeMesh(ctx.scene, sh.mesh); }
 }

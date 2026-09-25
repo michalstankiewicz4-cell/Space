@@ -4,6 +4,19 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.9.0]
+
+### Added
+- **New swarm ships**: SW-01 SWARMER from the ship lab replaces the teal
+  cones — a teal dart with gold bite "mandibles", swept fins and a main
+  engine that fires up as it flies. Far away (most of the time at this
+  scale) ships still draw as the light cone, so the swarm stays cheap.
+  The ship cam now looks out from its canopy, and a black hole blows a
+  ship apart instead of making it vanish.
+- Other players' ships use the same model, not recolored — a small
+  marker in the owner's color floats above each one, and they turn to
+  face where they're flying.
+
 ## [2.8.2]
 
 ### Added

@@ -1158,5 +1158,18 @@ then read just that range.
   offline, shots, tx, ty, tz]` — still one message per 120 ms, a few more
   numbers. All untrusted: power clamped to 0..1, shots only acted on when
   they increase, at most 2 per update, coordinates through `safeCoord`.
-  Remote swarm ships are still the old tinted cones (not ShipKit yet).
+- **Swarm ships** (v2.9.0, `ships/shipVisual.js`): ShipKit's SW-01
+  SWARMER up close, the old light cone beyond `SHIP_LOD_DISTANCE` (45)
+  from the camera; the model is built lazily (merged, effects in the
+  scene, detail = graphics detail x 0.5, remote x 0.3) and always shown
+  for a selected ship or the ship cam's (`forceDetail`). Engine power:
+  cruising 1, eating 0.35, idle 0.1. `swarm.js#destroyShip` (black
+  holes) plays the model's destroy and `updateShipVisuals` disposes the
+  wreck after 7 s. Remote ships use the same visual, untinted, with an
+  owner-colored diamond marker (`sizeAttenuation:false`) and face their
+  direction of travel (derived from the interpolated movement — no new
+  network data). Known: at base-view distance the models read paler
+  than the old emissive cones (the ship glow lights are off by default);
+  to address in the lighting pass. The remote station ghost is still
+  tinted.
 

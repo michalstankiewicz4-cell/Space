@@ -11,26 +11,25 @@ import { spawnPrintEffect } from "../drone/dronePrintFx.js";
 import { buildStationMesh, disposeStationMesh } from "../station/stationModel.js";
 import { STATION_MODEL_SCALE } from "../config.js";
 import { buildDroneModel } from "../drone/drone.js";
+import { makeShipVisual } from "../ships/shipVisual.js";
 import { sRGBTexture } from "../core/utils.js";
 
-// Shared by every simple (non-station) ghost unit — a remote ship/drone is
-// flat-recolored to its owner's color, simple enough for one solid tint to
-// read fine on a cone/octahedron (unlike the station, see makeGhostStationMesh
-// below). Only the geometry+orientation differ between ship and drone ghosts.
-function makeGhostMesh(geo, colorHex){
-  const mat = new THREE.MeshStandardMaterial({
-    color: colorHex, emissive: colorHex, emissiveIntensity:0.6,
-    roughness:0.5, metalness:0.3, transparent:true, opacity:0.75
-  });
-  const mesh = new THREE.Mesh(geo, mat);
-  ctx.scene.add(mesh);
-  return mesh;
+// Another player's ship: the same look as ours (ships/shipVisual.js — the
+// ShipKit model up close, the cone far away), not tinted; a small marker
+// in the owner's color tells whose it is. Turned to face where it's going.
+function makeGhostShipMesh(colorHex){
+  const group = new THREE.Group();
+  const visual = makeShipVisual({ remote: true, markerColor: colorHex });
+  group.add(visual.root);
+  group.userData.visual = visual;
+  group.userData.prev = new THREE.Vector3();
+  ctx.scene.add(group);
+  return group;
 }
 
-function makeGhostShipMesh(colorHex){
-  const mesh = makeGhostMesh(new THREE.ConeGeometry(0.28, 0.9, 8), colorHex);
-  mesh.rotation.x = Math.PI/2;
-  return mesh;
+function disposeGhostShip(mesh){
+  mesh.userData.visual.dispose();
+  disposeMesh(ctx.scene, mesh);
 }
 
 // Another player's drone is the same ShipKit model as ours (drone/drone.js)
@@ -163,7 +162,7 @@ export function handleRemoteShips(payload){
 
   const list = Array.isArray(payload.ships) ? payload.ships.slice(0, NET_MAX_REMOTE_SHIPS) : [];
   while(rp.meshes.length < list.length) rp.meshes.push(makeGhostShipMesh(rp.color));
-  while(rp.meshes.length > list.length) disposeMesh(ctx.scene, rp.meshes.pop());
+  while(rp.meshes.length > list.length) disposeGhostShip(rp.meshes.pop());
   const d = Array.isArray(payload.drone) ? payload.drone : null;
   if(d){
     if(!rp.droneMesh) rp.droneMesh = makeGhostDrone(rp);
@@ -210,20 +209,29 @@ export function handleRemoteShips(payload){
 }
 
 let ghostT = 0;
+const ghostDelta = new THREE.Vector3(), ghostLook = new THREE.Vector3();
 export function updateRemoteShips(dt){
   ghostT += dt;
   const now = Date.now();
   Object.keys(ctx.remotePlayers).forEach(function(id){
     const rp = ctx.remotePlayers[id];
     if(now - rp.lastSeen > NET_REMOTE_PLAYER_TIMEOUT_MS){
-      rp.meshes.forEach(function(m){ disposeMesh(ctx.scene, m); });
+      rp.meshes.forEach(disposeGhostShip);
       removeGhostDrone(rp);
       removeGhostStation(rp);
       delete ctx.remotePlayers[id];
       updatePlayersHud();
       return;
     }
-    rp.meshes.forEach(function(m){ lerpGhost(m, dt); });
+    rp.meshes.forEach(function(m){
+      m.userData.prev.copy(m.position);
+      lerpGhost(m, dt);
+      // face the direction of travel; engines follow the speed
+      const moved = ghostDelta.subVectors(m.position, m.userData.prev);
+      const speed = moved.length() / Math.max(dt, 1e-4);
+      if(speed > 0.05) m.lookAt(ghostLook.addVectors(m.position, moved));
+      m.userData.visual.power = Math.min(1, speed / 1.2);
+    });
     if(rp.droneMesh){
       lerpGhost(rp.droneMesh, dt);
       rp.droneModel.update(ghostT, dt, { power: rp.dronePower, particles: false });

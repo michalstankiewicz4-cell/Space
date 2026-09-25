@@ -4,7 +4,7 @@ import { makeAccretionTexture, makeHaloTexture } from "./textures.js";
 import { showToast } from "../ui/hud/eventLog.js";
 import { spawnExplosionParticles } from "../fx/particles.js";
 import { spawnShockwave } from "../fx/breakup.js";
-import { disposeShip } from "../ships/swarm.js";
+import { destroyShip } from "../ships/swarm.js";
 import { refreshResearch } from "../ui/windows/research.js";
 import { save } from "../core/gameState.js";
 import { stopDroneScript, destroyDroneMesh } from "../drone/drone.js";
@@ -130,7 +130,7 @@ export function updateBlackHoles(dt){
     const sh = entry.ship;
     spawnExplosionParticles(sh.pos, new THREE.Color(0xb98cff), 26);
     spawnShockwave({ mesh:{ position: sh.pos, material:{ color:new THREE.Color(0x6a3fb0) } }, radius: 0.7 });
-    disposeShip(sh);
+    destroyShip(sh);   // blows apart; the wreck is cleaned up later (ships/shipVisual.js)
     removeItem(ctx.ships, sh);
     showToast(t("toast.shipConsumed"), "alert");
   });
