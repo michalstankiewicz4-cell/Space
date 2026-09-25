@@ -867,7 +867,8 @@ then read just that range.
 ## UI kit (start screen and setup modal)
 
 - **New UI kit (start screen + setup modal, v2.1.0)**: ported from the
-  standalone `UI-start.html` mockup. File layout: `css/ui/kit.css` holds
+  standalone single-file mockup (`UI-start.html`, deleted once fully
+  ported — the game itself is now the reference). File layout: `css/ui/kit.css` holds
   the shared primitives (`.uiStage`, `.mat` + color variants, `.uiPanel`,
   `.hdLine`, `.oBtn`), one CSS file per screen next to it
   (`startScreen.css`, `setupModal.css`), all pulled in via `@import` at
