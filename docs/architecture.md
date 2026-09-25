@@ -1018,7 +1018,12 @@ then read just that range.
   `drone/scriptFeatures.js` reads which commands a program contains off
   its parsed AST, and `droneScript.js#runActive` discovers them once the
   program actually starts), `blocks` (a block-mode run), `files` (a
-  second block-editor file), `life`/`relic` (like `future`, with their
+  second block-editor file), `progress` (Story tab: `core/storyLog.js`
+  — `storyEvent()` from banner.js on entering orbit / stationPanel.js on
+  opening the station, plus a 1s check of `state.eaten`, bought upgrades
+  and other discoveries, so fragments earned earlier still appear),
+  `story` (Story fragments tied to features not built yet; the story
+  itself is drafted in a local, untracked `FABULA.md`), `life`/`relic` (like `future`, with their
   own story hint — life forms and artifacts) or `future` (placeholder for features not
   built yet — elements/minerals/ores/refined resources/materials/most
   buildings and ships). Programming entries' pictures are the real

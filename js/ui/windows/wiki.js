@@ -5,6 +5,7 @@ import { state } from "../../core/gameState.js";
 import { TREE } from "../../config.js";
 import { showToast } from "../hud/eventLog.js";
 import { t, onLangChange } from "../../i18n.js";
+import { initStoryLog } from "../../core/storyLog.js";
 
 // The Wiki window (#wikiModal): a read-only encyclopedia the player fills
 // in by playing. Tabs across the top, the tab's entries on the left, the
@@ -81,7 +82,7 @@ export function initWiki(){
   });
   onDiscover(function(id){
     const e = findWikiEntry(id);
-    if(e) showToast(t("wiki.newEntry")(entryName(e)), "arrive");
+    if(e) showToast(t(id.indexOf("story:") === 0 ? "wiki.newStory" : "wiki.newEntry")(entryName(e)), "arrive");
     if(isWikiOpen()) render();
   });
   onLangChange(function(){ if(isWikiOpen()) render(); });
@@ -89,4 +90,5 @@ export function initWiki(){
   // without a burst of event-log messages on the first load.
   Object.keys(TREE).forEach(function(k){ if(state.levels[k] > 0) discover("tech:" + k, true); });
   discoveredCount(allWikiIds()); // warm read, nothing to show yet
+  initStoryLog();
 }

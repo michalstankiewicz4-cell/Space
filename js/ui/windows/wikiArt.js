@@ -418,6 +418,17 @@ function life(a){
     '<path d="M118 98 q2 6 0 10 M112 100 q0 6 -2 9" stroke="#8fd0ff" stroke-width="2" fill="none"/>');
 }
 
+// Story fragments: a small terminal screen with the log number.
+function story(a){
+  let scan = "";
+  for(let y = 44; y < 158; y += 6) scan += '<line x1="30" y1="' + y + '" x2="170" y2="' + y + '" stroke="#4fe3c6" stroke-opacity=".06"/>';
+  const bars = a.corrupt ? '<rect x="44" y="130" width="46" height="10" fill="#4fe3c6" opacity=".7"/><rect x="96" y="130" width="60" height="10" fill="#4fe3c6" opacity=".4"/>'
+    : '<rect x="44" y="132" width="90" height="4" rx="2" fill="#4fe3c6" opacity=".45"/><rect x="44" y="142" width="60" height="4" rx="2" fill="#4fe3c6" opacity=".3"/>';
+  return frame('<rect x="22" y="32" width="156" height="136" rx="12" fill="#02100e" stroke="#1f8f7a" stroke-width="3"/>' + scan +
+    '<text x="44" y="62" font-family="IBM Plex Mono, Courier New, monospace" font-size="15" fill="#4fe3c6">LOG ' + (a.n < 10 ? "0" : "") + a.n + "</text>" +
+    '<text x="100" y="116" text-anchor="middle" font-size="42">' + a.glyph + "</text>" + bars);
+}
+
 function tech(a){
   const id = "wa" + (++uid);
   return frame('<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffda92"/><stop offset="1" stop-color="#d38b37"/></linearGradient></defs>' +
@@ -441,7 +452,7 @@ function race(a){
 const DRAW = { planet: planet, sun: sun, meteoroid: meteoroid, comet: comet, blackhole: blackhole,
   system: system, element: element, mineral: mineral, material: material,
   building: building, ship: ship, tech: tech, race: race, resource: resource, code: code,
-  artifact: artifact, life: life };
+  artifact: artifact, life: life, story: story };
 
 export function wikiArt(art){
   return DRAW[art.type](art);

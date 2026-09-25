@@ -1,4 +1,5 @@
 import { ctx } from "../../core/context.js";
+import { storyEvent } from "../../core/storyLog.js";
 import { setStationSelected } from "../../station/station.js";
 import { STATION_SILHOUETTE_RADIUS } from "../../station/stationModel.js";
 import { STATION_MODEL_SCALE, TREE } from "../../config.js";
@@ -18,6 +19,7 @@ export function isStationPanelOpen(){
 }
 
 export function openStationPanel(){
+  storyEvent("station");
   showInfo("station", {
     thumbTarget: function(){
       return ctx.station ? { pos: ctx.station.pos, radius: STATION_SILHOUETTE_RADIUS * STATION_MODEL_SCALE } : null;

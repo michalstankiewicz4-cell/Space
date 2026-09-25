@@ -4,6 +4,17 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.7.0]
+
+### Added
+- Wiki: a **Story** tab (first in the list) that logs fragments of the
+  world's story as you recover them — sixteen memory fragments of the AI
+  that woke on the ruined station. Some come back simply by playing
+  (entering orbit, opening your station, the first bodies eaten, the
+  first upgrade, the first drone program, a closer look at the black
+  hole); the rest are still corrupted and will unlock with future
+  features. Each recovered fragment is announced in the event log.
+
 ## [2.6.1]
 
 ### Changed

@@ -1,4 +1,5 @@
 import { hasConfirmedNick, confirmNick, randomNickSuggestion, myIdentity } from "../net/identity.js";
+import { storyEvent } from "../core/storyLog.js";
 import { t, onLangChange } from "../i18n.js";
 import { openSetupModal } from "./setupModal.js";
 import { showToast } from "./hud/eventLog.js";
@@ -61,6 +62,7 @@ export function initBanner(){
     if(!welcomed){
       welcomed = true;
       showToast(t("event.welcome")(myIdentity.nick), "arrive");
+      storyEvent("enter");
     }
   });
 

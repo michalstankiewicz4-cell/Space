@@ -10,6 +10,8 @@
 //              (drone/scriptFeatures.js reads it off the program itself)
 //   "blocks"   a program built from blocks was run
 //   "files"    a second file was made in the block editor
+//   "progress" story fragments recovered by playing (core/storyLog.js)
+//   "story"    story fragments tied to features that don't exist yet
 //   "future"   not reachable yet — arrives with a future update
 //   "life" / "relic"  same as "future" (nothing unlocks them yet), with
 //              their own hint — life forms and the artifacts humans left
@@ -19,9 +21,28 @@
 // (atomic number, symbol, standard atomic weight / chemical formula);
 // refined resources their real composition; programming entries the same
 // command written in the text script language.
-export const WIKI_TABS = ["systems", "bodies", "elements", "minerals", "ores", "resources", "materials", "buildings", "ships", "tech", "programming", "races", "lifeforms", "artifacts"];
+export const WIKI_TABS = ["story", "systems", "bodies", "elements", "minerals", "ores", "resources", "materials", "buildings", "ships", "tech", "programming", "races", "lifeforms", "artifacts"];
 
 export const WIKI_ENTRIES = {
+  // Fragments of the world's story, in the order they're meant to be found.
+  story: [
+    { id: "story:logReboot", unlock: "progress", meta: "LOG 01", art: { type: "story", n: 1, glyph: "⏻" } },
+    { id: "story:logHunger", unlock: "progress", meta: "LOG 02", art: { type: "story", n: 2, glyph: "⚙" } },
+    { id: "story:logToy", unlock: "progress", meta: "LOG 03", art: { type: "story", n: 3, glyph: "⌨" } },
+    { id: "story:logGreenhouse", unlock: "progress", meta: "LOG 04", art: { type: "story", n: 4, glyph: "🌱" } },
+    { id: "story:logProtocol", unlock: "progress", meta: "LOG 05", art: { type: "story", n: 5, glyph: "📜" } },
+    { id: "story:logGardener", unlock: "progress", meta: "LOG 06", art: { type: "story", n: 6, glyph: "🤖" } },
+    { id: "story:logMuseum", unlock: "story", meta: "LOG 07", art: { type: "story", n: 7, glyph: "🏛" } },
+    { id: "story:logGuardian", unlock: "story", meta: "LOG 08", art: { type: "story", n: 8, glyph: "👁" } },
+    { id: "story:logDispute", unlock: "progress", meta: "LOG 09", art: { type: "story", n: 9, glyph: "💬" } },
+    { id: "story:logRings", unlock: "progress", meta: "LOG 10", art: { type: "story", n: 10, glyph: "◎" } },
+    { id: "story:logDeparture", unlock: "story", meta: "LOG 11", art: { type: "story", n: 11, glyph: "🚪" } },
+    { id: "story:logSignal", unlock: "story", meta: "LOG 12", art: { type: "story", n: 12, glyph: "📡" } },
+    { id: "story:logUnknown", unlock: "story", meta: "LOG 13", art: { type: "story", n: 13, glyph: "❔" } },
+    { id: "story:logColony", unlock: "story", meta: "LOG 14", art: { type: "story", n: 14, glyph: "🪐", corrupt: true } },
+    { id: "story:logShutdown", unlock: "story", meta: "LOG 15", art: { type: "story", n: 15, glyph: "⏹" } },
+    { id: "story:logOrder", unlock: "story", meta: "LOG 16", art: { type: "story", n: 16, glyph: "🌾" } }
+  ],
   systems: [
     { id: "system:home", unlock: "start", art: { type: "system", rings: 9, dots: 8 } },
     { id: "system:binary", unlock: "future", art: { type: "system", rings: 5, dots: 5, binary: true } },
