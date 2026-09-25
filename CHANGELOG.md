@@ -4,6 +4,15 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.7.1]
+
+### Changed
+- Story fragments come back gradually: apart from the reboot log (on
+  entering orbit), at most one fragment is recovered every 3 minutes of
+  play, in story order — before, a player with some progress got six at
+  once on entering the game. The later fragments also need more
+  progress (10, 25 and 50 bodies instead of 5, 10 and 20).
+
 ## [2.7.0]
 
 ### Added

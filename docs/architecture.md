@@ -1021,7 +1021,10 @@ then read just that range.
   second block-editor file), `progress` (Story tab: `core/storyLog.js`
   — `storyEvent()` from banner.js on entering orbit / stationPanel.js on
   opening the station, plus a 1s check of `state.eaten`, bought upgrades
-  and other discoveries, so fragments earned earlier still appear),
+  and other discoveries — paced: only the reboot log is instant, the
+  rest come one at a time, in LOG order, at most one per 3 minutes of
+  play (the timer starts at page load, so a veteran player's backlog
+  trickles in instead of arriving as six toasts at once),
   `story` (Story fragments tied to features not built yet; the story
   itself is drafted in a local, untracked `FABULA.md`), `life`/`relic` (like `future`, with their
   own story hint — life forms and artifacts) or `future` (placeholder for features not
