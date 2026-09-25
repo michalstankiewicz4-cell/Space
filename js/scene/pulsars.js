@@ -3,6 +3,7 @@
 // they don't blink in sync. Kept deliberately few (see PULSAR_COUNT): this
 // is meant to read as a rare, eye-catching detail woven into the
 // background, not a light show competing with actual gameplay.
+import { sRGBTexture } from "../core/utils.js";
 const PULSAR_COUNT = 6;
 const PULSAR_MIN_RADIUS = 1300; // inside the starfield's own 1200-2600 range (scene/setup.js)
 const PULSAR_MAX_RADIUS = 2500;
@@ -20,7 +21,7 @@ function makePulsarTexture(){
   grad.addColorStop(1,    "rgba(120,170,255,0)");
   c.fillStyle = grad;
   c.fillRect(0, 0, size, size);
-  return new THREE.CanvasTexture(canvas);
+  return sRGBTexture(new THREE.CanvasTexture(canvas));
 }
 
 let pulsars = [];

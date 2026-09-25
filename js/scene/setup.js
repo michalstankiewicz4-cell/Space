@@ -1,3 +1,4 @@
+import { gfxQuality, pixelRatioFor, onGraphicsChange } from "./graphics.js";
 import { ctx } from "../core/context.js";
 import { addSkybox } from "./skybox.js";
 import { addPulsars } from "./pulsars.js";
@@ -23,9 +24,21 @@ export function initScene(){
   // rather than a visibly faceted nearby shape (see skybox.js's own note).
   const camera = new THREE.PerspectiveCamera(52, window.innerWidth/window.innerHeight, 0.1, 12000);
   const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  renderer.setPixelRatio(pixelRatioFor(gfxQuality()));
+  onGraphicsChange(function(){
+    renderer.setPixelRatio(pixelRatioFor(gfxQuality()));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x05060a, 1);
+  // Rendered like the ship/body labs (ship.html, bodies.html): sRGB output,
+  // filmic tone mapping and an environment map for reflections — the same
+  // generated space sky the labs light their models with. Every color
+  // texture the game makes is marked sRGB to match (see sRGBTexture()).
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+  scene.environment = ShipKit.makeEnvironment(renderer);
   stage.appendChild(renderer.domElement);
 
   scene.add(new THREE.AmbientLight(0x8892b0, 0.55));
@@ -97,9 +110,11 @@ function starfield(scene){
 
     const tint = STAR_TINTS[Math.floor(Math.random()*STAR_TINTS.length)];
     const brightness = 0.7 + Math.random()*0.3;
-    col[i*3]   = tint[0]*brightness;
-    col[i*3+1] = tint[1]*brightness;
-    col[i*3+2] = tint[2]*brightness;
+    // vertex colors are linear light with the sRGB output (see colorManagement.js)
+    const c = new THREE.Color(tint[0]*brightness, tint[1]*brightness, tint[2]*brightness).convertSRGBToLinear();
+    col[i*3]   = c.r;
+    col[i*3+1] = c.g;
+    col[i*3+2] = c.b;
   }
   geo.setAttribute("position", new THREE.BufferAttribute(pos,3));
   geo.setAttribute("color", new THREE.BufferAttribute(col,3));

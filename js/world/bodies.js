@@ -1,5 +1,5 @@
 import { ctx } from "../core/context.js";
-import { removeItem } from "../core/utils.js";
+import { removeItem, sRGBTexture } from "../core/utils.js";
 import { SOLAR_REGEN_RATE } from "../config.js";
 import { CONTENT } from "../content.js";
 import { NET_ENABLED } from "../env.js";
@@ -91,7 +91,7 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   scorchCanvas.width = 256; scorchCanvas.height = 256;
   const scorchCtx = scorchCanvas.getContext("2d");
   scorchCtx.clearRect(0,0,256,256);
-  const scorchTexture = new THREE.CanvasTexture(scorchCanvas);
+  const scorchTexture = sRGBTexture(new THREE.CanvasTexture(scorchCanvas));
   const scorchGeo = new THREE.SphereGeometry(radius*1.012, 22, 16);
   const scorchMat = new THREE.MeshBasicMaterial({
     map: scorchTexture, transparent:true, opacity:0.95,

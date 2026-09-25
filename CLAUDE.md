@@ -204,6 +204,19 @@ the full detail behind each of these.
   same for windows. Full detail,
   gotchas and where every old HUD feature went: docs/architecture.md's
   "UI kit" and "In-game HUD" sections.
+- **Rendering = the labs' pipeline (v2.8.0)**: sRGB output + ACES tone
+  mapping + `scene.environment` from `ShipKit.makeEnvironment()`. Game
+  colors are converted sRGB->linear once per new material/light by
+  `scene/colorManagement.js` (ShipKit models, `userData.shipkit`, are
+  skipped); every game canvas texture goes through `sRGBTexture()`. A
+  color set at runtime bypasses that — convert it yourself.
+- **ShipKit** (`js/shipkit/shipkit.js`): the procedural ship models, one
+  classic-script file shared by `ship.html` and the game (not copied).
+  The drone is its DR-01 SCRIBE (`merge: true`, `fxRoot: scene`,
+  `makeGameHolder`); other players' drones are the same model, **never
+  tinted** — owners get a name label instead (user's call). Mark any
+  animated/toggled part `userData.dynamic` or merging bakes it in place.
+  Changing `shipkit.js` changes the game: version bump. See `docs/ship.md`.
 - **Wiki** (`ui/windows/wiki*.js`): read-only, filled in by play via
   `core/discovery.js` (`"tab:key"` ids, localStorage). Texts in i18n
   `wiki.entries.<key>` — **the key after the colon must be unique across

@@ -24,7 +24,7 @@ export function renderUnitThumb(){
   DIR.copy(POS).negate().setY(0);
   if(DIR.lengthSq() < 1e-6) DIR.set(1, 0, 0);
   DIR.normalize().applyAxisAngle(UP, 0.7);
-  const dist = t.ship ? 1.6 : 2.0;
+  const dist = t.ship ? 1.6 : 3.4;
   camera.position.copy(POS).addScaledVector(DIR, dist);
   camera.position.y += dist * 0.45;
   camera.lookAt(POS);

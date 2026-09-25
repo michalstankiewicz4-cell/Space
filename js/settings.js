@@ -6,7 +6,9 @@ import { readStorage, writeStorage } from "./core/utils.js";
 const DEFAULTS = {
   invertX: false,
   invertY: false,
-  swapMouseButtons: false
+  swapMouseButtons: false,
+  gfxQuality: 3,  // render quality 0..4 (see scene/graphics.js)
+  gfxDetail: 1    // ship geometry detail 0.2..2
 };
 
 function load(){

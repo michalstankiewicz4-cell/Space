@@ -1,3 +1,4 @@
+import { sRGBTexture } from "../core/utils.js";
 import { CONTENT } from "../content.js";
 import { PLANET_BRACKET_SCALE } from "../config.js";
 import { makeSunRayTexture, makeCometTailTexture } from "./textures.js";
@@ -129,7 +130,7 @@ function getBracketTexture(){
   corner(size-margin, margin, -1, 1);                  // top-right
   corner(margin, size-margin, 1, -1);                  // bottom-left
   corner(size-margin, size-margin, -1, -1);             // bottom-right
-  bracketTexture = new THREE.CanvasTexture(canvas);
+  bracketTexture = sRGBTexture(new THREE.CanvasTexture(canvas));
   return bracketTexture;
 }
 

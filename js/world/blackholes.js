@@ -7,7 +7,7 @@ import { spawnShockwave } from "../fx/breakup.js";
 import { disposeShip } from "../ships/swarm.js";
 import { refreshResearch } from "../ui/windows/research.js";
 import { save } from "../core/gameState.js";
-import { stopDroneScript } from "../drone/drone.js";
+import { stopDroneScript, destroyDroneMesh } from "../drone/drone.js";
 import { SOLAR_BODY_BY_SLOT, bodyPosAt, nowSimTime } from "./solarSystem.js";
 import { t } from "../i18n.js";
 
@@ -170,7 +170,7 @@ export function updateBlackHoles(dt){
           spawnExplosionParticles(drone.pos, new THREE.Color(0xb98cff), 26);
           spawnShockwave({ mesh:{ position: drone.pos, material:{ color:new THREE.Color(0x6a3fb0) } }, radius: 0.7 });
           stopDroneScript(drone);
-          disposeMesh(ctx.scene, drone.mesh);
+          destroyDroneMesh(drone);   // blows apart; the wreck is cleaned up later (drone.js)
           ctx.drone = null;
           showToast(t("toast.shipConsumed"), "alert");
         }

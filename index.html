@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.7.2">
+<link rel="stylesheet" href="css/style.css?v=2.8.0">
 </head>
 <body>
 
@@ -224,14 +224,13 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
         <label class="setupCheckRow"><input type="checkbox" id="swapButtonsCheck"><span class="chk"></span><span id="swapButtonsLabel">Swap left/right mouse button</span></label>
       </div>
 
-      <!-- Not wired up yet: these arrive together with importing ships from
-           the ship lab (ship.html has the same two sliders). -->
+      <!-- The same two sliders as the ship lab (ship.html); see scene/graphics.js. -->
       <div id="setupTabGraphics" class="setupTabPanel hidden" data-tab="graphics">
-        <label class="gfxRow" id="gfxQualityRow" style="top:0"><span id="gfxQualityLabel">Render quality</span><b>ULTRA</b></label>
-        <input type="range" class="gfxSlider" style="top:24px; --fill:75%" min="0" max="4" step="1" value="3" disabled>
+        <label class="gfxRow" id="gfxQualityRow" style="top:0"><span id="gfxQualityLabel">Render quality</span><b id="gfxQualityVal">ULTRA</b></label>
+        <input type="range" class="gfxSlider" id="gfxQualitySlider" style="top:24px; --fill:75%" min="0" max="4" step="1" value="3">
         <div class="gfxTicks" id="gfxQualityTicks" style="top:48px"><span>LOW</span><span>MED</span><span>HIGH</span><span>ULTRA</span><span>MAX</span></div>
-        <label class="gfxRow" style="top:72px"><span id="gfxDetailLabel">Geometry detail (triangles)</span><b>100%</b></label>
-        <input type="range" class="gfxSlider" style="top:96px; --fill:44.4%" min="0.2" max="2" step="0.05" value="1" disabled>
+        <label class="gfxRow" style="top:72px"><span id="gfxDetailLabel">Geometry detail (triangles)</span><b id="gfxDetailVal">100%</b></label>
+        <input type="range" class="gfxSlider" id="gfxDetailSlider" style="top:96px; --fill:44.4%" min="0.2" max="2" step="0.05" value="1">
         <div class="gfxTicks" style="top:120px"><span>20%</span><span>100%</span><span>200%</span></div>
         <div id="gfxSoon" style="top:150px">Coming soon</div>
       </div>
@@ -632,12 +631,14 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
 <div id="cmdFlash"></div>
 
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- ShipKit: procedural ship models, the same file the ship lab (ship.html) uses -->
+<script defer src="js/shipkit/shipkit.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <!-- defer: the two libraries no longer block the HTML parser, so main.js's
      module graph starts downloading right away instead of after the CDN
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.7.2"></script>
+<script type="module" src="js/main.js?v=2.8.0"></script>
 </body>
 </html>

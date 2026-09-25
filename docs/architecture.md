@@ -31,6 +31,7 @@ then read just that range.
 - [UI kit (start screen and setup modal)](#ui-kit-start-screen-and-setup-modal)
 - [In-game HUD](#in-game-hud)
 - [Load order and first paint](#load-order-and-first-paint)
+- [Rendering and ShipKit models](#rendering-and-shipkit-models)
 
 ## Body types
 
@@ -1097,3 +1098,60 @@ then read just that range.
   (3) The inline pre-paint `<head>` script sits *above* the stylesheets —
   an inline script after a stylesheet waits for that stylesheet (and
   stalls the parser meanwhile).
+
+## Rendering and ShipKit models
+
+- **The game renders like the ship/body labs (v2.8.0)**: sRGB output,
+  ACES filmic tone mapping (exposure 1.1) and
+  `scene.environment = ShipKit.makeEnvironment(renderer)` — a PMREM of
+  the labs' own generated space sky (`ShipKit.makeSpaceSky()`), so metal
+  reflects and ShipKit models look as they do in `ship.html`. Planets and
+  the station pick up the reflections too. The skybox and the scene
+  lights weren't retuned for it yet (the user's plan: later).
+- **Color management (`scene/colorManagement.js`)**: with sRGB output a
+  material color is linear light, while every game color was picked for
+  the old plain output — left alone, everything washed out (the teal
+  ships came out nearly white). `manageSceneColors(scene)` runs every
+  frame and converts each *new* material's `color`/`emissive`, each
+  light's color and the fog color sRGB -> linear once (a WeakSet
+  remembers what's done), so later spawns are covered too. It skips
+  anything under `userData.shipkit` (ShipKit models and their effects are
+  authored for this pipeline, like in the labs). Vertex colors are
+  converted where written (the starfield in `scene/setup.js`; particles
+  copy already-converted material colors). Every game-made canvas texture
+  goes through `core/utils.js#sRGBTexture()` (all are color textures).
+  Custom `ShaderMaterial`s write their color untouched and need nothing.
+  **A new material color set at runtime** (not at creation) would bypass
+  the one-time conversion — convert it yourself.
+- **ShipKit is shared, not copied**: `js/shipkit/shipkit.js` is a classic
+  script (`window.ShipKit`, like the `THREE` global), loaded by
+  `index.html` (`defer`, after Three.js) and by `ship.html` — one source
+  of truth. See `docs/ship.md` for its API.
+- **The drone** (`drone/drone.js#buildDroneModel`) is ShipKit's DR-01
+  SCRIBE: built with `merge: true` (static meshes merged per material,
+  see `docs/ship.md`), effects in the scene (`fxRoot`), wrapped by
+  `makeGameHolder` to +Z forward and `DRONE_MODEL_LENGTH` (1.4) units,
+  inside the old holder group with the game's pick sphere (0.6) and
+  selection ring. No PointLight of its own any more (glow sprites
+  instead). `updateDrone()` feeds it: engine power eased toward 1 during
+  `move()` (0.15 idle), `offline` when out of fuel, `act("fire",
+  { target })` from `applyAttack()` at the bitten surface point. Swallowed
+  by a black hole it plays `act("destroy")` and the wreck is disposed
+  after 7 s (`updateDroneWreckage`). The game keeps its own print()
+  effect (`dronePrintFx.js`) rather than the model's.
+- **Graphics settings** (`scene/graphics.js`, Setup -> Graphics): render
+  quality 0..4 = pixel ratio 0.5 / 0.75 / 1 / device (1..2, default) /
+  1.5x device (max 3), particles off at LOW; geometry detail 0.2..2
+  rebuilds the drone model when the slider is released
+  (`onGraphicsChange`). Both persisted in `settings.js`
+  (`gfxQuality`, `gfxDetail`).
+- **Other players' drones** (`net/shipsBroadcast.js`): the same model at
+  detail 0.4, no particles, **not tinted** (the user's call: owners are
+  told apart by labels/markers, not by recoloring ships) — a name label
+  sprite above it with a small bar in the owner's color. The `ships`
+  broadcast's `drone` array grew from `[x, y, z, heading]` to `[..., power,
+  offline, shots, tx, ty, tz]` — still one message per 120 ms, a few more
+  numbers. All untrusted: power clamped to 0..1, shots only acted on when
+  they increase, at most 2 per update, coordinates through `safeCoord`.
+  Remote swarm ships are still the old tinted cones (not ShipKit yet).
+

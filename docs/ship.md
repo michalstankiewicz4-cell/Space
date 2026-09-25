@@ -1,10 +1,11 @@
 # Ship lab (`ship.html`)
 
-A standalone, single-file preview page for procedurally built 3D
-spaceships. It isn't linked from the game and isn't loaded by it (so,
-like the other dev tools, a change to it needs no version bump). Its ship
-code is written so a ship can later be moved into the game with little
-work: see [Moving a ship into the game](#moving-a-ship-into-the-game).
+A standalone preview page for procedurally built 3D spaceships. The
+ships themselves live in **`js/shipkit/shipkit.js`**, one file shared by
+this lab and the game (see [ShipKit in the game](#shipkit-in-the-game)):
+edit a ship there and both see it. A change to `ship.html` alone (the
+viewer) needs no version bump; a change to `shipkit.js` changes the game,
+so it does.
 
 Open `ship.html` straight from disk (double-click). No server, no build
 step and no network are needed. The only external request is Google
@@ -12,18 +13,17 @@ Fonts, and without it the panels fall back to system fonts.
 
 ## File layout
 
-One HTML file with four `<script>` blocks, in this order:
+`ship.html` loads four scripts, in this order:
 
-| Block | What it is | Needed by the game? |
+| Script | What it is | In the game? |
 |---|---|---|
-| 1. `<script>` (Three.js r128, minified, MIT) | Vendor library, inlined so the page works offline. Same version as the game. | No (the game loads its own copy) |
+| 1. `<script>` (Three.js r128, minified, MIT) | Vendor library, inlined so the page works offline. Same version as the game. | The game loads its own copy |
 | 2. `<script>` (OrbitControls, r128 `examples/js`, MIT) | Mouse camera control for the preview | No |
-| 3. `<script id="shipkit">` | **The ship models**: texture generators, materials, shaders, ship definitions, public API. Its header comment repeats the API and the extraction guide. | **Yes, this is the only part to port** |
+| 3. `<script id="shipkit" src="js/shipkit/shipkit.js">` | **The ship models**: texture generators, materials, shaders, ship definitions, shared effects, public API (`window.ShipKit`). A classic script, not a module, so the lab still opens from disk. | **Yes — the same file** |
 | 4. `<script id="viewer">` | Preview page: sky, lights, renderer, camera, HUD, sliders, counters. Uses only ShipKit's public API. | No |
 
-The HUD's HTML and CSS sit above the scripts. Search for `id="shipkit"`
-or `id="viewer"` to jump to a block. Three.js takes ~600 KB of the
-~700 KB file, all on one minified line.
+The HUD's HTML and CSS sit above the scripts. Three.js takes ~600 KB of
+the page, all on one minified line.
 
 ## ShipKit (`window.ShipKit`)
 
@@ -43,7 +43,11 @@ ShipKit.disposeShipModel(model);
 
 | Member | Description |
 |---|---|
-| `buildShipModel(id, { detail })` | Builds one ship and returns a model handle (below). `detail` is 0.2–2 and scales every segment count. |
+| `buildShipModel(id, { detail, merge, fxRoot, envMap })` | Builds one ship and returns a model handle (below). `detail` is 0.2–2 and scales every segment count. `merge: true` merges static meshes (the game's build; the lab's GAME BUILD button). `fxRoot`: where effects that leave the ship go (the game passes the scene). `envMap`: a reflection map for its materials (not needed when `scene.environment` is set). |
+| `makeGameHolder(model, length)` | Wraps a model for the game: turned to +Z forward and scaled to `length` units. Move/turn the holder. |
+| `prewarm(ids)` | Generates a type's textures/materials ahead of time (the first build costs ~1 s). |
+| `mergeStatic(group)` | What `merge: true` does (see below). |
+| `makeSpaceSky()`, `makeEnvironment(renderer)` | The labs' generated space sky, and a prefiltered environment map made from it (the game's `scene.environment`). |
 | `disposeShipModel(model)` | Removes the group from its parent and frees its geometries and per-model materials. The cached shared materials and all textures are kept for reuse. |
 | `modelStats(group)` | Returns object, figure, triangle, vertex, material, shader and texture counts, plus a texture GPU-memory estimate (`texMB`). |
 | `SHIP_DEFS` | Registry of ship types (see [Adding a ship](#adding-a-ship)). |
@@ -297,39 +301,46 @@ toggles work for it with no extra code. Create any per-model
 `ShaderMaterial` with its own uniform object (see `U` in `codewing`),
 not a shared one.
 
-## Moving a ship into the game
+## ShipKit in the game
 
-The same guide is in the header comment of the `shipkit` block.
+Since v2.8.0 the game loads `js/shipkit/shipkit.js` itself (a `defer`
+script right after Three.js in `index.html`), and the drone is ShipKit's
+DR-01 SCRIBE. How it's wired (`js/drone/drone.js#buildDroneModel`, full
+story in `docs/architecture.md`'s "Rendering and ShipKit models"):
 
-1. **Module**: copy the `shipkit` block into e.g.
-   `js/ships/shipModels.js`, following the
-   `js/station/stationModel.js` pattern (`buildStationMesh(opts)` /
-   `disposeStationMesh(scene, group)`). Replace the
-   `window.ShipKit = (function () { … return {…}; })();` wrapper with
-   top-level code and an `export { … }`. Add the new file to
-   `js/versionCheck.js#MODULE_FILES`.
-2. **Orientation**: game ships (`js/ships/swarm.js`) steer with
-   `mesh.lookAt(target)`, so their forward is **+Z**. Wrap the model:
-   `model.group.rotation.y = -Math.PI / 2` inside a holder group.
-3. **Scale**: the current game ship (the cone in `makeShipMesh()`) is
-   0.9 units long. `holder.scale.setScalar(0.9 / model.size.x)` is
-   ≈0.075 for codewing; the final size is a design decision.
-4. **Renderer differences (important)**: `js/scene/setup.js` sets no
-   `scene.environment`, no sRGB output, no tone mapping and no shadows.
-   Without an environment map the metal parts (metalness 0.7–1) render
-   almost black, so either add one in the game or lower metalness when
-   porting. Colors also shift without sRGB output and tone mapping.
-   `shadowed()` only sets the cast/receive flags, which are harmless
-   with shadows off.
-5. **Performance**: build once during loading, e.g. behind the start
-   screen, because the first build generates the textures (≈1.1 s CPU).
-   For a swarm, use `detail` 0.2–0.4 and `update(…, { particles: false })`,
-   and consider skipping `update()` for distant ships.
-6. **Picking and selection**: keep the game's invisible pick sphere and
-   selection ring in the wrapper group; `model.radius` helps size them.
-7. **Repo conventions**: a game change needs `js/version.js`,
-   `CHANGELOG.md` and the `?v=` params in `index.html` bumped; English
-   comments; no trademarked franchise names (see `CLAUDE.md`).
+1. **Renderer like the labs**: the game renders with sRGB output, ACES
+   tone mapping and `scene.environment = ShipKit.makeEnvironment(renderer)`
+   — the labs' look. The game's own colors are converted to match
+   (`scene/colorManagement.js`); ShipKit models are marked
+   `userData.shipkit` and left as authored.
+2. **Build**: `buildShipModel(id, { detail, merge: true, fxRoot: scene })`
+   then `makeGameHolder(model, length)` (+Z forward, `length` units long);
+   the holder sits in a plain group the game moves as before, next to the
+   game's own pick sphere and selection ring.
+3. **Merging**: `merge: true` bakes meshes sharing a material into one,
+   per "unit" — the root and every object marked `userData.dynamic`
+   (anything the ship animates by transform or toggles on/off, each
+   merged in its own space). Codewing goes from 77 to 31 draw calls, the
+   drone from 68 to 52 (its four gimballed pods stay separate). **When
+   you add an animated or toggled part to a ship, mark it
+   `userData.dynamic = true`**, or merging bakes it in place.
+4. **Effects in world space**: with `fxRoot`, bolts, scan waves and print
+   clouds are placed in the scene (converted from ship space; sizes follow
+   the ship's world scale), so a turning ship doesn't drag its shots.
+   They're tracked and freed by `disposeShipModel`.
+5. **Driving it**: every frame `model.update(t, dt, { power, particles })`;
+   actions from game events — `act("fire", { target })` (a world point),
+   `act("offline", on)`, `act("destroy")`; `act("print", { text })` exists
+   but the game keeps its own print() effect.
+6. **Graphics settings** (Setup → Graphics, `scene/graphics.js`): the
+   same two sliders as this lab — render quality (pixel ratio, particles)
+   and geometry detail (rebuilds the models).
+7. **Multiplayer**: models aren't sent, only a few numbers per drone in
+   the regular `ships` broadcast (engine power, offline, shot count and
+   last target); other players' drones are the same model, not tinted,
+   with a name label.
+8. **Repo conventions**: `shipkit.js` is part of the game — changing it
+   needs the version bump (`js/version.js`, `CHANGELOG.md`, `?v=`).
 
 ## Gotchas
 

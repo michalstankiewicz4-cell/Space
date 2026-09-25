@@ -1,4 +1,6 @@
 import { ctx } from "../core/context.js";
+import { disposeMesh } from "../core/utils.js";
+import { gfxDetail, gfxParticles, onGraphicsChange } from "../scene/graphics.js";
 import { readStorage, writeStorage } from "../core/utils.js";
 import { NET_ENABLED } from "../env.js";
 import { state, save } from "../core/gameState.js";
@@ -14,7 +16,7 @@ import { parseDroneScript } from "./dsl.js";
 import { runProgram } from "./interpreter.js";
 import { spawnPrintEffect } from "./dronePrintFx.js";
 import { broadcastDronePrint } from "../net/shipsBroadcast.js";
-import { DRONE_MAX_FUEL, DRONE_FUEL_PER_MOVE_UNIT, DRONE_MOVE_SPEED, DRONE_TURN_SPEED, DRONE_BASE_ATTACK, DRONE_BASE_DEFENSE, DRONE_DOCK_RANGE_MULT, DRONE_REFUEL_RATE, DRONE_PRINT_MAX_LEN, DRONE_PRINT_COOLDOWN_S, DRONE_ATTACK_COOLDOWN_S } from "../config.js";
+import { DRONE_MAX_FUEL, DRONE_FUEL_PER_MOVE_UNIT, DRONE_MOVE_SPEED, DRONE_TURN_SPEED, DRONE_BASE_ATTACK, DRONE_BASE_DEFENSE, DRONE_DOCK_RANGE_MULT, DRONE_REFUEL_RATE, DRONE_PRINT_MAX_LEN, DRONE_PRINT_COOLDOWN_S, DRONE_ATTACK_COOLDOWN_S, DRONE_MODEL_LENGTH } from "../config.js";
 
 // Runaway-script guard: a script with no move()/turn()/wait() in a while
 // loop (e.g. `while(true){ attack() }`) would otherwise resolve instant
@@ -40,18 +42,24 @@ function saveStoredScript(src){
   writeStorage(SCRIPT_STORAGE_KEY, src);
 }
 
+// The drone's look is ShipKit's DR-01 SCRIBE (js/shipkit/shipkit.js — the
+// same model as in the ship lab, ship.html), built with static meshes
+// merged and effects (bolts, scan waves) placed in the scene. `mesh` is a
+// plain holder the game moves/turns as before; the model sits inside it,
+// turned to the game's +Z forward and scaled to DRONE_MODEL_LENGTH. It
+// lights itself with glow sprites, so no PointLight of its own anymore.
+export function buildDroneModel(detail){
+  const model = ShipKit.buildShipModel("scribe", { detail: detail, merge: true, fxRoot: ctx.scene });
+  return { model: model, holder: ShipKit.makeGameHolder(model, DRONE_MODEL_LENGTH) };
+}
+
 function makeDroneMesh(){
-  const geo = new THREE.OctahedronGeometry(0.42, 0);
-  const mat = new THREE.MeshStandardMaterial({
-    color: 0xffcf4f, emissive: 0xffa726, emissiveIntensity: 0.75,
-    roughness: 0.35, metalness: 0.55
-  });
-  const mesh = new THREE.Mesh(geo, mat);
-  const glow = new THREE.PointLight(0xffcf4f, 0.5, 6);
-  mesh.add(glow);
+  const mesh = new THREE.Group();
+  const built = buildDroneModel(gfxDetail());
+  mesh.add(built.holder);
 
   // selection ring, same pattern as ships/swarm.js — visible only while selected
-  const ringGeo = new THREE.RingGeometry(0.62, 0.72, 24);
+  const ringGeo = new THREE.RingGeometry(0.95, 1.05, 32);
   const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false });
   const ring = new THREE.Mesh(ringGeo, ringMat);
   ring.rotation.x = Math.PI/2;
@@ -62,13 +70,36 @@ function makeDroneMesh(){
   // smaller than a ship's (0.55): the drone sits apart from the swarm (see
   // spawnDrone()) specifically so an oversized hitbox can't "steal" clicks
   // meant for nearby ships/planets during normal fleet-commanding.
-  const pickGeo = new THREE.SphereGeometry(0.5, 8, 8);
+  const pickGeo = new THREE.SphereGeometry(0.6, 8, 8);
   const pickMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 });
   const pickMesh = new THREE.Mesh(pickGeo, pickMat);
   mesh.add(pickMesh);
 
-  return { mesh: mesh, pickMesh: pickMesh, ring: ring };
+  return { mesh: mesh, pickMesh: pickMesh, ring: ring, model: built.model, modelHolder: built.holder };
 }
+
+// Rebuild the model at a new geometry detail (Setup -> Graphics), keeping
+// its state (offline) — the holder, ring and pick sphere stay.
+function rebuildDroneModel(drone){
+  drone.mesh.remove(drone.modelHolder);
+  ShipKit.disposeShipModel(drone.model);
+  const built = buildDroneModel(gfxDetail());
+  drone.model = built.model;
+  drone.modelHolder = built.holder;
+  drone.mesh.add(built.holder);
+  if(drone.fuel <= 0) drone.model.act("offline", true);
+}
+
+// The drone is gone (swallowed by a black hole): it blows apart — the
+// model's own destroy effect — and the wreck is cleaned up a few seconds
+// later.
+export function destroyDroneMesh(drone){
+  drone.model.act("destroy");
+  const wreck = drone;
+  wreckage.push({ drone: wreck, t: 7 });
+}
+const wreckage = [];
+let animT = 0;
 
 // Purely a selection indicator (ring), like ships — never moves the camera.
 // The drone's info panel tracks this same flag (see ui/hud/unitPanel.js) so
@@ -103,6 +134,11 @@ export function spawnDrone(){
 
   const drone = {
     mesh: built.mesh,
+    model: built.model,           // ShipKit model handle (animations, actions)
+    modelHolder: built.modelHolder,
+    visPower: 0,                  // eased engine throttle for the model
+    shots: 0,                     // attack() hits so far — broadcast so others see the shots
+    shotTarget: null,
     pickMesh: built.pickMesh,
     selectionRing: built.ring,
     selected: false,
@@ -203,6 +239,9 @@ function applyAttack(drone){
 
   const outward = drone.pos.clone().sub(body.mesh.position).normalize();
   const surfacePoint = body.mesh.position.clone().addScaledVector(outward, body.radius);
+  drone.model.act("fire", { target: surfacePoint });   // the eye fires at the bitten spot
+  drone.shots += 1;
+  drone.shotTarget = surfacePoint.clone();
   spawnBiteParticles(surfacePoint, outward, body.mesh.material.color, 4);
   paintScorch(body, surfacePoint, 1);
 
@@ -389,4 +428,28 @@ export function updateDrone(dt){
 
   drone.mesh.position.copy(drone.pos);
   drone.mesh.rotation.y = drone.heading;
+
+  // the model: engines follow move(), dark when out of fuel
+  animT += dt;
+  const moving = drone.running && drone.pending && drone.pending.name === "move";
+  drone.visPower += ((moving ? 1 : 0.15) - drone.visPower) * Math.min(1, dt * 3);
+  if((drone.fuel <= 0) !== drone.model.offline) drone.model.act("offline", drone.fuel <= 0);
+  drone.model.update(animT, dt, { power: drone.visPower, particles: gfxParticles() });
 }
+
+// Wrecks of destroyed drones keep animating (debris, smoke) until removed.
+export function updateDroneWreckage(dt){
+  for(let i = wreckage.length - 1; i >= 0; i--){
+    const w = wreckage[i];
+    w.drone.model.update(animT, dt, { particles: gfxParticles() });
+    if((w.t -= dt) <= 0){
+      ShipKit.disposeShipModel(w.drone.model);
+      disposeMesh(ctx.scene, w.drone.mesh);
+      wreckage.splice(i, 1);
+    }
+  }
+}
+
+onGraphicsChange(function(before){
+  if(ctx.drone && before.detail !== gfxDetail()) rebuildDroneModel(ctx.drone);
+});

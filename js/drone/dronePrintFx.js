@@ -1,3 +1,4 @@
+import { sRGBTexture } from "../core/utils.js";
 import { ctx } from "../core/context.js";
 
 // print(x)'s in-world visual (see drone.js's "print" builtin case, and
@@ -31,7 +32,7 @@ function getGasTexture(){
   grad.addColorStop(1, "rgba(255,255,255,0)");
   c2d.fillStyle = grad;
   c2d.fillRect(0, 0, size, size);
-  gasTexture = new THREE.CanvasTexture(canvas);
+  gasTexture = sRGBTexture(new THREE.CanvasTexture(canvas));
   return gasTexture;
 }
 
@@ -80,7 +81,7 @@ function makeTextSprite(text, colorHex){
   c2d.fillText(text, canvas.width/2, canvas.height/2);
   c2d.fillText(text, canvas.width/2, canvas.height/2); // second pass thickens the glow
 
-  const texture = new THREE.CanvasTexture(canvas);
+  const texture = sRGBTexture(new THREE.CanvasTexture(canvas));
   const mat = new THREE.SpriteMaterial({ map: texture, transparent:true, depthWrite:false, blending: THREE.AdditiveBlending, opacity:0 });
   const sprite = new THREE.Sprite(mat);
   const worldHeight = 0.55;

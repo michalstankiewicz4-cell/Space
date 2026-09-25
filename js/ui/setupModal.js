@@ -1,5 +1,6 @@
-import { getLang, setLang, onLangChange, LANGS } from "../i18n.js";
+import { getLang, setLang, onLangChange, LANGS, t } from "../i18n.js";
 import { settings, saveSettings } from "../settings.js";
+import { gfxQuality, gfxDetail, setGraphics } from "../scene/graphics.js";
 
 // Setup modal (language / mouse / graphics / help tabs), opened from the
 // start screen. Tabs and panels are matched by their data-tab attribute.
@@ -70,4 +71,26 @@ export function initSetupModal(){
   bindSettingCheckbox("invertXCheck", "invertX");
   bindSettingCheckbox("invertYCheck", "invertY");
   bindSettingCheckbox("swapButtonsCheck", "swapMouseButtons");
+  initGraphicsSliders();
+}
+
+// Setup -> Graphics: render quality + geometry detail (scene/graphics.js).
+// The detail slider applies when released — it rebuilds ship models.
+function paintGfx(){
+  const q = document.getElementById("gfxQualitySlider"), d = document.getElementById("gfxDetailSlider");
+  const fill = function(s){ s.style.setProperty("--fill", ((s.value - s.min) / (s.max - s.min) * 100) + "%"); };
+  fill(q); fill(d);
+  document.getElementById("gfxQualityVal").textContent = t("setup.qualityLevels")[+q.value];
+  document.getElementById("gfxDetailVal").textContent = Math.round(+d.value * 100) + "%";
+}
+
+function initGraphicsSliders(){
+  const q = document.getElementById("gfxQualitySlider"), d = document.getElementById("gfxDetailSlider");
+  q.value = gfxQuality();
+  d.value = gfxDetail();
+  paintGfx();
+  q.addEventListener("input", function(){ paintGfx(); setGraphics(+q.value, gfxDetail()); });
+  d.addEventListener("input", paintGfx);
+  d.addEventListener("change", function(){ setGraphics(gfxQuality(), +d.value); });
+  onLangChange(paintGfx);
 }

@@ -46,3 +46,11 @@ export function disposeMesh(scene, mesh){
     }
   });
 }
+
+// Every texture the game generates is a color texture (surfaces, glows,
+// sprites, labels): with the renderer's sRGB output (scene/setup.js) it
+// has to be marked sRGB too, or it would come out washed out.
+export function sRGBTexture(tex){
+  tex.encoding = THREE.sRGBEncoding;
+  return tex;
+}

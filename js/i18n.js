@@ -48,7 +48,7 @@ const STRINGS = {
       renderQuality: "Render quality",
       geometryDetail: "Geometry detail (triangles)",
       qualityLevels: ["LOW", "MED", "HIGH", "ULTRA", "MAX"],
-      graphicsSoon: "Coming soon — these arrive together with importing ships from the ship lab."
+      graphicsSoon: "Render quality sets the resolution and effects; geometry detail sets how finely the ships are built."
     },
     about: {
       button: "About the game",
@@ -392,7 +392,7 @@ const STRINGS = {
       renderQuality: "Jakość renderowania",
       geometryDetail: "Szczegółowość geometrii (trójkąty)",
       qualityLevels: ["NISKA", "ŚREDNIA", "WYSOKA", "ULTRA", "MAX"],
-      graphicsSoon: "Wkrótce — pojawią się razem z importem statków z laboratorium statków."
+      graphicsSoon: "Jakość renderowania ustawia rozdzielczość i efekty; szczegółowość — jak dokładnie zbudowane są statki."
     },
     about: {
       button: "O grze",

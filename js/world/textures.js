@@ -1,5 +1,6 @@
 // Procedural textures/geometries used by celestial bodies.
 import { CONTENT } from "../content.js";
+import { sRGBTexture } from "../core/utils.js";
 
 // Compact 3D simplex noise (Perlin/Gustavson algorithm, public domain).
 // The permutation is randomized on every call to makeSimplex3(), so every
@@ -139,7 +140,7 @@ export function makePlanetSurfaceTexture(){
   }
   c.putImageData(img, 0, 0);
 
-  const tex = new THREE.CanvasTexture(canvas);
+  const tex = sRGBTexture(new THREE.CanvasTexture(canvas));
   tex.wrapS = THREE.RepeatWrapping;
   return tex;
 }
@@ -171,7 +172,7 @@ export function generateCrackTexture(){
       ctx2d.stroke();
     }
   }
-  return new THREE.CanvasTexture(canvas);
+  return sRGBTexture(new THREE.CanvasTexture(canvas));
 }
 
 export function makeRockGeometry(size){
@@ -228,7 +229,7 @@ export function makeAccretionTexture(){
   ctx2d.fillRect(0,0,size,size);
 
   ctx2d.globalCompositeOperation = "source-over";
-  const tex = new THREE.CanvasTexture(canvas);
+  const tex = sRGBTexture(new THREE.CanvasTexture(canvas));
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   return tex;
 }
@@ -250,7 +251,7 @@ export function makeHaloTexture(){
   }
   ringPass(0.16, 0.24, 0.35);
   ringPass(0.07, 0.13, 0.9);
-  return new THREE.CanvasTexture(canvas);
+  return sRGBTexture(new THREE.CanvasTexture(canvas));
 }
 
 // Soft, round sun glow — a sprite facing the camera (like the black hole's
@@ -278,7 +279,7 @@ export function makeSunHaloTexture(){
   ctx2d.fillStyle = glow;
   ctx2d.fillRect(0,0,size,size);
 
-  return new THREE.CanvasTexture(canvas);
+  return sRGBTexture(new THREE.CanvasTexture(canvas));
 }
 
 // Texture for a single "ray" — a thin blade: bright/opaque at the base
@@ -311,7 +312,7 @@ export function makeSunRayTexture(){
   c.fillRect(0, 0, w, h);
   c.globalCompositeOperation = "source-over";
 
-  return new THREE.CanvasTexture(canvas);
+  return sRGBTexture(new THREE.CanvasTexture(canvas));
 }
 
 // Comet "tail" texture: bright/opaque at the base (right by the comet),
@@ -341,7 +342,7 @@ export function makeCometTailTexture(){
   c.fillRect(0, 0, w, h);
   c.globalCompositeOperation = "source-over";
 
-  return new THREE.CanvasTexture(canvas);
+  return sRGBTexture(new THREE.CanvasTexture(canvas));
 }
 
 export function generateDustTexture(){
@@ -364,5 +365,5 @@ export function generateDustTexture(){
     ctx2d.arc(cx,cy,r,0,Math.PI*2);
     ctx2d.fill();
   }
-  return new THREE.CanvasTexture(canvas);
+  return sRGBTexture(new THREE.CanvasTexture(canvas));
 }

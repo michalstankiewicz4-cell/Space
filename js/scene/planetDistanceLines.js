@@ -1,3 +1,4 @@
+import { sRGBTexture } from "../core/utils.js";
 import { ctx } from "../core/context.js";
 import { getSelectedPlanetsOrdered } from "./controls.js";
 
@@ -24,7 +25,7 @@ function getLabelTexture(text){
   c2d.shadowColor = "#ffe066"; c2d.shadowBlur = 14;
   c2d.fillStyle = "#ffe066";
   c2d.fillText(text, canvas.width/2, canvas.height/2);
-  return { texture: new THREE.CanvasTexture(canvas), aspect: canvas.width/canvas.height };
+  return { texture: sRGBTexture(new THREE.CanvasTexture(canvas)), aspect: canvas.width/canvas.height };
 }
 
 function makeLabel(){

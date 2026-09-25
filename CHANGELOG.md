@@ -4,6 +4,27 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.8.0]
+
+### Added
+- **A new drone**: the plain gold octahedron is replaced by DR-01 SCRIBE
+  from the ship lab — a faceted gold hull, four swivelling thruster pods,
+  an eye, a crown of scrolling program code, solar panels and fuel tanks.
+  Its engines fire up while it moves, its eye shoots at whatever it
+  attacks, it goes dark when it runs out of fuel, and a black hole now
+  blows it apart instead of making it vanish.
+- Other players' drones are the same model, in its own colors, with
+  their owner's name floating above them.
+- **Graphics settings work**: Setup → Graphics — render quality
+  (resolution and effects) and geometry detail (how finely ships are
+  built), remembered between visits.
+
+### Changed
+- The game now renders like the ship and planet editors: richer colors
+  and highlights (filmic tone mapping) and reflections of a space sky on
+  metal — the station and planets look noticeably better. The game's own
+  colors are kept as they were; sky and lighting will be tuned later.
+
 ## [2.7.2]
 
 ### Changed

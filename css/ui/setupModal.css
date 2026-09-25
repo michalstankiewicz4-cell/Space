@@ -41,8 +41,7 @@
 #setupTabGraphics .gfxRow b{ font-family:var(--uiFontLabel); font-weight:500; color:#f8bb56; letter-spacing:.6px; }
 #setupTabGraphics .gfxTicks{ left:0; width:428px; display:flex; justify-content:space-between;
   font-family:var(--uiFontLabel); font-size:11.5px; letter-spacing:.5px; color:#5f6fb8; }
-#setupTabGraphics .gfxRow, #setupTabGraphics .gfxSlider, #setupTabGraphics .gfxTicks{ opacity:.5; }
-.gfxSlider{ left:0; width:428px; height:22px; margin:0; -webkit-appearance:none; appearance:none; background:none; cursor:not-allowed; }
+.gfxSlider{ left:0; width:428px; height:22px; margin:0; -webkit-appearance:none; appearance:none; background:none; cursor:pointer; }
 .gfxSlider::-webkit-slider-runnable-track{ height:10px; border-radius:5px; border:1.5px solid #3c55d8;
   background:linear-gradient(90deg,#f8bb56 0,#d38b37 var(--fill),#050d33 var(--fill)); }
 .gfxSlider::-moz-range-track{ height:10px; border-radius:5px; border:1.5px solid #3c55d8; background:#050d33; }
@@ -51,5 +50,5 @@
   background:linear-gradient(180deg,#b8c5ff,#5f77f7 55%,#3a50d2); box-shadow:0 0 6px rgb(95 119 247 / .7), inset 0 1px 1px rgb(255 255 255 / .5); }
 .gfxSlider::-moz-range-thumb{ width:30px; height:20px; border-radius:4px 10px 10px 4px; border:0;
   background:linear-gradient(180deg,#b8c5ff,#5f77f7 55%,#3a50d2); box-shadow:0 0 6px rgb(95 119 247 / .7); }
-#gfxSoon{ left:0; width:428px; font-size:15px; line-height:20px; color:#ffd98f; }
+#gfxSoon{ left:0; width:428px; font-size:14px; line-height:19px; color:#93a6ff; }
 #setupHelpText{ left:0; top:4px; width:428px; font-size:17px; line-height:30px; color:#c7d0ff; }

@@ -56,6 +56,7 @@ export const TREE = {
 // player writes. Kept separate from the swarm's own TREE/
 // upgrade stats since the drone isn't part of that economy.
 export const DRONE_MAX_FUEL = 100;
+export const DRONE_MODEL_LENGTH = 1.4; // the ShipKit drone model's length in world units (ships are 0.9)
 export const DRONE_FUEL_PER_MOVE_UNIT = 1; // fuel spent per unit of move() distance
 export const DRONE_MOVE_SPEED = 4; // units/second while a move() is in progress
 export const DRONE_TURN_SPEED = 120; // degrees/second while a turn() is in progress

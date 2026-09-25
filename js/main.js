@@ -4,6 +4,8 @@ import { NET_DAMAGE_FLUSH_MS } from "./config.js";
 import { VERSION } from "./version.js";
 
 import { initScene } from "./scene/setup.js";
+import { manageSceneColors } from "./scene/colorManagement.js";
+import { ctx } from "./core/context.js";
 import { initControls, updateCamera, setCameraMode } from "./scene/controls.js";
 import { updatePulsars } from "./scene/pulsars.js";
 import { initParticles, updateParticles } from "./fx/particles.js";
@@ -27,7 +29,7 @@ import { flushSolarDamage } from "./net/solarBodiesSync.js";
 import { updateRemoteShips, maybeBroadcastShips } from "./net/shipsBroadcast.js";
 import { initNet } from "./net/connect.js";
 import { initVersionCheck } from "./versionCheck.js";
-import { spawnDrone, updateDrone } from "./drone/drone.js";
+import { spawnDrone, updateDrone, updateDroneWreckage } from "./drone/drone.js";
 import { updateDronePrintFx } from "./drone/dronePrintFx.js";
 import { spawnStation } from "./station/station.js";
 import { applyStationField } from "./station/stationField.js";
@@ -126,6 +128,7 @@ function tick(){
   updateBlackHoles(dt);
   updateDust(dt);
   updateDrone(dt);
+  updateDroneWreckage(dt);
   updateDronePrintFx(dt);
   updateLightMarkers();
   updateDistanceLines();
@@ -137,6 +140,8 @@ function tick(){
   }
 
   updateHud(dt);
+
+  manageSceneColors(ctx.scene); // new materials/lights: sRGB -> linear, once each
 
   // Main view into the HUD's viewport rect, then the extra passes (ship cam,
   // unit/planet miniatures) into their own panels' rects — all on the same

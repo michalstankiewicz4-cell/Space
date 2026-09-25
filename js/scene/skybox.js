@@ -11,6 +11,7 @@
 // (invisible when it was proportionally much farther away, as it used to
 // be at the old, much smaller camera-zoom scale) became visible as a
 // distinct faceted shape instead of reading as a smooth, distant backdrop.
+import { sRGBTexture } from "../core/utils.js";
 const SKY_RADIUS = 9000;
 
 function makeNebulaTexture(){
@@ -67,7 +68,7 @@ function makeNebulaTexture(){
     c.fillRect(x, y, s, s);
   }
 
-  const tex = new THREE.CanvasTexture(canvas);
+  const tex = sRGBTexture(new THREE.CanvasTexture(canvas));
   tex.wrapS = THREE.RepeatWrapping;
   return tex;
 }

@@ -1,3 +1,4 @@
+import { sRGBTexture } from "../core/utils.js";
 import { ctx } from "../core/context.js";
 
 // Dev Tools debug visualization (see ui/hud/devTools.js) — a small "light bulb"
@@ -43,7 +44,7 @@ function getIconTexture(){
   // White base texture, tinted per-instance via SpriteMaterial.color (see
   // updateLightMarkers) — one shared texture, same cached-canvas-texture
   // pattern as world/bodies.js's selection bracket.
-  iconTexture = new THREE.CanvasTexture(canvas);
+  iconTexture = sRGBTexture(new THREE.CanvasTexture(canvas));
   return iconTexture;
 }
 
