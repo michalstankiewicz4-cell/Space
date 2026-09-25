@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.5.0">
+<link rel="stylesheet" href="css/style.css?v=2.6.0">
 </head>
 <body>
 
@@ -442,13 +442,13 @@
     <span class="mat gold hdSq" id="mmHdSq"></span>
     <h2 class="hd" id="mmHd">MINIMAP</h2>
     <div class="hdLine" id="mmHdLine"></div>
+    <div id="mmZoom">
+      <button type="button" id="mmOut" aria-label="Zoom out">&minus;</button>
+      <span></span>
+      <button type="button" id="mmIn" aria-label="Zoom in">+</button>
+    </div>
     <div id="mmBox">
       <svg id="mmSvg" viewBox="0 0 295 206"></svg>
-      <div id="mmZoom">
-        <button type="button" id="mmIn" aria-label="Zoom in">+</button>
-        <span></span>
-        <button type="button" id="mmOut" aria-label="Zoom out">&minus;</button>
-      </div>
     </div>
   </section>
 </div>
@@ -523,6 +523,8 @@
         <button type="button" class="mat blueT" data-tab="tech"></button>
         <button type="button" class="mat blueT" data-tab="programming"></button>
         <button type="button" class="mat blueT" data-tab="races"></button>
+        <button type="button" class="mat blueT" data-tab="lifeforms"></button>
+        <button type="button" class="mat blueT" data-tab="artifacts"></button>
       </nav>
       <ul id="wikiList"></ul>
       <article id="wikiDetail">
@@ -633,6 +635,6 @@
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.5.0"></script>
+<script type="module" src="js/main.js?v=2.6.0"></script>
 </body>
 </html>

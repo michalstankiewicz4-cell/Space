@@ -13,7 +13,7 @@ import { t } from "../../i18n.js";
 // (scene/controls.js#clickPlanet): course order for the selected ships,
 // otherwise select it; shift toggles the multi-select. +/- (or the mouse
 // wheel) zoom, dragging pans.
-const W = 295, H = 206, CX = 140, CY = 100;
+const W = 295, H = 206, CX = W / 2, CY = H / 2;
 const RING_STEP = 13, RING_BASE = 16, TILT = 0.66;
 const ZOOM_MIN = 1, ZOOM_MAX = 4, ZOOM_STEP = 1.5;
 const PICK_RADIUS = 11;
@@ -37,8 +37,11 @@ function schematicRadius(r){
     const a = RING_TABLE[i - 1], b = RING_TABLE[i];
     if(r <= b[0]) return a[1] + (r - a[0]) / (b[0] - a[0]) * (b[1] - a[1]);
   }
+  // Past the outermost orbit (an arriving/leaving comet, out to ~1.3x
+  // its radius) only a sliver of extra room: the outer ring already nearly
+  // fills the box, and more would push the comet off the map's edge.
   const last = RING_TABLE[RING_TABLE.length - 1];
-  return Math.min(last[1] + 18, last[1] + (r - last[0]) * 0.03);
+  return Math.min(last[1] + 8, last[1] + (r - last[0]) * 0.03);
 }
 
 let zoom = 1, panX = 0, panY = 0;

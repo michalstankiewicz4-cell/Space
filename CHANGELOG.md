@@ -4,6 +4,25 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.6.0]
+
+### Added
+- Wiki: **Life forms** — real organisms tough enough for space
+  (tardigrade, a radiation-proof bacterium, lichen, a radiation-eating
+  mould) plus the machine "life" of the game's story.
+- Wiki: **Artifacts** — real things humans left behind: the Statue of
+  Liberty, the Voyager Golden Record, the Pioneer plaque, the flags on
+  the Moon, the Rosetta Stone and the seed vault. The game's story: the
+  humans are gone, only AI and robots remain. Neither tab can be
+  discovered in the game yet.
+
+### Fixed
+- Minimap: a comet far out beyond the last orbit (arriving or leaving)
+  was drawn past the map's left edge, and the zoom buttons covered the
+  outer orbits in the lower right — comets (and planets) there were
+  hidden. The zoom buttons moved up into the panel's header, the map is
+  centered, and a far-out comet now always stays inside the frame.
+
 ## [2.5.0]
 
 ### Added

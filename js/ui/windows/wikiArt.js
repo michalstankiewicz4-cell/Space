@@ -322,6 +322,102 @@ function code(a){
   return frame(grad + out);
 }
 
+// Artifacts humans left behind.
+function artifact(a){
+  const id = "wa" + (++uid);
+  const gold = '<defs><radialGradient id="' + id + '" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#ffe7a8"/><stop offset=".6" stop-color="#e0a93e"/><stop offset="1" stop-color="#8a5a18"/></radialGradient></defs>';
+  if(a.kind === "statue"){
+    return frame('<path d="M70 180 H130 L124 160 H76 Z" fill="#5d6b72"/>' +
+      '<path d="M82 160 L90 92 Q100 82 110 92 L120 160 Z" fill="#5fae96"/><path d="M88 110 L78 150 L92 150 Z" fill="#4e9a83"/>' +
+      '<circle cx="100" cy="78" r="11" fill="#6fc0a6"/>' +
+      '<path d="M100 60 L100 67 M88 64 L91 70 M112 64 L109 70 M80 72 L87 75 M120 72 L113 75" stroke="#6fc0a6" stroke-width="3" stroke-linecap="round"/>' +
+      '<path d="M108 96 L128 46" stroke="#5fae96" stroke-width="8" stroke-linecap="round"/>' +
+      '<path d="M122 44 H136 L133 50 H125 Z" fill="#5fae96"/><path d="M129 42 Q121 30 129 18 Q137 30 129 42 Z" fill="#f8bb56"/>' +
+      '<rect x="84" y="112" width="12" height="16" rx="2" fill="#4e9a83"/>');
+  }
+  if(a.kind === "disc"){
+    let grooves = "";
+    for(let r = 30; r <= 70; r += 8) grooves += '<circle cx="100" cy="100" r="' + r + '" fill="none" stroke="#8a5a18" stroke-opacity=".45" stroke-width="1.2"/>';
+    return frame(gold + '<circle cx="100" cy="100" r="76" fill="url(#' + id + ')"/>' + grooves +
+      '<circle cx="100" cy="100" r="20" fill="#c9922e"/><circle cx="100" cy="100" r="4" fill="#0c1440"/>' +
+      '<path d="M44 70 A62 62 0 0 1 80 40" stroke="#fff" stroke-opacity=".5" stroke-width="5" fill="none" stroke-linecap="round"/>');
+  }
+  if(a.kind === "plaque"){
+    let rays = "";
+    for(let i = 0; i < 14; i++){
+      const ang = i / 14 * Math.PI * 2, len = 14 + (i * 7) % 16;
+      rays += '<line x1="62" y1="126" x2="' + (62 + Math.cos(ang) * len).toFixed(1) + '" y2="' + (126 + Math.sin(ang) * len).toFixed(1) + '" stroke="#6b4a14" stroke-width="1.3"/>';
+    }
+    return frame(gold + '<rect x="30" y="44" width="140" height="112" rx="8" fill="url(#' + id + ')"/>' + rays +
+      '<circle cx="120" cy="76" r="5" fill="none" stroke="#6b4a14" stroke-width="2"/><path d="M120 81 V110 M112 92 H128 M120 110 L113 128 M120 110 L127 128" stroke="#6b4a14" stroke-width="2.5" fill="none"/>' +
+      '<circle cx="146" cy="80" r="4.5" fill="none" stroke="#6b4a14" stroke-width="2"/><path d="M146 85 V110 M140 96 H152 M146 110 L141 128 M146 110 L151 128" stroke="#6b4a14" stroke-width="2.5" fill="none"/>' +
+      '<path d="M36 146 H164" stroke="#6b4a14" stroke-width="1.5"/>');
+  }
+  if(a.kind === "flag"){
+    return frame('<path d="M14 160 Q60 146 100 152 T186 150 V186 H14 Z" fill="#8a8f99"/><ellipse cx="146" cy="166" rx="22" ry="6" fill="#5f646e"/>' +
+      '<line x1="80" y1="156" x2="80" y2="44" stroke="#d8dde6" stroke-width="4"/><line x1="80" y1="48" x2="138" y2="48" stroke="#d8dde6" stroke-width="3"/>' +
+      '<path d="M80 50 H136 V90 H80 Z" fill="#f4f1ea"/><path d="M80 58 H136 M80 66 H136 M80 74 H136 M80 82 H136" stroke="#e6dfd2" stroke-width="3"/>' +
+      '<rect x="80" y="50" width="24" height="20" fill="#e3e7ee"/>');
+  }
+  if(a.kind === "stone"){
+    let lines = "";
+    for(let i = 0; i < 4; i++) lines += '<path d="M56 ' + (58 + i * 9) + ' h14 m6 0 h10 m5 0 h16 m4 0 h12" stroke="#9aa0aa" stroke-width="3"/>';
+    for(let i = 0; i < 4; i++) lines += '<path d="M54 ' + (104 + i * 8) + ' q8 -5 16 0 t16 0 t16 0 t16 0" stroke="#9aa0aa" stroke-width="2" fill="none"/>';
+    for(let i = 0; i < 4; i++) lines += '<path d="M54 ' + (144 + i * 7) + ' H146" stroke="#9aa0aa" stroke-width="2" stroke-dasharray="4 2"/>';
+    return frame('<path d="M44 34 L150 30 L160 184 L40 184 Z" fill="#3b3f47"/><path d="M44 34 L150 30 L154 60 L44 62 Z" fill="#4a4f59"/>' + lines);
+  }
+  return frame('<path d="M0 170 L70 60 L110 110 L140 80 L200 170 Z" fill="#dfe8f2"/><path d="M70 60 L90 90 L78 92 Z M140 80 L152 100 L136 98 Z" fill="#fff"/>' +
+    '<path d="M86 170 L100 118 L130 118 L116 170 Z" fill="#6b7482"/><path d="M100 118 L130 118 L124 136 L104 136 Z" fill="#4fe3c6" opacity=".85"/>' +
+    '<path d="M0 170 H200 V186 H0 Z" fill="#c9d6e4"/>');
+}
+
+// Life forms: real space-hardy organisms, and the story's machine "life".
+function life(a){
+  const id = "wa" + (++uid);
+  if(a.kind === "tardigrade"){
+    let legs = "";
+    [58, 84, 110, 136].forEach(function(x){ legs += '<path d="M' + x + ' 128 q-4 16 -10 20 M' + (x + 8) + ' 128 q2 16 6 20" stroke="#c98f7a" stroke-width="6" stroke-linecap="round" fill="none"/>'; });
+    return frame('<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3cdb8"/><stop offset="1" stop-color="#c98f7a"/></linearGradient></defs>' + legs +
+      '<path d="M40 110 Q40 70 100 70 Q164 70 166 108 Q166 134 100 134 Q40 134 40 110 Z" fill="url(#' + id + ')"/>' +
+      '<path d="M76 74 Q72 100 76 132 M104 70 Q100 100 104 134 M132 72 Q128 100 132 132" stroke="#b07a66" stroke-width="2" fill="none" opacity=".6"/>' +
+      '<circle cx="152" cy="98" r="3" fill="#3a1f18"/><path d="M164 106 q6 2 8 6" stroke="#b07a66" stroke-width="3" fill="none"/>');
+  }
+  if(a.kind === "bacteria"){
+    const cell = function(x, y){ return '<circle cx="' + x + '" cy="' + y + '" r="30" fill="url(#' + id + ')"/><circle cx="' + (x - 8) + '" cy="' + (y - 10) + '" r="7" fill="#fff" opacity=".35"/>'; };
+    return frame('<defs><radialGradient id="' + id + '" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#ffc7a0"/><stop offset=".6" stop-color="#ff8a5c"/><stop offset="1" stop-color="#b8452a"/></radialGradient></defs>' +
+      cell(72, 72) + cell(128, 72) + cell(72, 128) + cell(128, 128));
+  }
+  if(a.kind === "lichen"){
+    return frame('<path d="M20 150 Q30 70 100 60 Q176 58 182 150 Z" fill="#6e737c"/><path d="M40 140 Q54 96 96 92" stroke="#5a5f68" stroke-width="3" fill="none"/>' +
+      '<path d="M58 118 q10 -14 24 -6 q12 -12 22 2 q10 8 -2 16 q-14 10 -28 4 q-18 2 -16 -16 Z" fill="#f28c28"/>' +
+      '<path d="M116 96 q10 -10 22 -2 q10 10 -2 18 q-14 6 -22 -4 Z" fill="#f5b83d"/><path d="M122 132 q8 -8 18 -2 q6 8 -4 12 q-10 2 -14 -10 Z" fill="#e8742a"/>' +
+      '<circle cx="76" cy="118" r="3" fill="#ffd27a"/><circle cx="128" cy="100" r="2.5" fill="#ffe29a"/>');
+  }
+  if(a.kind === "fungus"){
+    let blobs = "";
+    [[70, 80, 26], [118, 70, 20], [132, 118, 30], [78, 132, 22], [100, 104, 14]].forEach(function(b){
+      blobs += '<circle cx="' + b[0] + '" cy="' + b[1] + '" r="' + b[2] + '" fill="#15131a"/><circle cx="' + b[0] + '" cy="' + b[1] + '" r="' + (b[2] * 0.6) + '" fill="#2a2432"/>';
+    });
+    return frame('<rect x="24" y="24" width="152" height="152" rx="10" fill="#8a8578"/>' + blobs +
+      '<g opacity=".55" fill="#f8bb56"><path d="M100 100 L86 76 A28 28 0 0 1 114 76 Z"/><path d="M100 100 L128 100 A28 28 0 0 1 114 124 Z"/><path d="M100 100 L86 124 A28 28 0 0 1 72 100 Z"/></g>');
+  }
+  if(a.kind === "probe"){
+    const bot = function(x, y, s, o){
+      return '<g transform="translate(' + x + " " + y + ") scale(" + s + ')" opacity="' + o + '">' +
+        '<path d="M0 -26 L22 -13 L22 13 L0 26 L-22 13 L-22 -13 Z" fill="#8ea6fd" stroke="#3a50d2" stroke-width="3"/>' +
+        '<circle r="8" fill="#4fe3c6"/><path d="M22 0 H44 M-22 0 H-44 M11 22 L22 42 M-11 22 L-22 42" stroke="#c7d0ff" stroke-width="4" stroke-linecap="round"/></g>';
+    };
+    return frame(bot(86, 92, 1.3, 1) + bot(150, 146, 0.7, 0.75) + '<path d="M114 118 L136 134" stroke="#4fe3c6" stroke-width="2" stroke-dasharray="4 4"/>');
+  }
+  return frame('<rect x="40" y="150" width="120" height="10" rx="3" fill="#5a4636"/><path d="M120 150 V112" stroke="#3f8f4a" stroke-width="4"/>' +
+    '<path d="M120 124 q-18 -8 -22 -24 q18 2 22 24 Z M120 118 q16 -10 26 -26 q-2 22 -26 26 Z" fill="#5fcf6e"/>' +
+    '<rect x="44" y="86" width="44" height="40" rx="8" fill="#8ea6fd"/><rect x="52" y="96" width="28" height="12" rx="4" fill="#0c1440"/>' +
+    '<circle cx="60" cy="102" r="3" fill="#4fe3c6"/><circle cx="72" cy="102" r="3" fill="#4fe3c6"/>' +
+    '<rect x="50" y="126" width="32" height="18" rx="4" fill="#687fe6"/><circle cx="56" cy="148" r="5" fill="#3a50d2"/><circle cx="76" cy="148" r="5" fill="#3a50d2"/>' +
+    '<path d="M88 104 L104 94" stroke="#8ea6fd" stroke-width="6" stroke-linecap="round"/><path d="M100 88 h14 l6 8 h-18 Z" fill="#f8bb56"/>' +
+    '<path d="M118 98 q2 6 0 10 M112 100 q0 6 -2 9" stroke="#8fd0ff" stroke-width="2" fill="none"/>');
+}
+
 function tech(a){
   const id = "wa" + (++uid);
   return frame('<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffda92"/><stop offset="1" stop-color="#d38b37"/></linearGradient></defs>' +
@@ -344,7 +440,8 @@ function race(a){
 
 const DRAW = { planet: planet, sun: sun, meteoroid: meteoroid, comet: comet, blackhole: blackhole,
   system: system, element: element, mineral: mineral, material: material,
-  building: building, ship: ship, tech: tech, race: race, resource: resource, code: code };
+  building: building, ship: ship, tech: tech, race: race, resource: resource, code: code,
+  artifact: artifact, life: life };
 
 export function wikiArt(art){
   return DRAW[art.type](art);

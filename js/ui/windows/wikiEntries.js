@@ -11,12 +11,15 @@
 //   "blocks"   a program built from blocks was run
 //   "files"    a second file was made in the block editor
 //   "future"   not reachable yet — arrives with a future update
+//   "life" / "relic"  same as "future" (nothing unlocks them yet), with
+//              their own hint — life forms and the artifacts humans left
+//              behind in the game's story (no humans left, only machines)
 // `meta` (optional) is a language-neutral fact line shown under the name:
 // elements, minerals and ores are real, so it carries their real data
 // (atomic number, symbol, standard atomic weight / chemical formula);
 // refined resources their real composition; programming entries the same
 // command written in the text script language.
-export const WIKI_TABS = ["systems", "bodies", "elements", "minerals", "ores", "resources", "materials", "buildings", "ships", "tech", "programming", "races"];
+export const WIKI_TABS = ["systems", "bodies", "elements", "minerals", "ores", "resources", "materials", "buildings", "ships", "tech", "programming", "races", "lifeforms", "artifacts"];
 
 export const WIKI_ENTRIES = {
   systems: [
@@ -123,6 +126,25 @@ export const WIKI_ENTRIES = {
     { id: "race:swarm", unlock: "start", art: { type: "race", race: "swarm" } },
     { id: "race:blade", unlock: "future", art: { type: "race", race: "blade" } },
     { id: "race:unknown", unlock: "future", art: { type: "race", race: "unknown" } }
+  ],
+  // Real organisms that can survive space, plus machine "life" from the
+  // game's story.
+  lifeforms: [
+    { id: "life:tardigrade", unlock: "life", meta: "Tardigrada · ~0.5 mm", art: { type: "life", kind: "tardigrade" } },
+    { id: "life:deinococcus", unlock: "life", meta: "Deinococcus radiodurans", art: { type: "life", kind: "bacteria" } },
+    { id: "life:lichen", unlock: "life", meta: "Xanthoria elegans", art: { type: "life", kind: "lichen" } },
+    { id: "life:fungus", unlock: "life", meta: "Cladosporium sphaerospermum", art: { type: "life", kind: "fungus" } },
+    { id: "life:vonneumann", unlock: "life", art: { type: "life", kind: "probe" } },
+    { id: "life:gardener", unlock: "life", art: { type: "life", kind: "gardener" } }
+  ],
+  // Things humans left behind — all real objects.
+  artifacts: [
+    { id: "relic:statue", unlock: "relic", meta: "1886 · 46 m", art: { type: "artifact", kind: "statue" } },
+    { id: "relic:voyager", unlock: "relic", meta: "1977 · Voyager 1 & 2", art: { type: "artifact", kind: "disc" } },
+    { id: "relic:pioneer", unlock: "relic", meta: "1972–1973 · Pioneer 10 & 11", art: { type: "artifact", kind: "plaque" } },
+    { id: "relic:moonflag", unlock: "relic", meta: "1969–1972", art: { type: "artifact", kind: "flag" } },
+    { id: "relic:rosetta", unlock: "relic", meta: "196 p.n.e. / BC", art: { type: "artifact", kind: "stone" } },
+    { id: "relic:seedvault", unlock: "relic", meta: "2008 · −18 °C", art: { type: "artifact", kind: "vault" } }
   ]
 };
 

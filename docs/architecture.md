@@ -1018,7 +1018,8 @@ then read just that range.
   `drone/scriptFeatures.js` reads which commands a program contains off
   its parsed AST, and `droneScript.js#runActive` discovers them once the
   program actually starts), `blocks` (a block-mode run), `files` (a
-  second block-editor file) or `future` (placeholder for features not
+  second block-editor file), `life`/`relic` (like `future`, with their
+  own story hint — life forms and artifacts) or `future` (placeholder for features not
   built yet — elements/minerals/ores/refined resources/materials/most
   buildings and ships). Programming entries' pictures are the real
   blocks, drawn in SVG from the block editor's own category colors and

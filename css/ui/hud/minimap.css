@@ -9,8 +9,9 @@
 #mmSvg{ left:0; top:0; width:295px; height:206px; cursor:crosshair; }
 #mmSvg .mmPick{ cursor:pointer; }
 #mmSvg .mmPick:hover circle.mmBody{ stroke:#fff; stroke-width:1.2; }
-#mmZoom{ left:252px; top:113px; width:37px; height:76px; border:2px solid #93a6ff; border-radius:9px; background:#000; }
-#mmZoom button{ position:absolute; left:0; width:100%; height:37px; font-size:26px; line-height:34px; color:#c7d2ff; font-weight:300; }
+/* Zoom lives in the header, not over the map — sitting on the map it hid
+   whatever was on the outer orbits in the lower right (comets included). */
+#mmZoom{ right:9px; top:5px; display:flex; align-items:center; height:24px; border:1.5px solid #93a6ff; border-radius:12px; background:#000; }
+#mmZoom button{ width:30px; height:100%; font-size:19px; line-height:20px; color:#c7d2ff; font-weight:300; }
 #mmZoom button:hover{ color:#fff; text-shadow:0 0 6px #7f95ff; }
-#mmIn{ top:0; } #mmOut{ top:37px; }
-#mmZoom span{ position:absolute; left:5px; right:5px; top:36px; height:1.5px; background:#5a6fd8; }
+#mmZoom span{ width:1.5px; height:14px; background:#5a6fd8; }
