@@ -272,10 +272,54 @@ shots along).
   cool rim light and a hemisphere fill. Output is sRGB with ACES
   filmic tone mapping.
 
+## Building blocks (reuse, don't re-write)
+
+`js/shipkit/shipkit.js` has a **SHIP BUILDING BLOCKS** section: parts
+and behaviours shared by ships. A ship definition composes them; it
+only writes what is unique to it (its hull, its signature parts, its own
+animations).
+
+| Block | What it gives you |
+|---|---|
+| `detailHelpers(detail)` | `{ seg, bevel }`: segment counts scaled by `detail`, extrude bevel options |
+| `makeEngineSet(M, U, seg)` | `add(parent, pos, opts)` builds an engine (nacelle, intake ring, nose cone, lathed bell, throat, optional heat ring, shader plume, glow), exhaust toward −X; `update(t, power)` drives every plume/glow. Options: `radius, length, color, plumeMat, heatMat, taper, intake, cone, bell, plume, glow, res` |
+| `makeExhaust(parent, U, { count, seed, emitters, rate, grow })` | Exhaust particles from each emitter `{ pos, spread, length }`; `update(dt, power, on, offsetY)` |
+| `makeNavLights(parent, defs)` | Running lights `{ color, pos, size, kind: "steady" \| "strobe", phase }`; `update(t)`, `setVisible(on)` |
+| `makeShotQueue()` | `schedule([{ delay, ... }])` for act("fire"), `run(t, fn)` fires each when due |
+| `makeOnlineFader()` | Offline state for the ship's own parts: `set(on)`, `offline`, `update(dt)` → 0..1 online level |
+| `makeBoltPool`, `makeScanWave`, `textTexture`, `fxTextures` | Action effects (see [Actions, offline and damage](#actions-offline-and-damage)) |
+
+Plus, for every ship without any code: the standard action buttons,
+OFFLINE, damage, DESTROY, static-mesh merging and the game wrapper.
+
+### Rules — follow these for every new ship (and every change)
+
+1. **Look for a block first.** Before writing a part or behaviour, check
+   the table above. If it's almost right, give the block an option
+   instead of copying it (that's how the drone's smaller engines got
+   `res`, `taper`, `bell`…), keeping the existing ships' look unchanged.
+2. **The second use moves it into the blocks.** When a part or
+   behaviour you're writing already exists in another ship, don't copy
+   it: move it into SHIP BUILDING BLOCKS, switch the other ship to it, and
+   add it to this table. Nothing is written twice.
+3. **Check it didn't change.** After such a move, compare both ships
+   before/after: `ShipKit.modelStats()` (triangles, objects, materials)
+   and a screenshot from the same camera; small differences in segment
+   counts are fine, a different look is not.
+4. **Animated or toggled parts get `userData.dynamic = true`**, or the
+   game's merged build bakes them in place.
+5. **Per-frame code allocates nothing**: keep scratch vectors outside
+   `update()`, reuse them.
+6. **A texture shared by all instances is animated from the clock**
+   (`offset = f(t)`), never `+= dt` — otherwise N ships on screen move it
+   N times as fast.
+7. **Per-model state stays per model**: its own `U` uniforms, its own
+   copy of any material it dims or recolors (sharing the textures).
+
 ## Adding a ship
 
-Push one more entry into `SHIP_DEFS` inside the `shipkit` block, in the
-same shape as `codewing`:
+Push one more entry into `SHIP_DEFS` in `js/shipkit/shipkit.js`, built
+from the blocks above:
 
 ```js
 SHIP_DEFS.push({
@@ -285,21 +329,39 @@ SHIP_DEFS.push({
   _assets: null,
   assets() { /* create + cache textures/materials once; add them to
                sharedMaterials and trackTextures(...) */ },
-  // features: { offline: false, damage: false },  // opt out of shared ones
-  build(detail) {
-    const seg = (n, min = 3) => Math.max(min, Math.round(n * detail));
-    // build with seg(...) segment counts, nose along +X
-    const actions = [{ id: "fire", label: "FIRE" }];       // enable what you animate
-    function act(id, on) { /* "fire", "scan", "print", "offline" (on = state), extras */ }
-    return { group, update(t, dt, opts) {}, setLights(on) {}, actions, act };
+  // features: { offline: false, damage: false, destroy: false },  // opt out of shared ones
+  build(detail, env) {
+    const M = this.assets(), U = { uTime: { value: 0 }, uPower: { value: 1 } };
+    const { seg, bevel } = detailHelpers(detail);
+    const ship = new THREE.Group();          // nose along +X, up +Y
+    // ... the hull and signature parts ...
+    const engines = makeEngineSet(M, U, seg);
+    engines.add(ship, new THREE.Vector3(-3, 0, 0), { radius: 0.5, length: 2, color: 0x7f9bff });
+    const nav = makeNavLights(ship, [{ color: 0x33ff77, pos: [-2, 0, 2] }]);
+    const exhaust = makeExhaust(ship, U, { count: 200, seed: 1, emitters: [{ pos: [-3.8, 0, 0], spread: 0.3, length: 3 }] });
+    const power = makeOnlineFader(), shots = makeShotQueue();
+    const bolts = makeBoltPool(ship, env, 0xffb45a);
+    const actions = [{ id: "fire", label: "FIRE" }];       // enable only what you animate
+    function act(id, on) {
+      if (id === "offline") { power.set(on); return; }
+      if (power.offline) return;
+      if (id === "fire") shots.schedule([{ delay: 0, target: on && on.target }]);
+    }
+    function update(t, dt, { power: throttle = 1, particles = true } = {}) {
+      const online = power.update(dt);
+      U.uTime.value = t; U.uPower.value = throttle;
+      engines.update(t, throttle); nav.update(t); exhaust.update(dt, throttle, particles);
+      shots.run(t, (sh) => bolts.fire(new THREE.Vector3(3, 0, 0), new THREE.Vector3(1, 0, 0), sh.target));
+      bolts.update(dt);
+    }
+    return { group: ship, update, setLights: (on) => nav.setVisible(on), actions, act };
   },
 });
 ```
 
-The prev/next arrows, statistics, detail slider, wireframe and light
-toggles work for it with no extra code. Create any per-model
-`ShaderMaterial` with its own uniform object (see `U` in `codewing`),
-not a shared one.
+The prev/next arrows, statistics, detail slider, wireframe, light
+toggles, action buttons, damage and GAME BUILD work for it with no extra
+code.
 
 ## ShipKit in the game
 

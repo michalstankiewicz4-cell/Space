@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.8.1]
+
+### Changed
+- Behind the scenes: the ship models' shared parts (engines, exhaust,
+  running lights, timed shots, offline dimming) are now one set of
+  building blocks instead of being written separately for each ship —
+  no visible change, but new ships are quicker to add.
+
 ## [2.8.0]
 
 ### Added

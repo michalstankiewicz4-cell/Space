@@ -216,7 +216,10 @@ the full detail behind each of these.
   `makeGameHolder`); other players' drones are the same model, **never
   tinted** — owners get a name label instead (user's call). Mark any
   animated/toggled part `userData.dynamic` or merging bakes it in place.
-  Changing `shipkit.js` changes the game: version bump. See `docs/ship.md`.
+  Changing `shipkit.js` changes the game: version bump. **Build ships from
+  its SHIP BUILDING BLOCKS and move any part/behaviour a second ship
+  needs into them — never copy between ships** (rules in `docs/ship.md`
+  "Building blocks").  See `docs/ship.md`.
 - **Wiki** (`ui/windows/wiki*.js`): read-only, filled in by play via
   `core/discovery.js` (`"tab:key"` ids, localStorage). Texts in i18n
   `wiki.entries.<key>` — **the key after the colon must be unique across

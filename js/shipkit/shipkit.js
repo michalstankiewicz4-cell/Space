@@ -879,6 +879,148 @@ function createDamageFx(ship, radius) {
 }
 
 // =====================================================================
+// SHIP BUILDING BLOCKS — parts and behaviours more than one ship uses.
+// A ship definition composes these instead of re-writing them (see
+// docs/ship.md "Adding a ship": anything a second ship would need goes
+// here, not into the ship).
+// =====================================================================
+
+// Segment-count and bevel helpers bound to a build's `detail`.
+function detailHelpers(detail) {
+  const seg = (n, min = 3) => Math.max(min, Math.round(n * detail));
+  const bevel = (t, sz) => ({ bevelEnabled: true, bevelThickness: t, bevelSize: sz, bevelSegments: seg(3, 1) });
+  return { seg, bevel };
+}
+
+// Engines: a nacelle with a gold intake ring, a nose cone, a lathed bell,
+// a glowing throat, an optional heat ring, a shader plume and a glow
+// sprite. Built along local +Y and turned so the intake faces +X and the
+// exhaust -X. One set per ship: add() builds an engine, update() drives
+// every plume/glow from the throttle. `plumeMat` shares one plume material
+// between engines (else each gets its own, e.g. per color).
+function makeEngineSet(M, U, seg) {
+  const G = glowTextures(), engines = [];
+  return {
+    add(parent, pos, { radius, length, color, plumeMat = null, heatMat = null, taper = 1.08, intake = 0.12,
+                       cone = [0.55, 1.2], bell = [0.42, 1.2], plume = 7, glow = 4.2, res = 1 }) {
+      const r = radius, sg = (n, min) => seg(n * res, min);
+      const g = new THREE.Group();
+      g.add(shadowed(new THREE.Mesh(new THREE.CylinderGeometry(r, r * taper, length, sg(40, 8), 1), M.engine)));
+      const ring = shadowed(new THREE.Mesh(new THREE.TorusGeometry(r * 0.98, r * intake, sg(16, 4), sg(48, 8)), M.gold));
+      ring.rotation.x = Math.PI / 2; ring.position.y = length / 2; g.add(ring);
+      const nose = shadowed(new THREE.Mesh(new THREE.ConeGeometry(r * cone[0], r * cone[1], sg(32, 6)), M.dark));
+      nose.position.y = length / 2 + r * 0.3; g.add(nose);
+      const pts = [], steps = sg(16, 3);
+      for (let i = 0; i <= steps; i++) { const t = i / steps; pts.push(new THREE.Vector2(r * (0.72 + bell[0] * t * t), -t * r * bell[1])); }
+      const bellMesh = shadowed(new THREE.Mesh(new THREE.LatheGeometry(pts, sg(48, 8)), M.bell));
+      bellMesh.position.y = -length / 2; g.add(bellMesh);
+      const throat = new THREE.Mesh(new THREE.CircleGeometry(r * 0.72, sg(40, 8)), M.throat);
+      throat.rotation.x = Math.PI / 2; throat.position.y = -length / 2 - 0.02; g.add(throat);
+      if (heatMat) {
+        const heat = new THREE.Mesh(new THREE.TorusGeometry(r * 1.05, r * 0.05, sg(8), sg(48, 8)), heatMat);
+        heat.rotation.x = Math.PI / 2; heat.position.y = -length / 2 - r * 0.3; g.add(heat);
+      }
+      const plumeLen = r * plume;
+      const plumeGeo = new THREE.CylinderGeometry(r * 0.95, r * 0.08, plumeLen, sg(32, 8), sg(24, 4), true); // wide at the nozzle
+      plumeGeo.translate(0, -plumeLen / 2, 0);
+      const plumeMesh = new THREE.Mesh(plumeGeo, plumeMat || makePlumeMaterial(color, U));
+      plumeMesh.position.y = -length / 2 - r * 0.2;
+      plumeMesh.userData.dynamic = true; // toggled on/off: never merged (see mergeStatic)
+      g.add(plumeMesh);
+      const sprite = additiveSprite(G.engine, color);
+      sprite.scale.setScalar(r * glow); sprite.position.y = -length / 2 - r * 0.4; g.add(sprite);
+      engines.push({ sprite, plume: plumeMesh, base: r * glow });
+      g.rotation.z = -Math.PI / 2; // local +y (intake) -> +x (forward), exhaust toward -x
+      g.position.copy(pos);
+      parent.add(g);
+      return g;
+    },
+    update(t, power) {
+      for (const e of engines) {
+        e.sprite.scale.setScalar(e.base * (0.4 + 0.6 * power) * (0.95 + 0.05 * Math.sin(t * 40)));
+        e.plume.visible = power > 0.02;
+      }
+    },
+  };
+}
+
+// Exhaust particles: recycled Points streaming back (-X) from each emitter
+// { pos: [x, y, z], spread, length }, spread growing with age; `rate` is
+// [base, random] lifetimes per second, `grow` how much the cone widens.
+// update(dt, power, on, offsetY) — offsetY follows a bobbing body.
+function makeExhaust(parent, U, { count, seed, emitters, rate = [0.9, 0.6], grow = 1.4 }) {
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(count * 3), life = new Float32Array(count), pseed = new Float32Array(count);
+  const rand = rng(seed);
+  for (let i = 0; i < count; i++) { life[i] = rand(); pseed[i] = rand(); }
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute("life", new THREE.BufferAttribute(life, 1));
+  const points = new THREE.Points(geo, makeParticleMaterial(U));
+  points.frustumCulled = false;
+  parent.add(points);
+  return {
+    update(dt, power, on, offsetY = 0) {
+      points.visible = on && power > 0.05;
+      if (!points.visible) return;
+      for (let i = 0; i < count; i++) {
+        life[i] += dt * (rate[0] + pseed[i] * rate[1]);
+        if (life[i] >= 1) life[i] -= 1;
+        const e = emitters[i % emitters.length], l = life[i], spread = e.spread * (0.3 + l * grow), a = pseed[i] * 50 + i;
+        pos[i * 3] = e.pos[0] - l * e.length * (0.3 + 0.7 * power);
+        pos[i * 3 + 1] = e.pos[1] + Math.cos(a) * spread * pseed[i] + offsetY;
+        pos[i * 3 + 2] = e.pos[2] + Math.sin(a) * spread * pseed[i];
+      }
+      geo.attributes.position.needsUpdate = true;
+      geo.attributes.life.needsUpdate = true;
+    },
+  };
+}
+
+// Navigation lights: glow sprites, "steady" (gentle pulse) or "strobe"
+// (short flash; `phase` offsets it). defs: [{ color, pos: [x, y, z], size, kind, phase }]
+function makeNavLights(parent, defs) {
+  const G = glowTextures();
+  const lights = defs.map((d) => {
+    const s = additiveSprite(G.nav, d.color);
+    s.position.set(d.pos[0], d.pos[1], d.pos[2]); s.scale.setScalar(d.size || 0.6);
+    parent.add(s);
+    return { s, kind: d.kind || "steady", phase: d.phase || 0 };
+  });
+  return {
+    update(t) {
+      for (const n of lights) {
+        if (n.kind === "strobe") n.s.material.opacity = ((t * 0.8 + n.phase) % 1) < 0.06 ? 1 : 0.05;
+        else n.s.material.opacity = 0.75 + 0.25 * Math.sin(t * 3);
+      }
+    },
+    setVisible(on) { for (const n of lights) n.s.visible = on; },
+  };
+}
+
+// Timed shots for act("fire"): schedule([{ delay, ...data }]) queues them
+// relative to the current time; run(t, fn) calls fn(shot) for every one due.
+function makeShotQueue() {
+  const q = [];
+  let now = 0;
+  return {
+    schedule(shots) { for (const sh of shots) q.push({ ...sh, at: now + sh.delay }); },
+    run(t, fn) { now = t; while (q.length && q[0].at <= t) fn(q.shift()); },
+  };
+}
+
+// Offline state for a ship's own parts: set(on) from act("offline"),
+// update(dt) eases a 0..1 "online" level (1 = running) that the ship
+// multiplies its glows, spins and emissive strengths by.
+function makeOnlineFader(rate = 2) {
+  let off = false, level = 1;
+  return {
+    set(on) { off = !!on; },
+    get offline() { return off; },
+    update(dt) { level += ((off ? 0 : 1) - level) * Math.min(1, dt * rate); return level; },
+  };
+}
+
+// =====================================================================
 // SHIP DEFINITIONS
 // One entry per ship type:
 //   id        stable key used by buildShipModel(id)
@@ -950,7 +1092,7 @@ SHIP_DEFS.push({
   build(detail, env) {
     const M = this.assets(), G = glowTextures();
     const U = { uTime: { value: 0 }, uPower: { value: 1 }, uOn: { value: 1 } }; // per-model shader uniforms
-    const seg = (n, min = 3) => Math.max(min, Math.round(n * detail));
+    const { seg, bevel } = detailHelpers(detail);
     const ship = new THREE.Group();
 
     // ---- 1. Fuselage: lathe of a smooth spline profile, axis along +X.
@@ -1017,7 +1159,6 @@ SHIP_DEFS.push({
       s.lineTo(-3.9, 4.75 * k); s.lineTo(-3.6, 1.0 * k); s.lineTo(-3.4, 0.7 * k); s.lineTo(1.2, 0.7 * k);
       return s;
     };
-    const bevel = (t, sz) => ({ bevelEnabled: true, bevelThickness: t, bevelSize: sz, bevelSegments: seg(3, 1) });
     for (const side of [1, -1]) {
       const wing = shadowed(new THREE.Mesh(new THREE.ExtrudeGeometry(wingShape(side), { depth: 0.14, steps: 1, ...bevel(0.05, 0.05) }), M.wing));
       wing.rotation.x = Math.PI / 2; // shape y -> world z, extrusion -> world -y
@@ -1047,39 +1188,12 @@ SHIP_DEFS.push({
       ship.add(winglet);
     }
 
-    // ---- 5. Engines: nacelles + main drive, with lathed bells and shader plumes.
-    const glows = [];
-    const engine = (radius, length, pos, plumeColor) => {
-      const g = new THREE.Group();
-      g.add(shadowed(new THREE.Mesh(new THREE.CylinderGeometry(radius, radius * 1.08, length, seg(40, 8), 1), M.engine)));
-      const intake = shadowed(new THREE.Mesh(new THREE.TorusGeometry(radius * 0.98, radius * 0.12, seg(16, 4), seg(48, 8)), M.gold));
-      intake.rotation.x = Math.PI / 2; intake.position.y = length / 2; g.add(intake);
-      const cone = shadowed(new THREE.Mesh(new THREE.ConeGeometry(radius * 0.55, radius * 1.2, seg(32, 6)), M.dark));
-      cone.position.y = length / 2 + radius * 0.3; g.add(cone);
-      const bellPts = [], steps = seg(16, 3);
-      for (let i = 0; i <= steps; i++) { const t = i / steps; bellPts.push(new THREE.Vector2(radius * (0.72 + 0.42 * t * t), -t * radius * 1.2)); }
-      const bell = shadowed(new THREE.Mesh(new THREE.LatheGeometry(bellPts, seg(48, 8)), M.bell));
-      bell.position.y = -length / 2; g.add(bell);
-      const throat = new THREE.Mesh(new THREE.CircleGeometry(radius * 0.72, seg(40, 8)), M.throat);
-      throat.rotation.x = Math.PI / 2; throat.position.y = -length / 2 - 0.02; g.add(throat);
-      const heat = new THREE.Mesh(new THREE.TorusGeometry(radius * 1.05, radius * 0.05, seg(8), seg(48, 8)), M.blueGlow);
-      heat.rotation.x = Math.PI / 2; heat.position.y = -length / 2 - radius * 0.3; g.add(heat);
-      const plumeLen = radius * 7;
-      const plumeGeo = new THREE.CylinderGeometry(radius * 0.95, radius * 0.08, plumeLen, seg(32, 8), seg(24, 4), true); // wide at the nozzle
-      plumeGeo.translate(0, -plumeLen / 2, 0);
-      const plume = new THREE.Mesh(plumeGeo, makePlumeMaterial(plumeColor, U));
-      plume.position.y = -length / 2 - radius * 0.2; g.add(plume);
-      const glow = additiveSprite(G.engine, plumeColor);
-      glow.scale.setScalar(radius * 4.2); glow.position.y = -length / 2 - radius * 0.4; g.add(glow);
-      plume.userData.dynamic = true; // toggled on/off: never merged (see mergeStatic)
-      glows.push({ sprite: glow, plume, base: radius * 4.2 });
-      g.rotation.z = -Math.PI / 2; // local +y (intake) -> world +x (forward), exhaust toward -x
-      g.position.copy(pos);
-      ship.add(g);
-    };
-    engine(0.52, 2.8, new THREE.Vector3(-3.1, -0.15, 1.75), 0x7f9bff);
-    engine(0.52, 2.8, new THREE.Vector3(-3.1, -0.15, -1.75), 0x7f9bff);
-    engine(0.72, 1.2, new THREE.Vector3(-4.55, 0, 0), 0xffb45a);
+    // ---- 5. Engines: two nacelles + the main drive (makeEngineSet).
+    const engines = makeEngineSet(M, U, seg);
+    const nacelle = { radius: 0.52, length: 2.8, color: 0x7f9bff, heatMat: M.blueGlow };
+    engines.add(ship, new THREE.Vector3(-3.1, -0.15, 1.75), nacelle);
+    engines.add(ship, new THREE.Vector3(-3.1, -0.15, -1.75), nacelle);
+    engines.add(ship, new THREE.Vector3(-4.55, 0, 0), { radius: 0.72, length: 1.2, color: 0xffb45a, heatMat: M.blueGlow });
     for (const side of [1, -1]) {
       const pylon = shadowed(new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.14, 0.9), M.dark));
       pylon.position.set(-2.9, -0.15, 1.15 * side);
@@ -1178,30 +1292,19 @@ SHIP_DEFS.push({
     noseTip.rotation.z = -Math.PI / 2; noseTip.position.set(5.6, 0, 0); ship.add(noseTip);
 
     // ---- 11. Navigation lights.
-    const navLight = (color, pos, size = 0.7) => {
-      const s = additiveSprite(G.nav, color);
-      s.position.copy(pos); s.scale.setScalar(size); ship.add(s);
-      return s;
-    };
-    const navLights = [
-      { s: navLight(0x33ff77, new THREE.Vector3(-3.95, -0.1, 4.85)), phase: 0, kind: "steady" },
-      { s: navLight(0xff3344, new THREE.Vector3(-3.95, -0.1, -4.85)), phase: 0, kind: "steady" },
-      { s: navLight(0xffffff, new THREE.Vector3(-5.1, 3.35, 0), 0.9), phase: 0, kind: "strobe" },
-      { s: navLight(0xffffff, new THREE.Vector3(5.2, 0, 0), 0.6), phase: 0.5, kind: "strobe" },
-    ];
+    const nav = makeNavLights(ship, [
+      { color: 0x33ff77, pos: [-3.95, -0.1, 4.85], size: 0.7 },
+      { color: 0xff3344, pos: [-3.95, -0.1, -4.85], size: 0.7 },
+      { color: 0xffffff, pos: [-5.1, 3.35, 0], size: 0.9, kind: "strobe" },
+      { color: 0xffffff, pos: [5.2, 0, 0], size: 0.6, kind: "strobe", phase: 0.5 },
+    ]);
 
-    // ---- 12. Exhaust particles (recycled Points with a custom shader).
-    const PCOUNT = 420;
-    const pGeo = new THREE.BufferGeometry();
-    const pPos = new Float32Array(PCOUNT * 3), pLife = new Float32Array(PCOUNT), pSeed = new Float32Array(PCOUNT);
-    const emitters = [[-4.6, -0.15, 1.75, 0.35], [-4.6, -0.15, -1.75, 0.35], [-5.4, 0, 0, 0.5]];
-    const prand = rng(77);
-    for (let i = 0; i < PCOUNT; i++) { pLife[i] = prand(); pSeed[i] = prand(); }
-    pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
-    pGeo.setAttribute("life", new THREE.BufferAttribute(pLife, 1));
-    const particles = new THREE.Points(pGeo, makeParticleMaterial(U));
-    particles.frustumCulled = false;
-    ship.add(particles);
+    // ---- 12. Exhaust particles.
+    const exhaust = makeExhaust(ship, U, { count: 420, seed: 77, emitters: [
+      { pos: [-4.6, -0.15, 1.75], spread: 0.35, length: 3.85 },
+      { pos: [-4.6, -0.15, -1.75], spread: 0.35, length: 3.85 },
+      { pos: [-5.4, 0, 0], spread: 0.5, length: 5.5 },
+    ] });
 
     // ---- actions: alternating shots from the wingtip cannons, a sensor
     // ping from the dish. Offline: core, windows and gyro wind down.
@@ -1211,13 +1314,13 @@ SHIP_DEFS.push({
       { id: "fire", label: "FIRE CANNONS", kind: "trigger" },
       { id: "scan", label: "SENSOR PING", kind: "trigger" },
     ];
-    let offline = false, tNow = 0, online = 1;
-    const shots = [];
+    const power = makeOnlineFader(), shots = makeShotQueue();
+    const muzzle = new THREE.Vector3(), forward = new THREE.Vector3(1, 0, 0);
     function act(id, on) {
-      if (id === "offline") { offline = !!on; return; }
-      if (offline) return;
+      if (id === "offline") { power.set(on); return; }
+      if (power.offline) return;
       // act("fire", { target }) aims at a world-space point; without one, straight ahead
-      if (id === "fire") for (let i = 0; i < 4; i++) shots.push({ at: tNow + i * 0.14, side: i % 2 ? -1 : 1, target: on && on.target });
+      if (id === "fire") shots.schedule([0, 1, 2, 3].map((i) => ({ delay: i * 0.14, side: i % 2 ? -1 : 1, target: on && on.target })));
       if (id === "scan") wave.start(new THREE.Vector3(1.2, -1.4, 0), 13);
     }
 
@@ -1226,18 +1329,14 @@ SHIP_DEFS.push({
     // t: seconds since start, dt: frame delta (s),
     // opts.power: engine throttle 0..1 (caller may smooth it),
     // opts.particles: false to skip the exhaust particles (cheap LOD).
-    function update(t, dt, { power = 1, particles: particlesOn = true } = {}) {
-      tNow = t;
-      online += ((offline ? 0 : 1) - online) * Math.min(1, dt * 2);
+    function update(t, dt, { power: throttle = 1, particles: particlesOn = true } = {}) {
+      const online = power.update(dt);
       U.uOn.value = online;
       hullMat.emissiveIntensity = 1.4 * online;
       U.uTime.value = t;
-      U.uPower.value = power * (0.92 + 0.08 * Math.sin(t * 37.0) * Math.sin(t * 11.0)); // flicker
+      U.uPower.value = throttle * (0.92 + 0.08 * Math.sin(t * 37.0) * Math.sin(t * 11.0)); // flicker
       spinner.rotation.z += dt * 0.5 * online;
-      while (shots.length && shots[0].at <= t) {
-        const sh = shots.shift();
-        bolts.fire(new THREE.Vector3(-1.45, -0.12, 4.72 * sh.side), new THREE.Vector3(1, 0, 0), sh.target);
-      }
+      shots.run(t, (sh) => bolts.fire(muzzle.set(-1.45, -0.12, 4.72 * sh.side), forward, sh.target));
       bolts.update(dt); wave.update(dt);
       for (let i = 0; i < LIGHTS; i++) {
         const p1 = ((i / LIGHTS - t * 0.35) % 1 + 1) % 1, p2 = ((i / LIGHTS - t * 0.35 + 0.5) % 1 + 1) % 1;
@@ -1252,30 +1351,12 @@ SHIP_DEFS.push({
       coreGlow.material.opacity = (0.7 + 0.3 * Math.sin(t * 2.3)) * online;
       reactor.rotation.x += dt * 1.2 * online; reactor.rotation.y += dt * 0.7 * online;
 
-      for (const g of glows) {
-        g.sprite.scale.setScalar(g.base * (0.4 + 0.6 * power) * (0.95 + 0.05 * Math.sin(t * 40)));
-        g.plume.visible = power > 0.02;
-      }
-      for (const n of navLights) {
-        if (n.kind === "strobe") n.s.material.opacity = ((t * 0.8 + n.phase) % 1) < 0.06 ? 1 : 0.05;
-        else n.s.material.opacity = 0.75 + 0.25 * Math.sin(t * 3);
-      }
+      engines.update(t, throttle);
+      nav.update(t);
       antennaTip.material.color.setScalar(((t * 0.8) % 1) < 0.06 ? 1 : 0.25);
-
-      particles.visible = particlesOn && power > 0.05;
-      if (!particles.visible) return;
-      for (let i = 0; i < PCOUNT; i++) {
-        pLife[i] += dt * (0.9 + pSeed[i] * 0.6);
-        if (pLife[i] >= 1) pLife[i] -= 1;
-        const e = emitters[i % 3], l = pLife[i], spread = e[3] * (0.3 + l * 1.4), a = pSeed[i] * 50 + i;
-        pPos[i * 3] = e[0] - l * (e[3] * 11) * (0.3 + 0.7 * power);
-        pPos[i * 3 + 1] = e[1] + Math.cos(a) * spread * pSeed[i];
-        pPos[i * 3 + 2] = e[2] + Math.sin(a) * spread * pSeed[i];
-      }
-      pGeo.attributes.position.needsUpdate = true;
-      pGeo.attributes.life.needsUpdate = true;
+      exhaust.update(dt, throttle, particlesOn);
     }
-    function setLights(on) { for (const n of navLights) n.s.visible = on; chase.visible = on; }
+    function setLights(on) { nav.setVisible(on); chase.visible = on; }
     return { group: ship, update, setLights, actions, act };
   },
 });
@@ -1444,8 +1525,7 @@ SHIP_DEFS.push({
   build(detail, env) {
     const M = this.assets(), G = glowTextures();
     const U = { uTime: { value: 0 }, uPower: { value: 1 } };
-    const seg = (n, min = 3) => Math.max(min, Math.round(n * detail));
-    const bevel = (t, sz) => ({ bevelEnabled: true, bevelThickness: t, bevelSize: sz, bevelSegments: seg(3, 1) });
+    const { seg, bevel } = detailHelpers(detail);
     const ship = new THREE.Group();
     const body = new THREE.Group(); // everything bobs gently while hovering
     body.userData.dynamic = true;   // animated: merged as its own unit (see mergeStatic)
@@ -1509,8 +1589,8 @@ SHIP_DEFS.push({
     }
 
     // ---- 4. Thruster pods on curved arms (tube along a Catmull-Rom curve),
-    // each pod gimballed so it can swivel; lathed bells + shader plumes.
-    const pods = [], glows = [], plumeMat = makePlumeMaterial(0xffb45a, U);
+    // each pod gimballed so it can swivel; the engine itself is makeEngineSet's.
+    const pods = [], engines = makeEngineSet(M, U, seg), plumeMat = makePlumeMaterial(0xffb45a, U);
     const podDefs = [[0.8, 0.69, 0.9], [0.8, -0.69, 0.9], [-0.9, 0.61, -1.3], [-0.9, -0.61, -1.3]]; // [anchorX, anchorZ, podX]
     for (const [ax, az, px] of podDefs) {
       const side = Math.sign(az), podPos = new THREE.Vector3(px, 0.18, 2.0 * side);
@@ -1527,30 +1607,8 @@ SHIP_DEFS.push({
       gimbal.userData.dynamic = true;
       gimbal.position.copy(podPos);
       body.add(gimbal);
-      const pod = new THREE.Group();
-      pod.rotation.z = -Math.PI / 2; // local +y (intake) -> +x, exhaust toward -x
-      gimbal.add(pod);
-      const r = 0.2, len = 0.85;
-      pod.add(shadowed(new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.1, len, seg(32, 8)), M.engine)));
-      const intake = shadowed(new THREE.Mesh(new THREE.TorusGeometry(r * 0.98, r * 0.14, seg(12, 4), seg(36, 8)), M.gold));
-      intake.rotation.x = Math.PI / 2; intake.position.y = len / 2; pod.add(intake);
-      const cone = shadowed(new THREE.Mesh(new THREE.ConeGeometry(r * 0.6, r * 1.3, seg(24, 6)), M.dark));
-      cone.position.y = len / 2 + r * 0.3; pod.add(cone);
-      const bellPts = [], steps = seg(12, 3);
-      for (let i = 0; i <= steps; i++) { const t = i / steps; bellPts.push(new THREE.Vector2(r * (0.72 + 0.45 * t * t), -t * r * 1.3)); }
-      const bell = shadowed(new THREE.Mesh(new THREE.LatheGeometry(bellPts, seg(32, 8)), M.bell));
-      bell.position.y = -len / 2; pod.add(bell);
-      const throat = new THREE.Mesh(new THREE.CircleGeometry(r * 0.72, seg(24, 8)), M.throat);
-      throat.rotation.x = Math.PI / 2; throat.position.y = -len / 2 - 0.02; pod.add(throat);
-      const plumeLen = r * 8;
-      const plumeGeo = new THREE.CylinderGeometry(r * 0.95, r * 0.08, plumeLen, seg(24, 8), seg(16, 4), true);
-      plumeGeo.translate(0, -plumeLen / 2, 0);
-      const plume = new THREE.Mesh(plumeGeo, plumeMat);
-      plume.position.y = -len / 2 - r * 0.2; pod.add(plume);
-      const glow = additiveSprite(G.engine, 0xffb45a);
-      glow.scale.setScalar(r * 4.5); glow.position.y = -len / 2 - r * 0.4; pod.add(glow);
-      plume.userData.dynamic = true;
-      glows.push({ sprite: glow, plume, base: r * 4.5 });
+      engines.add(gimbal, new THREE.Vector3(), { radius: 0.2, length: 0.85, color: 0xffb45a, plumeMat, taper: 1.1, intake: 0.14,
+        cone: [0.6, 1.3], bell: [0.45, 1.3], plume: 8, glow: 4.5, res: 0.75 });
       pods.push({ gimbal, phase: pods.length * 1.7, side });
     }
 
@@ -1653,29 +1711,16 @@ SHIP_DEFS.push({
     ship.add(sweep);
 
     // ---- 11. Navigation lights.
-    const navLight = (color, pos, size = 0.55) => {
-      const s = additiveSprite(G.nav, color);
-      s.position.copy(pos); s.scale.setScalar(size); body.add(s);
-      return s;
-    };
-    const navLights = [
-      { s: navLight(0x33ff77, new THREE.Vector3(-1.5, 0.4, 2.0)), phase: 0, kind: "steady" },
-      { s: navLight(0xff3344, new THREE.Vector3(-1.5, 0.4, -2.0)), phase: 0, kind: "steady" },
-      { s: navLight(0xffffff, new THREE.Vector3(-L - 0.15, 0, 0), 0.7), phase: 0, kind: "strobe" },
-      { s: navLight(0xffffff, new THREE.Vector3(0, H + 0.62, 0), 0.5), phase: 0.5, kind: "strobe" },
-    ];
+    const nav = makeNavLights(body, [
+      { color: 0x33ff77, pos: [-1.5, 0.4, 2.0], size: 0.55 },
+      { color: 0xff3344, pos: [-1.5, 0.4, -2.0], size: 0.55 },
+      { color: 0xffffff, pos: [-L - 0.15, 0, 0], size: 0.7, kind: "strobe" },
+      { color: 0xffffff, pos: [0, H + 0.62, 0], size: 0.5, kind: "strobe", phase: 0.5 },
+    ]);
 
     // ---- 12. Exhaust particles from the four pods.
-    const PCOUNT = 240, pGeo = new THREE.BufferGeometry();
-    const pPos = new Float32Array(PCOUNT * 3), pLife = new Float32Array(PCOUNT), pSeed = new Float32Array(PCOUNT);
-    const prand = rng(91);
-    for (let i = 0; i < PCOUNT; i++) { pLife[i] = prand(); pSeed[i] = prand(); }
-    pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
-    pGeo.setAttribute("life", new THREE.BufferAttribute(pLife, 1));
-    const particles = new THREE.Points(pGeo, makeParticleMaterial(U));
-    particles.frustumCulled = false;
-    ship.add(particles);
-    const exhaust = new THREE.Vector3();
+    const exhaust = makeExhaust(ship, U, { count: 240, seed: 91, rate: [1.1, 0.7], grow: 1.6,
+      emitters: podDefs.map((d) => ({ pos: [d[2] - 0.65, 0.18, 2.0 * Math.sign(d[1])], spread: 0.18, length: 2.2 })) });
 
     // ---- actions: laser bolts from the eye, a scan wave from the crown,
     // and print() — the belly laser writes a word into a cloud of gas, like
@@ -1695,13 +1740,13 @@ SHIP_DEFS.push({
       { id: "scan", label: "SCAN", kind: "trigger" },
       { id: "print", label: "PRINT", kind: "trigger" },
     ];
-    let offline = false, tNow = 0, scanT = 0, printT = -1, flareT = 0, placed = false;
-    const shots = [];
+    const power = makeOnlineFader(), shots = makeShotQueue();
+    let scanT = 0, printT = -1, flareT = 0, placed = false;
     function act(id, on) {
-      if (id === "offline") { offline = !!on; return; }
-      if (offline) return;                                    // a switched-off drone does nothing
+      if (id === "offline") { power.set(on); return; }
+      if (power.offline) return;                              // a switched-off drone does nothing
       // act("fire", { target }): world-space aim point, else along the eye's gaze
-      if (id === "fire") { const tg = on && on.target; shots.push({ at: tNow, tg }, { at: tNow + 0.14, tg }, { at: tNow + 0.28, tg }); }
+      if (id === "fire") shots.schedule([0, 0.14, 0.28].map((delay) => ({ delay, tg: on && on.target })));
       if (id === "scan") { scanT = 2.2; wave.start(new THREE.Vector3(0, H + 0.36, 0).add(body.position), 9); }
       // act("print", { text }) writes that text (default HELLO)
       if (id === "print" && printT < 0) {
@@ -1713,24 +1758,20 @@ SHIP_DEFS.push({
     let printK = 1;
 
     // ---- animation
-    let fuel = 1, eyeYaw = 0, eyePitch = 0, online = 1;
-    function update(t, dt, { power = 1, particles: particlesOn = true } = {}) {
-      tNow = t;
-      online += ((offline ? 0 : 1) - online) * Math.min(1, dt * 2);
+    let fuel = 1, eyeYaw = 0, eyePitch = 0;
+    function update(t, dt, { power: throttle = 1, particles: particlesOn = true } = {}) {
+      const online = power.update(dt), offline = power.offline;
       U.uTime.value = t;
-      U.uPower.value = power * (0.9 + 0.1 * Math.sin(t * 33.0) * Math.sin(t * 13.0));
+      U.uPower.value = throttle * (0.9 + 0.1 * Math.sin(t * 33.0) * Math.sin(t * 13.0));
       body.position.y = Math.sin(t * 1.3) * 0.08 * online - 0.3 * (1 - online);   // hover bob / sink
       body.rotation.x = Math.sin(t * 0.9) * 0.03 * online;
       body.rotation.z = Math.sin(t * 0.7) * 0.02 * online + 0.14 * (1 - online);  // lists when dead
 
       for (const p of pods) {                                   // thrust vectoring
-        p.gimbal.rotation.y = Math.sin(t * 0.8 + p.phase) * 0.18 * power;
+        p.gimbal.rotation.y = Math.sin(t * 0.8 + p.phase) * 0.18 * throttle;
         p.gimbal.rotation.z = Math.sin(t * 1.1 + p.phase) * 0.08 * online;
       }
-      for (const g of glows) {
-        g.sprite.scale.setScalar(g.base * (0.4 + 0.6 * power) * (0.95 + 0.05 * Math.sin(t * 40)));
-        g.plume.visible = power > 0.02;
-      }
+      engines.update(t, throttle);
 
       // eye: short glances to new targets every ~1.3 s, eased (frozen offline)
       if (!offline) {
@@ -1757,16 +1798,15 @@ SHIP_DEFS.push({
       hinge.rotation.z = Math.sin(t * 0.25) * 0.35 * online;   // solar tracking
       sweep.rotation.y += dt * (scanT > 0 ? 3.5 : 0.4);
 
-      fuel = clamp(fuel + (power > 0.5 ? -0.04 : 0.12 * online) * dt, 0.12, 1);
+      fuel = clamp(fuel + (throttle > 0.5 ? -0.04 : 0.12 * online) * dt, 0.12, 1);
       for (const g of gauges) g.scale.x = fuel;
 
       // fire: bolts leave the eye along its gaze
-      while (shots.length && shots[0].at <= t) {
-        const sh = shots.shift();
+      shots.run(t, (sh) => {
         eyeDir.set(1, 0, 0).applyEuler(eye.rotation);
         tmp.copy(eyeMount.position).addScaledVector(eyeDir, 0.42).add(body.position);
         bolts.fire(tmp, eyeDir, sh.tg); flareT = 1;
-      }
+      });
       bolts.update(dt); wave.update(dt);
 
       // print: the beam writes for 2.4 s, the word stays in its gas cloud, then fades
@@ -1791,25 +1831,10 @@ SHIP_DEFS.push({
       beamMat.uniforms.uOn.value += ((writing ? 1 : 0) - beamMat.uniforms.uOn.value) * Math.min(1, dt * 8);
       hit.material.opacity = beamMat.uniforms.uOn.value * (0.7 + 0.3 * Math.sin(t * 50));
 
-      for (const n of navLights) {
-        if (n.kind === "strobe") n.s.material.opacity = ((t * 0.8 + n.phase) % 1) < 0.06 ? 1 : 0.05;
-        else n.s.material.opacity = 0.75 + 0.25 * Math.sin(t * 3);
-      }
-
-      particles.visible = particlesOn && power > 0.05;
-      if (!particles.visible) return;
-      for (let i = 0; i < PCOUNT; i++) {
-        pLife[i] += dt * (1.1 + pSeed[i] * 0.7);
-        if (pLife[i] >= 1) pLife[i] -= 1;
-        const d = podDefs[i % 4], l = pLife[i], spread = 0.18 * (0.3 + l * 1.6), a = pSeed[i] * 50 + i;
-        exhaust.set(d[2] - 0.65 - l * 2.2 * (0.3 + 0.7 * power), 0.18 + Math.cos(a) * spread * pSeed[i],
-                    2.0 * Math.sign(d[1]) + Math.sin(a) * spread * pSeed[i]);
-        pPos[i * 3] = exhaust.x; pPos[i * 3 + 1] = exhaust.y + body.position.y; pPos[i * 3 + 2] = exhaust.z;
-      }
-      pGeo.attributes.position.needsUpdate = true;
-      pGeo.attributes.life.needsUpdate = true;
+      nav.update(t);
+      exhaust.update(dt, throttle, particlesOn, body.position.y);
     }
-    function setLights(on) { for (const n of navLights) n.s.visible = on; sweep.visible = on; }
+    function setLights(on) { nav.setVisible(on); sweep.visible = on; }
     return { group: ship, update, setLights, actions, act };
   },
 });
@@ -2098,6 +2123,8 @@ return {
   SHIP_DEFS, buildShipModel, disposeShipModel, modelStats, makeGameHolder, prewarm, mergeStatic,
   makeSpaceSky, makeEnvironment,
   makeBoltPool, makeScanWave, textTexture, fxTextures, // action/effect helpers for ship defs
+  // building blocks for ship definitions (see "SHIP BUILDING BLOCKS")
+  detailHelpers, makeEngineSet, makeExhaust, makeNavLights, makeShotQueue, makeOnlineFader,
   STANDARD_ACTIONS,
   allTextures,                      // Set of every generated texture
   isSharedMaterial: (m) => sharedMaterials.has(m),
