@@ -60,6 +60,11 @@ Model handle:
 | `group` | `THREE.Group`. Origin at the ship's center, nose along **+X**, up **+Y**. |
 | `update(t, dt, opts)` | Call every frame. `t` is seconds since start and `dt` the frame delta in seconds. `opts.power` (0–1) is the engine throttle; smooth it on the caller's side. `opts.particles: false` skips the exhaust particles. |
 | `setLights(on)` | Turns the running/navigation lights and the ring chase lights on or off |
+| `actions` | The action buttons: `[{ id, label, kind: "trigger" \| "toggle", enabled }]`. Always the standard set in this order (`fire`, `scan`, `print`, `offline`), with `enabled: false` where the ship has no animation for it, then any ship-specific extras. See [Actions, offline and damage](#actions-offline-and-damage). |
+| `act(id, on)` | Runs a trigger action, or sets a toggle (`on` true/false). Disabled actions are ignored. |
+| `offline` | `true` while the OFFLINE toggle is on |
+| `setDamage(d)` | Procedural damage, 0 (pristine) to 1 (wrecked) |
+| `damage`, `damageEnabled` | Current damage level; `false` if the ship opted out of damage |
 | `size` | `THREE.Vector3` of the **solid hull only**. Engine plumes, glow sprites and particles are excluded, since they would inflate the box. |
 | `radius` | Half of `size`'s diagonal |
 
@@ -79,6 +84,61 @@ textures are cached per ship type and shared by all instances.
 | Textures | 11 canvas-generated textures, ≈39 MB GPU (1024² hull and wing sets: color, roughness, bump, emissive; brushed metal; 3 glow sprites) |
 | Build time | ≈1.1 s the first time (texture generation), then a few ms |
 
+### "scribe" (DR-01 SCRIBE, the drone), measured
+
+The first ship meant for the game: a replacement for the drone's plain
+gold octahedron (`js/drone/drone.js#makeDroneMesh`), keeping its identity
+as a gold, faceted octahedral hull. It has not been moved into the game yet.
+
+| | |
+|---|---|
+| Size (length × height × span) | 3.98 × 3.44 × 4.47 units |
+| Triangles by `detail` | 0.2 ≈ 2.6k · 0.5 ≈ 6.4k · 1 ≈ 23k · 2 ≈ 86k |
+| Objects at `detail` 1 | 67: 53 meshes, 2 instanced groups (8 edge struts + 40 belt bolts), 10 glow sprites, 1 dashed line, 1 particle system (240 points) |
+| Figure types | 13: octahedron, cylinder, sphere, extruded shape (with a hole), tube along curve, torus, cone, lathe, circle, icosahedron, plane, box, line |
+| Materials / custom shaders | 25 / 4 (pod plumes, eye, print laser, exhaust particles) |
+| Textures | 9 canvas-generated, ≈19 MB GPU (gold hull plating set, brushed metal, solar cells, a code band, shared glows) |
+
+What's on it, front to back:
+
+- **Hull**: `OctahedronGeometry` scaled to half extents 1.5 × 1.35 × 1.15
+  (nose along +X), flat-shaded, gold `makePlating` texture with two blue
+  bands. Its section at height `y` is a rhombus (1.5, 1.15)·(1 − |y|/1.35),
+  which the code uses to place parts on the surface.
+- **Edge struts**: one `InstancedMesh` of cylinders, each matrix composed
+  from an edge's midpoint, the rotation from +Y onto the edge, and its
+  length.
+- **Belt**: an `ExtrudeGeometry` of a rhombus with a rhombus `hole`
+  (`Shape.holes`), bevelled, around the waist, with 40 instanced hex bolts
+  on top.
+- **Four thruster pods** on arms bent along `CatmullRomCurve3` tubes, with
+  a gold sleeve aligned to the curve's tangent. Each pod sits in a gimbal
+  that swivels with the throttle (thrust vectoring); the lathed bells,
+  plume shader and glow sprite are codewing's.
+- **The eye** at the nose: a `ShaderMaterial` working in polar
+  coordinates around the eye's +X axis (iris rings and spokes, a dark
+  pupil with a hot rim, a Fresnel sheen). It glances to a new pseudo-random
+  target every ~1.3 s, eased. It sits well in front of the hull's tip
+  (center at x = 1.62): the belt's pointed front reaches x = 1.74 and,
+  with the eye further back, poked through the iris.
+- **Crown** on the top vertex: an open cylinder with an additive,
+  horizontally scrolling band of the drone's own script language
+  (`makeCodeBand`), between two gold rims, around a spinning emissive
+  crystal. Its texture offset is shared by every instance of the type.
+- **Solar wing** on a mast: a hinge bar with two `PlaneGeometry` panels
+  using a canvas solar-cell texture (`makeSolarCells`), slowly tracking.
+- **Fuel tanks**: lathed capsules under the waist with an emissive gauge
+  that drains while the engines run and refills when they're off.
+- **Print laser** (the in-game `print()` writes text into gas with a
+  laser): a belly turret whose beam is an open cylinder with an additive
+  dash shader. It fires in bursts, sweeps side to side and has a glowing
+  hit point at its end.
+- **Sensor sweep**: a `LineDashedMaterial` ring around the drone
+  (`computeLineDistances()`), tilted and rotating; it's hidden together
+  with the running lights.
+- Hover bob and a slight wobble of the whole body, navigation lights and
+  strobes, and exhaust particles from the four pods.
+
 ### Techniques used
 
 - **Hull plating** (`makePlating`): recursive panel split; seams,
@@ -97,12 +157,70 @@ textures are cached per ship type and shared by all instances.
   rewritten every frame.
 - **Exhaust particles**: recycled `Points` with a size and fade shader.
 
+## Actions, offline and damage
+
+Shared by every ship (`buildShipModel` wraps each definition's `build()`
+result), so a new ship gets them with no work:
+
+- **Standard action set** (`STANDARD_ACTIONS`): `fire`, `scan`, `print`
+  (triggers) and `offline` (a toggle). A ship **enables** one by listing
+  it in its build result's `actions` — it can relabel it, e.g.
+  `{ id: "fire", label: "FIRE CANNONS" }` — and handles it in
+  `act(id, on)`. Anything it doesn't list stays visible but disabled, so
+  a ship without an animation for something simply leaves it out
+  (codewing has no `print`). Extra ship-specific actions (any other id)
+  are appended after the standard four.
+- **OFFLINE**: implemented once for all ships — engines forced to power 0
+  and the running lights switched off. The ship's `act("offline", on)`
+  gets the state too, to dim its own parts: codewing's logic core,
+  lit windows (a per-model copy of the hull material), gyro and reactor
+  wind down; the drone sinks and lists, and its eye, code ring
+  ("switched-off lettering"), crystal and fuel gauges go dark.
+  Offline, the ship's own actions are ignored.
+- **Damage** (`setDamage(0..1)`, `createDamageFx`): 8 damage sites are
+  sampled once, with a fixed seed, on the ship's big solid meshes (a
+  random triangle, a random point on it, its outward normal). Each carries
+  a scorch decal (a ragged dark circle with polygon offset) and an ember
+  glow, parented to that mesh so they follow its animation. With damage
+  rising: more sites show, the decals grow, smoke puffs rise from them
+  (a `Points` system with a soft noise texture and normal blending),
+  spark bursts fly out (additive points with drag), the lights flicker,
+  and from 70% up small parts break off and drift away spinning. They're
+  put back where they were when damage goes down again.
+- A definition can opt out of the shared features:
+  `features: { offline: false, damage: false }` (the button / slider then
+  show as disabled).
+
+Helpers for writing actions (exported too):
+
+| Helper | What it does |
+|---|---|
+| `makeBoltPool(parent, color, opts)` | Laser bolts: `fire(origin, dir)` launches a glowing rod with a muzzle flash, `update(dt)` moves them. |
+| `makeScanWave(parent, color)` | An expanding shell with a Fresnel rim and scan lines: `start(pos, radius)`, `update(dt)`. |
+| `textTexture(text, color)` | A glowing word on a transparent canvas (cached), e.g. for a sprite. |
+| `fxTextures()` | The shared smoke puff and scorch textures. |
+
+What each ship does:
+
+| Action | codewing | scribe (drone) |
+|---|---|---|
+| fire | 4 alternating bolts from the wingtip cannons | 3 bolts from the eye along its gaze, the eye flares |
+| scan | a sensor ping from the dish | a teal wave from the crown, the eye turns teal, the sweep ring speeds up |
+| print | — (disabled) | the belly laser writes "HELLO" into a gas cloud at the beam's end, then it fades |
+
+In the lab, bolts and waves live in the ship's own space. In the game
+they'd need to be world-space objects (so a turning ship doesn't drag its
+shots along).
+
 ## Viewer (preview page)
 
 - **Left panel**: ship name and prev/next navigation over `SHIP_DEFS`,
-  the MODEL statistics, a per-type FIGURES list, and toggles for
+  the MODEL statistics, a per-type FIGURES list, toggles for
   auto-rotate, engines (the throttle eases in and out), running lights
-  and wireframe.
+  and wireframe, then ACTIONS — one button per `model.actions` entry
+  (disabled ones greyed out, triggers flash, toggles stay lit, OFFLINE in
+  red) — and a Damage slider. Toggles and damage survive a detail
+  rebuild; switching ships resets the toggles.
 - **Right panel, OPTIMIZATION**:
   - **Render quality**, 5 presets:
 
@@ -145,10 +263,13 @@ SHIP_DEFS.push({
   _assets: null,
   assets() { /* create + cache textures/materials once; add them to
                sharedMaterials and trackTextures(...) */ },
+  // features: { offline: false, damage: false },  // opt out of shared ones
   build(detail) {
     const seg = (n, min = 3) => Math.max(min, Math.round(n * detail));
     // build with seg(...) segment counts, nose along +X
-    return { group, update(t, dt, opts) {}, setLights(on) {} };
+    const actions = [{ id: "fire", label: "FIRE" }];       // enable what you animate
+    function act(id, on) { /* "fire", "scan", "print", "offline" (on = state), extras */ }
+    return { group, update(t, dt, opts) {}, setLights(on) {}, actions, act };
   },
 });
 ```
