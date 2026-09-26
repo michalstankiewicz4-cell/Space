@@ -99,6 +99,21 @@ and two side thrusters — everything but the hull, mandibles, fins and
 strip comes from the building blocks. Actions: BITE, SCAN (+ the shared
 OFFLINE/DESTROY).
 
+### "haven" (ST-04 HAVEN, the player's station)
+
+The game's space station (since v2.13.0), ≈30k triangles at `detail` 1,
+79 draw calls, 30 merged. Ring flat in XZ, spine along +Y, the solar
+truss along X (its longest extent, which `makeGameHolder` sizes by):
+a spinning habitat ring (dynamic) on four spokes with modules, two rows
+of lit windows, the spine with hub and window band, the **greenhouse
+dome** (glass cap over lit garden beds — the story's greenhouse kept at
+21 °C), a docking port with a teal glow at the bottom, radiators, a comms
+dish that sweeps (faster during SCAN). Actions: SCAN (+ the shared
+OFFLINE/DESTROY; offline dims the windows and stops the ring, the garden
+keeps a little light). **Damage stages** (its `setDamage`, as pairs of
+dynamic "whole"/"ruined" groups): dark windows by the breach from 0.1, a
+broken hanging panel from 0.2, a torn ring segment with debris from 0.3.
+
 ### "scribe" (DR-01 SCRIBE, the drone), measured
 
 The first ship meant for the game: a replacement for the drone's plain
@@ -300,6 +315,9 @@ animations).
 | `makeShotQueue()` | `schedule([{ delay, ... }])` for act("fire"), `run(t, fn)` fires each when due |
 | `makeOnlineFader()` | Offline state for the ship's own parts: `set(on)`, `offline`, `update(dt)` → 0..1 online level |
 | `makeBoltPool`, `makeScanWave`, `textTexture`, `fxTextures` | Action effects (see [Actions, offline and damage](#actions-offline-and-damage)) |
+| `makeSolarCells({ seed, cols, rows })` | Solar-cell sheet texture (the drone's wing, the station's panels) |
+| `strut(a, b, radius, material, segments)` | A cylinder from point a to point b: struts, spokes, booms, antenna feeds |
+| a def's own `setDamage(d)` | Damage stages of its own on top of the shared smoke/sparks (the station's ruin); `buildShipModel` passes every `setDamage` on, and 1 on DESTROY |
 
 Plus, for every ship without any code: the standard action buttons,
 OFFLINE, damage, DESTROY, static-mesh merging and the game wrapper.

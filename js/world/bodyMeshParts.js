@@ -3,8 +3,8 @@ import { PLANET_BRACKET_SCALE } from "../config.js";
 
 // Mesh-building helpers for a body's game-side decorations — split out of
 // world/bodies.js#materializePlanet (same "model-building lives in its own
-// file" split already used for the station, see station/stationModel.js
-// vs station.js). The bodies themselves (sun corona, comet tails, …) are
+// file" split as the station's, station/stationVisual.js vs station.js).
+// The bodies themselves (sun corona, comet tails, …) are
 // BodyKit's now (world/bodyVisual.js); what's left here is the game's own
 // selection bracket.
 

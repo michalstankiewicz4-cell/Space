@@ -241,8 +241,11 @@ the full detail behind each of these.
   draft lives in a **local, untracked `FABULA.md`** (in
   `.git/info/exclude`): never commit it.
 - **Space station** (`js/station/*.js`): one static per-player landmark,
-  read-only info in the HUD's PLANET INFO slot, mesh shared between local + ghost rendering
-  via `buildStationMesh(opts)`. Ships spawn arranged around it on a
+  read-only info in the HUD's PLANET INFO slot. The look is ShipKit's
+  ST-04 HAVEN (`station/stationVisual.js`, shared by the local station and
+  other players' — never tinted, owners get a name label); its ruin (dark
+  windows, broken panel, torn ring) is the model's damage, and the game
+  starts it at `STATION_START_DAMAGE` (the story; repairs come later). Ships spawn arranged around it on a
   golden-angle spiral (`ships/swarm.js#shipSpawnPosition()`), inside a
   gravity-free containment field (`STATION_FIELD_RADIUS`) —
   `world/solarGravity.js` skips ambient gravity for any ship inside it,

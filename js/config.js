@@ -79,12 +79,21 @@ export const DRONE_ATTACK_COOLDOWN_S = 0.25; // min seconds between attack() hit
 export const DRONE_PRINT_COOLDOWN_S = 1.5; // min seconds between print() calls (see drone.js#triggerPrintFx) — a while(true){print(...)} loop with no wait() would otherwise flood the broadcast channel as fast as the interpreter's step limit allows
 
 // Player space station (see js/station/*.js) — one static landmark per
-// player, procedurally built (js/station/stationModel.js, shared by the
+// player, ShipKit's ST-04 HAVEN (js/station/stationVisual.js, shared by the
 // local station and every remote player's ghost station so they can
 // never visually drift apart). Purely a docking-panel overview for now
 // (fleet count, points, upgrade levels) — no new resource economy, just a
 // window onto the existing one.
-export const STATION_MODEL_SCALE = 0.16; // shrinks stationModel.js's native proportions (ring radius 23) down to roughly sun-sized in actual gameplay
+// The station (ShipKit's ST-04 HAVEN, station/stationVisual.js): its length
+// along the solar truss in world units (the habitat ring is ~0.28 of it),
+// and the radius of its pick sphere / selection ring — around the ring, not
+// the truss tips, so it doesn't steal clicks meant for ships parked nearby.
+export const STATION_MODEL_LENGTH = 10;
+export const STATION_PICK_RADIUS = 3.4;
+// The story's station is a ruin: it starts at this damage (0..1 — ShipKit's
+// damage stages: dark windows from 0.1, a broken panel from 0.2, the torn
+// ring from 0.3, plus smoke and sparks). Repairs are meant to bring it down.
+export const STATION_START_DAMAGE = 0.35;
 
 // Station's containment field ("pole siłowe") — gently pulls the local
 // player's own ships back if they'd otherwise drift beyond this radius of

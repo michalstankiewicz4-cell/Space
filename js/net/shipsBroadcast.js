@@ -8,8 +8,7 @@ import { roomChannel } from "./connect.js";
 import { containsProfanity } from "../moderation.js";
 import { t } from "../i18n.js";
 import { spawnPrintEffect } from "../drone/dronePrintFx.js";
-import { buildStationMesh, disposeStationMesh } from "../station/stationModel.js";
-import { STATION_MODEL_SCALE } from "../config.js";
+import { makeStationVisual } from "../station/stationVisual.js";
 import { buildDroneModel } from "../drone/drone.js";
 import { makeShipVisual } from "../ships/shipVisual.js";
 import { sRGBTexture } from "../core/utils.js";
@@ -40,7 +39,9 @@ function disposeGhostShip(mesh){
 const GHOST_DRONE_DETAIL = 0.4;
 const MAX_GHOST_SHOTS_PER_UPDATE = 2;
 
-function makeNameLabel(nick, colorHex){
+// opts: { y, width } — where the label floats and how wide it is (world units)
+function makeNameLabel(nick, colorHex, opts){
+  opts = opts || {};
   const c = document.createElement("canvas");
   c.width = 512; c.height = 96;
   const g = c.getContext("2d");
@@ -54,8 +55,9 @@ function makeNameLabel(nick, colorHex){
   g.fillRect(256 - 40, 78, 80, 6);
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: sRGBTexture(new THREE.CanvasTexture(c)), transparent: true, depthWrite: false }));
   sprite.userData.shipkit = true;              // already sRGB-correct (scene/colorManagement.js)
-  sprite.scale.set(2.4, 0.45, 1);
-  sprite.position.y = 1.3;
+  const w = opts.width || 2.4;
+  sprite.scale.set(w, w * 0.1875, 1);
+  sprite.position.y = opts.y !== undefined ? opts.y : 1.3;
   return sprite;
 }
 
@@ -102,24 +104,31 @@ function lerpGhost(mesh, dt){
   if(mesh.userData.target) mesh.position.lerp(mesh.userData.target, Math.min(1, dt*NET_GHOST_LERP_SPEED));
 }
 
-// Unlike the ghost ship/drone (flat-recolored to the owner's color, simple
-// enough for that to read fine on a cone/octahedron), the station keeps its
-// grey hull materials and only tints the window glow + accent stripe via
-// buildStationMesh()'s own windowColor/opacity options — recoloring this
-// much greebled detail to one solid color would just read as a blob. Same
-// source of truth as the local station (station/station.js), so a ghost
-// can never visually diverge from what a real station looks like.
-function makeGhostStationMesh(colorHex){
-  const mesh = buildStationMesh({ windowColor: colorHex, opacity: 0.8 });
-  mesh.scale.setScalar(STATION_MODEL_SCALE);
+// Another player's station: the same ShipKit model as ours
+// (station/stationVisual.js), not tinted — like their drone, a name label
+// with a bar in the owner's color floats above it.
+const STATION_LABEL = { y: 5.2, width: 5 };
+
+function makeGhostStation(rp){
+  const mesh = new THREE.Group();
+  const visual = makeStationVisual({ remote: true });
+  mesh.add(visual.root);
+  const label = makeNameLabel(rp.nick, rp.color, STATION_LABEL);
+  mesh.add(label);
   ctx.scene.add(mesh);
+  rp.stationVisual = visual;
+  rp.stationLabel = label;
+  rp.stationLabelNick = rp.nick;
   return mesh;
 }
 
 function removeGhostStation(rp){
   if(!rp.stationMesh) return;
-  disposeStationMesh(ctx.scene, rp.stationMesh);
+  rp.stationVisual.dispose();
+  rp.stationLabel.material.map.dispose();
+  disposeMesh(ctx.scene, rp.stationMesh);
   rp.stationMesh = null;
+  rp.stationVisual = null;
 }
 
 function isValidHexColor(c){
@@ -194,10 +203,15 @@ export function handleRemoteShips(payload){
 
   const st = Array.isArray(payload.station) ? payload.station : null;
   if(st){
-    if(!rp.stationMesh) rp.stationMesh = makeGhostStationMesh(rp.color);
+    if(!rp.stationMesh) rp.stationMesh = makeGhostStation(rp);
     const mesh = rp.stationMesh;
     setGhostTarget(mesh, safeCoord(st[0]), safeCoord(st[1]), safeCoord(st[2]));
     mesh.rotation.y = Number.isFinite(Number(st[3])) ? Number(st[3]) : mesh.rotation.y;
+    if(rp.stationLabelNick !== rp.nick){        // nick changed: redraw the label
+      mesh.remove(rp.stationLabel); rp.stationLabel.material.map.dispose();
+      rp.stationLabel = makeNameLabel(rp.nick, rp.color, STATION_LABEL); rp.stationLabelNick = rp.nick;
+      mesh.add(rp.stationLabel);
+    }
   } else {
     removeGhostStation(rp);
   }

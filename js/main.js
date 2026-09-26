@@ -6,6 +6,7 @@ import { VERSION } from "./version.js";
 import { initScene } from "./scene/setup.js";
 import { manageSceneColors } from "./scene/colorManagement.js";
 import { updateShipVisuals } from "./ships/shipVisual.js";
+import { updateStationVisuals } from "./station/stationVisual.js";
 import { updateBodyLooks } from "./world/bodyVisual.js";
 import { perfFrameStart, perfRenderStart, perfFrameEnd } from "./ui/hud/perfStats.js";
 import { ctx } from "./core/context.js";
@@ -145,6 +146,7 @@ function tick(){
   updateHud(dt);
 
   updateShipVisuals(dt);        // ship models: level of detail, animation, wrecks
+  updateStationVisuals(dt);     // stations (ShipKit's ST-04 HAVEN): ring spin, lights, dish
   updateBodyLooks(dt);          // BodyKit bodies: animated layers, spin, sun direction
   updateSkybox(dt);             // BodyKit sky: follows the camera, twinkles, bakes after a change
   manageSceneColors(ctx.scene); // new materials/lights: sRGB -> linear, once each

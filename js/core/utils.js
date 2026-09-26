@@ -31,8 +31,8 @@ export function writeStorage(key, value){
 // many-submesh group like the station model can share one material across
 // several children, and disposing it twice is a no-op but still wasteful
 // busywork) across ships/swarm.js#disposeShip, world/blackholes.js's
-// drone-consumed-by-blackhole cleanup, and station/stationModel.js's
-// disposeStationMesh. `scene` is passed explicitly rather than imported
+// drone-consumed-by-blackhole cleanup and the ghost units in
+// net/shipsBroadcast.js. `scene` is passed explicitly rather than imported
 // from core/context.js so this stays a small, dependency-free helper
 // callable from anywhere, same spirit as removeItem() above.
 export function disposeMesh(scene, mesh){

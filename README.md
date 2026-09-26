@@ -68,8 +68,8 @@ js/
   blocks/            the drone's block programs: block catalog (blockSpecs.js), the
                      project with its virtual files (blockProject.js), the compiler to
                      the drone DSL (blockCompile.js) and the example programs
-  station/           each player's static space station — the procedural mesh
-                     (stationModel.js), the game-side entity (station.js), and its
+  station/           each player's static space station — its look (stationVisual.js:
+                     ShipKit's ST-04 HAVEN), the game-side entity (station.js), and its
                      containment field pulling stray ships back (stationField.js);
                      ships/the drone also spawn arranged around it, inside a
                      gravity-free zone (world/solarGravity.js) — see "Space station" below

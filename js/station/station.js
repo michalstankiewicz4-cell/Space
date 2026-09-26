@@ -1,6 +1,6 @@
 import { ctx } from "../core/context.js";
-import { buildStationMesh, STATION_SILHOUETTE_RADIUS } from "./stationModel.js";
-import { STATION_MODEL_SCALE } from "../config.js";
+import { makeStationVisual } from "./stationVisual.js";
+import { STATION_PICK_RADIUS } from "../config.js";
 import { STATION_RING, orbitPoint } from "../world/solarSystem.js";
 import { clientId } from "../net/identity.js";
 
@@ -12,14 +12,14 @@ export function setStationSelected(station, val){
   station.selectionRing.visible = val;
 }
 
-function makePickMesh(radiusNative){
-  const geo = new THREE.SphereGeometry(radiusNative, 12, 10);
+function makePickMesh(radius){
+  const geo = new THREE.SphereGeometry(radius, 12, 10);
   const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 });
   return new THREE.Mesh(geo, mat);
 }
 
-function makeSelectionRing(radiusNative){
-  const ringGeo = new THREE.RingGeometry(radiusNative * 0.96, radiusNative * 1.04, 48);
+function makeSelectionRing(radius){
+  const ringGeo = new THREE.RingGeometry(radius * 0.96, radius * 1.04, 48);
   const ringMat = new THREE.MeshBasicMaterial({
     color: 0x4fe3c6, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false
   });
@@ -48,8 +48,11 @@ function angleFromClientId(id){
 // updateStation(dt) wired into main.js's tick() the same way updateDrone()
 // is — deliberately skipped for now, no per-frame work needed yet.
 export function spawnStation(){
-  const mesh = buildStationMesh();
-  mesh.scale.setScalar(STATION_MODEL_SCALE);
+  // The look is ShipKit's ST-04 HAVEN (stationVisual.js), already sized in
+  // world units inside its own holder — this group is never scaled.
+  const visual = makeStationVisual();
+  const mesh = new THREE.Group();
+  mesh.add(visual.root);
 
   // Deterministic point on the station ring, not a random circle — see
   // angleFromClientId() above. No exact per-slot reservation (that would
@@ -63,20 +66,16 @@ export function spawnStation(){
   mesh.position.copy(pos);
   mesh.rotation.y = heading;
 
-  // Pick sphere / selection ring are sized in the model's own native
-  // (pre-scale) units and added as children of the group, so
-  // STATION_MODEL_SCALE shrinks them along with the visible hull
-  // automatically — sizing them in already-scaled world units here would
-  // double-apply the scale.
-  const pickMesh = makePickMesh(STATION_SILHOUETTE_RADIUS);
+  // Pick sphere / selection ring around the habitat ring (world units).
+  const pickMesh = makePickMesh(STATION_PICK_RADIUS);
   mesh.add(pickMesh);
-  const selectionRing = makeSelectionRing(STATION_SILHOUETTE_RADIUS);
+  const selectionRing = makeSelectionRing(STATION_PICK_RADIUS);
   mesh.add(selectionRing);
 
   ctx.scene.add(mesh);
 
   const station = {
-    mesh: mesh, pickMesh: pickMesh, selectionRing: selectionRing,
+    mesh: mesh, visual: visual, pickMesh: pickMesh, selectionRing: selectionRing,
     selected: false, pos: pos, heading: heading
   };
   pickMesh.userData.station = station;

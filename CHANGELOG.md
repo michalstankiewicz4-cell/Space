@@ -4,6 +4,20 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.13.0]
+
+### Added
+- **A new space station**, built in the ship lab: a slowly spinning
+  habitat ring full of lit windows, a central spine crowned by a glass
+  greenhouse dome with glowing garden beds, a solar truss, radiators, a
+  comms dish and a docking port for the swarm.
+- It's a ruin, as the story says: part of the ring is torn open with
+  debris drifting in the gap, a solar panel hangs broken and the windows
+  near the breach are dark — the station's damage, which repairs are
+  meant to fix one day.
+- Other players' stations look the same (no more tinting) with their
+  owner's name floating above.
+
 ## [2.12.1]
 
 ### Changed

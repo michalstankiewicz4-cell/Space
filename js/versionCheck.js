@@ -59,7 +59,7 @@ const MODULE_FILES = [
   "js/scene/unitThumb.js", "js/scene/viewRect.js", "js/settings.js",
   "js/shipkit/shipkit.js", "js/ships/shipVisual.js", "js/ships/swarm.js",
   "js/station/station.js", "js/station/stationField.js",
-  "js/station/stationModel.js", "js/supabaseClient.js", "js/ui/about.js",
+  "js/station/stationVisual.js", "js/supabaseClient.js", "js/ui/about.js",
   "js/ui/banner.js", "js/ui/escapeKey.js", "js/ui/hud/commandBar.js",
   "js/ui/hud/connectionStatus.js", "js/ui/hud/devTools.js",
   "js/ui/hud/eventLog.js", "js/ui/hud/fleetList.js", "js/ui/hud/hud.js",

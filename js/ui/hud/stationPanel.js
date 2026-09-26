@@ -1,8 +1,7 @@
 import { ctx } from "../../core/context.js";
 import { storyEvent } from "../../core/storyLog.js";
 import { setStationSelected } from "../../station/station.js";
-import { STATION_SILHOUETTE_RADIUS } from "../../station/stationModel.js";
-import { STATION_MODEL_SCALE, TREE } from "../../config.js";
+import { STATION_PICK_RADIUS, TREE } from "../../config.js";
 import { state } from "../../core/gameState.js";
 import { myIdentity } from "../../net/identity.js";
 import { t } from "../../i18n.js";
@@ -22,7 +21,7 @@ export function openStationPanel(){
   storyEvent("station");
   showInfo("station", {
     thumbTarget: function(){
-      return ctx.station ? { pos: ctx.station.pos, radius: STATION_SILHOUETTE_RADIUS * STATION_MODEL_SCALE } : null;
+      return ctx.station ? { pos: ctx.station.pos, radius: STATION_PICK_RADIUS } : null;
     },
     onClose: closeStationPanel
   });

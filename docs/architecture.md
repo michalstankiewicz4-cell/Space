@@ -757,54 +757,38 @@ then read just that range.
   modals. No new resource economy was introduced; "manage resources" here
   just means a window onto `state.points`/`state.levels`, not a second
   currency.
-  - **The procedural mesh (`js/station/stationModel.js#buildStationMesh()`)
-    lives in its own file, separate from the game entity (`station.js`),
-    because it genuinely has two callers**: the local player's own station
-    (`station.js#spawnStation()`) and every remote player's ghost station
-    (`net/shipsBroadcast.js#makeGhostStationMesh()`) — same function,
-    different `opts` (see below), so a ghost can never visually diverge
-    from what a real station looks like. (An earlier standalone preview,
-    `station.html`, used this same function too — built first to settle
-    the design before it shipped in-game, then deleted once it did, since
-    the actual game became the fastest way to look at it.) The model's
-    native proportions (ring radius 23, etc.) are its own arbitrary scale —
-    the game shrinks the whole group down via `STATION_MODEL_SCALE`
-    (config.js) rather than the model file's own numbers changing.
-  - **The pick sphere and selection ring are sized from the model's own
-    exported `STATION_SILHOUETTE_RADIUS` constant, not a separate
-    `config.js` number** — they're added as children of the (later-scaled)
-    mesh group *before* `STATION_MODEL_SCALE` is applied, so the scale
-    shrinks hull + hitbox + ring together automatically. Sizing them
-    independently in already-scaled world units would have silently
-    double-applied the scale to just the hitbox/ring, a real trap given how
-    this file was written (scale-the-group-at-the-end came after the
-    hitbox already existed once, during development).
+  - **The look is ShipKit's ST-04 HAVEN (v2.13.0)** —
+    `js/shipkit/shipkit.js`, built in the ship lab like the ships, placed
+    by `station/stationVisual.js#makeStationVisual()`, which both the local
+    station (`station.js#spawnStation()`) and every remote player's ghost
+    (`net/shipsBroadcast.js#makeGhostStation()`) use, so they can't
+    diverge. A spinning habitat ring on spokes, the central spine with the
+    greenhouse dome, a solar truss along X, radiators, a comms dish, the
+    docking port; merged static meshes (≈30 draw calls), effects in the
+    scene, `STATION_MODEL_LENGTH` (10) world units along the truss via
+    `makeGameHolder`. It replaced the old primitive-built
+    `station/stationModel.js` (deleted).
+  - **The ruin is the damage (a story choice by the user)**: the model's own
+    `setDamage` stages (dark ring windows from 0.1, a broken hanging solar
+    panel from 0.2, a torn ring segment with drifting debris from 0.3) on
+    top of the shared smoke/sparks. The game starts every station at
+    `STATION_START_DAMAGE` (0.35, config.js) — a ruin, as the story says —
+    and repairs are meant to lower it later; `visual.setDamage(d)` keeps
+    the value across rebuilds.
+  - **Pick sphere and selection ring**: `STATION_PICK_RADIUS` (3.4 world
+    units, config.js) around the habitat ring, not the truss tips — the
+    station is picked before ships, so a sphere as wide as the truss would
+    steal clicks meant for ships parked nearby. The station's own group is
+    never scaled (the holder inside the visual is), so these are plain
+    world units.
   - **Multiplayer sync rides the same periodic `"ships"` broadcast payload
     as the drone** (a `station: [x,y,z,heading]` field,
-    `net/shipsBroadcast.js`) — cheap even though the model is visually
-    complex, since only that 4-number array ever crosses the network; every
-    client builds the identical mesh locally from `buildStationMesh()`,
-    confirmed live via two concurrent sessions (one client's real station
-    position matched the other client's ghost `stationMesh` position
-    exactly). **Ghost stations are recolored differently from ghost
-    ships/the ghost drone**: those flatten their entire simple shape (cone/
-    octahedron) to one solid owner color, which reads fine on something
-    that small, but doing the same to this model's ~150+ greebled
-    sub-meshes would just read as a flat blob and lose the whole point of
-    the detail. Instead `buildStationMesh({ windowColor, opacity })` only
-    retints the window glow + accent stripe to the owner's color and keeps
-    every hull material as-is, so a remote station still reads as *a
-    station*, just tinted. **As of 1.10.15, `disposeStationMesh(scene, group)`
-    is a thin wrapper around the shared `core/utils.js#disposeMesh(scene,
-    mesh)`** — `disposeShip()` (`ships/swarm.js`), the drone-consumed-by-
-    black-hole cleanup (`world/blackholes.js`), and every ghost unit's
-    teardown (`net/shipsBroadcast.js`'s `removeGhostDrone`/the ships-array
-    shrink path) had all independently reimplemented the same
-    `scene.remove(mesh)` + traverse-and-dispose-geometry/material shape;
-    `disposeMesh()` always dedupes materials via a `Set` before disposing
-    (needed for the station's ~150+ shared sub-mesh materials, harmless
-    no-op overhead for a single-material ship/drone mesh), so there's now
-    exactly one dispose implementation instead of four near-identical ones.
+    `net/shipsBroadcast.js`) — only that 4-number array crosses the
+    network; every client builds the same model locally. **Other players'
+    stations are not tinted** (the user's call, like ships and drones): a
+    name label with a bar in the owner's color floats above (the drone's
+    `makeNameLabel`, larger and higher). Remote stations build at half the
+    detail and without particles, and start at the same damage.
   - **Ships spawn arranged around the station, inside a gravity-free
     containment field, instead of scattered near the origin** (v2.0.6) —
     a real problem once ships spawn far from the Sun: with the old
@@ -1161,8 +1145,8 @@ then read just that range.
   direction of travel (derived from the interpolated movement — no new
   network data). Known: at base-view distance the models read paler
   than the old emissive cones (the ship glow lights are off by default);
-  to address in the lighting pass. The remote station ghost is still
-  tinted.
+  to address in the lighting pass. (Remote stations stopped being tinted
+  in v2.13.0, see "Space station".)
 - **BodyKit planets** (v2.10.0, `world/bodyVisual.js`): the six planet
   slots are the body lab's bodies — `js/bodykit/bodykit.js`, a classic
   script (`window.BodyKit`) shared with `bodies.html` like ShipKit is with
