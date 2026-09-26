@@ -13,6 +13,9 @@ shown next to the title on the start screen and in the browser tab title
   ships are never sent into it.
 - Comets (small and fast) and faraway bodies are much easier to click:
   a click close to one on screen counts.
+- The Sun can be clicked on the minimap too (selects it, camera flies
+  there), and clicking your station on the minimap switches to the BASE
+  view.
 
 ### Fixed
 - The black hole's tooltip showed a broken "time left" (it no longer

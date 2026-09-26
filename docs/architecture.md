@@ -109,6 +109,9 @@ then read just that range.
   camera on it (`focusCameraOn` takes any body with a `mesh` or a
   `group`, `bodyPosition()`). Its hover tooltip showed "time left" from
   the long-gone expiring black hole (NaN) — it shows the pull range now.
+- **Every minimap object is clickable (v2.15.0)**: planets, the meteoroid,
+  comets, the Sun (it used to be drawn without a pick) and the black hole
+  select + focus the camera; the station selects + switches to "base".
 - **Small bodies are easier to click (v2.15.0)**: when the ray misses,
   `scene/picking.js#pickPlanetAt` falls back to the nearest body within
   14 px of the cursor on screen (`pickSmallBodyAt`) — comets are small and
