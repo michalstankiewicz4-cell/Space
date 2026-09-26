@@ -6,7 +6,6 @@ import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
 import { hideBolt } from "../ships/swarm.js";
 import { bodyParams, tempColor, randomPlanetSpawnData, contentKindFor } from "./bodyParams.js";
-import { buildSelectionBracket } from "./bodyMeshParts.js";
 import { SOLAR_BODIES, SOLAR_BODY_BY_SLOT, bodyPosAt, nowSimTime } from "./solarSystem.js";
 import { materializeBlackHole } from "./blackholes.js";
 import { makeBodyLook, bodyLookRef, cometActivity } from "./bodyVisual.js";
@@ -15,9 +14,8 @@ import { buildCometTrajectoryLine } from "../scene/orbitLines.js";
 
 // Body lifecycle: materializing a mesh from spawn data, spawning/despawning
 // (local-only and networked), and the per-frame update. Pure body-type
-// math/data lives in ./bodyParams.js, and mesh-building helpers for a
-// body's optional decorations (sun rays, comet tail, selection bracket)
-// live in ./bodyMeshParts.js — this file is what's left: turning that data
+// math/data lives in ./bodyParams.js, the look in ./bodyVisual.js (BodyKit)
+// and the selection frame in scene/selectionBrackets.js — this file is what's left: turning that data
 // into an actual scene object and keeping it alive.
 //
 // Two kinds of body pass through materializePlanet()/updateBodies() now:
@@ -100,8 +98,6 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   // despawns (despawnLocalOnly/destroyPlanet below).
   let trajectoryLine = null;
 
-  const selectionBracket = buildSelectionBracket(radius);
-  mesh.add(selectionBracket);
 
   const basePos = pos.clone();
   // A comet's `vel` (the one stored in the DB row, or freshly rolled for a
@@ -162,7 +158,6 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     // rad/s, for the info panel only: the body spins itself, at its lab rate
     spin: look.spinRate(),
     selected: false,
-    selectionBracket: selectionBracket,
     dying: false,
     look: look,
     scorchMesh: scorchMesh,

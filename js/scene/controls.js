@@ -2,7 +2,7 @@ import { ctx } from "../core/context.js";
 import { removeItem } from "../core/utils.js";
 import { showToast } from "../ui/hud/eventLog.js";
 import { setShipSelected } from "../ships/swarm.js";
-import { setPlanetSelected } from "../world/bodyMeshParts.js";
+import { setPlanetSelected } from "./selectionBrackets.js";
 import { openDronePanel, closeDronePanel } from "../ui/hud/unitPanel.js";
 import { setDroneSelected } from "../drone/drone.js";
 import { openStationPanel, closeStationPanel } from "../ui/hud/stationPanel.js";

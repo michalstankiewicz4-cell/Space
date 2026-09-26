@@ -51,8 +51,8 @@ js/
   world/             celestial body logic — the 9-orbit solar system's fixed bodies
                      (solarSystem.js: orbit table/positions, solarGravity.js: patched-conics
                      gravity on ships/drone), comet-specific real physics (cometPhysics.js:
-                     gravity-curved flight simulation), body mesh/lifecycle (bodies.js,
-                     bodyParams.js, bodyMeshParts.js) — per-type data lives in js/bodies/
+                     gravity-curved flight simulation), body lifecycle and look (bodies.js,
+                     bodyParams.js, bodyVisual.js) — per-type data lives in js/bodies/
   bodies/            7 body types, one file each (sun.js, icePlanet.js, neutralPlanet.js,
                      volcanicPlanet.js, comet.js, meteoroid.js, blackhole.js).
                      Only comets are still randomly rolled; the other 6 are each one fixed,

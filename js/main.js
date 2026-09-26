@@ -38,6 +38,7 @@ import { updateDronePrintFx } from "./drone/dronePrintFx.js";
 import { spawnStation } from "./station/station.js";
 import { applyStationField } from "./station/stationField.js";
 import { renderMainView, initViewRect } from "./scene/viewRect.js";
+import { updateSelectionBrackets } from "./scene/selectionBrackets.js";
 import { initUnitThumb, renderUnitThumb } from "./scene/unitThumb.js";
 import { initInfoThumb, renderInfoThumb } from "./scene/infoThumb.js";
 import { updateLightMarkers } from "./scene/lightMarkers.js";
@@ -160,6 +161,7 @@ function tick(){
   renderShipCamPIP();
   renderUnitThumb();
   renderInfoThumb(dt);
+  updateSelectionBrackets();    // body selection frames: an HTML overlay, placed after the camera moved
   perfFrameEnd();
 
   requestAnimationFrame(tick);

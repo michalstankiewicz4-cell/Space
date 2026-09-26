@@ -113,8 +113,8 @@ the full detail behind each of these.
   rolled — the other 6 are fixed, permanent bodies in the solar system
   (see below).
 - **`world/bodies.js`** = body lifecycle only; pure kind/temp math lives
-  in `world/bodyParams.js`, decoration mesh builders in
-  `world/bodyMeshParts.js`. **`scene/controls.js`** = camera +
+  in `world/bodyParams.js`, the look in `world/bodyVisual.js` (BodyKit),
+  selection frames in `scene/selectionBrackets.js` (an HTML overlay). **`scene/controls.js`** = camera +
   selection/event-wiring only; raycasts in `scene/picking.js`, hover
   tooltip in `scene/tooltip.js`.
 - **Ships only ever move on an explicit order** (`commandTo()` in

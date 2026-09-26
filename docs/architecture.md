@@ -53,7 +53,9 @@ then read just that range.
   `tempColor`, `randomPlanetSpawnData`) moved to `world/bodyParams.js`, and
   the optional-decoration mesh builders (`buildSunRays`, `buildCometTail`,
   the selection-bracket sprite, `setPlanetSelected`) moved to
-  `world/bodyMeshParts.js` — the same "model-building lives in its own
+  `world/bodyMeshParts.js` (since removed: the bodies became BodyKit's in
+  v2.10–2.11 and the selection frame an HTML overlay in v2.15,
+  `scene/selectionBrackets.js`) — the same "model-building lives in its own
   file" split `station/stationModel.js` already used, just applied
   retroactively to the file that had accumulated the most. `scene/controls.js`
   similarly kept only camera state + the actual selection/event-wiring
@@ -363,9 +365,9 @@ then read just that range.
     gives comets their varied, non-coplanar swing-bys). Re-verified: real
     perihelions now land within ~0.02% of the target.
   - **The tail always points directly away from the Sun** (real
-    solar-wind/radiation-pressure direction — `bodyMeshParts.js#
-    updateCometTailDirection()`, called every frame from `updateBodies()`
-    since the direction changes continuously as the comet curves), not
+    solar-wind/radiation-pressure direction — since v2.11 BodyKit's comet
+    takes it from its own world position every frame, as the direction
+    changes continuously while the comet curves), not
     "opposite direction of travel" (the old, astronomically-incorrect
     model that only ever looked right for a straight, unaccelerated
     line). Comets get `spin:0` specifically so the tail group's *local*
@@ -1211,7 +1213,18 @@ then read just that range.
   sprite and 3D rays, crossed-plane comet tail, sprite/ring black hole and
   their canvas textures (`world/textures.js` keeps only
   `makeRockGeometry` for debris and `generateDustTexture`),
-  `bodyMeshParts.js` keeps only the selection bracket.
+  `bodyMeshParts.js` kept only the selection bracket (and was removed in
+  v2.15, see "Selection frames" below).
+- **Selection frames (v2.15.0, `scene/selectionBrackets.js`)**: the corner
+  marks around a selected body (planets, Sun, meteoroid, comets, the
+  black hole) are an HTML overlay on the 3D view, not a sprite in the
+  scene: 2 px lines, arms ≤ 12 px, 8 px outside the body's edge on
+  screen, the same at any zoom (the frame follows the body's projected
+  size). `updateSelectionBrackets()` runs after the renders in main.js;
+  the layer (`#selectionBrackets`, fixed, clipped to the view rect) is
+  pointer-events:none. They no longer show in the ship cam or the
+  PLANET INFO miniature. `setPlanetSelected()` lives there now (only the
+  flag).
 - **Ship glow lights reach the bodies (v2.11.1)**: BodyKit shaders ignore
   THREE lights, so the setting looked like it did nothing (the light also
   sat inside the hull). Now it's behind the engines (`SHIP_LIGHT_*` in

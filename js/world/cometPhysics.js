@@ -92,8 +92,7 @@ export function randomCometEntry(){
   // Orbital plane: any direction perpendicular to `pos` works equally well
   // (this is what gives comets their varied, non-coplanar swing-bys) —
   // build one by discarding a random vector's component along the radial
-  // direction, same "reject onto a known axis" trick used for the tail's
-  // own local basis in bodyMeshParts.js.
+  // direction (the "reject onto a known axis" trick).
   const radial = pos.clone().normalize();
   const planeNormal = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5);
   planeNormal.addScaledVector(radial, -planeNormal.dot(radial));

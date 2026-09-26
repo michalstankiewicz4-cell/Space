@@ -54,11 +54,11 @@ const MODULE_FILES = [
   "js/scene/controls.js", "js/scene/graphics.js", "js/scene/infoThumb.js",
   "js/scene/lightMarkers.js", "js/scene/lightsToggle.js",
   "js/scene/orbitLines.js", "js/scene/picking.js",
-  "js/scene/planetDistanceLines.js", "js/scene/setup.js",
-  "js/scene/shipcam.js", "js/scene/skybox.js", "js/scene/tooltip.js",
-  "js/scene/unitThumb.js", "js/scene/viewRect.js", "js/settings.js",
-  "js/shipkit/shipkit.js", "js/ships/shipVisual.js", "js/ships/swarm.js",
-  "js/station/station.js", "js/station/stationField.js",
+  "js/scene/planetDistanceLines.js", "js/scene/selectionBrackets.js",
+  "js/scene/setup.js", "js/scene/shipcam.js", "js/scene/skybox.js",
+  "js/scene/tooltip.js", "js/scene/unitThumb.js", "js/scene/viewRect.js",
+  "js/settings.js", "js/shipkit/shipkit.js", "js/ships/shipVisual.js",
+  "js/ships/swarm.js", "js/station/station.js", "js/station/stationField.js",
   "js/station/stationVisual.js", "js/supabaseClient.js", "js/ui/about.js",
   "js/ui/banner.js", "js/ui/escapeKey.js", "js/ui/hud/blackHolePanel.js",
   "js/ui/hud/commandBar.js", "js/ui/hud/connectionStatus.js",
@@ -74,10 +74,10 @@ const MODULE_FILES = [
   "js/ui/windows/research.js", "js/ui/windows/wiki.js",
   "js/ui/windows/wikiArt.js", "js/ui/windows/wikiEntries.js",
   "js/ui/windows/windows.js", "js/version.js", "js/versionCheck.js",
-  "js/world/blackholes.js", "js/world/bodies.js", "js/world/bodyMeshParts.js",
-  "js/world/bodyParams.js", "js/world/bodyVisual.js",
-  "js/world/cometPhysics.js", "js/world/solarGravity.js",
-  "js/world/solarSystem.js", "js/world/textures.js"
+  "js/world/blackholes.js", "js/world/bodies.js", "js/world/bodyParams.js",
+  "js/world/bodyVisual.js", "js/world/cometPhysics.js",
+  "js/world/solarGravity.js", "js/world/solarSystem.js",
+  "js/world/textures.js"
 ];
 const REFRESH_TIMEOUT_MS = 3000; // don't leave the player stuck if the network is slow/flaky
 

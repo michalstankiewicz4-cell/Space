@@ -104,7 +104,6 @@ export const STATION_FIELD_RADIUS = 11;
 export const STATION_FIELD_STRENGTH = 4;
 
 // Planet selection (see world/bodies.js#setPlanetSelected, ui/hud/planetPanel.js)
-export const PLANET_BRACKET_SCALE = 2.6; // corner-bracket sprite size, x radius
 
 // Multiplayer: intervals and time limits
 export const NET_SHIP_BROADCAST_MS = 120;

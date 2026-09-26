@@ -27,6 +27,20 @@
   background:rgb(0 2 12 / .82); color:#ffd98f; font-family:var(--uiFontLabel); font-size:13px; letter-spacing:.4px; }
 #shipCamCloseBtn{ position:absolute; right:4px; top:4px; width:36px; height:22px; font-size:12px; pointer-events:auto; }
 
+/* Body selection frames (scene/selectionBrackets.js): four thin corner
+   marks around each selected body, in client pixels over the 3D view. The
+   layer is a direct child of <body> (created in JS) — inside the scaled
+   HUD a fixed element would be positioned and scaled by the HUD's
+   transform — clipped to the view rect set from JS, under the HUD panels. */
+#selectionBrackets{ position:fixed; overflow:hidden; pointer-events:none; z-index:1; }
+.selBracket{ position:absolute; display:none; --arm:12px; }
+.selBracket i{ position:absolute; width:var(--arm); height:var(--arm);
+  border:0 solid rgb(238 241 255 / .92); filter:drop-shadow(0 0 1px rgb(0 0 0 / .8)); }
+.selBracket .tl{ left:0; top:0; border-left-width:2px; border-top-width:2px; }
+.selBracket .tr{ right:0; top:0; border-right-width:2px; border-top-width:2px; }
+.selBracket .bl{ left:0; bottom:0; border-left-width:2px; border-bottom-width:2px; }
+.selBracket .br{ right:0; bottom:0; border-right-width:2px; border-bottom-width:2px; }
+
 /* Dev Tools: small button in the viewport's bottom-right corner + its menu. */
 /* Dev Tools -> Performance stats (ui/hud/perfStats.js), top-left corner. */
 #perfStats{ left:12px; top:12px; width:244px; padding:8px 10px 6px; border-radius:8px; pointer-events:none;

@@ -1,7 +1,6 @@
 import { ctx } from "../core/context.js";
 import { removeItem } from "../core/utils.js";
 import { makeBodyLook, bodyLookRef } from "./bodyVisual.js";
-import { buildSelectionBracket } from "./bodyMeshParts.js";
 import { showToast } from "../ui/hud/eventLog.js";
 import { spawnExplosionParticles } from "../fx/particles.js";
 import { spawnShockwave } from "../fx/breakup.js";
@@ -40,16 +39,13 @@ export function materializeBlackHole(radius, orbitSlot){
   group.add(look.root);
   const pickMesh = new THREE.Mesh(new THREE.SphereGeometry(radius*2.5, 16, 12), new THREE.MeshBasicMaterial({ visible: false }));
   group.add(pickMesh);
-  // selectable like a planet (scene/controls.js#clickBlackHole), same bracket
-  const selectionBracket = buildSelectionBracket(radius * 2.2);
-  group.add(selectionBracket);
 
   ctx.scene.add(group);
 
   const bh = {
     orbitSlot: orbitSlot,
     group: group, look: look, pickMesh: pickMesh,
-    selectionBracket: selectionBracket, selected: false,
+    selected: false,   // selectable like a planet (scene/controls.js#clickBlackHole, scene/selectionBrackets.js)
     radius: radius,
     gravityRadius: radius*7.5,
     killRadius: radius*1.35
