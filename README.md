@@ -35,8 +35,10 @@ js/
   i18n.js            UI text (English by default, Polish toggle — see the start screen)
   env.js             Supabase URL/key (anon key — safe to commit, see below)
   supabaseClient.js  Supabase client singleton
-  shipkit/           ShipKit — the procedural ship models (the drone), one classic script shared
-                     with the ship lab (ship.html); see docs/ship.md
+  shipkit/           ShipKit — the procedural ship models (swarm ships, the drone), one classic
+                     script shared with the ship lab (ship.html); see docs/ship.md
+  bodykit/           BodyKit — the procedural planets, one classic script shared with the
+                     body lab (bodies.html); see docs/bodies.md
   core/              shared game state (scene/entity collections, player points), Wiki discovery
                      state (discovery.js) + small utilities
   scene/             camera, renderer, the 3D view's rect inside the HUD + miniature render passes
@@ -88,9 +90,10 @@ supabase/schema.sql  database schema (tables, RLS, RPC functions) to paste into 
 `admin.html`/`css/admin.css`/`css/devTheme.css`/`js/admin/` is a separate
 developer-tool entry point, not part of the game's own module graph above —
 see "Admin panel" below. `ship.html` and `bodies.html` are standalone
-single-file labs for procedural ships and celestial bodies, built to be
-ported into the game later (they replaced the older `planetEditor.html` and
-`shipEditor.html`, removed in v2.2.1) — see [`docs/ship.md`](docs/ship.md) and
+labs for procedural ships and celestial bodies; their models live in
+`js/shipkit/` and `js/bodykit/`, shared with the game (they replaced the
+older `planetEditor.html` and `shipEditor.html`, removed in v2.2.1) — see
+[`docs/ship.md`](docs/ship.md) and
 [`docs/bodies.md`](docs/bodies.md). `tools/` holds small standalone dev
 utilities (e.g. `grainTexture.html`, which regenerates `css/ui/grain.png`). `blog/` isn't part of the game at all — see "Devlog"
 below.

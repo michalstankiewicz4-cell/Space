@@ -4,6 +4,25 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.10.0]
+
+### Added
+- **New planets from the body lab**: all six planets are now drawn
+  entirely on the graphics card, the same bodies the body lab shows —
+  continents, oceans, mountains, drifting clouds and a glowing
+  atmosphere, lit by the Sun. Two volcanic worlds (CINDER, MAGMA) with
+  rivers of lava glowing on the night side under ash clouds, two
+  Earth-like ones (TERRA-1, PELAGIA) and two frozen ones (RIME, GLACIES)
+  with cracked ice seas.
+- A bitten planet now cracks open with glowing fissures that spread as
+  its health drops; scorch marks turn with the planet's surface.
+- Setup → Graphics applies to planets too: render quality sets their
+  surface detail, geometry detail their shape.
+
+### Changed
+- Planets spin at the same rate for every player and no longer get a
+  random ring.
+
 ## [2.9.0]
 
 ### Added

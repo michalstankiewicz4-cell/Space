@@ -6,7 +6,7 @@ import { getShipCamTarget } from "../scene/shipcam.js";
 import { ORBIT_RADIUS } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { state, swarmStats, save } from "../core/gameState.js";
-import { paintScorch, destroyPlanet } from "../world/bodies.js";
+import { paintScorch, destroyPlanet, applyHealthVisual } from "../world/bodies.js";
 import { bodyValueEstimate } from "../world/bodyParams.js";
 import { spawnBiteParticles } from "../fx/particles.js";
 import { triggerBreakup } from "../fx/breakup.js";
@@ -314,7 +314,7 @@ export function updateShips(dt){
       // before breaking apart
       const healthFrac = Math.max(0, sh.target.health/sh.target.maxHealth);
       const damage = 1-healthFrac;
-      sh.target.crackMesh.material.opacity = Math.min(1, damage*1.2);
+      applyHealthVisual(sh.target);
       if(healthFrac < 0.3){
         const shakeAmt = ((0.3-healthFrac)/0.3) * sh.target.radius*0.014;
         sh.target.shakePhase += dt*32;

@@ -220,6 +220,15 @@ the full detail behind each of these.
   its SHIP BUILDING BLOCKS and move any part/behaviour a second ship
   needs into them — never copy between ships** (rules in `docs/ship.md`
   "Building blocks").  See `docs/ship.md`.
+- **BodyKit** (`js/bodykit/bodykit.js`): the procedural planets, one
+  classic-script file shared by `bodies.html` and the game, the same way.
+  Each lab body with a `slot` is that orbit's planet in the game
+  (`world/bodyVisual.js`; `p.mesh` is then an invisible pick sphere,
+  damage = the shader's glowing cracks, scorch marks on `surfaceRoot`).
+  Changing `bodykit.js` changes the game: version bump. **A new body is
+  data (a `bodies` entry / a new parameter), never a copied shader**;
+  classification lives once in `GLSL_PLANET` (rules in `docs/bodies.md`
+  "Building blocks and rules").
 - **Wiki** (`ui/windows/wiki*.js`): read-only, filled in by play via
   `core/discovery.js` (`"tab:key"` ids, localStorage). Texts in i18n
   `wiki.entries.<key>` — **the key after the colon must be unique across

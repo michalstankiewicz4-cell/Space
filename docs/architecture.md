@@ -1172,4 +1172,20 @@ then read just that range.
   than the old emissive cones (the ship glow lights are off by default);
   to address in the lighting pass. The remote station ghost is still
   tinted.
+- **BodyKit planets** (v2.10.0, `world/bodyVisual.js`): the six planet
+  slots are the body lab's bodies — `js/bodykit/bodykit.js`, a classic
+  script (`window.BodyKit`) shared with `bodies.html` like ShipKit is with
+  `ship.html`. `BodyKit.GAME_BODIES` maps orbit slot -> lab body (from the
+  bodies' `slot` field). `materializePlanet()` keeps `p.mesh` as an
+  invisible sphere (`MeshBasicMaterial({ visible:false })` — raycasts
+  still hit it, it carries the color for particles/debris) with the
+  BodyKit group as a child; no crack overlay (the shader's `setDamage`,
+  fed by `applyHealthVisual()`), scorch overlay attached to the body's
+  `surfaceRoot` so it turns with the ground, no random ring, `p.spin` 0
+  (the body spins at its lab rate). `updateBodyLooks(dt)` in the main loop
+  drives time/spin/sun direction; a detail change rebuilds, a quality
+  change sets the octaves (`BodyKit.QUALITY_OCTAVES`). The old CPU-made
+  neutral-planet surface texture (`makePlanetSurfaceTexture`) was removed
+  with it. The Sun, the meteoroid, comets and the black hole are still
+  the game's own meshes. Details and rules: `docs/bodies.md`.
 

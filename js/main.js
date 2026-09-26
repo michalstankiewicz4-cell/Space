@@ -6,6 +6,7 @@ import { VERSION } from "./version.js";
 import { initScene } from "./scene/setup.js";
 import { manageSceneColors } from "./scene/colorManagement.js";
 import { updateShipVisuals } from "./ships/shipVisual.js";
+import { updateBodyLooks } from "./world/bodyVisual.js";
 import { ctx } from "./core/context.js";
 import { initControls, updateCamera, setCameraMode } from "./scene/controls.js";
 import { updatePulsars } from "./scene/pulsars.js";
@@ -143,6 +144,7 @@ function tick(){
   updateHud(dt);
 
   updateShipVisuals(dt);        // ship models: level of detail, animation, wrecks
+  updateBodyLooks(dt);          // BodyKit planets: animated layers, spin, sun direction
   manageSceneColors(ctx.scene); // new materials/lights: sRGB -> linear, once each
 
   // Main view into the HUD's viewport rect, then the extra passes (ship cam,
