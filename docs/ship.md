@@ -273,9 +273,11 @@ shots along).
     draw submission), triangles and draw calls per frame
     (`renderer.info`), render resolution, and a color-coded FPS graph.
 - **Scaling**: both panels share one CSS scale factor (`--ui`, 0.45–1.35),
-  set by `fitHud()`. It follows the window size, keeps both panels
-  inside the window height and stops them overlapping. It re-runs on
-  resize, after web fonts load and after each rebuild.
+  set by `fitHud()`. It follows **the window size only** and stops the
+  panels overlapping; a panel taller than the window scrolls (CSS
+  `max-height` on `#hud` / `#opt`). It used to shrink the whole UI to fit
+  the tallest panel, so GAME BUILD (a shorter stats list after merging)
+  made the UI jump in size — don't make the scale depend on content again.
 - **Scene**: a generated equirectangular nebula sky is used both as the
   sky dome and, through `PMREMGenerator`, as `scene.environment`
   (reflections on the metal). A warm key light casts shadows, with a

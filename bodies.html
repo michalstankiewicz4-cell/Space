@@ -44,6 +44,11 @@ canvas#view{ position:fixed; inset:0; width:100%; height:100%; display:block; }
 
 #hud{ position:fixed; left:16px; top:16px; width:330px; pointer-events:none;
   transform:scale(var(--ui, 1)); transform-origin:top left; }
+/* The scale follows the window only (fitHud); a panel taller than the
+   window scrolls instead of shrinking the whole UI — so the UI size never
+   jumps when the content changes (a rebuilt model's stats, another tab). */
+#hud, #opt{ max-height:calc((100vh - 32px) / var(--ui, 1)); overflow-y:auto; overflow-x:hidden;
+  scrollbar-width:thin; scrollbar-color:#3c55d8 transparent; }
 #hud > *{ pointer-events:auto; }
 #hudTop{ position:relative; height:58px; }
 #hudBracket{ position:absolute; left:0; top:0; width:30px; height:58px;
@@ -155,6 +160,7 @@ input[type=range]::-moz-range-thumb{ width:30px; height:20px; border-radius:4px 
       <button class="tBtn on" id="btnClouds">CLOUDS</button>
       <button class="tBtn on" id="btnAtmo">ATMOSPHERE</button>
       <button class="tBtn" id="btnWire">WIREFRAME</button>
+      <button class="tBtn" id="btnGameBuild" title="Build the body the way the game does: geometry detail × BodyKit.GAME_DETAIL_SCALE (the sky: as is)">GAME BUILD</button>
       <button class="tBtn" id="btnShipLight" title="A ship's glow light orbiting the body, as in the game when a ship bites it">SHIP LIGHT</button>
     </div>
     <div id="hint">Left-drag: rotate · Right-drag: pan · Scroll: zoom</div>
@@ -1361,7 +1367,7 @@ scene.add(shipLightDot);
 // =====================================================================
 // State + body loading
 // =====================================================================
-const state = { groupIndex: 0, bodyIndex: 0, rotate: true, clouds: true, atmosphere: true, wire: false, shipLight: false,
+const state = { groupIndex: 0, bodyIndex: 0, rotate: true, clouds: true, atmosphere: true, wire: false, shipLight: false, gameBuild: false,
                 quality: 3, detail: 1, values: null };
 let current = null;
 const $ = (id) => document.getElementById(id);
@@ -1384,7 +1390,9 @@ function loadBody(keepValues) {
   if (!def) { state.values = null; buildParamSliders(); return; }
   backdrop.group.visible = g.id !== gameSky.groupId;       // the SKY tab shows its own sky
   if (!keepValues || !state.values) state.values = BodyKit.defaultValues(g, def);
-  current = BodyKit.buildBody(g.id, def.id, { detail: state.detail, values: state.values });
+  // GAME BUILD: the detail the game uses for this body (the sky is built as is)
+  const detail = state.gameBuild && g.id !== gameSky.groupId ? state.detail * BodyKit.GAME_DETAIL_SCALE : state.detail;
+  current = BodyKit.buildBody(g.id, def.id, { detail, values: state.values });
   scene.add(current.group);
   current.setOctaves(QUALITY[state.quality].octaves);
   current.setLayers({ clouds: state.clouds, atmosphere: state.atmosphere });
@@ -1526,6 +1534,7 @@ toggle("btnRotate", "rotate", (on) => { controls.autoRotate = on; });
 toggle("btnClouds", "clouds", (on) => current && current.setLayers({ clouds: on }));
 toggle("btnAtmo", "atmosphere", (on) => current && current.setLayers({ atmosphere: on }));
 toggle("btnWire", "wire", applyWire);
+toggle("btnGameBuild", "gameBuild", () => loadBody(true));
 toggle("btnShipLight", "shipLight", (on) => { shipLightDot.visible = on; });
 
 $("btnSeed").addEventListener("click", () => {
@@ -1594,15 +1603,16 @@ dSlider.addEventListener("input", () => {
 
 // =====================================================================
 // HUD scaling: all panels share one scale factor (--ui) so they follow
-// the window, always fit vertically and never overlap horizontally.
+// the window and never overlap horizontally. It depends on the WINDOW
+// only, not on the content — a panel that doesn't fit vertically scrolls
+// (CSS max-height on #hud/#opt), so switching tabs (other sliders) never
+// changes the UI size.
 // =====================================================================
 const hudEl = $("hud"), optEl = $("opt");
 function fitHud() {
   const w = window.innerWidth, h = window.innerHeight, margin = 16, gap = 24;
-  const tallest = Math.max(hudEl.offsetHeight, optEl.offsetHeight);
-  const both = hudEl.offsetWidth + optEl.offsetWidth;
-  const s = Math.max(0.4, Math.min(1.3, Math.min(w / 1500, h / 900) * 1.05,
-    (h - margin * 2) / tallest, (w - margin * 2 - gap) / both));
+  const both = hudEl.offsetWidth + optEl.offsetWidth;                 // fixed widths
+  const s = Math.max(0.4, Math.min(1.3, Math.min(w / 1500, h / 900) * 1.05, (w - margin * 2 - gap) / both));
   document.documentElement.style.setProperty("--ui", s.toFixed(3));
 }
 

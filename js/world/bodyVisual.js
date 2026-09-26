@@ -39,7 +39,7 @@ export function makeBodyLook(ref, radius){
     // things that turn with the surface (scorch marks), in units of the radius
     attached: [],
     build: function(){
-      look.body = BodyKit.buildBody(ref.groupId, ref.bodyId, { detail: gfxDetail() * 0.5, values: { damage: look.damage } });
+      look.body = BodyKit.buildBody(ref.groupId, ref.bodyId, { detail: gfxDetail() * BodyKit.GAME_DETAIL_SCALE, values: { damage: look.damage } });
       look.body.setRadius(radius);
       look.body.setOctaves(BodyKit.QUALITY_OCTAVES[gfxQuality()]);
       look.attached.forEach(function(o){ look.body.surfaceRoot.add(o); });

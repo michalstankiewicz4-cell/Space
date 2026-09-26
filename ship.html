@@ -43,6 +43,11 @@ canvas#view{ position:fixed; inset:0; width:100%; height:100%; display:block; }
 
 #hud{ position:fixed; left:16px; top:16px; width:330px; pointer-events:none;
   transform:scale(var(--ui, 1)); transform-origin:top left; }
+/* The scale follows the window only (fitHud); a panel taller than the
+   window scrolls instead of shrinking the whole UI — so the UI size never
+   jumps when the content changes (a rebuilt model's stats, another tab). */
+#hud, #opt{ max-height:calc((100vh - 32px) / var(--ui, 1)); overflow-y:auto; overflow-x:hidden;
+  scrollbar-width:thin; scrollbar-color:#3c55d8 transparent; }
 #hud > *{ pointer-events:auto; }
 #hudTop{ position:relative; height:58px; }
 #hudBracket{ position:absolute; left:0; top:0; width:30px; height:58px;
@@ -1543,17 +1548,18 @@ function frame() {
 }
 
 // HUD scaling: both panels share one scale factor (--ui) so they follow
-// the window: grow a little on big screens, shrink so they always fit
-// vertically and never overlap each other horizontally.
+// the window: grow a little on big screens, shrink on small ones and never
+// overlap each other horizontally. It depends on the WINDOW only, not on
+// the panels' content — a panel that doesn't fit vertically scrolls (CSS
+// max-height on #hud/#opt), so the UI doesn't change size when, e.g., GAME
+// BUILD rebuilds the model and its stats list gets shorter.
 const hudEl = document.getElementById("hud"), optEl = document.getElementById("opt");
 function fitHud() {
   const w = window.innerWidth, h = window.innerHeight, margin = 16, gap = 24;
-  const tallest = Math.max(hudEl.offsetHeight, optEl.offsetHeight);   // unscaled layout sizes
-  const both = hudEl.offsetWidth + optEl.offsetWidth;
+  const both = hudEl.offsetWidth + optEl.offsetWidth;                 // fixed widths
   const s = Math.max(0.45, Math.min(
     1.35,
     Math.min(w / 1500, h / 900) * 1.05,       // follow the window size
-    (h - margin * 2) / tallest,               // fit vertically
     (w - margin * 2 - gap) / both,            // keep the two panels apart
   ));
   document.documentElement.style.setProperty("--ui", s.toFixed(3));

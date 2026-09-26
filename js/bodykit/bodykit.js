@@ -72,6 +72,7 @@
    modelStats(group)          mesh/triangle/vertex/shader counts
    QUALITY_OCTAVES            noise octaves per render-quality preset
                               (LOW .. MAX), shared by the lab and the game
+   GAME_DETAIL_SCALE          the game builds bodies at detail × this
    GAME_BODIES                which body each of the game's fixed orbit
                               slots shows: { slot: { groupId, bodyId } },
                               from the bodies' `slot` field
@@ -1401,6 +1402,9 @@ const COMMON_PARAMS = [
 // Noise octaves per pixel for the render-quality presets LOW .. MAX —
 // the lab's quality buttons and the game's Setup -> Graphics use the same.
 const QUALITY_OCTAVES = [3, 4, 5, 6, 8];
+// The game builds bodies at this fraction of its geometry-detail setting
+// (world/bodyVisual.js) — the lab's GAME BUILD toggle uses the same.
+const GAME_DETAIL_SCALE = 0.5;
 
 // What the game shows: { slot: ref } for its fixed orbits, { kind: ref }
 // for kinds that come and go (comets); ref = { groupId, bodyId }.
@@ -1444,7 +1448,7 @@ function modelStats(root) {
   return st;
 }
 
-return { GROUPS, COMMON_PARAMS, QUALITY_OCTAVES, MAX_POINT_LIGHTS, GLSL_SKY, GAME_BODIES, GAME_KINDS, SPIN_RAD_PER_UNIT,
+return { GROUPS, COMMON_PARAMS, QUALITY_OCTAVES, GAME_DETAIL_SCALE, MAX_POINT_LIGHTS, GLSL_SKY, GAME_BODIES, GAME_KINDS, SPIN_RAD_PER_UNIT,
          buildBody, disposeBody, modelStats, defaultValues,
          GLSL_NOISE, GLSL_BODY, GLSL_PLANET, GLSL_SUN, GLSL_ROCK, GLSL_HOLE };
 })();

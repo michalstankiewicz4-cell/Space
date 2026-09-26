@@ -364,8 +364,10 @@ Sun, the meteoroid, comets, the black hole) and since v2.12.0 the sky
   own.
 - **Left panel**: group tabs (PLANETS / SUNS / COMETS / ROCKS / BLACK HOLES / SKY), body
   navigation, PHYSICAL statistics and MODEL statistics, and toggles for
-  auto-rotate, the two layers (named by the group), wireframe and SHIP LIGHT
-  (a teal light circling the body, as a ship's glow light does in the game). The clouds and
+  auto-rotate, the two layers (named by the group), wireframe, GAME BUILD
+  (the body at the detail the game builds it: × `BodyKit.GAME_DETAIL_SCALE`,
+  0.5; the sky as is) and SHIP LIGHT (a teal light circling the body, as a
+  ship's glow light does in the game). The clouds and
   atmosphere toggles are hidden for empty groups.
   - PHYSICAL: radius in km (size × the group's `kmPerSize`), surface
     area, then the body's own `describe()` rows (a planet: the measured
@@ -397,7 +399,8 @@ Sun, the meteoroid, comets, the black hole) and since v2.12.0 the sky
 - **PERFORMANCE**: FPS, frame time, CPU time per frame, triangles and
   draw calls per frame, render resolution, and an FPS graph.
 - **Scaling**: all panels share one CSS scale factor (`--ui`), exactly
-  as in `ship.html`.
+  as in `ship.html`: it follows the window only, and a panel taller than
+  the window scrolls, so switching tabs never changes the UI size.
 
 ## Gotchas
 
