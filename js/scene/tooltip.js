@@ -43,8 +43,9 @@ export function showBlackHoleTooltip(bh, clientX, clientY){
   if(!tooltipEl) return;
   discover("body:blackhole");
   ttTitleEl.textContent = t("body.blackhole");
-  ttRow1LabelEl.textContent = t("tooltip.timeLeft");
-  ttRow1ValEl.textContent = Math.max(0, Math.round(bh.maxLife-bh.life)) + "s";
+  // a permanent fixture (no lifetime any more): how far its pull reaches
+  ttRow1LabelEl.textContent = t("blackhole.pull");
+  ttRow1ValEl.textContent = bh.gravityRadius.toFixed(1);
   ttRow2LabelEl.textContent = t("tooltip.hazard");
   ttRow2ValEl.textContent = t("tooltip.hazardWarning");
   positionTooltip(clientX, clientY);

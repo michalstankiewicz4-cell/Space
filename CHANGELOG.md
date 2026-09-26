@@ -4,6 +4,20 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.15.0]
+
+### Added
+- The black hole can be clicked and selected — in the view and on the
+  minimap (where the camera also flies to it) — and shows its own info:
+  radius, how far its pull reaches and the point of no return. Selected
+  ships are never sent into it.
+- Comets (small and fast) and faraway bodies are much easier to click:
+  a click close to one on screen counts.
+
+### Fixed
+- The black hole's tooltip showed a broken "time left" (it no longer
+  expires); it shows its pull range now.
+
 ## [2.14.0]
 
 ### Added

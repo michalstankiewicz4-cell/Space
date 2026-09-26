@@ -99,6 +99,20 @@ then read just that range.
   the previous framing — except the very first `setCameraMode("base",
   { instant: true })` at startup. The minimap's green camera frame
   follows the focused body.
+- **The black hole is selectable (v2.15.0)** — in the world
+  (`pickBlackHoleAt`) and on the minimap, `scene/controls.js#
+  clickBlackHole(bh)`: a selection bracket like a planet's and its own
+  read-only info panel (`ui/hud/blackHolePanel.js`: radius, pull range,
+  point of no return). Never part of the planet multi-select and **never a
+  course target** — clicking it with ships selected just selects it (an
+  order would feed the ships to it). A minimap click also focuses the
+  camera on it (`focusCameraOn` takes any body with a `mesh` or a
+  `group`, `bodyPosition()`). Its hover tooltip showed "time left" from
+  the long-gone expiring black hole (NaN) — it shows the pull range now.
+- **Small bodies are easier to click (v2.15.0)**: when the ray misses,
+  `scene/picking.js#pickPlanetAt` falls back to the nearest body within
+  14 px of the cursor on screen (`pickSmallBodyAt`) — comets are small and
+  fast, and anything far away is only a few pixels.
 
 - **Camera has two modes, toggled top-center in the HUD** (`scene/
   controls.js#setCameraMode()`, v2.0.6): "system" orbits the Sun at the

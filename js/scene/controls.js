@@ -8,6 +8,7 @@ import { setDroneSelected } from "../drone/drone.js";
 import { openStationPanel, closeStationPanel } from "../ui/hud/stationPanel.js";
 import { setStationSelected } from "../station/station.js";
 import { openPlanetPanel, closePlanetPanel } from "../ui/hud/planetPanel.js";
+import { openBlackHolePanel, closeBlackHolePanel } from "../ui/hud/blackHolePanel.js";
 import { pickShipAt, pickDroneAt, pickStationAt, pickPlanetAt, pickBlackHoleAt } from "./picking.js";
 import { initTooltip, showTooltip, showBlackHoleTooltip, hideTooltip } from "./tooltip.js";
 import { getViewRect, isInViewRect } from "./viewRect.js";
@@ -97,18 +98,24 @@ export function setCameraMode(mode, opts){
   refreshCamModeButtons();
 }
 
+// Where a focusable body is: a planet-like body's mesh, the black hole's group.
+export function bodyPosition(body){
+  return body.mesh ? body.mesh.position : body.group.position;
+}
+
 // "focus" mode: orbit `body` (an entry of ctx.planets — a planet, the Sun,
-// the meteoroid, a comet) from its sunlit side, a little above its orbit,
-// and follow it. Its zoom range scales with the body (focusZoomRange()).
+// the meteoroid, a comet — or a black hole) from its sunlit side, a little
+// above its orbit, and follow it. Its zoom range scales with the body
+// (focusZoomRange()).
 export function focusCameraOn(body){
-  if(!body || !body.mesh) return;
+  if(!body || !(body.mesh || body.group)) return;
   beginCamTransition();
   camState.mode = "focus";
   camState.target = body;
-  const p = body.mesh.position;
+  const p = bodyPosition(body);
   if(p.lengthSq() > 1) camState.az = Math.atan2(-p.z, -p.x) + 0.6;   // toward the Sun, turned a bit
   camState.pol = clampPol(Math.PI / 2 - 0.35);
-  camState.radius = Math.max(4, body.radius * 6);
+  camState.radius = Math.max(4, body.radius * (body.group ? 9 : 6));   // a black hole's disk is wide
   camState.autoSpin = true;
   refreshCamModeButtons();
 }
@@ -129,8 +136,9 @@ function zoomRange(){
 function currentPivot(out){
   if(camState.mode === "focus"){
     const b = camState.target;
-    if(!b || b.dying || ctx.planets.indexOf(b) < 0){ setCameraMode("system"); return out.set(0, 0, 0); }
-    return out.copy(b.mesh.position);
+    const alive = b && !b.dying && (ctx.planets.indexOf(b) >= 0 || ctx.blackholes.indexOf(b) >= 0);
+    if(!alive){ setCameraMode("system"); return out.set(0, 0, 0); }
+    return out.copy(bodyPosition(b));
   }
   if(camState.mode === "base" && ctx.station) return out.copy(ctx.station.pos);
   return out.set(0, 0, 0);
@@ -206,7 +214,27 @@ export function getSelectedPlanetsOrdered(){
   return planetSelectionOrder;
 }
 
+// The black hole: selectable on its own (never part of the planet
+// multi-select, never a course target — sending ships in would lose them).
+let selectedBlackHole = null;
+function deselectBlackHole(){
+  if(!selectedBlackHole) return;
+  setPlanetSelected(selectedBlackHole, false);
+  selectedBlackHole = null;
+  closeBlackHolePanel();
+}
+
+// A click on the black hole, in the world or on the minimap: selects it
+// and shows it in the info slot. Selected ships stay out of it: no order.
+export function clickBlackHole(bh){
+  clearSelection();
+  selectedBlackHole = bh;
+  setPlanetSelected(bh, true);
+  openBlackHolePanel(bh);
+}
+
 function deselectAllPlanets(){
+  deselectBlackHole();
   if(planetSelectionOrder.length === 0) return;
   planetSelectionOrder.forEach(function(p){ setPlanetSelected(p, false); });
   planetSelectionOrder = [];
@@ -265,6 +293,7 @@ export function clickPlanet(hitPlanet, shiftKey){
     // ambiguity between "order ships here" and "add to selection".
     if(ctx.drone && ctx.drone.selected) closeDronePanel();
     if(ctx.station && ctx.station.selected) closeStationPanel();
+    deselectBlackHole();
     if(hitPlanet.selected){
       setPlanetSelected(hitPlanet, false);
       removeItem(planetSelectionOrder, hitPlanet);
@@ -433,8 +462,11 @@ export function initControls(){
         setShipSelected(hitShip, !hitShip.selected || !e.shiftKey);
       } else {
         const hitPlanet = pickPlanetAt(e);
+        const hitBlackHole = hitPlanet ? null : pickBlackHoleAt(e);
         if(hitPlanet){
           clickPlanet(hitPlanet, e.shiftKey);
+        } else if(hitBlackHole){
+          clickBlackHole(hitBlackHole);
         } else if(!e.shiftKey){
           clearSelection();
         }

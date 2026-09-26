@@ -1,6 +1,6 @@
 import { ctx } from "../../core/context.js";
 import { SOLAR_BODIES, STATION_RING } from "../../world/solarSystem.js";
-import { camState, clickPlanet, clickStation, focusCameraOn } from "../../scene/controls.js";
+import { camState, clickPlanet, clickStation, clickBlackHole, focusCameraOn, bodyPosition } from "../../scene/controls.js";
 import { bodyVariantKey } from "../../world/bodyParams.js";
 import { t } from "../../i18n.js";
 
@@ -95,8 +95,11 @@ export function drawMinimap(){
     const pos = bh.group.position;
     const ringR = bh.orbitSlot != null ? ringRadius(bh.orbitSlot) : schematicRadius(Math.hypot(pos.x, pos.z));
     const pt = project(ringR, angleOf(pos));
-    out += '<g><title>' + esc(t("body.blackhole")) + '</title><circle cx="' + pt.x + '" cy="' + pt.y + '" r="' + 5 * Math.sqrt(zoom) +
+    out += '<g class="mmPick"><title>' + esc(t("body.blackhole")) + '</title>' +
+      (bh.selected ? '<circle cx="' + pt.x + '" cy="' + pt.y + '" r="' + (5 * Math.sqrt(zoom) + 3.5) + '" fill="none" stroke="#f5bd5c" stroke-width="1.5"/>' : "") +
+      '<circle class="mmBody" cx="' + pt.x + '" cy="' + pt.y + '" r="' + 5 * Math.sqrt(zoom) +
       '" fill="#000" stroke="#b06cff" stroke-width="1.6" filter="url(#mmGlow)"/></g>';
+    picks.push({ x: pt.x, y: pt.y, obj: bh, kind: "blackhole" });
   });
 
   ctx.ships.forEach(function(sh){
@@ -119,7 +122,7 @@ export function drawMinimap(){
   let pivot = sun;
   if(camState.mode === "base" && ctx.station) pivot = project(ringRadius(4), angleOf(ctx.station.pos));
   else if(camState.mode === "focus" && camState.target && camState.target.kind !== "sun"){
-    const b = camState.target, pos = b.mesh.position;
+    const b = camState.target, pos = bodyPosition(b);
     pivot = project(b.orbitSlot != null ? ringRadius(b.orbitSlot) : schematicRadius(Math.hypot(pos.x, pos.z)), angleOf(pos));
   }
   const size = Math.max(10, Math.min(250, Math.sqrt(camState.radius / 950) * 250)) * zoom;
@@ -184,6 +187,7 @@ export function initMinimap(){
     if(!hit) return;
     // a body: the same as clicking it in the world, and the camera flies to it
     if(hit.kind === "planet"){ clickPlanet(hit.obj, e.shiftKey); focusCameraOn(hit.obj); }
+    else if(hit.kind === "blackhole"){ clickBlackHole(hit.obj); focusCameraOn(hit.obj); }
     else if(hit.kind === "station") clickStation(e.shiftKey);
     drawMinimap();
   });

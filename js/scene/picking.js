@@ -53,10 +53,31 @@ export function pickPlanetAt(e){
   raycaster.setFromCamera(ndc, ctx.camera);
   const meshes = ctx.planets.map(function(p){ return p.mesh; });
   const hits = raycaster.intersectObjects(meshes, false);
-  if(hits.length===0) return null;
+  if(hits.length===0) return pickSmallBodyAt(e);
   const mesh = hits[0].object;
   for(let i=0;i<ctx.planets.length;i++){ if(ctx.planets[i].mesh===mesh) return ctx.planets[i]; }
   return null;
+}
+
+// A body that's only a few pixels on screen (a comet — small and fast — or
+// anything far away) is near impossible to hit exactly: within
+// SMALL_PICK_PX of its center counts, the nearest one wins.
+const SMALL_PICK_PX = 14;
+const projScratch = new THREE.Vector3();
+function pickSmallBodyAt(e){
+  const rect = getViewRect();
+  let best = null, bestD = SMALL_PICK_PX;
+  for(let i = 0; i < ctx.planets.length; i++){
+    const p = ctx.planets[i];
+    if(p.dying) continue;
+    projScratch.copy(p.mesh.position).project(ctx.camera);
+    if(projScratch.z > 1) continue;                         // behind the camera
+    const x = rect.left + (projScratch.x * 0.5 + 0.5) * rect.width;
+    const y = rect.top + (-projScratch.y * 0.5 + 0.5) * rect.height;
+    const d = Math.hypot(x - e.clientX, y - e.clientY);
+    if(d < bestD){ bestD = d; best = p; }
+  }
+  return best;
 }
 
 export function pickBlackHoleAt(e){

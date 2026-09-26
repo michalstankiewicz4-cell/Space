@@ -128,7 +128,8 @@ the full detail behind each of these.
   "focus" (`focusCameraOn(body)`, v2.14.0), orbits and follows one body —
   a minimap click on a body selects it as before and flies the camera
   there; every mode change glides (~1 s), a lost target falls back to
-  "system".
+  "system". The black hole is selectable too (world + minimap, own info
+  panel) but never a course target.
 - **The world is a fixed 9-orbit solar system** (`world/solarSystem.js`),
   not a random pool — Sun + 9 hand-placed orbit slots (2 volcanic, 2
   neutral, 2 ice, 1 meteoroid, 1 permanent black hole, orbit 4 = the

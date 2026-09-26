@@ -80,7 +80,7 @@ const STRINGS = {
     },
     tooltip: {
       health: "Health", value: "Value",
-      timeLeft: "Time left", hazard: "Hazard",
+      hazard: "Hazard",
       hazardWarning: "Avoid — consumes ships!"
     },
     upgrades: {
@@ -152,6 +152,7 @@ const STRINGS = {
       health: "Health", radius: "Radius", spin: "Spin", value: "Value",
       waypoint: "SET WAYPOINT", scan: "SCAN", colonize: "COLONIZE"
     },
+    blackhole: { pull: "Pull range", noReturn: "No return" },
     devTools: {
       button: "Dev Tools",
       lights: "Show light sources",
@@ -432,7 +433,7 @@ const STRINGS = {
     },
     tooltip: {
       health: "Zdrowie", value: "Wartość",
-      timeLeft: "Pozostały czas", hazard: "Zagrożenie",
+      hazard: "Zagrożenie",
       hazardWarning: "Unikaj — pochłania statki!"
     },
     upgrades: {
@@ -504,6 +505,7 @@ const STRINGS = {
       health: "Zdrowie", radius: "Promień", spin: "Obrót", value: "Wartość",
       waypoint: "USTAW PUNKT", scan: "SKANUJ", colonize: "KOLONIZUJ"
     },
+    blackhole: { pull: "Przyciąganie", noReturn: "Bez powrotu" },
     devTools: {
       button: "Dev Tools",
       lights: "Pokaż źródła światła",
