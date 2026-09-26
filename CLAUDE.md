@@ -23,7 +23,10 @@ only the section you need.
 
 A 3D space game built with Three.js (r128, classic UMD `THREE` global).
 Static site, no build step, no npm — native ES modules loaded via
-`<script type="module" src="js/main.js">`. Deployed on GitHub Pages by
+`<script type="module" src="js/main.js">`. No CDN at runtime: Three.js
+and supabase-js are local copies in `vendor/` (version in the file name,
+see `vendor/README.md`; admin.html → "Check library updates"), fonts in
+`fonts/`. Deployed on GitHub Pages by
 pushing to `main` (repo: `michalstankiewicz4-cell/Space`).
 
 Gameplay: the player's swarm of ships eats planets/suns/comets/meteoroids

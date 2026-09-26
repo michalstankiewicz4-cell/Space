@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.12.0">
+<link rel="stylesheet" href="css/style.css?v=2.12.1">
 </head>
 <body>
 
@@ -636,16 +636,16 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
 <div id="selectBox"></div>
 <div id="cmdFlash"></div>
 
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script defer src="vendor/three-r128.min.js"></script>
 <!-- ShipKit: procedural ship models, the same file the ship lab (ship.html) uses -->
 <script defer src="js/shipkit/shipkit.js"></script>
 <script defer src="js/bodykit/bodykit.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script defer src="vendor/supabase-js-2.117.2.js"></script>
 <!-- defer: the two libraries no longer block the HTML parser, so main.js's
      module graph starts downloading right away instead of after the CDN
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.12.0"></script>
+<script type="module" src="js/main.js?v=2.12.1"></script>
 </body>
 </html>

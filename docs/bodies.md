@@ -8,8 +8,8 @@ ShipKit: a body tuned in the lab is the body the game shows. There is no
 copy to keep in sync.
 
 Open `bodies.html` straight from disk (double-click). No server, no build
-step and no network are needed. The only external request is Google
-Fonts, and without it the panels fall back to system fonts. The page
+step and no network are needed: the fonts come from the repo's own
+`css/fonts.css` / `fonts/` (they load from disk too, checked in Chromium). The page
 itself (the viewer) is a dev tool and needs no version bump, but
 **`js/bodykit/bodykit.js` is part of the game**: changing it needs the
 bump (`js/version.js`, `CHANGELOG.md`, the `?v=` params).

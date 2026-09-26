@@ -8,8 +8,8 @@ viewer) needs no version bump; a change to `shipkit.js` changes the game,
 so it does.
 
 Open `ship.html` straight from disk (double-click). No server, no build
-step and no network are needed. The only external request is Google
-Fonts, and without it the panels fall back to system fonts.
+step and no network are needed: the fonts come from the repo's own
+`css/fonts.css` / `fonts/` (they load from disk too, checked in Chromium).
 
 ## File layout
 

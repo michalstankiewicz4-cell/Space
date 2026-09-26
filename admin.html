@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Swarm Protocol // Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/devTheme.css">
 <link rel="stylesheet" href="css/admin.css">
 </head>
@@ -23,6 +23,18 @@
     or ordinary HTTP headers, not verified identity — a distinguishing
     hint for the common case, never proof of who did something.
   </p>
+
+  <div id="libRow">
+    <button id="libCheckBtn" type="button">Check library updates</button>
+    <span class="hint">Three.js and supabase-js are local copies in <code>vendor/</code>; this asks the npm registry whether newer versions exist.</span>
+  </div>
+  <div id="libResult"></div>
+  <div id="dbCompareRow">
+    <!-- Placeholder for later: will compare the Supabase data with the
+         single-player (offline) copy of the database. Not wired up yet. -->
+    <button id="dbCompareBtn" type="button" disabled title="Coming later">Compare database with single player</button>
+    <span class="hint">Coming later — for the offline, single-player copy of the database.</span>
+  </div>
 
   <div id="secretRow">
     <input id="secretInput" type="password" placeholder="Admin secret" autocomplete="off">
@@ -67,7 +79,8 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="vendor/supabase-js-2.117.2.js"></script>
 <script type="module" src="js/admin/main.js"></script>
+<script type="module" src="js/admin/libCheck.js"></script>
 </body>
 </html>

@@ -26,6 +26,8 @@ css/ui/              the new-style UI kit: shared primitives (kit.css — scaled
                      file per component in hud/ and windows/ (mirroring js/ui/);
                      grain.png is the material's texture
 fonts/               the .woff2 font files (SIL Open Font License, originally from Google Fonts)
+vendor/              local copies of Three.js r128 and supabase-js (versioned file names, MIT) —
+                     no CDN at runtime; see vendor/README.md
 js/
   version.js         current version number (shown next to the title) — bump on every meaningful release
   versionCheck.js    periodically checks for a newer deploy; blocks play with a "please refresh" overlay if this tab is stale

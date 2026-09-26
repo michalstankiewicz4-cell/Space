@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.12.1]
+
+### Changed
+- The game no longer downloads anything from outside servers to start:
+  Three.js and the multiplayer library are now served with the game
+  itself (the fonts already were). Nothing changes on screen.
+
 ## [2.12.0]
 
 ### Added
