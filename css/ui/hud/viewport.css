@@ -36,10 +36,10 @@
 .selBracket{ position:absolute; display:none; --arm:12px; }
 .selBracket i{ position:absolute; width:var(--arm); height:var(--arm);
   border:0 solid rgb(238 241 255 / .92); filter:drop-shadow(0 0 1px rgb(0 0 0 / .8)); }
-.selBracket .tl{ left:0; top:0; border-left-width:2px; border-top-width:2px; }
-.selBracket .tr{ right:0; top:0; border-right-width:2px; border-top-width:2px; }
-.selBracket .bl{ left:0; bottom:0; border-left-width:2px; border-bottom-width:2px; }
-.selBracket .br{ right:0; bottom:0; border-right-width:2px; border-bottom-width:2px; }
+.selBracket .tl{ left:0; top:0; border-left-width:1px; border-top-width:1px; }
+.selBracket .tr{ right:0; top:0; border-right-width:1px; border-top-width:1px; }
+.selBracket .bl{ left:0; bottom:0; border-left-width:1px; border-bottom-width:1px; }
+.selBracket .br{ right:0; bottom:0; border-right-width:1px; border-bottom-width:1px; }
 
 /* Dev Tools: small button in the viewport's bottom-right corner + its menu. */
 /* Dev Tools -> Performance stats (ui/hud/perfStats.js), top-left corner. */

@@ -1227,7 +1227,7 @@ then read just that range.
 - **Selection frames (v2.15.0, `scene/selectionBrackets.js`)**: the corner
   marks around a selected body (planets, Sun, meteoroid, comets, the
   black hole) are an HTML overlay on the 3D view, not a sprite in the
-  scene: 2 px lines, arms ≤ 12 px, 8 px outside the body's edge on
+  scene: 1 px lines, arms ≤ 12 px, 8 px outside the body's edge on
   screen, the same at any zoom (the frame follows the body's projected
   size). `updateSelectionBrackets()` runs after the renders in main.js;
   the layer (`#selectionBrackets`, fixed, clipped to the view rect) is

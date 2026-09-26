@@ -3,12 +3,12 @@ import { getViewRect } from "./viewRect.js";
 
 // Selection indicator for bodies (planets, the Sun, the meteoroid, comets,
 // the black hole) and other players' stations: four thin L-shaped corner marks drawn as an HTML overlay
-// on the 3D view, not in the scene — so the lines stay BRACKET_LINE_PX
+// on the 3D view, not in the scene — so the lines stay 1 px
 // thick and the arms short at any zoom, and they never show up in the
 // ship cam or the PLANET INFO miniature. The frame follows the body's size
 // on screen, BRACKET_GAP_PX outside its edge. Ships, the drone and the
 // station keep their own rings. Styling: css/ui/hud/viewport.css
-// (#selectionBrackets); the line width is set there too (2px).
+// (#selectionBrackets); the line width is set there too (1px).
 const BRACKET_GAP_PX = 8;       // between the body's edge and the marks
 const BRACKET_ARM_MAX_PX = 12;  // arm length (shorter for a tiny frame)
 const BRACKET_MIN_HALF_PX = 10; // a speck still gets a clickable-looking frame
