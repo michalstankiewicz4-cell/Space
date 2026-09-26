@@ -1,24 +1,35 @@
 import { gfxDetail, gfxQuality, onGraphicsChange } from "../scene/graphics.js";
+import { COMET_ACTIVITY_DISTANCE } from "../config.js";
 
-// A fixed planet's look from BodyKit (js/bodykit/bodykit.js, the body
-// lab's bodies — the same file bodies.html loads): each orbit slot that
-// has a lab body (BodyKit.GAME_BODIES) shows exactly that body, sized to
-// the slot's radius. Retune a planet in the lab and the game follows.
-// The body lights itself from the Sun at the origin, spins at its lab
-// rate and shows damage as glowing cracks (setDamage); world/bodies.js
-// keeps the invisible pick sphere, the scorch marks and the game logic
-// around it. Geometry detail and noise octaves follow Setup -> Graphics.
+// Every body's look comes from BodyKit (js/bodykit/bodykit.js, the body
+// lab's bodies — the same file bodies.html loads): a fixed orbit slot
+// shows its own lab body (BodyKit.GAME_BODIES), a kind that comes and
+// goes shows the lab body for that kind (BodyKit.GAME_KINDS: comets).
+// Retune a body in the lab and the game follows. The body lights itself
+// from the Sun at the origin, spins at its lab rate and shows damage as
+// glowing cracks (setDamage); world/bodies.js and world/blackholes.js keep
+// the invisible pick sphere, the scorch marks and the game logic around
+// it. Geometry detail and noise octaves follow Setup -> Graphics.
 const all = new Set();
 let animT = 0;
 
-export function hasBodyLook(slot){
-  return slot != null && !!BodyKit.GAME_BODIES[slot];
+// Which lab body a game body is: its fixed slot's, else its kind's.
+export function bodyLookRef(slot, kind){
+  const ref = (slot != null && BodyKit.GAME_BODIES[slot]) || BodyKit.GAME_KINDS[kind];
+  if(!ref) throw new Error("No BodyKit body for slot " + slot + " / kind " + kind);
+  return ref;
 }
 
-export function makeBodyLook(slot, radius){
-  const ref = BodyKit.GAME_BODIES[slot];
+// A comet's activity (coma, tail length): stronger nearer the Sun.
+export function cometActivity(distanceFromSun){
+  return Math.max(0.3, Math.min(1.5, COMET_ACTIVITY_DISTANCE / Math.max(distanceFromSun, 1)));
+}
+
+export function makeBodyLook(ref, radius){
   const look = {
     root: new THREE.Group(), body: null, damage: 0,
+    // passed to BodyKit's update() every frame (a comet: velocity, activity)
+    opts: {},
     // things that turn with the surface (scorch marks), in units of the radius
     attached: [],
     build: function(){
@@ -30,6 +41,8 @@ export function makeBodyLook(slot, radius){
     },
     attach: function(o){ look.attached.push(o); look.body.surfaceRoot.add(o); },
     setDamage: function(x){ look.damage = x; look.body.setDamage(x); },
+    // rad/s (the info panel shows it)
+    spinRate: function(){ return look.body.values.spin * BodyKit.SPIN_RAD_PER_UNIT; },
     dispose: function(){ BodyKit.disposeBody(look.body); all.delete(look); }
   };
   look.build();
@@ -37,10 +50,10 @@ export function makeBodyLook(slot, radius){
   return look;
 }
 
-// Every frame: time for the animated layers (clouds, lava), spin, sun direction.
+// Every frame: time for the animated layers, spin, sun direction, tails.
 export function updateBodyLooks(dt){
   animT += dt;
-  all.forEach(function(l){ l.body.update(animT, dt); });
+  all.forEach(function(l){ l.body.update(animT, dt, l.opts); });
 }
 
 onGraphicsChange(function(before){

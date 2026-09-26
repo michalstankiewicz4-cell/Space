@@ -4,6 +4,24 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.11.0]
+
+### Added
+- **A new Sun**: a boiling surface of convection cells with sunspots and
+  bright patches, a disk that darkens to orange at its edge, and a
+  corona of streamers and flares around it.
+- **A new meteoroid**: a lumpy, cratered, elongated rock with metal
+  veins glinting in the sunlight.
+- **New comets**: an icy nucleus in a glowing coma with two tails — a
+  straight blue ion tail and a wider dust tail curving behind it — both
+  always pointing away from the Sun and growing as the comet comes close.
+- **A new black hole**: a black shadow in a turning accretion disk, one
+  side brighter and bluer as it swings toward you, with a thin ring of
+  light around the shadow.
+- Every body now shows damage the same way: glowing cracks.
+- Dev Tools: **Performance stats** — FPS, frame time, CPU time, draw
+  calls, triangles, memory and a frame-time graph.
+
 ## [2.10.0]
 
 ### Added

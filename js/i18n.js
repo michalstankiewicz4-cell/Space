@@ -156,7 +156,14 @@ const STRINGS = {
       button: "Dev Tools",
       lights: "Show light sources",
       distance: "Connect selected planets",
-      noLights: "Turn off lights"
+      noLights: "Turn off lights",
+      perf: "Performance stats",
+      stats: {
+        fps: "FPS", frame: "Frame time", worst: "Worst frame (0.5 s)",
+        cpu: "CPU: update + render", calls: "Draw calls / frame", tris: "Triangles / frame",
+        memory: "Geometries / textures / shaders", resolution: "Render resolution",
+        scene: "Scene objects", units: "Bodies / ships / players", heap: "JS memory"
+      }
     },
     topbar: {
       points: "Points", ships: "Units", eaten: "Devoured", players: "Online",
@@ -501,7 +508,14 @@ const STRINGS = {
       button: "Dev Tools",
       lights: "Pokaż źródła światła",
       distance: "Połącz zaznaczone planety",
-      noLights: "Wyłącz światła"
+      noLights: "Wyłącz światła",
+      perf: "Statystyki wydajności",
+      stats: {
+        fps: "FPS", frame: "Czas klatki", worst: "Najgorsza klatka (0,5 s)",
+        cpu: "CPU: logika + render", calls: "Wywołania rysowania / klatka", tris: "Trójkąty / klatka",
+        memory: "Geometrie / tekstury / shadery", resolution: "Rozdzielczość renderu",
+        scene: "Obiekty sceny", units: "Ciała / statki / gracze", heap: "Pamięć JS"
+      }
     },
     topbar: {
       points: "Punkty", ships: "Jednostki", eaten: "Pochłonięte", players: "Online",

@@ -4,13 +4,12 @@ import { SOLAR_REGEN_RATE } from "../config.js";
 import { CONTENT } from "../content.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
-import { generateCrackTexture, makeRockGeometry, makeSunHaloTexture } from "./textures.js";
 import { hideBolt } from "../ships/swarm.js";
 import { bodyParams, tempColor, randomPlanetSpawnData, contentKindFor } from "./bodyParams.js";
-import { buildSunRays, buildCometTail, updateCometTailDirection, buildSelectionBracket } from "./bodyMeshParts.js";
+import { buildSelectionBracket } from "./bodyMeshParts.js";
 import { SOLAR_BODIES, SOLAR_BODY_BY_SLOT, bodyPosAt, nowSimTime } from "./solarSystem.js";
 import { materializeBlackHole } from "./blackholes.js";
-import { hasBodyLook, makeBodyLook } from "./bodyVisual.js";
+import { makeBodyLook, bodyLookRef, cometActivity } from "./bodyVisual.js";
 import { stepComet, advanceComet, COMET_EXIT_RADIUS, computeCometTrajectory } from "./cometPhysics.js";
 import { buildCometTrajectoryLine } from "../scene/orbitLines.js";
 
@@ -30,16 +29,13 @@ import { buildCometTrajectoryLine } from "../scene/orbitLines.js";
 //   checkpoint" comment below) — never destroyed/removed.
 // - Comets (`row.orbit_slot` absent) — entirely unchanged from before:
 //   full row-driven shape, straight-line drift, spawn/despawn pool.
-// The black hole (orbit_slot 9) is NOT among these — it has its own,
-// visually distinct materializeBlackHole() in world/blackholes.js.
+// The black hole (orbit_slot 9) is NOT among these — it has its own
+// materializeBlackHole() in world/blackholes.js (not in ctx.planets).
 
-// Damage shows as cracks: glowing ones in a BodyKit planet's own shader,
-// or the crack overlay's opacity for every other body.
+// Damage shows as glowing cracks in the body's own BodyKit shader.
 export function applyHealthVisual(obj){
   if(!obj.maxHealth) return;
-  const damage = 1 - Math.max(0, obj.health/obj.maxHealth);
-  if(obj.look) obj.look.setDamage(damage);
-  else if(obj.crackMesh) obj.crackMesh.material.opacity = Math.min(1, damage*1.2);
+  obj.look.setDamage(1 - Math.max(0, obj.health/obj.maxHealth));
 }
 
 // Builds a mesh + entry in `ctx.planets` from a body row (local or networked).
@@ -47,6 +43,11 @@ export function applyHealthVisual(obj){
 // a player joining a game already in progress) — meaningless for fixed
 // solar bodies, which derive position from wall-clock time instead (see
 // below), not an elapsed-since-spawn value.
+//
+// Every body is drawn by BodyKit (world/bodyVisual.js — the body lab's
+// bodies: the fixed slot's own body, or the lab body for its kind, e.g.
+// every comet). `mesh` is only an invisible sphere for picking and
+// position, still carrying the body's color (bite particles, debris).
 export function materializePlanet(row, pos, vel, elapsedSec){
   const orbitSlot = row.orbit_slot != null ? row.orbit_slot : null;
   let kind, radius, temp;
@@ -64,98 +65,40 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   const color = kind==="sun" ? new THREE.Color().setHSL(0.09,0.9,0.6)
     : kind==="comet" ? new THREE.Color(0xffffff)
     : tempColor(temp);
-  // The fixed planets are BodyKit bodies from the body lab
-  // (world/bodyVisual.js): `mesh` is then only an invisible sphere for
-  // picking and position, still carrying the body's color (bite
-  // particles, debris), and the planet itself is drawn by `look`.
-  const look = hasBodyLook(orbitSlot) ? makeBodyLook(orbitSlot, radius) : null;
-  const geo = (kind==="meteoroid" || kind==="comet") ? makeRockGeometry(radius) : new THREE.SphereGeometry(radius, look ? 16 : 22, look ? 12 : 16);
-  const mat = look ? new THREE.MeshBasicMaterial({ color: color, visible: false })
-    : new THREE.MeshStandardMaterial({
-        color: color, emissive: color, emissiveIntensity: params.emissive,
-        roughness: 0.65, metalness: 0.15
-      });
-  const mesh = new THREE.Mesh(geo, mat);
+  const look = makeBodyLook(bodyLookRef(orbitSlot, kind), radius);
+  const mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(radius, 16, 12),
+    new THREE.MeshBasicMaterial({ color: color, visible: false })
+  );
   mesh.position.copy(pos);
   ctx.scene.add(mesh);
-  if(look) mesh.add(look.root);
+  mesh.add(look.root);
 
-  // crack overlay - invisible at first, revealed as the body gets bitten
-  // down (a BodyKit planet cracks in its own shader instead)
-  let crackMesh = null;
-  if(!look){
-    const crackGeo = new THREE.SphereGeometry(radius*1.02, 22, 16);
-    const crackMat = new THREE.MeshBasicMaterial({
-      map: generateCrackTexture(), transparent:true, opacity:0,
-      depthWrite:false, blending: THREE.AdditiveBlending
-    });
-    crackMesh = new THREE.Mesh(crackGeo, crackMat);
-    mesh.add(crackMesh);
-  }
-
-  // scorch-mark overlay - starts completely clean, burned in by ships' beams
+  // scorch-mark overlay - starts completely clean, burned in by ships'
+  // beams; attached to the body's surface so it turns with it (unit radius)
   const scorchCanvas = document.createElement("canvas");
   scorchCanvas.width = 256; scorchCanvas.height = 256;
   const scorchCtx = scorchCanvas.getContext("2d");
   scorchCtx.clearRect(0,0,256,256);
   const scorchTexture = sRGBTexture(new THREE.CanvasTexture(scorchCanvas));
-  // on a BodyKit planet it turns with the surface (unit radius there)
-  const scorchGeo = new THREE.SphereGeometry(look ? 1.012 : radius*1.012, 22, 16);
   const scorchMat = new THREE.MeshBasicMaterial({
     map: scorchTexture, transparent:true, opacity:0.95,
     depthWrite:false, blending: THREE.AdditiveBlending
   });
-  const scorchMesh = new THREE.Mesh(scorchGeo, scorchMat);
-  scorchMesh.renderOrder = 1; // over a BodyKit planet's clouds
-  if(look) look.attach(scorchMesh);
-  else mesh.add(scorchMesh);
+  const scorchMesh = new THREE.Mesh(new THREE.SphereGeometry(1.012, 22, 16), scorchMat);
+  scorchMesh.renderOrder = 1; // over a planet's clouds
+  look.attach(scorchMesh);
 
-  // sun: a smooth, single-layer glow (a sprite facing the camera - the
-  // canvas gradient interpolates continuously, without the "banding" that
-  // earlier layered 3D-sphere shells produced) + real 3D rays (see
-  // buildSunRays - real objects in space, with parallax as the camera
-  // rotates) + its own light
-  let sunHalo = null;
-  let sunRays = null;
-  if(kind === "sun"){
-    const haloMat = new THREE.SpriteMaterial({
-      map: makeSunHaloTexture(), color: 0xffffff, transparent:true, opacity:0.9,
-      blending: THREE.AdditiveBlending, depthWrite:false
-    });
-    sunHalo = new THREE.Sprite(haloMat);
-    sunHalo.scale.setScalar(radius*CONTENT.sun.haloScale);
-    mesh.add(sunHalo);
+  // the Sun lights the game's own (standard-material) objects: ships,
+  // the station; BodyKit bodies light themselves from its position
+  if(kind === "sun") mesh.add(new THREE.PointLight(0xffcf8a, 1.6, radius*40));
 
-    sunRays = buildSunRays(radius);
-    mesh.add(sunRays);
-
-    const sunLight = new THREE.PointLight(0xffcf8a, 1.6, radius*40);
-    mesh.add(sunLight);
-  }
-
-  // comet: a tail pointing away from the sun (bodyMeshParts.js's own
-  // comment explains why, and why it needs to be re-oriented every frame
-  // now) - built after the fast-forward below computes where it actually
-  // is right now, so the tail's initial direction isn't stale for a
-  // late-joining client.
-  let cometTail = null;
   // The comet's own "orbit" line (see scene/orbitLines.js) - a separate,
   // top-level scene object (not a mesh child), since it shows the WHOLE
   // static flight path in world space while the comet itself moves along
   // it - added to the scene when the comet appears, removed again when it
   // despawns (despawnLocalOnly/destroyPlanet below).
   let trajectoryLine = null;
-
-  // a subtle orbital ring on some planets (not comets, not the lab-built
-  // BodyKit planets, which look the same for everyone) - a purely
-  // cosmetic choice, rolled independently by each client
-  if(kind!=="comet" && !look && Math.random() < 0.3){
-    const rg = new THREE.RingGeometry(radius*1.5, radius*1.75, 40);
-    const rm = new THREE.MeshBasicMaterial({ color:color, transparent:true, opacity:0.25, side:THREE.DoubleSide });
-    const ring = new THREE.Mesh(rg, rm);
-    ring.rotation.x = Math.PI/2 + (Math.random()-0.5)*0.6;
-    mesh.add(ring);
-  }
 
   const selectionBracket = buildSelectionBracket(radius);
   mesh.add(selectionBracket);
@@ -174,8 +117,8 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     cometVel = vel.clone();
     advanceComet(basePos, cometVel, elapsedSec||0);
     mesh.position.copy(basePos);
-    cometTail = buildCometTail(radius, basePos.clone().normalize());
-    mesh.add(cometTail);
+    // the dust tail bends back along the motion (BodyKit's comet)
+    look.opts.velocity = cometVel;
     // From the ORIGINAL entry pos/vel (not basePos/cometVel, which the
     // advanceComet() call above already fast-forwarded to "now") - the
     // line should trace the whole path from where the comet entered, not
@@ -216,20 +159,11 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     healthUpdatedAtMs: healthUpdatedAtMs,
     valueBonus: orbitSlot != null ? (params.valueBonus||0) : (row.value_bonus||0),
     pendingDamage: 0,
-    // Comets get spin:0 deliberately - the tail group is a child of this
-    // mesh, re-oriented every frame in world-space terms (bodyMeshParts.js#
-    // updateCometTailDirection); if the mesh itself kept rotating, that
-    // world-space direction would immediately drift out of alignment again
-    // since it's set in the mesh's LOCAL space.
-    // A BodyKit planet spins itself, at its lab rate (look.body.update()).
-    spin: kind==="comet" || look ? 0 : (Math.random()-0.5)*0.6,
+    // rad/s, for the info panel only: the body spins itself, at its lab rate
+    spin: look.spinRate(),
     selected: false,
     selectionBracket: selectionBracket,
-    sunHalo: sunHalo,
-    sunRays: sunRays,
-    sunPhase: Math.random()*10,
     dying: false,
-    crackMesh: crackMesh,
     look: look,
     scorchMesh: scorchMesh,
     scorchCanvas: scorchCanvas,
@@ -238,15 +172,12 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     basePos: basePos,
     shakePhase: Math.random()*10,
     moving: kind==="comet",
-    cometTail: cometTail,
     trajectoryLine: trajectoryLine,
     // The CURRENT (gravity-advanced) velocity, not the original spawn
     // value - see the comment above where cometVel is computed. Comets
     // are the only body whose velocity keeps changing every frame
     // (updateBodies() steps it forward under the Sun's pull, unlike every
-    // fixed solar body's closed-form orbit or a ship's own steering) — no
-    // more cached driftDir, either: "away from the sun" changes as the
-    // comet moves, so it's recomputed fresh each frame instead.
+    // fixed solar body's closed-form orbit or a ship's own steering).
     vel: kind==="comet" ? cometVel : vel
   };
   ctx.planets.push(p);
@@ -338,7 +269,7 @@ export function despawnLocalOnly(p){
     if(other.commandedTarget===p) other.commandedTarget=null;
   });
   ctx.scene.remove(p.mesh);
-  if(p.look) p.look.dispose();
+  p.look.dispose();
   if(p.trajectoryLine){ ctx.scene.remove(p.trajectoryLine); p.trajectoryLine.geometry.dispose(); }
   removeItem(ctx.planets, p);
 }
@@ -355,34 +286,10 @@ export function despawnBodySilently(p){
   }
 }
 
-// Reused every frame by updateBodies()'s comet branch instead of a fresh
-// `new THREE.Vector3()` per comet per frame - same scratch-vector pattern
-// already established elsewhere (world/blackholes.js's toHoleScratch,
-// ships/swarm.js's toTargetScratch, etc.).
-const outwardCometScratch = new THREE.Vector3();
-
 export function updateBodies(dt){
   for(let i=ctx.planets.length-1; i>=0; i--){
     const p = ctx.planets[i];
     if(p.dying) continue;
-    p.mesh.rotation.y += p.spin*dt;
-
-    if(p.sunHalo){
-      p.sunPhase += dt*2.2;
-      p.sunHalo.material.rotation += dt*0.09;
-      const pulse = 1 + 0.06*Math.abs(Math.sin(p.sunPhase*0.55));
-      p.sunHalo.scale.setScalar(p.radius*CONTENT.sun.haloScale*pulse);
-      p.sunHalo.material.opacity = 0.82 + 0.14*Math.abs(Math.sin(p.sunPhase*0.9));
-    }
-
-    if(p.sunRays){
-      // its own, slightly faster rotation than the sun's base (p.spin) -
-      // real 3D geometry, so the rays get parallax as the camera rotates
-      p.sunRays.rotation.y += dt*0.15;
-      p.sunRays.rotation.x += dt*0.045;
-      const pulse = 1 + 0.08*Math.abs(Math.sin(p.sunPhase*0.7));
-      p.sunRays.scale.setScalar(pulse);
-    }
 
     if(p.moving){
       // Real gravity-curved flight (world/cometPhysics.js), not a straight
@@ -392,13 +299,10 @@ export function updateBodies(dt){
       stepComet(p.basePos, p.vel, dt);
       p.mesh.position.copy(p.basePos);
 
-      // "Away from the sun," recomputed fresh every frame since the comet
-      // is now curving (not moving in a fixed direction) - the Sun sits at
-      // the origin, so the comet's own position IS that direction once
-      // normalized (bodyMeshParts.js#updateCometTailDirection uses this
-      // same real-astronomy direction, not "opposite velocity").
-      const awayFromSun = outwardCometScratch.copy(p.basePos).normalize();
-      if(p.cometTail) updateCometTailDirection(p.cometTail, awayFromSun);
+      // The tails point away from the Sun by themselves (BodyKit's comet
+      // takes the direction from its world position); they grow as the
+      // comet nears the Sun.
+      p.look.opts.activity = cometActivity(p.basePos.length());
 
       if(p.basePos.length() > COMET_EXIT_RADIUS){
         despawnBodySilently(p);
@@ -439,9 +343,11 @@ export function destroyPlanet(p){
   // body's own death effect.
   if(p.trajectoryLine){ ctx.scene.remove(p.trajectoryLine); p.trajectoryLine.geometry.dispose(); }
   const t0 = performance.now();
+  // a short swell, then the body (its BodyKit look inside the mesh)
+  // shrinks away
   function pop(){
     const el = (performance.now()-t0)/220;
-    if(el >= 1){ ctx.scene.remove(p.mesh); if(p.look) p.look.dispose(); return; }
+    if(el >= 1){ ctx.scene.remove(p.mesh); p.look.dispose(); return; }
     let s;
     if(el < 0.22){
       s = 1 + (el/0.22)*0.18; // short flash-swell
@@ -450,10 +356,6 @@ export function destroyPlanet(p){
       s = (1.18)*(1-e2);
     }
     p.mesh.scale.setScalar(Math.max(s,0.001));
-    const op = el < 0.22 ? 1 : 1-((el-0.22)/0.78);
-    p.mesh.material.opacity = op;
-    p.mesh.material.transparent = true;
-    if(p.crackMesh) p.crackMesh.material.opacity = op;
     requestAnimationFrame(pop);
   }
   pop();

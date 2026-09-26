@@ -1,6 +1,6 @@
 import { ctx } from "../core/context.js";
-import { removeItem, disposeMesh } from "../core/utils.js";
-import { makeAccretionTexture, makeHaloTexture } from "./textures.js";
+import { removeItem } from "../core/utils.js";
+import { makeBodyLook, bodyLookRef } from "./bodyVisual.js";
 import { showToast } from "../ui/hud/eventLog.js";
 import { spawnExplosionParticles } from "../fx/particles.js";
 import { spawnShockwave } from "../fx/breakup.js";
@@ -31,48 +31,23 @@ const toHoleScratch = new THREE.Vector3();
 export function materializeBlackHole(radius, orbitSlot){
   const group = new THREE.Group();
 
-  const core = new THREE.Mesh(
-    new THREE.SphereGeometry(radius, 24, 18),
-    new THREE.MeshBasicMaterial({ color: 0x030106 })
-  );
-  group.add(core);
-
-  const horizon = new THREE.Mesh(
-    new THREE.RingGeometry(radius*1.05, radius*1.22, 40),
-    new THREE.MeshBasicMaterial({ color:0xcaa8ff, transparent:true, opacity:0.85, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide })
-  );
-  horizon.rotation.x = Math.PI/2 + (Math.random()-0.5)*0.3;
-  group.add(horizon);
-
-  // gravitational-lensing glow - a sprite (always facing the camera), so
-  // from any angle it looks like a ring - like in real black hole photos
-  const haloMat = new THREE.SpriteMaterial({
-    map: makeHaloTexture(), color:0xfff3d9, transparent:true, opacity:0.9,
-    blending: THREE.AdditiveBlending, depthWrite:false
-  });
-  const halo = new THREE.Sprite(haloMat);
-  halo.scale.setScalar(radius*3.1);
-  group.add(halo);
-
-  const diskGeo = new THREE.RingGeometry(radius*1.5, radius*4.2, 64);
-  const diskMat = new THREE.MeshBasicMaterial({
-    map: makeAccretionTexture(), transparent:true, opacity:0.85,
-    blending: THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide
-  });
-  const disk = new THREE.Mesh(diskGeo, diskMat);
-  disk.rotation.x = Math.PI/2 + (Math.random()-0.5)*0.3;
-  group.add(disk);
+  // The look is BodyKit's black hole from the body lab (world/bodyVisual.js:
+  // horizon, accretion disk with Doppler beaming, photon ring and lensing
+  // glow). An invisible sphere around it is what picking hits — larger
+  // than the horizon, so the disk is clickable too.
+  const look = makeBodyLook(bodyLookRef(orbitSlot != null ? orbitSlot : 9, "blackhole"), radius);
+  group.add(look.root);
+  const pickMesh = new THREE.Mesh(new THREE.SphereGeometry(radius*2.5, 16, 12), new THREE.MeshBasicMaterial({ visible: false }));
+  group.add(pickMesh);
 
   ctx.scene.add(group);
 
   const bh = {
     orbitSlot: orbitSlot,
-    group: group, core: core, horizon: horizon, disk: disk, halo: halo,
+    group: group, look: look, pickMesh: pickMesh,
     radius: radius,
     gravityRadius: radius*7.5,
-    killRadius: radius*1.35,
-    pulsePhase: Math.random()*10,
-    flowSpeed: 0.05+Math.random()*0.06
+    killRadius: radius*1.35
   };
   ctx.blackholes.push(bh);
   showToast(t("toast.blackholeDetected"), "alert");
@@ -84,19 +59,6 @@ export function updateBlackHoles(dt){
   for(let i=0;i<ctx.blackholes.length;i++){
     const bh = ctx.blackholes[i];
     if(bh.orbitSlot != null) bodyPosAt(bh.orbitSlot, t, bh.group.position);
-    // We rotate the whole mesh (not the texture via offset.x) - RingGeometry
-    // has planar UV mapping (u,v from x,y position, not from angle), so
-    // animating the offset slides the texture like a flat image: the bright
-    // center slides in from one side and falls out the other, while the true
-    // center (the hole in the geometry) always looks dark. Rotating around
-    // its own axis preserves symmetry - the texture's bright spot (if visible
-    // at all) circles around the center along with everything else.
-    bh.disk.rotation.z += dt*(0.6 + bh.flowSpeed);
-    bh.pulsePhase += dt*3;
-    bh.horizon.material.opacity = 0.6 + 0.35*Math.abs(Math.sin(bh.pulsePhase));
-    bh.halo.material.opacity = 0.75 + 0.2*Math.abs(Math.sin(bh.pulsePhase*0.8));
-    const haloPulseScale = 1 + 0.04*Math.abs(Math.sin(bh.pulsePhase*0.8));
-    bh.halo.scale.setScalar(bh.radius*3.1*haloPulseScale);
   }
 
   if(ctx.blackholes.length === 0 || ctx.ships.length === 0) return;

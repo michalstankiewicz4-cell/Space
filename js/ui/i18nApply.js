@@ -120,4 +120,5 @@ export function applyStaticText(){
   document.getElementById("devLightsLabel").textContent = t("devTools.lights");
   document.getElementById("devDistanceLabel").textContent = t("devTools.distance");
   document.getElementById("devNoLightsLabel").textContent = t("devTools.noLights");
+  document.getElementById("devPerfLabel").textContent = t("devTools.perf");
 }

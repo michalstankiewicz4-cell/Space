@@ -18,7 +18,7 @@ for(let pi=0; pi<MAX_PARTICLES; pi++){
 // interval spaced particles too far apart to read as a continuous trail,
 // showing up instead as a visibly dashed line of separate dots trailing
 // the comet - reported live, and redundant with the comet's own geometric
-// tail (bodyMeshParts.js#buildCometTail) plus the new trajectory line
+// tail (BodyKit's comet, js/bodykit/bodykit.js) plus the new trajectory line
 // (scene/orbitLines.js#buildCometTrajectoryLine) anyway.
 export function initParticles(){
   particleGeo = new THREE.BufferGeometry();

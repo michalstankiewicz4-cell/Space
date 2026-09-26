@@ -1,101 +1,12 @@
 import { sRGBTexture } from "../core/utils.js";
-import { CONTENT } from "../content.js";
 import { PLANET_BRACKET_SCALE } from "../config.js";
-import { makeSunRayTexture, makeCometTailTexture } from "./textures.js";
 
-// Mesh-building helpers for a body's optional decorations — split out of
+// Mesh-building helpers for a body's game-side decorations — split out of
 // world/bodies.js#materializePlanet (same "model-building lives in its own
 // file" split already used for the station, see station/stationModel.js
-// vs station.js). Each function here only builds and returns a THREE
-// object; bodies.js decides when to call them and adds the result to its
-// own mesh.
-
-// Real 3D sun rays: thin planes (not a sprite/billboard) shot out in random
-// directions in space and randomly rotated around their own axis ("roll") —
-// this way, unlike a flat image always facing the camera, they have real
-// parallax as the view rotates.
-export function buildSunRays(radius){
-  const group = new THREE.Group();
-  const rayTexture = makeSunRayTexture();
-  const s = CONTENT.sun;
-  const up = new THREE.Vector3(0, 1, 0);
-
-  for(let i=0;i<s.rayCount;i++){
-    const long = i % 2 === 0;
-    const length = radius * (long ? (s.rayLengthLongMin+Math.random()*s.rayLengthLongRange) : (s.rayLengthShortMin+Math.random()*s.rayLengthShortRange));
-    const width = radius * (s.rayWidthMin + Math.random()*s.rayWidthRange);
-
-    const geo = new THREE.PlaneGeometry(width, length);
-    geo.translate(0, length/2, 0); // local (0,0,0) = ray base at the surface
-
-    const mat = new THREE.MeshBasicMaterial({
-      map: rayTexture, transparent: true, opacity: 0.8,
-      blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
-    });
-    const plane = new THREE.Mesh(geo, mat);
-
-    const dir = new THREE.Vector3(Math.random()*2-1, Math.random()*2-1, Math.random()*2-1);
-    if(dir.lengthSq() < 0.0001) dir.set(0,1,0);
-    dir.normalize();
-    plane.quaternion.setFromUnitVectors(up, dir);
-    plane.rotateY(Math.random()*Math.PI*2); // random rotation around its own axis (now = dir)
-
-    group.add(plane);
-  }
-  return group;
-}
-
-// Comet tail: two crossed planes (the classic "crossed billboard" trick -
-// visible from almost any angle, unlike a single flat plane that disappears
-// when seen "edge-on") pointing AWAY FROM THE SUN — real comet tails point
-// away from the star (solar wind/radiation pressure), not away from the
-// direction of travel, which only happens to look similar for a straight,
-// unaccelerated path. Now that comets fly a real gravity-curved swing-by
-// (world/cometPhysics.js), "away from the sun" changes every frame as the
-// comet moves, unlike the old straight-line drift where a fixed direction
-// computed once at spawn stayed correct forever — see
-// updateCometTailDirection() below, called every frame from
-// world/bodies.js#updateBodies. Comets are given spin:0 specifically (see
-// materializePlanet) so this group's LOCAL orientation always equals its
-// WORLD orientation — no need to account for a spinning parent mesh here.
-const TAIL_UP = new THREE.Vector3(0, 1, 0);
-
-export function buildCometTail(radius, awayFromSun){
-  const group = new THREE.Group();
-
-  const length = radius * (CONTENT.comet.tailLengthMin + Math.random()*CONTENT.comet.tailLengthRange);
-  const width = radius * (CONTENT.comet.tailWidthMin + Math.random()*CONTENT.comet.tailWidthRange);
-  const geo = new THREE.PlaneGeometry(width, length);
-  geo.translate(0, length/2, 0);
-  const mat = new THREE.MeshBasicMaterial({
-    map: makeCometTailTexture(), transparent: true, opacity: 0.85,
-    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
-  });
-
-  for(let i=0;i<2;i++){
-    const plane = new THREE.Mesh(geo, mat);
-    // Each child's own fixed "crossed billboard" offset around the shared
-    // tail axis - reapplied on top of the (per-frame-changing) base
-    // direction every time updateCometTailDirection() runs.
-    plane.userData.tailOffset = i * Math.PI/2;
-    group.add(plane);
-  }
-  updateCometTailDirection(group, awayFromSun);
-  return group;
-}
-
-// Re-orients an existing tail group's two planes toward a fresh
-// "away from the sun" direction - called every frame (world/bodies.js#
-// updateBodies) rather than only once at creation, unlike every other
-// optional decoration mesh in this file.
-export function updateCometTailDirection(group, awayFromSun){
-  if(awayFromSun.lengthSq() < 0.0001) return;
-  for(let i=0;i<group.children.length;i++){
-    const plane = group.children[i];
-    plane.quaternion.setFromUnitVectors(TAIL_UP, awayFromSun);
-    plane.rotateY(plane.userData.tailOffset);
-  }
-}
+// vs station.js). The bodies themselves (sun corona, comet tails, …) are
+// BodyKit's now (world/bodyVisual.js); what's left here is the game's own
+// selection bracket.
 
 // Selection indicator for a planet: four L-shaped corner marks (a
 // "targeting bracket", not a full ring like ships/drone/station use) —
@@ -105,9 +16,8 @@ export function updateCometTailDirection(group, awayFromSun){
 // A THREE.Sprite always faces the camera regardless of its parent's own
 // rotation, so adding it as a child of the planet mesh at local (0,0,0)
 // (matching how the ship/drone/station rings ride along as children) is
-// safe even though the mesh itself spins (p.spin) — the sprite doesn't
-// inherit that rotation, only the (unchanging, since it's at the origin)
-// position. The texture is built once and cached — every planet's bracket
+// safe whatever the mesh's rotation — the sprite doesn't inherit it, only
+// the (unchanging, since it's at the origin) position. The texture is built once and cached — every planet's bracket
 // reuses the same texture, just scaled per-instance by radius.
 let bracketTexture = null;
 function getBracketTexture(){

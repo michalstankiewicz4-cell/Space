@@ -7,6 +7,7 @@ import { initScene } from "./scene/setup.js";
 import { manageSceneColors } from "./scene/colorManagement.js";
 import { updateShipVisuals } from "./ships/shipVisual.js";
 import { updateBodyLooks } from "./world/bodyVisual.js";
+import { perfFrameStart, perfRenderStart, perfFrameEnd } from "./ui/hud/perfStats.js";
 import { ctx } from "./core/context.js";
 import { initControls, updateCamera, setCameraMode } from "./scene/controls.js";
 import { updatePulsars } from "./scene/pulsars.js";
@@ -109,6 +110,7 @@ if(NET_ENABLED){
 const clock = new THREE.Clock();
 
 function tick(){
+  perfFrameStart();             // Dev Tools -> Performance stats (ui/hud/perfStats.js)
   const dt = Math.min(0.05, clock.getDelta());
   updateCamera(dt);
   updatePulsars(dt);
@@ -150,11 +152,13 @@ function tick(){
   // Main view into the HUD's viewport rect, then the extra passes (ship cam,
   // unit/planet miniatures) into their own panels' rects — all on the same
   // full-window canvas (see scene/viewRect.js).
+  perfRenderStart();
   renderMainView();
   updateShipCam();
   renderShipCamPIP();
   renderUnitThumb();
   renderInfoThumb(dt);
+  perfFrameEnd();
 
   requestAnimationFrame(tick);
 }

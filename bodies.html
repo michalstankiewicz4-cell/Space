@@ -1376,7 +1376,7 @@ const controls = new THREE.OrbitControls(camera, view);
 controls.enableDamping = true;
 controls.dampingFactor = 0.06;
 controls.minDistance = 1.4;
-controls.maxDistance = 25;
+controls.maxDistance = 90;
 controls.autoRotate = true;
 controls.autoRotateSpeed = 0.35;
 
@@ -1412,8 +1412,10 @@ function loadBody(keepValues) {
   $("hudTitle").textContent = def ? def.name + (def.slot != null ? ` · ORBIT ${def.slot}` : "") : g.name;
   $("emptyNote").classList.toggle("hidden", !!def);
   $("bodyStats").classList.toggle("hidden", !def);
-  // layer toggles only make sense for a body that has those layers
-  $("btnClouds").classList.toggle("hidden", !def); $("btnAtmo").classList.toggle("hidden", !def);
+  // layer toggles: only the layers this group has, named by the group
+  const layers = g.layers || {};
+  $("btnClouds").classList.toggle("hidden", !def || !layers.clouds); $("btnAtmo").classList.toggle("hidden", !def || !layers.atmosphere);
+  $("btnClouds").textContent = layers.clouds || "CLOUDS"; $("btnAtmo").textContent = layers.atmosphere || "ATMOSPHERE";
   if (!def) { state.values = null; buildParamSliders(); return; }
   if (!keepValues || !state.values) state.values = BodyKit.defaultValues(g, def);
   current = BodyKit.buildBody(g.id, def.id, { detail: state.detail, values: state.values });
@@ -1441,7 +1443,7 @@ function refreshModelStats() {
   const box = $("modelRows"); box.textContent = "";
   if (!current) return;
   const st = BodyKit.modelStats(current.group);
-  row(box, "Meshes (surface / clouds / atmosphere)", st.meshes);
+  row(box, "Meshes", st.meshes);
   row(box, "Triangles", fmtInt(st.triangles));
   row(box, "Vertices", fmtInt(st.vertices));
   row(box, "Custom shaders", st.shaderCount);
@@ -1453,16 +1455,12 @@ let measureTimer = 0;
 function queueMeasure() { clearTimeout(measureTimer); measureTimer = setTimeout(measure, 120); }
 function measure() {
   if (!current) return;
-  const m = current.measure(renderer), v = state.values;
-  const R = 6371 * v.size;
+  const v = state.values;
+  const R = currentGroup().kmPerSize * v.size, area = 4 * Math.PI * R * R;
   const box = $("physRows"); box.textContent = "";
   row(box, "Radius", fmtInt(R) + " km");
-  row(box, "Surface area", (4 * Math.PI * R * R / 1e6).toFixed(0) + " M km²");
-  row(box, "Land", (m.land * 100).toFixed(1) + "%");
-  row(box, "Water", (m.water * 100).toFixed(1) + "%");
-  if (m.lava > 0) row(box, "Lava", (m.lava * 100).toFixed(1) + "%");
-  row(box, "Ice & snow", (m.ice * 100).toFixed(1) + "%");
-  row(box, "Cloud cover", (m.clouds * 100).toFixed(1) + "%");
+  row(box, "Surface area", area >= 1e6 ? fmtInt(area / 1e6) + " M km²" : fmtInt(area) + " km²");
+  for (const [k, text] of current.describe(renderer)) row(box, k, text);   // the group's own statistics
   row(box, "Axial tilt", Math.round(v.tilt) + "°");
   fitHud();
 }
@@ -1535,6 +1533,7 @@ BodyKit.GROUPS.forEach((g, i) => {
   b.className = "mat groupTab"; b.textContent = g.name;
   b.addEventListener("click", () => {
     state.groupIndex = i; state.bodyIndex = 0;
+    camera.position.setLength(g.view || 4.4);    // frame the group's bodies (a comet's tail is long)
     [...tabs.children].forEach((t, j) => { t.classList.toggle("gold", j === i); t.classList.toggle("blueT", j !== i); });
     loadBody(false);
   });

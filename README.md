@@ -37,7 +37,7 @@ js/
   supabaseClient.js  Supabase client singleton
   shipkit/           ShipKit — the procedural ship models (swarm ships, the drone), one classic
                      script shared with the ship lab (ship.html); see docs/ship.md
-  bodykit/           BodyKit — the procedural planets, one classic script shared with the
+  bodykit/           BodyKit — every procedural celestial body, one classic script shared with the
                      body lab (bodies.html); see docs/bodies.md
   core/              shared game state (scene/entity collections, player points), Wiki discovery
                      state (discovery.js) + small utilities

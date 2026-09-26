@@ -28,6 +28,13 @@
 #shipCamCloseBtn{ position:absolute; right:4px; top:4px; width:36px; height:22px; font-size:12px; pointer-events:auto; }
 
 /* Dev Tools: small button in the viewport's bottom-right corner + its menu. */
+/* Dev Tools -> Performance stats (ui/hud/perfStats.js), top-left corner. */
+#perfStats{ left:12px; top:12px; width:244px; padding:8px 10px 6px; border-radius:8px; pointer-events:none;
+  background:rgb(0 2 12 / .82); border:1.5px solid var(--uiFrame); box-shadow:0 0 8px var(--uiFrameGlow);
+  font-family:var(--uiFontLabel); font-size:13px; letter-spacing:.2px; color:#aab6ff; }
+#perfStatsText > div{ display:flex; justify-content:space-between; gap:10px; line-height:1.45; white-space:nowrap; }
+#perfStatsText b{ color:#ffe2a8; font-weight:500; }
+#perfStatsGraph{ display:block; width:224px; height:44px; margin-top:5px; border-top:1px solid #1d2c7a; }
 #devToolsBtn{ right:12px; bottom:12px; width:40px; height:36px; display:flex; align-items:center; justify-content:center; }
 #devToolsBtn svg{ width:22px; height:22px; }
 #devToolsMenu{ right:12px; bottom:56px; padding:10px 14px 4px; border-radius:10px;

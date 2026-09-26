@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.10.0">
+<link rel="stylesheet" href="css/style.css?v=2.11.0">
 </head>
 <body>
 
@@ -374,6 +374,11 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
       <label class="setupCheckRow"><input type="checkbox" id="devLightsCheck"><span class="chk"></span><span id="devLightsLabel">Show light sources</span></label>
       <label class="setupCheckRow"><input type="checkbox" id="devDistanceCheck"><span class="chk"></span><span id="devDistanceLabel">Connect selected planets</span></label>
       <label class="setupCheckRow"><input type="checkbox" id="devNoLightsCheck"><span class="chk"></span><span id="devNoLightsLabel">Turn off lights</span></label>
+      <label class="setupCheckRow"><input type="checkbox" id="devPerfCheck"><span class="chk"></span><span id="devPerfLabel">Performance stats</span></label>
+    </div>
+    <div id="perfStats" class="hidden">
+      <div id="perfStatsText"></div>
+      <canvas id="perfStatsGraph" width="240" height="44"></canvas>
     </div>
   </div>
 
@@ -641,6 +646,6 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.10.0"></script>
+<script type="module" src="js/main.js?v=2.11.0"></script>
 </body>
 </html>

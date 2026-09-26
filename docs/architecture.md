@@ -1186,6 +1186,28 @@ then read just that range.
   drives time/spin/sun direction; a detail change rebuilds, a quality
   change sets the octaves (`BodyKit.QUALITY_OCTAVES`). The old CPU-made
   neutral-planet surface texture (`makePlanetSurfaceTexture`) was removed
-  with it. The Sun, the meteoroid, comets and the black hole are still
-  the game's own meshes. Details and rules: `docs/bodies.md`.
+  with it. Details and rules: `docs/bodies.md`.
+- **Every body is BodyKit's (v2.11.0)**: the Sun (SOL: granulation,
+  sunspots, corona billboard; keeps the game's PointLight for standard
+  materials), the meteoroid (FERRUM, a GPU-displaced rock), every comet
+  (COMET via `BodyKit.GAME_KINDS`: rock nucleus, coma, ion + dust tails
+  pointing away from the Sun by themselves; `look.opts.velocity` bends
+  the dust tail, `look.opts.activity = cometActivity(distance)` grows them
+  near the Sun) and the black hole (ABYSS: horizon, Doppler-beamed disk,
+  photon ring; `materializeBlackHole` adds an invisible 2.5 × radius pick
+  sphere, `bh.pickMesh`, used by `scene/picking.js`). `bodyLookRef(slot,
+  kind)` picks the lab body. Removed with it: the crack overlay, sun halo
+  sprite and 3D rays, crossed-plane comet tail, sprite/ring black hole and
+  their canvas textures (`world/textures.js` keeps only
+  `makeRockGeometry` for debris and `generateDustTexture`),
+  `bodyMeshParts.js` keeps only the selection bracket.
+- **Dev Tools -> Performance stats** (`ui/hud/perfStats.js`): FPS, frame
+  time, worst frame, CPU time (update + render), draw calls and
+  triangles summed over all of a frame's render passes (main view, ship
+  cam, miniatures — `renderer.info.autoReset` is off and it's reset once
+  per frame in `perfFrameStart()`), GPU memory (geometries / textures /
+  shader programs), render resolution, scene object count, bodies /
+  ships / players, JS heap (Chrome), plus a frame-time graph. `main.js`
+  brackets each frame with `perfFrameStart()` / `perfRenderStart()` /
+  `perfFrameEnd()`; the toggle is remembered (`roj-devPerf`).
 

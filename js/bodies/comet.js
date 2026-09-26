@@ -14,7 +14,6 @@ export const COMET = {
   // size (world/solarSystem.js) - the old 3.2-5.0 was tuned for the
   // previous, much smaller world and would take a comet a very long time
   // to cross this one.
-  speedMin: 8, speedRange: 4,
-  tailLengthMin: 9, tailLengthRange: 4,
-  tailWidthMin: 1.43, tailWidthRange: 0.39
+  speedMin: 8, speedRange: 4
+  // its look (nucleus, coma, tails) is BodyKit's COMET (js/bodykit/bodykit.js)
 };

@@ -64,7 +64,7 @@ export function pickBlackHoleAt(e){
   raycaster.setFromCamera(ndc, ctx.camera);
   for(let i=0;i<ctx.blackholes.length;i++){
     const bh = ctx.blackholes[i];
-    const hits = raycaster.intersectObjects([bh.core, bh.horizon, bh.disk], false);
+    const hits = raycaster.intersectObject(bh.pickMesh, false);
     if(hits.length>0) return bh;
   }
   return null;

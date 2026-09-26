@@ -32,8 +32,7 @@ function makeNebulaTexture(){
 
   // Soft nebula cloud blobs in the game's own accent palette (teal/ice/
   // ember, plus a violet for variety), additive-blended so overlaps
-  // brighten naturally instead of muddying into grey — same layering idea
-  // as makeAccretionTexture()'s plasma streaks in world/textures.js.
+  // brighten naturally instead of muddying into grey.
   const palette = ["79,227,198", "79,168,255", "255,122,69", "150,120,255"];
   c.globalCompositeOperation = "lighter";
   const cloudCount = 9;
