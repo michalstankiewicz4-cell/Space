@@ -1,5 +1,6 @@
 import { gfxDetail, gfxQuality, onGraphicsChange } from "../scene/graphics.js";
 import { COMET_ACTIVITY_DISTANCE } from "../config.js";
+import { ctx } from "../core/context.js";
 
 // Every body's look comes from BodyKit (js/bodykit/bodykit.js, the body
 // lab's bodies — the same file bodies.html loads): a fixed orbit slot
@@ -10,8 +11,13 @@ import { COMET_ACTIVITY_DISTANCE } from "../config.js";
 // glowing cracks (setDamage); world/bodies.js and world/blackholes.js keep
 // the invisible pick sphere, the scorch marks and the game logic around
 // it. Geometry detail and noise octaves follow Setup -> Graphics.
+// Ships' glow lights (when on) light the bodies too: every frame each body
+// gets up to BodyKit.MAX_POINT_LIGHTS of the nearest ones that reach it.
 const all = new Set();
 let animT = 0;
+const lightPool = [];              // { position, color, intensity, distance }, reused
+let lightCount = 0;
+const bodyPos = new THREE.Vector3();
 
 // Which lab body a game body is: its fixed slot's, else its kind's.
 export function bodyLookRef(slot, kind){
@@ -27,9 +33,9 @@ export function cometActivity(distanceFromSun){
 
 export function makeBodyLook(ref, radius){
   const look = {
-    root: new THREE.Group(), body: null, damage: 0,
-    // passed to BodyKit's update() every frame (a comet: velocity, activity)
-    opts: {},
+    root: new THREE.Group(), body: null, damage: 0, radius: radius,
+    // passed to BodyKit's update() every frame (lights; a comet: velocity, activity)
+    opts: { lights: [] },
     // things that turn with the surface (scorch marks), in units of the radius
     attached: [],
     build: function(){
@@ -50,10 +56,46 @@ export function makeBodyLook(ref, radius){
   return look;
 }
 
-// Every frame: time for the animated layers, spin, sun direction, tails.
+// The visible ship glow lights, in world space (hidden ones: the setting
+// is off, or Dev Tools turned all lights off).
+function gatherShipLights(){
+  lightCount = 0;
+  for(let i = 0; i < ctx.ships.length; i++){
+    const light = ctx.ships[i].light;
+    if(!light || !light.visible) continue;
+    if(!lightPool[lightCount]) lightPool[lightCount] = { position: new THREE.Vector3(), color: null, intensity: 0, distance: 0 };
+    const l = lightPool[lightCount++];
+    light.getWorldPosition(l.position);
+    l.color = light.color; l.intensity = light.intensity; l.distance = light.distance;
+  }
+}
+
+// The nearest lights that reach this body's surface, at most MAX_POINT_LIGHTS.
+function pickLights(look){
+  const out = look.opts.lights;
+  out.length = 0;
+  if(lightCount === 0) return;
+  look.root.getWorldPosition(bodyPos);
+  for(let i = 0; i < lightCount; i++){
+    const l = lightPool[i];
+    l.d = l.position.distanceTo(bodyPos);
+    if(l.d < l.distance + look.radius * 1.5) out.push(l);
+  }
+  if(out.length > BodyKit.MAX_POINT_LIGHTS){
+    out.sort(function(a, b){ return a.d - b.d; });
+    out.length = BodyKit.MAX_POINT_LIGHTS;
+  }
+}
+
+// Every frame: time for the animated layers, spin, sun direction, tails,
+// nearby ship lights.
 export function updateBodyLooks(dt){
   animT += dt;
-  all.forEach(function(l){ l.body.update(animT, dt, l.opts); });
+  gatherShipLights();
+  all.forEach(function(l){
+    pickLights(l);
+    l.body.update(animT, dt, l.opts);
+  });
 }
 
 onGraphicsChange(function(before){

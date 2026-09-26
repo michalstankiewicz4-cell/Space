@@ -156,6 +156,7 @@ input[type=range]::-moz-range-thumb{ width:30px; height:20px; border-radius:4px 
       <button class="tBtn on" id="btnClouds">CLOUDS</button>
       <button class="tBtn on" id="btnAtmo">ATMOSPHERE</button>
       <button class="tBtn" id="btnWire">WIREFRAME</button>
+      <button class="tBtn" id="btnShipLight" title="A ship's glow light orbiting the body, as in the game when a ship bites it">SHIP LIGHT</button>
     </div>
     <div id="hint">Left-drag: rotate · Right-drag: pan · Scroll: zoom</div>
   </div>
@@ -1393,10 +1394,19 @@ sun.position.copy(sunDir).multiplyScalar(150);
 sun.scale.setScalar(30);
 scene.add(sun);
 
+// SHIP LIGHT toggle: a teal point light circling the body (BodyKit's
+// opts.lights), with a glow dot to show where it is.
+const shipLight = { position: new THREE.Vector3(), color: new THREE.Color(0x4fe3c6).convertSRGBToLinear(), intensity: 1.5, distance: 4 };
+const shipLights = [shipLight];
+const shipLightDot = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: makeGlow("rgba(220,255,248,1)", "rgba(79,227,198,0.6)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+shipLightDot.visible = false;
+scene.add(shipLightDot);
+
 // =====================================================================
 // State + body loading
 // =====================================================================
-const state = { groupIndex: 0, bodyIndex: 0, rotate: true, clouds: true, atmosphere: true, wire: false,
+const state = { groupIndex: 0, bodyIndex: 0, rotate: true, clouds: true, atmosphere: true, wire: false, shipLight: false,
                 quality: 3, detail: 1, values: null };
 let current = null;
 const $ = (id) => document.getElementById(id);
@@ -1555,6 +1565,7 @@ toggle("btnRotate", "rotate", (on) => { controls.autoRotate = on; });
 toggle("btnClouds", "clouds", (on) => current && current.setLayers({ clouds: on }));
 toggle("btnAtmo", "atmosphere", (on) => current && current.setLayers({ atmosphere: on }));
 toggle("btnWire", "wire", applyWire);
+toggle("btnShipLight", "shipLight", (on) => { shipLightDot.visible = on; });
 
 $("btnSeed").addEventListener("click", () => {
   if (!current) return;
@@ -1674,7 +1685,16 @@ function frame() {
   const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
   controls.update();
   camera.updateMatrixWorld();
-  if (current) current.update(t, dt, { sunDir });
+  if (current) {
+    // SHIP LIGHT: the game's ship glow (config.js SHIP_LIGHT_*) orbiting at
+    // the eating distance, in the body's radius units
+    const R = current.radius, a = t * 0.6;
+    shipLight.position.set(Math.cos(a) * R * 1.8, R * 0.35, Math.sin(a) * R * 1.8);
+    shipLight.distance = R * 4.5;
+    shipLightDot.position.copy(shipLight.position);
+    shipLightDot.scale.setScalar(R * 0.25);
+    current.update(t, dt, { sunDir, lights: state.shipLight ? shipLights : undefined });
+  }
   renderer.render(scene, camera);
   updatePerf(performance.now(), performance.now() - t0);
   requestAnimationFrame(frame);

@@ -208,6 +208,7 @@ Body handle:
 | `setRadius(units)` | Radius in world units; overrides `values.size` |
 | `setValues(values)` | Changes parameters live (uniforms only) |
 | `setDamage(x)` | Damage 0–1, a single uniform write (use it per frame instead of `setValues`) |
+| (`update` `opts.lights`) | Up to `MAX_POINT_LIGHTS` (4) nearby point lights `{ position (world), color, intensity, distance }`; planets and rocks (incl. a comet's nucleus) add them to their lighting (`pointLightAt()` in `GLSL_BODY`), self-lit bodies ignore them |
 | `setOctaves(n)` | Noise octaves per pixel (2–8), a quality/cost knob |
 | `setLayers({ clouds, atmosphere })` | Shows or hides the layers |
 | `describe(renderer)` | The group's own statistics for the lab: `[[label, text], …]` |
@@ -222,7 +223,7 @@ be reused:
 | Block | What it gives you |
 |---|---|
 | `GLSL_NOISE` | `snoise` (3D simplex) and `fbm(p, octaves, persistence)` with a runtime octave count |
-| `GLSL_BODY` | What every body shader includes next: the common uniforms (`uSeed`, `uTime`, `uDamage`, `uOctaves`), `crackAt()` (the damage cracks) and `hash33()` |
+| `GLSL_BODY` | What every body shader includes next: the common uniforms (`uSeed`, `uTime`, `uDamage`, `uOctaves`, the point lights), `crackAt()` (the damage cracks), `pointLightAt()` (nearby point lights) and `hash33()` |
 | `bodyUniforms(v)` | Those uniforms + `uSunDir`, for a new build to extend |
 | `makeBodyHandle({ v, U, group, spin, pickMesh, apply, layers, onUpdate, describe, measure, dispose })` | **The whole body handle** (sun direction, spin, tilt, radius, seed, damage, octaves, layer toggles); a build only passes what's its own |
 | `GLSL_SPHERE_VERTEX` | The plain lit-sphere vertex shader (`vDir`, `vWorldPos`, `vNormalW`): clouds, atmosphere, sun surface |
@@ -329,14 +330,22 @@ Sun, the meteoroid, comets, the black hole) are BodyKit bodies
    a body fills the screen (the ship cam, the PLANET INFO miniature, the
    Sun's corona up close). Dev Tools → Performance stats shows FPS,
    frame time, draw calls and triangles live.
-10. **Multiplayer**: nothing is sent — the look is fixed per slot and the
+10. **Ship glow lights** (v2.11.1, Setup → Graphics, off by default):
+    `updateBodyLooks()` gathers the visible ship lights (`ships/swarm.js`:
+    behind the engines, intensity following the engine power,
+    `SHIP_LIGHT_INTENSITY` / `SHIP_LIGHT_RANGE`) once per frame and gives
+    every body the nearest ones that reach it (at most 4) as
+    `opts.lights`. The lab's **SHIP LIGHT** toggle circles the same kind
+    of light around the body.
+11. **Multiplayer**: nothing is sent — the look is fixed per slot and the
     health that drives damage is already synced.
 
 ## Viewer (preview page)
 
 - **Left panel**: group tabs (PLANETS / SUNS / COMETS / ROCKS / BLACK HOLES), body
   navigation, PHYSICAL statistics and MODEL statistics, and toggles for
-  auto-rotate, clouds, atmosphere and wireframe. The clouds and
+  auto-rotate, the two layers (named by the group), wireframe and SHIP LIGHT
+  (a teal light circling the body, as a ship's glow light does in the game). The clouds and
   atmosphere toggles are hidden for empty groups.
   - PHYSICAL: radius in km (size × the group's `kmPerSize`), surface
     area, then the body's own `describe()` rows (a planet: the measured

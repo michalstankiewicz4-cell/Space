@@ -57,6 +57,9 @@
                               same as setValues({ damage }), but cheap
                               enough to call every frame
          setOctaves(n)        noise detail per pixel (2..8), a quality knob
+                              (update's opts.lights: up to 4 nearby point
+                              lights, e.g. ships' glow, light planets and
+                              rocks too)
          setLayers({ clouds, atmosphere })  show/hide layers
          measure(renderer)    surface coverage, computed on the GPU with the
                               same shader functions as the surface
@@ -178,6 +181,25 @@ float crackAt(vec3 p){
   float c2 = smoothstep(1.0 - w * 0.7, 1.0, 1.0 - abs(snoise(p * 10.0 + uSeed.zxy)));
   return clamp(c1 + c2 * 0.7, 0.0, 1.0) * reach;
 }
+// Nearby point lights (the game: ships' glow lights; the lab: SHIP LIGHT),
+// in world space: color already × intensity, linear falloff to 0 at the
+// range, squared. Up to MAX_POINT_LIGHTS, uPointCount of them in use.
+#define MAX_POINT_LIGHTS 4
+uniform vec3 uPointPos[MAX_POINT_LIGHTS];
+uniform vec3 uPointColor[MAX_POINT_LIGHTS];
+uniform float uPointRange[MAX_POINT_LIGHTS];
+uniform int uPointCount;
+vec3 pointLightAt(vec3 worldPos, vec3 N){
+  vec3 sum = vec3(0.0);
+  for (int i = 0; i < MAX_POINT_LIGHTS; i++){
+    if (i >= uPointCount) break;
+    vec3 d = uPointPos[i] - worldPos;
+    float dist = length(d);
+    float att = clamp(1.0 - dist / uPointRange[i], 0.0, 1.0);
+    sum += uPointColor[i] * max(dot(N, d / max(dist, 1e-4)), 0.0) * att * att;
+  }
+  return sum;
+}
 // three pseudo-random numbers 0..1 for a cell (integer coordinates)
 vec3 hash33(vec3 p){
   p = fract(p * vec3(0.1031, 0.1030, 0.0973));
@@ -215,6 +237,7 @@ function makeBillboard(U, halfSize, fragmentShader) {
 const hueColor = (hue) => new THREE.Color().setHSL(hue / 360, 0.75, 0.62);
 const SPIN_RAD_PER_UNIT = 0.6;              // values.spin 1 = 0.6 rad/s
 const ORIGIN = new THREE.Vector3();         // default light source: a sun at (0,0,0)
+const NO_LIGHTS = [];
 const seedVec = (s, out) => out.set(s * 17.13 % 97, s * 7.71 % 89, s * 3.37 % 83);
 
 // Star color of a black body at `kelvin` (Tanner Helland's fit), 0..1.
@@ -229,10 +252,14 @@ function blackbody(kelvin, out) {
 }
 
 // The uniforms every body has (GLSL_BODY + the light direction).
+const MAX_POINT_LIGHTS = 4;
 function bodyUniforms(v) {
+  const vecs = () => Array.from({ length: MAX_POINT_LIGHTS }, () => new THREE.Vector3());
   return {
     uSeed: { value: seedVec(v.seed, new THREE.Vector3()) }, uTime: { value: 0 },
     uDamage: { value: v.damage }, uOctaves: { value: 6 }, uSunDir: { value: new THREE.Vector3(1, 0, 0) },
+    uPointPos: { value: vecs() }, uPointColor: { value: vecs() },
+    uPointRange: { value: new Array(MAX_POINT_LIGHTS).fill(1) }, uPointCount: { value: 0 },
   };
 }
 
@@ -255,8 +282,19 @@ function makeBodyHandle({ v, U, group, spin, pickMesh, apply, layers = {}, onUpd
     // opts.sunDir: world direction toward the light, or
     // opts.sunPosition: world position of the light (default (0,0,0));
     // the direction is then taken from the body's own world position.
+    // opts.lights: nearby point lights, [{ position (world), color,
+    // intensity, distance }], the first MAX_POINT_LIGHTS used; left out =
+    // none.
     update(t, dt, opts = {}) {
       U.uTime.value = t;
+      const lights = opts.lights || NO_LIGHTS, n = Math.min(lights.length, MAX_POINT_LIGHTS);
+      for (let i = 0; i < n; i++) {
+        const l = lights[i];
+        U.uPointPos.value[i].copy(l.position);
+        U.uPointColor.value[i].set(l.color.r, l.color.g, l.color.b).multiplyScalar(l.intensity);
+        U.uPointRange.value[i] = l.distance;
+      }
+      U.uPointCount.value = n;
       spin.rotation.y += dt * v.spin * SPIN_RAD_PER_UNIT;
       group.rotation.z = THREE.MathUtils.degToRad(v.tilt);
       if (opts.sunDir) U.uSunDir.value.copy(opts.sunDir).normalize();
@@ -438,7 +476,7 @@ function planetSurfaceMaterial(U) {
         vec3 H = normalize(L + V);
         float gloss = (1.0 - uLava) * (1.0 - 0.6 * uFrozen);           // lava is matte, ice duller than water
         float spec = water * (1.0 - ice) * gloss * pow(max(dot(N, H), 0.0), 70.0) * 0.9 * wrap;
-        vec3 lit = col * (0.025 + diff * wrap * 1.15) + vec3(1.0, 0.95, 0.85) * spec;
+        vec3 lit = col * (0.025 + diff * wrap * 1.15 + pointLightAt(vWorldPos, Nb)) + vec3(1.0, 0.95, 0.85) * spec;
         // atmospheric haze toward the limb, on the day side
         float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0);
         lit += uAtmoColor * rim * uAtmo * 0.8 * smoothstep(-0.2, 0.4, dot(N, L));
@@ -769,7 +807,7 @@ function rockMaterial(U) {
         vec3 L = normalize(uSunDir), V = normalize(cameraPosition - vWorldPos), H = normalize(L + V);
         float diff = max(dot(Nb, L), 0.0);
         float spec = pow(max(dot(Nb, H), 0.0), 40.0) * (frost * 0.4 + vein * 1.5 + uMetal * 0.15) * step(0.0, dot(N, L));
-        vec3 col = base * (0.02 + diff * 1.1) + vec3(1.0, 0.95, 0.85) * spec;
+        vec3 col = base * (0.02 + diff * 1.1 + pointLightAt(vWorldPos, Nb)) + vec3(1.0, 0.95, 0.85) * spec;
         float crack = crackAt(p);
         col = col * (1.0 - crack * 0.7) + vec3(1.0, 0.45, 0.12) * crack * (0.7 + 0.9 * uDamage);
         gl_FragColor = vec4(col, 1.0);
@@ -1174,7 +1212,7 @@ function modelStats(root) {
   return st;
 }
 
-return { GROUPS, COMMON_PARAMS, QUALITY_OCTAVES, GAME_BODIES, GAME_KINDS, SPIN_RAD_PER_UNIT,
+return { GROUPS, COMMON_PARAMS, QUALITY_OCTAVES, MAX_POINT_LIGHTS, GAME_BODIES, GAME_KINDS, SPIN_RAD_PER_UNIT,
          buildBody, disposeBody, modelStats, defaultValues,
          GLSL_NOISE, GLSL_BODY, GLSL_PLANET, GLSL_SUN, GLSL_ROCK, GLSL_HOLE };
 })();

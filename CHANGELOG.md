@@ -4,6 +4,15 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.11.1]
+
+### Changed
+- **Ship glow lights actually show now** (Setup → Graphics, still off by
+  default): each ship's light sits behind its engines, brightens with the
+  engine power and lights up the planets, the meteoroid and comets it
+  flies past or bites — a planet's night side glows teal under a biting
+  swarm. Before, the light sat inside the hull and planets ignored it.
+
 ## [2.11.0]
 
 ### Added

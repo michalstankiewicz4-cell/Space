@@ -1201,6 +1201,13 @@ then read just that range.
   their canvas textures (`world/textures.js` keeps only
   `makeRockGeometry` for debris and `generateDustTexture`),
   `bodyMeshParts.js` keeps only the selection bracket.
+- **Ship glow lights reach the bodies (v2.11.1)**: BodyKit shaders ignore
+  THREE lights, so the setting looked like it did nothing (the light also
+  sat inside the hull). Now it's behind the engines (`SHIP_LIGHT_*` in
+  config.js, intensity × eased engine power), and `world/bodyVisual.js`
+  passes the nearest visible ship lights to each body (`opts.lights`,
+  max 4, BodyKit's `pointLightAt()`). Toggling it still recompiles the
+  game's standard-material shaders once (a light count change).
 - **Dev Tools -> Performance stats** (`ui/hud/perfStats.js`): FPS, frame
   time, worst frame, CPU time (update + render), draw calls and
   triangles summed over all of a frame's render passes (main view, ship

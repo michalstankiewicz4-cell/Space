@@ -58,6 +58,11 @@ export const TREE = {
 export const DRONE_MAX_FUEL = 100;
 export const SHIP_MODEL_LENGTH = 0.9;   // the swarm ship model's length (the old cone's)
 export const SHIP_LOD_DISTANCE = 45;    // closer than this to the camera: full model, else the light cone
+// Ship glow light (Setup -> Graphics, off by default): behind the engines,
+// lighting the hull, nearby ships, the station and (through BodyKit) the
+// bodies it flies by or bites. Brightness follows the engine power.
+export const SHIP_LIGHT_INTENSITY = 1.5;
+export const SHIP_LIGHT_RANGE = 7;
 // A comet's coma and tails at this distance from the Sun have activity 1
 // (world/bodyVisual.js#cometActivity): 1.5 near perihelion (~60), 0.3 far out.
 export const COMET_ACTIVITY_DISTANCE = 100;

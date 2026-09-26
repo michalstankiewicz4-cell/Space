@@ -77,8 +77,9 @@ export function makeShipVisual(opts){
       if(v.near && !v.model) v.build();
       cone.visible = !v.near;
       if(v.holder) v.holder.visible = v.near;
-      if(!v.near || !v.model) return;
+      // eased engine power, also far away (the ship's glow light follows it)
       v.throttle += (v.power - v.throttle) * Math.min(1, dt * 3);
+      if(!v.near || !v.model) return;
       v.model.update(animT, dt, { power: v.throttle, particles: gfxParticles() && !remote });
     },
     // Ship removed normally (fleet resized, player left): free everything.

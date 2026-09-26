@@ -3,7 +3,7 @@ import { disposeMesh } from "../core/utils.js";
 import { gfxUnitLights } from "../scene/graphics.js";
 import { makeShipVisual } from "./shipVisual.js";
 import { getShipCamTarget } from "../scene/shipcam.js";
-import { ORBIT_RADIUS } from "../config.js";
+import { ORBIT_RADIUS, SHIP_MODEL_LENGTH, SHIP_LIGHT_INTENSITY, SHIP_LIGHT_RANGE } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { state, swarmStats, save } from "../core/gameState.js";
 import { paintScorch, destroyPlanet, applyHealthVisual } from "../world/bodies.js";
@@ -71,7 +71,8 @@ function makeShipMesh(){
   const group = new THREE.Group();
   const visual = makeShipVisual();
   group.add(visual.root);
-  const glow = new THREE.PointLight(0x4fe3c6, 0.5, 6);
+  const glow = new THREE.PointLight(0x4fe3c6, SHIP_LIGHT_INTENSITY, SHIP_LIGHT_RANGE);
+  glow.position.z = -SHIP_MODEL_LENGTH * 0.7;   // behind the engines (+Z is forward), so it lights the hull
   glow.userData.unitLight = true;     // Setup -> Graphics -> ship glow lights (off by default)
   glow.visible = gfxUnitLights();
   group.add(glow);
@@ -245,6 +246,8 @@ export function updateShips(dt){
     const sh = ctx.ships[i];
     // the model: full detail whenever it's looked at up close (miniature, ship cam)
     sh.visual.forceDetail = sh.selected || camTarget === sh;
+    // the glow light follows the engines (power is last frame's, eased by shipVisual.js)
+    sh.light.intensity = SHIP_LIGHT_INTENSITY * (0.55 + 0.45 * sh.visual.throttle);
 
     // Ships only ever move on an explicit player order (commandTo() in
     // scene/controls.js) — no automatic nearest-planet targeting.
