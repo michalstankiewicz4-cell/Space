@@ -4,6 +4,15 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.14.0]
+
+### Added
+- Clicking a body on the minimap still selects it (or sends the selected
+  ships there), and now also flies the camera to it: the view glides over
+  and then orbits and follows the body along its orbit, with a zoom range
+  to match its size. BASE or SYSTEM returns to the usual views.
+- Switching between the camera views now glides instead of jumping.
+
 ## [2.13.1]
 
 ### Changed

@@ -87,7 +87,7 @@ if(!NET_ENABLED){
 // "base" is the default view on load (see scene/controls.js#
 // setCameraMode's own comment).
 spawnStation();
-setCameraMode("base");
+setCameraMode("base", { instant: true });
 
 spawnInitialFleet();
 reconcileFleetSize();

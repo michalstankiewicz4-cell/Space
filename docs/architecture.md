@@ -84,6 +84,22 @@ then read just that range.
 
 ## Camera modes
 
+- **"focus" mode (v2.14.0)**: `scene/controls.js#focusCameraOn(body)`
+  orbits one body from `ctx.planets` (planet, Sun, meteoroid, comet) and
+  follows it along its orbit — pivot = the body's live position,
+  default framing from its sunlit side a little above the orbit plane,
+  radius 6 × body radius, zoom range scaled to the body
+  (`focusZoomRange()`). A minimap click on a body does exactly what
+  clicking it in the world does (select / order the selected ships) and
+  then calls it. Neither toggle button is lit in this mode; either one
+  leaves it. If the body disappears (a comet flies off or is eaten) the
+  camera falls back to "system". **Every mode change glides** over
+  `CAM_TRANSITION_S` (1 s): pivot, azimuth (the short way round), polar
+  angle and radius (in log space, so 950 → 12 looks even) are eased from
+  the previous framing — except the very first `setCameraMode("base",
+  { instant: true })` at startup. The minimap's green camera frame
+  follows the focused body.
+
 - **Camera has two modes, toggled top-center in the HUD** (`scene/
   controls.js#setCameraMode()`, v2.0.6): "system" orbits the Sun at the
   origin (the original, only view before this); "base" orbits the

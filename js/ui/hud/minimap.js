@@ -1,6 +1,6 @@
 import { ctx } from "../../core/context.js";
 import { SOLAR_BODIES, STATION_RING } from "../../world/solarSystem.js";
-import { camState, clickPlanet, clickStation } from "../../scene/controls.js";
+import { camState, clickPlanet, clickStation, focusCameraOn } from "../../scene/controls.js";
 import { bodyVariantKey } from "../../world/bodyParams.js";
 import { t } from "../../i18n.js";
 
@@ -114,9 +114,14 @@ export function drawMinimap(){
   }
 
   // Camera: a green frame around what the 3D view orbits (the station in
-  // "base" mode, the Sun in "system" mode), sized by its zoom distance.
-  const pivot = camState.mode === "base" && ctx.station
-    ? project(ringRadius(4), angleOf(ctx.station.pos)) : sun;
+  // "base" mode, the focused body in "focus" mode, the Sun in "system"
+  // mode), sized by its zoom distance.
+  let pivot = sun;
+  if(camState.mode === "base" && ctx.station) pivot = project(ringRadius(4), angleOf(ctx.station.pos));
+  else if(camState.mode === "focus" && camState.target && camState.target.kind !== "sun"){
+    const b = camState.target, pos = b.mesh.position;
+    pivot = project(b.orbitSlot != null ? ringRadius(b.orbitSlot) : schematicRadius(Math.hypot(pos.x, pos.z)), angleOf(pos));
+  }
   const size = Math.max(10, Math.min(250, Math.sqrt(camState.radius / 950) * 250)) * zoom;
   out += '<rect x="' + (pivot.x - size / 2) + '" y="' + (pivot.y - size * 0.33) + '" width="' + size + '" height="' + size * 0.66 +
     '" fill="none" stroke="#27d05a" stroke-width="1.4" pointer-events="none"/>';
@@ -177,7 +182,8 @@ export function initMinimap(){
     if(wasDrag) return;
     const hit = pickAt(toViewBox(e));
     if(!hit) return;
-    if(hit.kind === "planet") clickPlanet(hit.obj, e.shiftKey);
+    // a body: the same as clicking it in the world, and the camera flies to it
+    if(hit.kind === "planet"){ clickPlanet(hit.obj, e.shiftKey); focusCameraOn(hit.obj); }
     else if(hit.kind === "station") clickStation(e.shiftKey);
     drawMinimap();
   });
