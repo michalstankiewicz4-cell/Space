@@ -114,6 +114,15 @@ then read just that range.
 - **Every minimap object is clickable (v2.15.0)**: planets, the meteoroid,
   comets, the Sun (it used to be drawn without a pick) and the black hole
   select + focus the camera; the station selects + switches to "base".
+- **Other players' stations are selectable (v2.15.0)**: `makeGhostStation`
+  (net/shipsBroadcast.js) adds a pick sphere and a handle,
+  `rp.stationRef` ({ group, pickMesh, frameRadius, focusDistance,
+  selected, alive() }), used by `picking.js#pickRemoteStationAt`,
+  `controls.js#clickRemoteStation`, the selection frames, the minimap (a
+  diamond in the owner's color on the station ring) and `focusCameraOn`
+  (which honours a target's own `alive()` / `focusDistance`). Read-only
+  info panel: `ui/hud/remoteStationPanel.js` (nick, fleet size, points,
+  bodies devoured from their broadcast); it closes when the owner leaves.
 - **Small bodies are easier to click (v2.15.0)**: when the ray misses,
   `scene/picking.js#pickPlanetAt` falls back to the nearest body within
   14 px of the cursor on screen (`pickSmallBodyAt`) — comets are small and

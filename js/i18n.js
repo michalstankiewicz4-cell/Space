@@ -187,7 +187,7 @@ const STRINGS = {
       status: "Status", target: "Target", velocity: "Velocity", bite: "Bite/s", selected: "Selected",
       speedLvl: "Speed", biteLvl: "Bite", heatLvl: "Heat res.",
       value: function(n){ return "Value ~" + n + " pts"; },
-      yourBase: "Your base", sun: "Sun",
+      yourBase: "Your base", playerBase: "Another player's base", sun: "Sun",
       zoomIn: "Zoom in", zoomOut: "Zoom out",
       droneStart: "START", droneStop: "STOP", droneScript: "SCRIPT",
       shipCam: "Ship cam (cockpit view) on/off"
@@ -540,7 +540,7 @@ const STRINGS = {
       status: "Status", target: "Cel", velocity: "Prędkość", bite: "Gryz/s", selected: "Zaznaczone",
       speedLvl: "Prędkość", biteLvl: "Gryz", heatLvl: "Ciepło",
       value: function(n){ return "Wartość ~" + n + " pkt"; },
-      yourBase: "Twoja baza", sun: "Słońce",
+      yourBase: "Twoja baza", playerBase: "Baza innego gracza", sun: "Słońce",
       zoomIn: "Przybliż", zoomOut: "Oddal",
       droneStart: "START", droneStop: "STOP", droneScript: "SKRYPT",
       shipCam: "Kamera statku (widok z kokpitu) wł./wył."

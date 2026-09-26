@@ -65,19 +65,19 @@ const MODULE_FILES = [
   "js/ui/hud/devTools.js", "js/ui/hud/eventLog.js", "js/ui/hud/fleetList.js",
   "js/ui/hud/hud.js", "js/ui/hud/infoPanel.js", "js/ui/hud/minimap.js",
   "js/ui/hud/nav.js", "js/ui/hud/perfStats.js", "js/ui/hud/planetPanel.js",
-  "js/ui/hud/stationPanel.js", "js/ui/hud/topBar.js", "js/ui/hud/unitPanel.js",
-  "js/ui/i18nApply.js", "js/ui/icons.js", "js/ui/playerCounts.js",
-  "js/ui/setupModal.js", "js/ui/windows/blockDrag.js",
-  "js/ui/windows/blockEditor.js", "js/ui/windows/blockPalette.js",
-  "js/ui/windows/blockRender.js", "js/ui/windows/droneScript.js",
-  "js/ui/windows/fleet.js", "js/ui/windows/players.js",
-  "js/ui/windows/research.js", "js/ui/windows/wiki.js",
-  "js/ui/windows/wikiArt.js", "js/ui/windows/wikiEntries.js",
-  "js/ui/windows/windows.js", "js/version.js", "js/versionCheck.js",
-  "js/world/blackholes.js", "js/world/bodies.js", "js/world/bodyParams.js",
-  "js/world/bodyVisual.js", "js/world/cometPhysics.js",
-  "js/world/solarGravity.js", "js/world/solarSystem.js",
-  "js/world/textures.js"
+  "js/ui/hud/remoteStationPanel.js", "js/ui/hud/stationPanel.js",
+  "js/ui/hud/topBar.js", "js/ui/hud/unitPanel.js", "js/ui/i18nApply.js",
+  "js/ui/icons.js", "js/ui/playerCounts.js", "js/ui/setupModal.js",
+  "js/ui/windows/blockDrag.js", "js/ui/windows/blockEditor.js",
+  "js/ui/windows/blockPalette.js", "js/ui/windows/blockRender.js",
+  "js/ui/windows/droneScript.js", "js/ui/windows/fleet.js",
+  "js/ui/windows/players.js", "js/ui/windows/research.js",
+  "js/ui/windows/wiki.js", "js/ui/windows/wikiArt.js",
+  "js/ui/windows/wikiEntries.js", "js/ui/windows/windows.js", "js/version.js",
+  "js/versionCheck.js", "js/world/blackholes.js", "js/world/bodies.js",
+  "js/world/bodyParams.js", "js/world/bodyVisual.js",
+  "js/world/cometPhysics.js", "js/world/solarGravity.js",
+  "js/world/solarSystem.js", "js/world/textures.js"
 ];
 const REFRESH_TIMEOUT_MS = 3000; // don't leave the player stuck if the network is slow/flaky
 

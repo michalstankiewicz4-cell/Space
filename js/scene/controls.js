@@ -9,7 +9,8 @@ import { openStationPanel, closeStationPanel } from "../ui/hud/stationPanel.js";
 import { setStationSelected } from "../station/station.js";
 import { openPlanetPanel, closePlanetPanel } from "../ui/hud/planetPanel.js";
 import { openBlackHolePanel, closeBlackHolePanel } from "../ui/hud/blackHolePanel.js";
-import { pickShipAt, pickDroneAt, pickStationAt, pickPlanetAt, pickBlackHoleAt } from "./picking.js";
+import { openRemoteStationPanel, closeRemoteStationPanel } from "../ui/hud/remoteStationPanel.js";
+import { pickShipAt, pickDroneAt, pickStationAt, pickPlanetAt, pickBlackHoleAt, pickRemoteStationAt } from "./picking.js";
 import { initTooltip, showTooltip, showBlackHoleTooltip, hideTooltip } from "./tooltip.js";
 import { getViewRect, isInViewRect } from "./viewRect.js";
 import { t } from "../i18n.js";
@@ -115,7 +116,7 @@ export function focusCameraOn(body){
   const p = bodyPosition(body);
   if(p.lengthSq() > 1) camState.az = Math.atan2(-p.z, -p.x) + 0.6;   // toward the Sun, turned a bit
   camState.pol = clampPol(Math.PI / 2 - 0.35);
-  camState.radius = Math.max(4, body.radius * (body.group ? 9 : 6));   // a black hole's disk is wide
+  camState.radius = body.focusDistance || Math.max(4, body.radius * (body.group ? 9 : 6));   // a black hole's disk is wide
   camState.autoSpin = true;
   refreshCamModeButtons();
 }
@@ -136,7 +137,7 @@ function zoomRange(){
 function currentPivot(out){
   if(camState.mode === "focus"){
     const b = camState.target;
-    const alive = b && !b.dying && (ctx.planets.indexOf(b) >= 0 || ctx.blackholes.indexOf(b) >= 0);
+    const alive = b && !b.dying && (b.alive ? b.alive() : ctx.planets.indexOf(b) >= 0 || ctx.blackholes.indexOf(b) >= 0);
     if(!alive){ setCameraMode("system"); return out.set(0, 0, 0); }
     return out.copy(bodyPosition(b));
   }
@@ -214,14 +215,31 @@ export function getSelectedPlanetsOrdered(){
   return planetSelectionOrder;
 }
 
-// The black hole: selectable on its own (never part of the planet
-// multi-select, never a course target — sending ships in would lose them).
-let selectedBlackHole = null;
+// The black hole and other players' stations: selectable on their own
+// (never part of the planet multi-select, never a course target — sending
+// ships into a black hole would lose them; a station isn't something to eat).
+let selectedBlackHole = null, selectedRemoteStation = null;
 function deselectBlackHole(){
-  if(!selectedBlackHole) return;
-  setPlanetSelected(selectedBlackHole, false);
-  selectedBlackHole = null;
-  closeBlackHolePanel();
+  if(selectedBlackHole){
+    setPlanetSelected(selectedBlackHole, false);
+    selectedBlackHole = null;
+    closeBlackHolePanel();
+  }
+  if(selectedRemoteStation){
+    selectedRemoteStation.selected = false;
+    selectedRemoteStation = null;
+    closeRemoteStationPanel();
+  }
+}
+
+// Another player's station (rp.stationRef, net/shipsBroadcast.js), clicked
+// in the world or on the minimap: selected, shown read-only in the info slot.
+export function clickRemoteStation(ref){
+  if(!ref || !ref.alive()) return;
+  clearSelection();
+  selectedRemoteStation = ref;
+  ref.selected = true;
+  openRemoteStationPanel(ref);
 }
 
 // A click on the black hole, in the world or on the minimap: selects it
@@ -454,6 +472,11 @@ export function initControls(){
       if(hitStation){
         if(!e.shiftKey) clearSelection();
         selectSingleton(hitStation, setStationSelected, openStationPanel);
+        return;
+      }
+      const hitRemoteStation = pickRemoteStationAt(e);
+      if(hitRemoteStation){
+        clickRemoteStation(hitRemoteStation);
         return;
       }
       const hitShip = pickShipAt(e);

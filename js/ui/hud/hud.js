@@ -8,6 +8,7 @@ import { initInfoPanel } from "./infoPanel.js";
 import { refreshPlanetPanel } from "./planetPanel.js";
 import { refreshStationPanel } from "./stationPanel.js";
 import { refreshBlackHolePanel } from "./blackHolePanel.js";
+import { refreshRemoteStationPanel } from "./remoteStationPanel.js";
 import { initUnitPanel, updateUnitPanel } from "./unitPanel.js";
 import { refreshFleetList } from "./fleetList.js";
 import { initMinimap, drawMinimap } from "./minimap.js";
@@ -38,7 +39,7 @@ export function initHudWorld(){
   // Dynamic panel text is re-derived from t() on every refresh, so a
   // language change only needs one forced pass.
   onLangChange(function(){
-    updateUnitPanel(true); refreshPlanetPanel(); refreshStationPanel(); refreshBlackHolePanel(); refreshFleetList(); drawMinimap();
+    updateUnitPanel(true); refreshPlanetPanel(); refreshStationPanel(); refreshBlackHolePanel(); refreshRemoteStationPanel(); refreshFleetList(); drawMinimap();
   });
 }
 
@@ -62,6 +63,7 @@ export function updateHud(dt){
     refreshStationPanel();
     refreshPlanetPanel();
     refreshBlackHolePanel();
+    refreshRemoteStationPanel();
     updateUnitPanel(true);
     refreshFleetList();
     refreshNav();

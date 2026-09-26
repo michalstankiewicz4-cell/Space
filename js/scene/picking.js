@@ -80,6 +80,20 @@ function pickSmallBodyAt(e){
   return best;
 }
 
+// Other players' stations (net/shipsBroadcast.js adds a pick sphere to each).
+export function pickRemoteStationAt(e){
+  const ndc = ndcFromEvent(e);
+  raycaster.setFromCamera(ndc, ctx.camera);
+  const spheres = [];
+  Object.keys(ctx.remotePlayers).forEach(function(id){
+    const ref = ctx.remotePlayers[id].stationRef;
+    if(ref) spheres.push(ref.pickMesh);
+  });
+  if(spheres.length === 0) return null;
+  const hits = raycaster.intersectObjects(spheres, false);
+  return hits.length > 0 ? hits[0].object.userData.remoteStation : null;
+}
+
 export function pickBlackHoleAt(e){
   const ndc = ndcFromEvent(e);
   raycaster.setFromCamera(ndc, ctx.camera);

@@ -1,6 +1,6 @@
 import { ctx } from "../../core/context.js";
 import { SOLAR_BODIES, STATION_RING } from "../../world/solarSystem.js";
-import { camState, clickPlanet, clickStation, clickBlackHole, focusCameraOn, bodyPosition, setCameraMode } from "../../scene/controls.js";
+import { camState, clickPlanet, clickStation, clickBlackHole, clickRemoteStation, focusCameraOn, bodyPosition, setCameraMode } from "../../scene/controls.js";
 import { bodyVariantKey } from "../../world/bodyParams.js";
 import { t } from "../../i18n.js";
 
@@ -111,6 +111,19 @@ export function drawMinimap(){
     out += '<circle cx="' + pt.x + '" cy="' + pt.y + '" r="1.3" fill="#4fe3c6"/>';
   });
 
+  // Other players' stations: a diamond in the owner's color on the station
+  // ring, their name in the tooltip; clicking selects it and flies there.
+  Object.keys(ctx.remotePlayers).forEach(function(id){
+    const rp = ctx.remotePlayers[id], ref = rp.stationRef;
+    if(!ref) return;
+    const pt = project(ringRadius(4), angleOf(ref.group.position));
+    const d = 4 * Math.sqrt(zoom);
+    out += '<g class="mmPick"><title>' + esc(rp.nick) + "</title>" +
+      '<path d="M' + pt.x + " " + (pt.y - d) + " L" + (pt.x + d) + " " + pt.y + " L" + pt.x + " " + (pt.y + d) + " L" + (pt.x - d) + " " + pt.y +
+      ' Z" class="mmBody" fill="' + esc(rp.color) + '" stroke="' + (ref.selected ? "#fff" : "#000") + '" stroke-width="1.2" filter="url(#mmGlow)"/></g>';
+    picks.push({ x: pt.x, y: pt.y, obj: ref, kind: "remoteStation" });
+  });
+
   if(ctx.station){
     const pt = project(ringRadius(4), angleOf(ctx.station.pos));
     const d = 4.5 * Math.sqrt(zoom);
@@ -192,6 +205,7 @@ export function initMinimap(){
     // a body: the same as clicking it in the world, and the camera flies to it
     if(hit.kind === "planet"){ clickPlanet(hit.obj, e.shiftKey); focusCameraOn(hit.obj); }
     else if(hit.kind === "blackhole"){ clickBlackHole(hit.obj); focusCameraOn(hit.obj); }
+    else if(hit.kind === "remoteStation"){ clickRemoteStation(hit.obj); focusCameraOn(hit.obj); }
     else if(hit.kind === "station"){ clickStation(e.shiftKey); setCameraMode("base"); }   // the station's own view
     drawMinimap();
   });

@@ -16,6 +16,10 @@ shown next to the title on the start screen and in the browser tab title
 - Selection frames around bodies are now thin corner marks with a small
   gap around the body, the same thickness at any zoom (they used to be
   thick, overlap the planet and grow when zooming in).
+- Other players' stations show on the minimap (a diamond in the owner's
+  color, their name on hover) and can be selected — in the view or on
+  the minimap, where the camera also flies there — with a panel showing
+  their fleet, points and bodies devoured.
 - The Sun can be clicked on the minimap too (selects it, camera flies
   there), and clicking your station on the minimap switches to the BASE
   view.

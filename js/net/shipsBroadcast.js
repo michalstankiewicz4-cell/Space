@@ -9,6 +9,7 @@ import { containsProfanity } from "../moderation.js";
 import { t } from "../i18n.js";
 import { spawnPrintEffect } from "../drone/dronePrintFx.js";
 import { makeStationVisual } from "../station/stationVisual.js";
+import { STATION_PICK_RADIUS } from "../config.js";
 import { buildDroneModel } from "../drone/drone.js";
 import { makeShipVisual, makeOwnerMarker } from "../ships/shipVisual.js";
 import { sRGBTexture } from "../core/utils.js";
@@ -112,10 +113,23 @@ function makeGhostStation(rp){
   mesh.add(visual.root);
   const label = makeNameLabel(rp.nick, rp.color, STATION_LABEL);
   mesh.add(label);
+  // selectable (scene/controls.js#clickRemoteStation): an invisible pick
+  // sphere around the ring, like our own station's
+  const pickMesh = new THREE.Mesh(new THREE.SphereGeometry(STATION_PICK_RADIUS, 12, 10), new THREE.MeshBasicMaterial({ visible: false }));
+  mesh.add(pickMesh);
   ctx.scene.add(mesh);
   rp.stationVisual = visual;
   rp.stationLabel = label;
   rp.stationLabelNick = rp.nick;
+  // The handle selection, the info panel, the minimap and the camera focus
+  // use; alive() turns false when the owner leaves or stops sending it.
+  rp.stationRef = {
+    kind: "remoteStation", rp: rp, group: mesh, pickMesh: pickMesh,
+    radius: STATION_PICK_RADIUS, frameRadius: STATION_PICK_RADIUS, focusDistance: 16,
+    selected: false,
+    alive: function(){ return rp.stationMesh === mesh && !!ctx.remotePlayers[rp.id]; }
+  };
+  pickMesh.userData.remoteStation = rp.stationRef;
   return mesh;
 }
 
@@ -126,6 +140,8 @@ function removeGhostStation(rp){
   disposeMesh(ctx.scene, rp.stationMesh);
   rp.stationMesh = null;
   rp.stationVisual = null;
+  if(rp.stationRef) rp.stationRef.selected = false;
+  rp.stationRef = null;
 }
 
 function isValidHexColor(c){
@@ -150,7 +166,8 @@ export function handleRemoteShips(payload){
     rp = ctx.remotePlayers[payload.id] = {
       meshes: [],
       color: isValidHexColor(payload.color) ? payload.color : "#ff7a45",
-      nick: t("players.defaultName")
+      nick: t("players.defaultName"),
+      id: payload.id
     };
     updatePlayersHud();
   }

@@ -2,7 +2,7 @@ import { ctx } from "../core/context.js";
 import { getViewRect } from "./viewRect.js";
 
 // Selection indicator for bodies (planets, the Sun, the meteoroid, comets,
-// the black hole): four thin L-shaped corner marks drawn as an HTML overlay
+// the black hole) and other players' stations: four thin L-shaped corner marks drawn as an HTML overlay
 // on the 3D view, not in the scene — so the lines stay BRACKET_LINE_PX
 // thick and the arms short at any zoom, and they never show up in the
 // ship cam or the PLANET INFO miniature. The frame follows the body's size
@@ -59,13 +59,17 @@ export function updateSelectionBrackets(){
   right.setFromMatrixColumn(ctx.camera.matrixWorld, 0);   // the camera's screen-right, in world space
   let n = 0;
   const bodies = ctx.planets.concat(ctx.blackholes);
+  Object.keys(ctx.remotePlayers).forEach(function(id){
+    const ref = ctx.remotePlayers[id].stationRef;
+    if(ref && ref.selected) bodies.push(ref);
+  });
   for(let i = 0; i < bodies.length; i++){
     const b = bodies[i];
     if(!b.selected || b.dying) continue;
     center.copy(bodyPos(b)).project(ctx.camera);
     if(center.z > 1) continue;                            // behind the camera
     // the body's radius on screen: its center vs a point one radius to the side
-    const r = b.group ? b.radius * 2.2 : b.radius;          // a black hole: around its disk's core
+    const r = b.frameRadius || (b.group ? b.radius * 2.2 : b.radius);   // a black hole: around its disk's core
     edge.copy(bodyPos(b)).addScaledVector(right, r).project(ctx.camera);
     const cx = (center.x * 0.5 + 0.5) * rect.width, cy = (-center.y * 0.5 + 0.5) * rect.height;
     const rpx = Math.abs(edge.x - center.x) * 0.5 * rect.width;
