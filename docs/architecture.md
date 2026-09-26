@@ -786,8 +786,9 @@ then read just that range.
     `net/shipsBroadcast.js`) — only that 4-number array crosses the
     network; every client builds the same model locally. **Other players'
     stations are not tinted** (the user's call, like ships and drones): a
-    name label with a bar in the owner's color floats above (the drone's
-    `makeNameLabel`, larger and higher). Remote stations build at half the
+    name label with a bar in the owner's color floats above
+    (`makeNameLabel` — the only unit that shows the owner's name; ships and
+    drones get the diamond marker). Remote stations build at half the
     detail and without particles, and start at the same damage.
   - **Ships spawn arranged around the station, inside a gravity-free
     containment field, instead of scattered near the origin** (v2.0.6) —
@@ -1127,8 +1128,10 @@ then read just that range.
   `gfxUnitLights`).
 - **Other players' drones** (`net/shipsBroadcast.js`): the same model at
   detail 0.4, no particles, **not tinted** (the user's call: owners are
-  told apart by labels/markers, not by recoloring ships) — a name label
-  sprite above it with a small bar in the owner's color. The `ships`
+  told apart by markers, not by recoloring ships) — the same diamond
+  marker in the owner's color as their ships
+  (`ships/shipVisual.js#makeOwnerMarker`); since v2.13.1 only the station
+  carries the owner's name (it had a name label before). The `ships`
   broadcast's `drone` array grew from `[x, y, z, heading]` to `[..., power,
   offline, shots, tx, ty, tz]` — still one message per 120 ms, a few more
   numbers. All untrusted: power clamped to 0..1, shots only acted on when

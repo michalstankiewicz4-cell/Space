@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.13.1]
+
+### Changed
+- Other players' drones now carry the same small diamond in their
+  owner's color as their ships; the owner's name is shown only above
+  their station.
+
 ## [2.13.0]
 
 ### Added

@@ -10,7 +10,7 @@ import { t } from "../i18n.js";
 import { spawnPrintEffect } from "../drone/dronePrintFx.js";
 import { makeStationVisual } from "../station/stationVisual.js";
 import { buildDroneModel } from "../drone/drone.js";
-import { makeShipVisual } from "../ships/shipVisual.js";
+import { makeShipVisual, makeOwnerMarker } from "../ships/shipVisual.js";
 import { sRGBTexture } from "../core/utils.js";
 
 // Another player's ship: the same look as ours (ships/shipVisual.js — the
@@ -32,14 +32,15 @@ function disposeGhostShip(mesh){
 }
 
 // Another player's drone is the same ShipKit model as ours (drone/drone.js)
-// in its own colors — not tinted: its owner is told apart by a name label
-// floating above it (with a small marker in the owner's color), not by
-// recoloring the ship. Built at low detail, no particles: there can be
+// in its own colors — not tinted: like their ships it carries the owner's
+// diamond marker (ships/shipVisual.js#makeOwnerMarker); only the station
+// shows the owner's name. Built at low detail, no particles: there can be
 // many of them. Its engines/offline/shots follow the owner's broadcast.
 const GHOST_DRONE_DETAIL = 0.4;
 const MAX_GHOST_SHOTS_PER_UPDATE = 2;
 
-// opts: { y, width } — where the label floats and how wide it is (world units)
+// The owner's name over their station (only there; ships and drones get the
+// diamond marker). opts: { y, width } — where it floats and how wide it is (world units)
 function makeNameLabel(nick, colorHex, opts){
   opts = opts || {};
   const c = document.createElement("canvas");
@@ -65,12 +66,9 @@ function makeGhostDrone(rp){
   const mesh = new THREE.Group();
   const built = buildDroneModel(GHOST_DRONE_DETAIL);
   mesh.add(built.holder);
-  const label = makeNameLabel(rp.nick, rp.color);
-  mesh.add(label);
+  mesh.add(makeOwnerMarker(rp.color, 1.1));
   ctx.scene.add(mesh);
   rp.droneModel = built.model;
-  rp.droneLabel = label;
-  rp.droneLabelNick = rp.nick;
   rp.dronePower = 0;
   rp.droneShots = null;
   return mesh;
@@ -79,7 +77,6 @@ function makeGhostDrone(rp){
 function removeGhostDrone(rp){
   if(!rp.droneMesh) return;
   ShipKit.disposeShipModel(rp.droneModel);
-  rp.droneLabel.material.map.dispose();
   disposeMesh(ctx.scene, rp.droneMesh);
   rp.droneMesh = null;
   rp.droneModel = null;
@@ -178,11 +175,6 @@ export function handleRemoteShips(payload){
     const mesh = rp.droneMesh;
     setGhostTarget(mesh, safeCoord(d[0]), safeCoord(d[1]), safeCoord(d[2]));
     mesh.rotation.y = Number.isFinite(Number(d[3])) ? Number(d[3]) : mesh.rotation.y;
-    if(rp.droneLabelNick !== rp.nick){          // nick changed: redraw the label
-      mesh.remove(rp.droneLabel); rp.droneLabel.material.map.dispose();
-      rp.droneLabel = makeNameLabel(rp.nick, rp.color); rp.droneLabelNick = rp.nick;
-      mesh.add(rp.droneLabel);
-    }
     // [4] engine power 0..1, [5] offline 0/1, [6] shots fired so far,
     // [7..9] the last shot's target — all untrusted, clamped here.
     const power = Number(d[4]);

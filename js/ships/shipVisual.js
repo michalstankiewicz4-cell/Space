@@ -32,6 +32,18 @@ function markerTexture(){
   return markerTex;
 }
 
+// The owner's marker over another player's unit (ships and drone): a small
+// diamond in the owner's color, the same size on screen at any distance.
+// Only stations carry the owner's name (net/shipsBroadcast.js).
+export function makeOwnerMarker(colorHex, y){
+  const marker = new THREE.Sprite(new THREE.SpriteMaterial({ map: markerTexture(), color: colorHex, sizeAttenuation: false, depthTest: false, transparent: true }));
+  marker.scale.set(0.014, 0.014, 1);
+  marker.position.y = y;
+  marker.renderOrder = 10;
+  marker.userData.shipkit = true; // exact owner color, not converted (scene/colorManagement.js)
+  return marker;
+}
+
 function makeCone(){
   const mat = new THREE.MeshStandardMaterial({ color: 0x4fe3c6, emissive: 0x1fae95, emissiveIntensity: 0.9, roughness: 0.35, metalness: 0.4 });
   const cone = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.9, 8), mat);
@@ -47,11 +59,7 @@ export function makeShipVisual(opts){
   root.add(cone);
   let marker = null;
   if(remote && opts.markerColor){
-    marker = new THREE.Sprite(new THREE.SpriteMaterial({ map: markerTexture(), color: opts.markerColor, sizeAttenuation: false, depthTest: false, transparent: true }));
-    marker.scale.set(0.014, 0.014, 1);
-    marker.position.y = 0.65;
-    marker.renderOrder = 10;
-    marker.userData.shipkit = true; // exact owner color, not converted (scene/colorManagement.js)
+    marker = makeOwnerMarker(opts.markerColor, 0.65);
     root.add(marker);
   }
   const v = {

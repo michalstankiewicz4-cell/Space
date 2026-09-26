@@ -430,7 +430,8 @@ story in `docs/architecture.md`'s "Rendering and ShipKit models"):
 7. **Multiplayer**: models aren't sent, only a few numbers per drone in
    the regular `ships` broadcast (engine power, offline, shot count and
    last target); other players' drones are the same model, not tinted,
-   with a name label.
+   with the owner's diamond marker (like their ships; only stations show
+   the owner's name).
 8. **Repo conventions**: `shipkit.js` is part of the game — changing it
    needs the version bump (`js/version.js`, `CHANGELOG.md`, `?v=`).
 

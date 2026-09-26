@@ -216,7 +216,8 @@ the full detail behind each of these.
   classic-script file shared by `ship.html` and the game (not copied).
   The drone is its DR-01 SCRIBE (`merge: true`, `fxRoot: scene`,
   `makeGameHolder`); other players' drones are the same model, **never
-  tinted** — owners get a name label instead (user's call). Mark any
+  tinted** — owners get a diamond marker in their color instead, like
+  their ships; only a station shows the owner's name (user's call). Mark any
   animated/toggled part `userData.dynamic` or merging bakes it in place.
   Changing `shipkit.js` changes the game: version bump. **Build ships from
   its SHIP BUILDING BLOCKS and move any part/behaviour a second ship
