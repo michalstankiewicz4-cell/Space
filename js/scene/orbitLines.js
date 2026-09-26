@@ -33,8 +33,8 @@ function buildOrbitLine(orbit, material){
   return new THREE.Line(geo, material);
 }
 
-// Takes the scene directly (like scene/skybox.js#addSkybox()/scene/
-// pulsars.js#addPulsars()) — runs during initScene(), before ctx.scene is
+// Takes the scene directly (like scene/skybox.js#addSkybox()) — runs
+// during initScene(), before ctx.scene is
 // actually assigned.
 export function addOrbitLines(scene){
   const material = getLineMaterial();

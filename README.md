@@ -44,7 +44,7 @@ js/
   scene/             camera, renderer, the 3D view's rect inside the HUD + miniature render passes
                      (viewRect.js, unitThumb.js, infoThumb.js), mouse controls/selection, hover tooltip,
                      ship cam (picture-in-picture cockpit view),
-                     nebula skybox (skybox.js), background pulsars (pulsars.js),
+                     the sky backdrop (skybox.js, BodyKit's SKY: nebulae, stars, pulsars),
                      the 9 fixed orbit lines + each comet's own trajectory line (orbitLines.js)
   world/             celestial body logic — the 9-orbit solar system's fixed bodies
                      (solarSystem.js: orbit table/positions, solarGravity.js: patched-conics

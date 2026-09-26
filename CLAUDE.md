@@ -176,10 +176,9 @@ the full detail behind each of these.
 - **Ship cam** (`scene/shipcam.js`): a second viewport/scissor render pass
   on the same renderer, not a second `WebGLRenderer` — must reset
   viewport/scissor to full-canvas before the main render each frame.
-- **Nebula skybox + starfield** (`scene/skybox.js`, `scene/setup.js`) both
-  need `fog:false` on their materials or they wash out into the fog color.
-- **Pulsars** (`scene/pulsars.js`) are purely decorative — not part of
-  `ctx.planets`, not edible.
+- **Sky** (`scene/skybox.js`): BodyKit's SKY (nebulae + Milky Way baked
+  once into a cube map, stars and ~3 pulsars as points), edited in the
+  body lab's SKY tab; follows the camera, purely decorative.
 - **Programmable drone** (`js/drone/*.js`): a single extra ship that only
   moves via a player-written script in a small custom DSL
   (`dsl.js`/`interpreter.js`, generator-based, not JS/eval). Full

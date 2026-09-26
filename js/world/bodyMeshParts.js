@@ -12,7 +12,7 @@ import { PLANET_BRACKET_SCALE } from "../config.js";
 // "targeting bracket", not a full ring like ships/drone/station use) —
 // there's no way to draw that with a plain RingGeometry, so it's a
 // canvas-drawn texture on a THREE.Sprite instead, same "canvas texture"
-// approach as the nebula skybox / drone print effect's gas+text sprites.
+// approach as the drone print effect's gas+text sprites.
 // A THREE.Sprite always faces the camera regardless of its parent's own
 // rotation, so adding it as a child of the planet mesh at local (0,0,0)
 // (matching how the ship/drone/station rings ride along as children) is

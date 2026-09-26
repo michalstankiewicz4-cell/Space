@@ -24,8 +24,7 @@ then read just that range.
 - [Settings, identity and i18n](#settings-identity-and-i18n)
 - [Nickname moderation](#nickname-moderation)
 - [Ship cam](#ship-cam)
-- [Nebula skybox and starfield](#nebula-skybox-and-starfield)
-- [Pulsars](#pulsars)
+- [Sky backdrop (nebulae, stars, pulsars)](#sky-backdrop-nebulae-stars-pulsars)
 - [Programmable drone](#programmable-drone)
 - [Space station](#space-station)
 - [UI kit (start screen and setup modal)](#ui-kit-start-screen-and-setup-modal)
@@ -485,47 +484,39 @@ then read just that range.
   corrects for this with a 180°-about-Y flip before copying the mesh's
   quaternion, since a camera always looks down its own -Z.
 
-## Nebula skybox and starfield
+## Sky backdrop (nebulae, stars, pulsars)
 
-- **Nebula skybox** (`js/scene/skybox.js#addSkybox()`): a huge (radius 900)
-  inverted sphere with a canvas-generated equirectangular texture (a dark
-  gradient + additive-blended soft color-cloud blobs in the game's own
-  accent palette, same "no external image assets" approach as every
-  celestial-body texture in `world/textures.js`) — added once in
-  `scene/setup.js#initScene()`, right before the existing `THREE.Points`
-  starfield. **Both the skybox material and the starfield's own
-  `PointsMaterial` need `fog: false`** — easy to miss since neither one
-  errors or looks obviously *wrong* without it, just washed-out: the
-  scene's `FogExp2` (density 0.0065) blends anything this far from camera
-  almost entirely into the fog color, verified by the difference a single
-  screenshot before/after adding `fog:false` to the starfield made (stars
-  went from a faint handful of pixels to an actually-populated sky) — the
-  math backs it up too (`1 - exp(-(density*distance)^2)` is already
-  ~94% at the starfield's own *nearest* radius, 260). A fixed backdrop
-  shouldn't dim with camera-relative fog the way foreground objects
-  legitimately should. The starfield's per-star tints (`STAR_TINTS` in
-  `scene/setup.js`) are deliberately pushed well past a "barely-off-white"
-  range — a first pass in the 0.85-1.00 channel range was indistinguishable
-  star-to-star at the 1.15px point size actually rendered; only once pushed
-  toward real stellar-classification colors (blue-white/white/yellow-white/
-  orange/red) did individual colored stars actually read as colored,
-  confirmed via a cropped, upscaled screenshot, not just eyeballing the
-  full-scene view where single pixels are too small to judge.
-
-## Pulsars
-
-- **Pulsars** (`js/scene/pulsars.js`): a handful (`PULSAR_COUNT`, currently
-  6) of small `THREE.Sprite`s scattered among the starfield's own radius
-  range, each independently brightening/dimming on its own randomized
-  period+phase (`updatePulsars(dt)`, called from `main.js`'s `tick()` like
-  every other per-frame update) — `Math.pow(sin(t), 4)` sharpens the wave
-  into a quick flash-and-fade rather than a smooth breathing glow, closer
-  to how a real pulsar reads. Deliberately driven by accumulated `dt`, not
-  `performance.now()`, to stay tied to the same clamped delta as everything
-  else rather than wall-clock time. Tagged `sprite.userData.pulsar = true`
-  purely so other code (or a test) can tell them apart from the sun-halo/
-  drone-print sprites already sharing the scene, since none of those set
-  that flag.
+- **Since v2.12.0 the sky is BodyKit's** (`js/bodykit/bodykit.js`, the SKY
+  group, kind `"sky"`; `js/scene/skybox.js` builds and updates it; the
+  body lab's SKY tab edits it and the lab shows it behind every body). It
+  replaces the old canvas nebula sphere, the `THREE.Points` starfield in
+  `scene/setup.js` and the sprite pulsars (`scene/pulsars.js`, deleted).
+- **Baked, not drawn live**: black space, a Milky Way band (clumps, dust
+  lanes) and the nebulae (regions of domain-warped noise: glowing gas,
+  wisps, hot cores, two colors, dark dust dimming only the gas) are a
+  heavy full-screen shader, so BodyKit renders it once into a cube map
+  (`CubeCamera`, 1024² per face at detail 1) and draws a sphere that just
+  samples it (`textureCube` by direction — verified pixel-identical to the
+  live shader, no face flips). It re-bakes only after a change (a slider,
+  `setOctaves`), ~40–100 ms; the first bake + compile ~1.2 s is lost in
+  the start-of-game shader compile (measured: the game's first-frame stall
+  is the same ~1.15 s with or without the sky).
+- **Stars and pulsars are points** (one `THREE.Points`, 14 000 max stars,
+  `stars` picks how many via the draw range): colors from their
+  temperature (`blackbody`), mostly faint, 40% crowding toward the Milky
+  Way's plane, ~12% twinkling (`twinkle`); the first 6 vertices are
+  pulsars (`pulsars` shows 0–6) with a period each, a bright core and
+  cross-shaped beams drawn in the point sprite. Positions come from a
+  seeded RNG (`seededRandom`), so a sky is the same for everyone.
+- **Infinitely far**: `updateSkybox(dt)` (main loop) passes the camera
+  position (`opts.center`) — the sky group follows the camera — and the
+  renderer (`opts.renderer`, for the bake and the pixel ratio). Radius
+  9000, inside the camera's far plane (12000). The display sphere draws
+  first (`renderOrder -1000`, no depth write), the points are additive.
+  BodyKit shaders don't use fog, so the old `fog:false` trap doesn't
+  apply. The reflections (`scene.environment`) still come from ShipKit's
+  lab sky (brighter than this black sky, which keeps the metal ships
+  readable).
 
 ## Programmable drone
 
@@ -1117,7 +1108,7 @@ then read just that range.
   remembers what's done), so later spawns are covered too. It skips
   anything under `userData.shipkit` (ShipKit models and their effects are
   authored for this pipeline, like in the labs). Vertex colors are
-  converted where written (the starfield in `scene/setup.js`; particles
+  converted where written (particles
   copy already-converted material colors). Every game-made canvas texture
   goes through `core/utils.js#sRGBTexture()` (all are color textures).
   Custom `ShaderMaterial`s write their color untouched and need nothing.

@@ -8,7 +8,7 @@
 // new (a WeakSet remembers the rest), so objects spawned later — comets,
 // ghosts, effects — are covered too. ShipKit models (userData.shipkit)
 // are skipped: they're authored for this pipeline already, like the labs.
-// Vertex colors (starfield, particles) are handled where they're written;
+// Vertex colors (particles) are handled where they're written;
 // custom ShaderMaterials output their color untouched and need nothing.
 const done = new WeakSet();
 

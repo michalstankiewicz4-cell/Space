@@ -36,11 +36,14 @@ from its schema.
 | COMETS | the rock parameters + coma, tail length, dust tail, ion tail hue | COMET (kind `comet`: every comet) | shape in km |
 | ROCKS | the rock parameters: size, lumpiness, elongation, craters, albedo, color, ice, metal veins | FERRUM (slot 8, the meteoroid) | shape in km, albedo |
 | BLACK HOLES | size, disk reach, disk temperature, turbulence, disk speed, Doppler beaming, lensing glow, brightness | ABYSS (slot 9) | mass, horizon radius, disk size |
+| SKY | nebula coverage, brightness, scale, two nebula colors, dark dust, Milky Way, stars, star brightness, twinkle, pulsars | DEEP FIELD (kind `sky`: the game's backdrop) | stars, pulsars, bake size |
 
 Each group also sets `kmPerSize` (the real radius of `size` 1, for the
 statistics), `view` (the lab camera's distance when the group is
 opened: a comet's tail is long) and `layers` (the names of the two layer
-toggles: CLOUDS / ATMOSPHERE, CORONA, COMA & TAILS, DISK & LENSING).
+toggles: CLOUDS / ATMOSPHERE, CORONA, COMA & TAILS, DISK & LENSING,
+STARS / NEBULAE). The SKY group has no `kmPerSize` (no radius statistics)
+and `common: false` (no spin / tilt / damage sliders).
 
 Every body also has the **common** parameters: rotation speed
 (`spin`, 1 = 0.6 rad/s), axial tilt (`tilt`, degrees) and `damage`
@@ -161,6 +164,18 @@ the game sizes each body to its own radius.
   camera is brighter and bluer) and a billboard for the thin photon ring
   and the lensed glow around the shadow. Self-lit.
 
+- **Sky** (`buildSky`, `GLSL_SKY`): not a body but the backdrop, built
+  with the same blocks. `skyColor(dir)` is black space, a Milky Way band
+  (clumps, dust lanes) and nebulae (regions of domain-warped noise:
+  glowing gas, wisps, hot cores, two colors, dark dust dimming only the
+  gas). That's heavy, so it's **baked into a cube map** (`CubeCamera`,
+  1024² per face at detail 1, 2048² at 2) and a sphere just samples it;
+  it re-bakes only after a change (`apply()` / `setOctaves` mark it
+  dirty; `update` bakes when `opts.renderer` is given). Stars and 0–6
+  pulsars are one `THREE.Points` (`fillStars`, seeded, colors from
+  `blackbody`, 40% near the band, some twinkling, pulsars with beams).
+  `opts.center` keeps it on the camera.
+
 ### TERRA-1, measured
 
 | | |
@@ -233,6 +248,7 @@ be reused:
 | `GLSL_PLANET` | The planet's shared uniforms and functions: `heightOct` / `heightAt`, `moistureAt`, `iceAt`, `cloudAt`, `lavaFlowAt`, `iceSheetAt`. Used by the surface, the clouds **and** the coverage probe. |
 | `GLSL_ROCK` | `craterField()`, `rockHeight()`, `rockPoint()`, `rockDetail()`: the rock's shape and relief |
 | `ROCK_PARAMS` | The rock sliders, shared by ROCKS and COMETS |
+| `GLSL_SKY`, `seededRandom(seed)` | The sky's color function; a deterministic RNG (same sky for everyone) |
 | `COMMON_PARAMS` | Spin, tilt and damage for every body in every group |
 | `QUALITY_OCTAVES` | Octaves per quality preset, for the lab and the game |
 | The body handle contract | `update`, `setRadius`, `setValues`, `setDamage`, `setOctaves`, `setLayers`, `describe`, `measure`, `pickMesh`, `surfaceRoot`: every group's `build()` returns it (through `makeBodyHandle`), so the lab and the game need no per-group code |
@@ -282,8 +298,9 @@ Rules, for every new body and every change:
 
 ## BodyKit in the game
 
-Since v2.10.0 the game's planets, and since v2.11.0 **every** body (the
-Sun, the meteoroid, comets, the black hole) are BodyKit bodies
+Since v2.10.0 the game's planets, since v2.11.0 **every** body (the
+Sun, the meteoroid, comets, the black hole) and since v2.12.0 the sky
+(`scene/skybox.js`) are BodyKit's
 (`world/bodyVisual.js`; full story in `docs/architecture.md`'s
 "Rendering and ShipKit models"):
 
@@ -342,7 +359,10 @@ Sun, the meteoroid, comets, the black hole) are BodyKit bodies
 
 ## Viewer (preview page)
 
-- **Left panel**: group tabs (PLANETS / SUNS / COMETS / ROCKS / BLACK HOLES), body
+- **Backdrop**: the game's own sky (BodyKit's kind `sky`), so a body looks
+  here exactly as in the game; hidden while the SKY tab shows a sky of its
+  own.
+- **Left panel**: group tabs (PLANETS / SUNS / COMETS / ROCKS / BLACK HOLES / SKY), body
   navigation, PHYSICAL statistics and MODEL statistics, and toggles for
   auto-rotate, the two layers (named by the group), wireframe and SHIP LIGHT
   (a teal light circling the body, as a ship's glow light does in the game). The clouds and
@@ -404,6 +424,11 @@ Sun, the meteoroid, comets, the black hole) are BodyKit bodies
 - **A billboard's fragment shader needs `uHalfSize` and `vQ` declared**:
   `makeBillboard` prepends them; a shader string must not declare them
   again.
+- **The sky's cube map lookup**: sampling the baked
+  `WebGLCubeRenderTarget` with `textureCube(uCube, dir)` (no x flip — that
+  flip is only for loaded `CubeTexture`s) matches the live shader; this
+  was checked by rendering both from the same camera (mean difference
+  ≈0.2/255).
 - **Decals on a spinning body**: the body spins its inner group, not
   its `group`. Anything parented to `group` (or the game's `p.mesh`)
   stays put while the ground turns under it — attach to `surfaceRoot`.

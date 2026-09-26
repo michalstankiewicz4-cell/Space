@@ -4,6 +4,19 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.12.0]
+
+### Added
+- **A new sky**: deep black space with bright, colorful nebulae — glowing
+  clouds in magenta and teal with hot cores and dark dust — a faint Milky
+  Way band, thousands of small stars in real star colors (some gently
+  twinkling) and three pulsars flashing with cross-shaped beams. The same
+  sky is behind every body in the body lab, which can tune it.
+
+### Removed
+- The old nebula backdrop, star dots and pulsar sprites (replaced by the
+  new sky).
+
 ## [2.11.1]
 
 ### Changed

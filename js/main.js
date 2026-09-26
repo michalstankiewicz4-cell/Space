@@ -10,7 +10,7 @@ import { updateBodyLooks } from "./world/bodyVisual.js";
 import { perfFrameStart, perfRenderStart, perfFrameEnd } from "./ui/hud/perfStats.js";
 import { ctx } from "./core/context.js";
 import { initControls, updateCamera, setCameraMode } from "./scene/controls.js";
-import { updatePulsars } from "./scene/pulsars.js";
+import { updateSkybox } from "./scene/skybox.js";
 import { initParticles, updateParticles } from "./fx/particles.js";
 import { updateFragments, updateShockwaves, updateDust } from "./fx/breakup.js";
 import { seedLocalWorld, updateBodies } from "./world/bodies.js";
@@ -113,7 +113,6 @@ function tick(){
   perfFrameStart();             // Dev Tools -> Performance stats (ui/hud/perfStats.js)
   const dt = Math.min(0.05, clock.getDelta());
   updateCamera(dt);
-  updatePulsars(dt);
   // Ambient gravity (every fixed solar body pulling ships/the drone, patched-
   // conics style) and the station's containment field both mutate ship
   // velocity/position — both need to run BEFORE updateShips() so this
@@ -146,7 +145,8 @@ function tick(){
   updateHud(dt);
 
   updateShipVisuals(dt);        // ship models: level of detail, animation, wrecks
-  updateBodyLooks(dt);          // BodyKit planets: animated layers, spin, sun direction
+  updateBodyLooks(dt);          // BodyKit bodies: animated layers, spin, sun direction
+  updateSkybox(dt);             // BodyKit sky: follows the camera, twinkles, bakes after a change
   manageSceneColors(ctx.scene); // new materials/lights: sRGB -> linear, once each
 
   // Main view into the HUD's viewport rect, then the extra passes (ship cam,

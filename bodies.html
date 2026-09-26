@@ -167,7 +167,7 @@ input[type=range]::-moz-range-thumb{ width:30px; height:20px; border-radius:4px 
     <div class="mat lilac side"></div>
     <div id="paramsEmpty" class="note hidden">Select a body to edit its parameters.</div>
     <div id="paramsBody">
-      <div class="secHd first">COMMON</div>
+      <div class="secHd first" id="commonHd">COMMON</div>
       <div id="commonParams"></div>
       <div class="secHd" id="groupParamsHd">PARAMETERS</div>
       <div id="groupParams"></div>
@@ -1267,7 +1267,8 @@ input[type=range]::-moz-range-thumb{ width:30px; height:20px; border-radius:4px 
 "use strict";
 
 // =====================================================================
-// Small procedural toolkit: seeded RNG + tileable value noise / fBm.
+// Small procedural toolkit for the panels' grain: seeded RNG + tileable
+// value noise, canvas helpers.
 // =====================================================================
 function rng(seed) {
   let s = seed >>> 0;
@@ -1284,15 +1285,6 @@ function valueNoise(rand, cx, cy) {
     tx = tx * tx * (3 - 2 * tx); ty = ty * ty * (3 - 2 * ty);
     const a = at(x0, y0), b = at(x0 + 1, y0), c = at(x0, y0 + 1), d = at(x0 + 1, y0 + 1);
     return (a + (b - a) * tx) * (1 - ty) + (c + (d - c) * tx) * ty;
-  };
-}
-function fbm(rand, baseX, baseY, octaves) {
-  const layers = [];
-  for (let o = 0; o < octaves; o++) layers.push(valueNoise(rand, baseX << o, baseY << o));
-  return (u, v) => {
-    let sum = 0, amp = 0.5, norm = 0;
-    for (const n of layers) { sum += n(u, v) * amp; norm += amp; amp *= 0.5; }
-    return sum / norm;
   };
 }
 function canvas(w, h) {
@@ -1321,45 +1313,6 @@ function makeGlow(inner = "rgba(255,255,255,1)", mid = "rgba(255,200,120,0.5)") 
 }
 
 
-// Equirectangular nebula sky (also used as the reflection environment).
-function makeSky(w = 2048, h = 1024) {
-  const rand = rng(11);
-  const [c, ctx] = canvas(w, h);
-  const n1 = fbm(rand, 6, 3, 6), n2 = fbm(rand, 3, 2, 5);
-  paintPixels(ctx, w, h, (u, v) => {
-    const a = n1(u, v), b = n2(u, v);
-    const neb = Math.pow(clamp((a - 0.42) * 2.4, 0, 1), 2.2);
-    const neb2 = Math.pow(clamp((b - 0.48) * 2.6, 0, 1), 2);
-    const lat = 1 - Math.abs(v - 0.5) * 1.6;
-    return [
-      clamp(4 + neb * 70 * lat + neb2 * 90, 0, 255),
-      clamp(6 + neb * 40 * lat + neb2 * 30, 0, 255),
-      clamp(16 + neb * 150 * lat + neb2 * 110, 0, 255),
-    ];
-  });
-  // stars
-  for (let i = 0; i < 2600; i++) {
-    const x = rand() * w, y = rand() * h, r = rand() < 0.97 ? rand() * 0.9 + 0.3 : rand() * 1.8 + 1;
-    const t = rand();
-    ctx.fillStyle = t < 0.2 ? "#ffd9a8" : t < 0.4 ? "#b8c8ff" : "#ffffff";
-    ctx.globalAlpha = 0.4 + rand() * 0.6; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-  // a distant warm sun (gives metal a strong highlight) + a cool rim source
-  const sun = (x, y, r, col) => {
-    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, "#ffffff"); g.addColorStop(0.08, col); g.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
-  };
-  sun(w * 0.18, h * 0.36, 260, "rgba(255,190,110,0.85)");
-  sun(w * 0.68, h * 0.55, 200, "rgba(110,140,255,0.6)");
-  const t = new THREE.CanvasTexture(c);
-  t.encoding = THREE.sRGBEncoding;
-  t.mapping = THREE.EquirectangularReflectionMapping;
-  return t;
-}
-
-
 // =====================================================================
 // Renderer, scene, camera, controls
 // =====================================================================
@@ -1381,10 +1334,13 @@ controls.maxDistance = 90;
 controls.autoRotate = true;
 controls.autoRotateSpeed = 0.35;
 
-const skyTex = makeSky();
-skyTex.mapping = THREE.UVMapping;
-scene.add(new THREE.Mesh(new THREE.SphereGeometry(200, 64, 32),
-  new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, depthWrite: false })));
+// The backdrop is the game's own sky (BodyKit's SKY group, kind "sky"):
+// what you see behind a body here is what the game shows. Hidden while
+// the SKY tab edits a sky of its own.
+const gameSky = BodyKit.GAME_KINDS.sky;
+const backdrop = BodyKit.buildBody(gameSky.groupId, gameSky.bodyId, { detail: 1 });
+backdrop.setRadius(200);
+scene.add(backdrop.group);
 
 // The bodies light themselves from sunDir; the sprite just shows where it is.
 const sunDir = new THREE.Vector3(-1, 0.28, 0.5).normalize();
@@ -1427,6 +1383,7 @@ function loadBody(keepValues) {
   $("btnClouds").classList.toggle("hidden", !def || !layers.clouds); $("btnAtmo").classList.toggle("hidden", !def || !layers.atmosphere);
   $("btnClouds").textContent = layers.clouds || "CLOUDS"; $("btnAtmo").textContent = layers.atmosphere || "ATMOSPHERE";
   if (!def) { state.values = null; buildParamSliders(); return; }
+  backdrop.group.visible = g.id !== gameSky.groupId;       // the SKY tab shows its own sky
   if (!keepValues || !state.values) state.values = BodyKit.defaultValues(g, def);
   current = BodyKit.buildBody(g.id, def.id, { detail: state.detail, values: state.values });
   scene.add(current.group);
@@ -1465,13 +1422,15 @@ let measureTimer = 0;
 function queueMeasure() { clearTimeout(measureTimer); measureTimer = setTimeout(measure, 120); }
 function measure() {
   if (!current) return;
-  const v = state.values;
-  const R = currentGroup().kmPerSize * v.size, area = 4 * Math.PI * R * R;
+  const v = state.values, g = currentGroup();
   const box = $("physRows"); box.textContent = "";
-  row(box, "Radius", fmtInt(R) + " km");
-  row(box, "Surface area", area >= 1e6 ? fmtInt(area / 1e6) + " M km²" : fmtInt(area) + " km²");
+  if (g.kmPerSize) {                                     // a body (not the sky)
+    const R = g.kmPerSize * v.size, area = 4 * Math.PI * R * R;
+    row(box, "Radius", fmtInt(R) + " km");
+    row(box, "Surface area", area >= 1e6 ? fmtInt(area / 1e6) + " M km²" : fmtInt(area) + " km²");
+  }
   for (const [k, text] of current.describe(renderer)) row(box, k, text);   // the group's own statistics
-  row(box, "Axial tilt", Math.round(v.tilt) + "°");
+  if (g.kmPerSize) row(box, "Axial tilt", Math.round(v.tilt) + "°");
   fitHud();
 }
 setInterval(() => { if (current && state.values.cloudDrift > 0) measure(); }, 2000); // clouds drift
@@ -1501,8 +1460,10 @@ function buildParamSliders() {
   $("paramsBody").classList.toggle("hidden", !has);
   $("paramsEmpty").classList.toggle("hidden", has);
   if (!has) { fitHud(); return; }
+  const showCommon = g.common !== false;                 // the sky has no spin/tilt/damage sliders
+  $("commonHd").classList.toggle("hidden", !showCommon); common.classList.toggle("hidden", !showCommon);
   const set = (key) => (x) => { state.values[key] = x; current.setValues({ [key]: x }); if (key !== "spin" && key !== "damage") queueMeasure(); };
-  for (const p of BodyKit.COMMON_PARAMS) slider(common, p, state.values[p.key], set(p.key));
+  if (showCommon) for (const p of BodyKit.COMMON_PARAMS) slider(common, p, state.values[p.key], set(p.key));
   if (g.params.length === 0) {
     const n = document.createElement("div"); n.className = "note"; n.textContent = "No group-specific parameters yet.";
     own.appendChild(n);
@@ -1528,6 +1489,7 @@ function applyQuality(level) {
   renderer.setPixelRatio(q.pr);
   renderer.setSize(window.innerWidth, window.innerHeight, false);
   if (current) current.setOctaves(q.octaves);
+  backdrop.setOctaves(q.octaves);
   $("qVal").textContent = q.name;
   $("statRes").textContent = `${Math.round(window.innerWidth * q.pr)}×${Math.round(window.innerHeight * q.pr)}`;
   refreshModelStats();
@@ -1693,8 +1655,9 @@ function frame() {
     shipLight.distance = R * 4.5;
     shipLightDot.position.copy(shipLight.position);
     shipLightDot.scale.setScalar(R * 0.25);
-    current.update(t, dt, { sunDir, lights: state.shipLight ? shipLights : undefined });
+    current.update(t, dt, { sunDir, lights: state.shipLight ? shipLights : undefined, center: camera.position, renderer });
   }
+  backdrop.update(t, dt, { center: camera.position, renderer });
   renderer.render(scene, camera);
   updatePerf(performance.now(), performance.now() - t0);
   requestAnimationFrame(frame);
