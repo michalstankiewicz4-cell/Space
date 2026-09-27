@@ -9,10 +9,9 @@ import { eatEfficiency, hideBolt } from "./swarm.js";
 // A swarm ship's program — the same language and builtins as the drone's
 // (drone/drone.js), run by program/runner.js, so a script written for one
 // runs on the other. While it runs, the program flies the ship: no course
-// order (a click order stops the program, scene/controls.js#commandTo),
-// no pull back to the station (station/stationField.js); ambient gravity
-// still acts on it the way it does on the drone — a drift of its position,
-// not an ever-growing velocity (world/solarGravity.js).
+// order (a click order stops the program, scene/controls.js#commandTo);
+// ambient gravity still acts on it the way it does on the drone — a drift
+// of its position, not an ever-growing velocity (world/solarGravity.js).
 //
 // Differences from the drone: ships have no fuel — fuel() and maxFuel()
 // both report SHIP_FUEL, a full tank, so drone scripts work unchanged —

@@ -8,7 +8,7 @@ import { startMotion, advanceMotion, headingOfMesh } from "./unitMotion.js";
 import { MAX_INSTANT_STEPS_PER_FRAME } from "./runner.js";
 import { shipMoveSpeed, SHIP_FUEL } from "../ships/shipProgram.js";
 import { EAT_ORBIT_GAP, DRONE_MOVE_SPEED, DRONE_TURN_SPEED, DRONE_FUEL_PER_MOVE_UNIT, DRONE_DOCK_GAP, DRONE_REFUEL_RATE,
-  DRONE_ATTACK_COOLDOWN_S, STATION_FIELD_RADIUS, STATION_FIELD_STRENGTH } from "../config.js";
+  DRONE_ATTACK_COOLDOWN_S } from "../config.js";
 
 // Trajectory preview for the drone and swarm ships (drawn by
 // scene/unitTrajectory.js) — the game's counterpart of the prototype's
@@ -17,9 +17,9 @@ import { EAT_ORBIT_GAP, DRONE_MOVE_SPEED, DRONE_TURN_SPEED, DRONE_FUEL_PER_MOVE_
 // time with the game's own rules, never touching the real one:
 //
 // - predictCurrentPath(): where the unit goes as things stand — an idle
-//   ship or drone drifting under gravity (a ship also pulled back to the
-//   station, station/stationField.js), a ship flying to its order (no
-//   forces then: it cruises straight at its target, ships/swarm.js).
+//   ship falling under real gravity, the drone drifting, a ship flying to
+//   its order (no forces then: it cruises straight at its target,
+//   ships/swarm.js).
 // - predictProgramPath(): where it would go if its program started now —
 //   the real interpreter (drone/interpreter.js) runs the real program;
 //   move/turn/wait are the same code as in the game
@@ -56,29 +56,20 @@ function nearBodyAt(pos, t){
 // One step of the forces the game applies (main.js's tick, before the
 // units move). `flown` (the drone always; a ship while its program runs):
 // gravity drifts its position directly (world/solarGravity.js) and — the
-// drone — a body nearby refuels it. Otherwise (an idle or ordered ship):
-// gravity and, when `pull`, the station's pull-back go into its velocity.
-function forces(v, t, dt, pull, flown){
+// drone — a body nearby refuels it. Otherwise (an idle ship) gravity goes
+// into its velocity. None inside the station's field.
+function forces(v, t, dt, flown){
   if(!insideStationField(v.pos)){
     gravityAccelAt(v.pos, t, ACCEL);
     if(flown) v.pos.addScaledVector(ACCEL, dt);
     else v.vel.addScaledVector(ACCEL, dt);
   }
-  if(!flown){
-    if(pull && ctx.station){
-      const d = v.pos.distanceTo(ctx.station.pos);
-      if(d > STATION_FIELD_RADIUS){
-        TMP.subVectors(ctx.station.pos, v.pos).normalize();
-        v.vel.addScaledVector(TMP, Math.min(1, (d - STATION_FIELD_RADIUS) / STATION_FIELD_RADIUS) * STATION_FIELD_STRENGTH * dt);
-      }
-    }
-  }
   if(v.isDrone && nearBodyAt(v.pos, t)) v.fuel = Math.min(v.maxFuel, v.fuel + DRONE_REFUEL_RATE * dt);
 }
 
 // Forces, then an idle ship coasts on its velocity.
-function physics(v, t, dt, pull, flown){
-  forces(v, t, dt, pull, flown);
+function physics(v, t, dt, flown){
+  forces(v, t, dt, flown);
   if(!flown) v.pos.addScaledVector(v.vel, dt);
 }
 
@@ -114,7 +105,7 @@ export function predictCurrentPath(unit){
       v.vel.lerp(TMP.normalize().multiplyScalar(cruise), steer);
       v.pos.addScaledVector(v.vel, SIM_DT);
     } else {
-      physics(v, t, SIM_DT, true, v.isDrone);
+      physics(v, t, SIM_DT, v.isDrone);
     }
     pts.push(v.pos.clone());
   }
@@ -180,9 +171,8 @@ export function predictProgramPath(unit, src){
       }
       if(fin) pending = null;
     }
-    // once the program has ended a ship idles again: coasting, pulled home
-    const ended = done && !pending;
-    physics(v, t, SIM_DT, ended, v.isDrone || !ended);
+    // once the program has ended a ship idles again: real gravity
+    physics(v, t, SIM_DT, v.isDrone || !(done && !pending));
     pts.push(v.pos.clone());
   }
   return { points: pts, error: error };

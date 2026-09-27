@@ -94,7 +94,7 @@ As of v2.17.1. World units; the whole system spans about ±1200.
 | Ship LOD (model ↔ cone) | 30 from the camera | `SHIP_LOD_DISTANCE` |
 | Drone ring / pick sphere | 0.68–0.75 / 0.5 × drone length | `drone/drone.js` |
 | Station pick sphere / selection | 1.7 | `STATION_PICK_RADIUS` |
-| Station field (no gravity, pull-back) | 8 | `STATION_FIELD_RADIUS` |
+| Station field (no gravity; no pull-back since v2.19.0) | 8 | `STATION_FIELD_RADIUS` |
 | Ship spawn spiral around the station | 3 + 0.55·√i | `ships/swarm.js` |
 | Other players' station label | 2.7 up, 3 wide | `net/shipsBroadcast.js#STATION_LABEL` |
 | Ship glow, scene light | 0.8, range 2.2 | `SHIP_LIGHT_INTENSITY/RANGE` |

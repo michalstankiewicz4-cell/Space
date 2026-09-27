@@ -19,6 +19,11 @@ shown next to the title on the start screen and in the browser tab title
   heading now, a violet one where its program would take it if started
   (while it runs: the route it planned at the start).
 
+### Changed
+- The station's field now only shields from gravity — it no longer pulls
+  ships back like a gravity of its own. A ship left idle outside it feels
+  real gravity and can fall into the Sun or a planet: give it an order.
+
 ### Fixed
 - Ships flying to an order were slowed to about half speed once they left
   the station, by an amount that depended on the frame rate: they now fly

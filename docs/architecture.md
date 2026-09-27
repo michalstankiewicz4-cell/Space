@@ -834,18 +834,25 @@ that ship view — "the drone too").
   `updateProgrammedShip` (mesh turned by `heading`, +Z forward); a click
   order stops the program (`controls.js#commandTo`).
 - **Gravity on a flown unit is a drift, not a velocity** (drone and
-  programmed ships, `solarGravity.js#applyGravityToOne(…, false)`), and a
-  programmed ship isn't pulled home (`stationField.js`). Measured: a
+  programmed ships, `solarGravity.js#applyGravityToOne(…, false)`). Measured: a
   programmed ship accumulating gravity in its velocity fell sunward at
   dozens of units/s within 30 s of leaving the station field.
 - **Ordered ships are now truly gravity- and pull-immune** (skipped in
-  `solarGravity.js` and `stationField.js` while `sh.commandedTarget`).
+  `solarGravity.js` while `sh.commandedTarget`).
   Before, both were added to the velocity and only partly steered away by
   the 8%/frame lerp: measured 0.4–0.6 instead of the 0.97 cruise speed
   beyond the station, varying with the frame rate — so the flight could
   be neither predicted nor trusted (the user: "should be like the drone").
   This is the "commanded ships stay gravity-immune" rule finally done as
   written.
+- **The station's field shields, it doesn't pull** (the user's call, same
+  version): `station/stationField.js`, which dragged idle ships back from
+  beyond `STATION_FIELD_RADIUS` at `STATION_FIELD_STRENGTH` (4/s²) — a
+  gravity of the station's own — is gone. Inside the field: no gravity.
+  Outside: real gravity, accumulated in an idle ship's velocity, so a
+  ship left idle far from home (e.g. after eating a body) falls toward
+  the Sun or a planet unless the player orders it somewhere — chosen over
+  "holds position" and "drifts like the drone".
 - **Programs per unit** (`program/unitPrograms.js`): script, mode and
   block project under the drone's original keys (`roj-drone-script /
   -mode / -blocks`, so existing programs survive) and `roj-ship-script-N /
@@ -962,7 +969,8 @@ that ship view — "the drone too").
     this (previously the fleet spawned first).
   - **`world/solarGravity.js#updateSolarGravity()` skips ambient gravity
     entirely for any ship within `STATION_FIELD_RADIUS` of the
-    station** (same radius `station/stationField.js`'s own containment
+    station** (the pull-back described here was removed in v2.19.0 —
+    see "Programmable ships, unit view and trajectories"; same radius `station/stationField.js`'s own containment
     pull-back already used — one coherent field, not two independently-
     tuned radii: inside it, gravity simply doesn't apply; at/beyond the
     boundary, `stationField.js`'s existing pull-back takes over for

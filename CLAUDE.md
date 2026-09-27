@@ -157,8 +157,8 @@ the full detail behind each of these.
   lerp): both let a ship never arrive at a target after a close SOI
   encounter. Reliable point-to-point travel is load-bearing, confirmed by
   testing, not just cautious. **Since v2.19.0 they're skipped outright**
-  in `solarGravity.js`/`stationField.js` (before, the added pull halved
-  their speed, frame-rate dependent). Units flown by a program (drone,
+  in `solarGravity.js` (before, the added pull halved their speed,
+  frame-rate dependent). Units flown by a program (drone,
   programmed ships) get gravity as a position drift, not velocity.
 - **Comets are the one body genuinely SIMULATED, not closed-form**
   (`world/cometPhysics.js`) — real gravity-curved swing-by, replayed via
@@ -266,11 +266,11 @@ the full detail behind each of these.
   windows, broken panel, torn ring) is the model's damage, and the game
   starts it at `STATION_START_DAMAGE` (the story; repairs come later). Ships spawn arranged around it on a
   golden-angle spiral (`ships/swarm.js#shipSpawnPosition()`), inside a
-  gravity-free containment field (`STATION_FIELD_RADIUS`) —
-  `world/solarGravity.js` skips ambient gravity for any ship inside it,
-  `station/stationField.js` pulls back anything that's drifted beyond it.
-  The drone spawns nearby too and shares the gravity exemption, but
-  deliberately *not* the pull-back (would drag it off a distant dock).
+  gravity-free protective field (`STATION_FIELD_RADIUS`) —
+  `world/solarGravity.js` skips ambient gravity for any ship or the drone
+  inside it. **It shields, it doesn't pull** (v2.19.0, user's call: the old
+  pull-back, `stationField.js`, was removed) — an idle ship outside it
+  feels real gravity and can fall into the Sun or a planet.
 
 ## Security model (Supabase)
 

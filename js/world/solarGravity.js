@@ -112,17 +112,16 @@ export function gravityAccelAt(pos, t, out){
   return accelInto(pos, predictPosScratches, out);
 }
 
-// Same radius as station/stationField.js's own containment pull-back
-// (config.js#STATION_FIELD_RADIUS) - one coherent "protective field"
-// around the station, not two independently-tuned radii: inside it,
-// ambient gravity simply doesn't apply at all (so a freshly-spawned or
+// The station's protective field (config.js#STATION_FIELD_RADIUS): inside
+// it, ambient gravity simply doesn't apply at all (so a freshly-spawned or
 // docked fleet sits still instead of immediately drifting toward the Sun
 // - real solar gravity is strong enough even at the station's own ~290-unit
-// distance that this isn't a negligible effect over time); at/beyond the
-// boundary, stationField.js's own pull-back takes over for anything that's
-// drifted or traveled away. Covers the drone too (v2.0.8) - it's "kind of
-// a ship" too, per the user's own framing, and now spawns right next to
-// the station the same way (drone.js#spawnDrone()).
+// distance that this isn't a negligible effect over time); beyond it, real
+// gravity. It only shields — until v2.19.0 a separate pull-back
+// (station/stationField.js, removed at the user's call) also dragged idle
+// ships home from beyond it, a gravity of the station's own. Covers the
+// drone too (v2.0.8) - it's "kind of a ship" too, per the user's own
+// framing, and spawns right next to the station the same way.
 export function insideStationField(pos){
   return !!ctx.station && pos.distanceTo(ctx.station.pos) < STATION_FIELD_RADIUS;
 }
@@ -135,14 +134,16 @@ export function updateSolarGravity(dt){
     // A ship flying to an order is gravity-immune while it cruises
     // (ships/swarm.js#updateShips) — skipped here outright: added to its
     // velocity and only partly steered away again, gravity (and the
-    // station's pull) still slowed an ordered ship to about half its cruise
+    // station's old pull-back) still slowed an ordered ship to about half its cruise
     // speed, by an amount that depended on the frame rate (measured,
     // v2.19.0), so its flight could be neither predicted nor trusted.
     if(sh.commandedTarget) continue;
     // A ship flown by its program drifts like the drone (position, not
     // velocity): accumulated, the Sun's pull would have it falling sunward
-    // at dozens of units/s within half a minute (measured), with no station
-    // pull-back to catch it while the program runs (station/stationField.js).
+    // at dozens of units/s within half a minute (measured) — unflyable.
+    // An idle ship outside the field feels real gravity: it speeds up and
+    // can fall into the Sun or a planet unless given an order (the user's
+    // call, v2.19.0).
     applyGravityToOne(sh, dt, !sh.running);
   }
   if(ctx.drone && !insideStationField(ctx.drone.pos)) applyGravityToOne(ctx.drone, dt, false);

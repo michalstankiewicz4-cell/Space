@@ -37,7 +37,6 @@ import { initVersionCheck } from "./versionCheck.js";
 import { spawnDrone, updateDrone, updateDroneWreckage } from "./drone/drone.js";
 import { updateDronePrintFx } from "./drone/dronePrintFx.js";
 import { spawnStation } from "./station/station.js";
-import { applyStationField } from "./station/stationField.js";
 import { renderMainView, initViewRect } from "./scene/viewRect.js";
 import { updateSelectionBrackets } from "./scene/selectionBrackets.js";
 import { initUnitThumb, renderUnitThumb } from "./scene/unitThumb.js";
@@ -124,11 +123,10 @@ function tick(){
   const dt = Math.min(0.05, clock.getDelta());
   updateCamera(dt);
   // Ambient gravity (every fixed solar body pulling ships/the drone, patched-
-  // conics style) and the station's containment field both mutate ship
-  // velocity/position — both need to run BEFORE updateShips() so this
-  // frame's pull is actually integrated into movement this frame, not next.
+  // conics style, none inside the station's field) mutates ship velocity/
+  // position — it runs BEFORE updateShips() so this frame's pull is
+  // actually integrated into movement this frame, not next.
   updateSolarGravity(dt);
-  applyStationField(dt);
   // Bodies' own orbital positions (+ health regen) refresh before ships:
   // ships/swarm.js's low-health "shake" effect overwrites a target's
   // mesh.position based on its freshly-updated basePos, and needs to run

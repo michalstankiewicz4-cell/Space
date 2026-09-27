@@ -106,13 +106,12 @@ export const STATION_PICK_RADIUS = 1.7;
 // ring from 0.3, plus smoke and sparks). Repairs are meant to bring it down.
 export const STATION_START_DAMAGE = 0.35;
 
-// Station's containment field ("pole siłowe") — gently pulls the local
-// player's own ships back if they'd otherwise drift beyond this radius of
-// ctx.station, once ambient solar gravity (world/solarGravity.js) can
-// actually move an idle ship on its own. Radius/strength are a starting
-// point for visual tuning, same as everything in world/solarSystem.js.
+// Station's protective field ("pole siłowe"): within this radius of
+// ctx.station no gravity acts on the player's ships and drone
+// (world/solarGravity.js). It shields; it doesn't pull (v2.19.0, the
+// user's call — until then it also dragged idle ships back from beyond it,
+// like a gravity of its own). Outside it, real gravity.
 export const STATION_FIELD_RADIUS = 8;
-export const STATION_FIELD_STRENGTH = 4;
 
 // Planet selection (see world/bodies.js#setPlanetSelected, ui/hud/planetPanel.js)
 

@@ -69,10 +69,10 @@ js/
                      project with its virtual files (blockProject.js), the compiler to
                      the drone DSL (blockCompile.js) and the example programs
   station/           each player's static space station — its look (stationVisual.js:
-                     ShipKit's ST-04 HAVEN), the game-side entity (station.js), and its
-                     containment field pulling stray ships back (stationField.js);
-                     ships/the drone also spawn arranged around it, inside a
-                     gravity-free zone (world/solarGravity.js) — see "Space station" below
+                     ShipKit's ST-04 HAVEN) and the game-side entity (station.js);
+                     ships/the drone spawn arranged around it, inside its
+                     gravity-free protective field (world/solarGravity.js) — see
+                     "Space station" below
   ui/                the start screen (banner.js, its live player counters in playerCounts.js,
                      the About window in about.js), the Setup modal (setupModal.js), the global
                      Escape-key chain (escapeKey.js), all static UI text (i18nApply.js), HUD icons
