@@ -882,8 +882,13 @@ that ship view — "the drone too").
   its first ships). A fixed body (planet, meteoroid, black hole) gets its
   way along the orbit over the same 120 s (closed-form `bodyPosAt`); the
   Sun and the station don't move; a comet already draws its full path.
-  Lines come from a reused pool, two shared materials (one per color —
-  `colorManagement.js` converts each once). For a unit: cyan = as things
+  Lines come from a reused pool, shared materials (one per kind —
+  `colorManagement.js` converts each once). A body's arc lies exactly on
+  its orbit line, so depth-tested the two z-fought (the arc looked broken
+  and faint, the user spotted it): it's drawn without a depth test, and
+  all trajectory lines sit on layer 2, which only the main camera renders
+  (the miniatures and the cockpit view see layer 0 — otherwise the arc
+  cut across the planet's miniature). For a unit: cyan = as things
   stand (`predictCurrentPath`: idle drift + station pull, or an order's
   flight), violet = if its program started now (`predictProgramPath`:
   the real interpreter on a copy of the unit, `unitMotion` for motion,

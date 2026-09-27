@@ -19,19 +19,27 @@ const CURRENT_COLOR = 0x49d3ff;
 const PROGRAM_COLOR = 0xb48cf0;
 const REFRESH_S = 0.4;
 const HORIZON_S = 120;          // the same look-ahead as a unit's preview
-const BODY_STEPS = 60;
+const BODY_STEPS = 120;
 const MAX_TRACKED = 12;         // a big group selection: the first few ships
+// A layer only the main camera sees: the miniatures (scene/unitThumb.js,
+// infoThumb.js) and the cockpit view (shipcam.js) render layer 0 only —
+// an arc drawn on top would otherwise cut across a planet's miniature.
+const TRAJECTORY_LAYER = 2;
 
 const pool = [];                // THREE.Line objects, reused
-const materials = {};           // one per color, shared (scene/colorManagement.js converts each once)
+const materials = {};           // one per kind, shared (scene/colorManagement.js converts each once)
 let shownKey = "", sinceRefresh = 0;
 
-function material(color){
-  if(!materials[color]) materials[color] = new THREE.LineBasicMaterial({
-    color: color, transparent: true, opacity: 0.9, depthWrite: false, fog: false,
+// `overOrbit`: a body's arc lies exactly on its orbit line
+// (scene/orbitLines.js) — depth-tested, the two lines z-fight and the arc
+// shows up broken and faint, so it's drawn on top instead.
+function material(color, overOrbit){
+  const key = color + (overOrbit ? "o" : "");
+  if(!materials[key]) materials[key] = new THREE.LineBasicMaterial({
+    color: color, transparent: true, opacity: 0.9, depthWrite: false, depthTest: !overOrbit, fog: false,
     toneMapped: false    // full color, not dimmed by the filmic tone mapping
   });
-  return materials[color];
+  return materials[key];
 }
 
 function lineAt(i){
@@ -40,6 +48,8 @@ function lineAt(i){
   line.frustumCulled = false;
   line.visible = false;
   line.renderOrder = 5;
+  line.layers.set(TRAJECTORY_LAYER);
+  ctx.camera.layers.enable(TRAJECTORY_LAYER);
   ctx.scene.add(line);
   pool[i] = line;
   return line;
@@ -90,7 +100,7 @@ function pathsFor(obj){
     if(src.trim()) out.push({ points: predictProgramPath(obj, src).points, color: PROGRAM_COLOR });
     return out;
   }
-  if(obj.orbitSlot != null) return [{ points: bodyArc(obj.orbitSlot), color: CURRENT_COLOR }];
+  if(obj.orbitSlot != null) return [{ points: bodyArc(obj.orbitSlot), color: CURRENT_COLOR, overOrbit: true }];
   return [];
 }
 
@@ -102,7 +112,8 @@ function refresh(list){
       const line = lineAt(n++);
       line.geometry.dispose();
       line.geometry = new THREE.BufferGeometry().setFromPoints(path.points);
-      line.material = material(path.color);
+      line.material = material(path.color, path.overOrbit);
+      line.renderOrder = path.overOrbit ? 999 : 5;
       line.visible = true;
     });
   });
