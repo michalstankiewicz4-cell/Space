@@ -63,7 +63,7 @@ initSetupModal();
 initAbout();
 initPrivacySettings();
 initPrivacyNotice();
-whenPrivacyAccepted(initPlayerCounts);   // no server request before the policy is accepted
+initPlayerCounts();   // its server requests wait for the privacy policy itself
 initBanner();
 initEscapeKey();
 // rAF + setTimeout: resumes right after the next frame is actually painted.

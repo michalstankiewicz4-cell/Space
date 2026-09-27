@@ -4,6 +4,7 @@ import { NET_ENABLED } from "../env.js";
 import { isConnected } from "../net/connect.js";
 import { t, onLangChange } from "../i18n.js";
 import { fillIcons } from "./icons.js";
+import { whenPrivacyAccepted } from "./privacy.js";
 
 // The start screen's live player counters (#playerCounts in the top bar):
 // players online right now (this client + everyone whose ships it hears
@@ -12,6 +13,8 @@ import { fillIcons } from "./icons.js";
 // connected, via the public player_count() RPC in supabase/schema.sql,
 // which returns only the number). Only refreshed while the start screen
 // is open. Hidden entirely in offline mode (no multiplayer configured).
+// The labels and icons show right away; the server requests wait for the
+// privacy policy to be accepted (ui/privacy.js), showing "—" until then.
 const ONLINE_REFRESH_MS = 1000;
 const REGISTERED_REFRESH_MS = 60000;
 let online = null, registered = null;
@@ -50,7 +53,9 @@ export function initPlayerCounts(){
   fillIcons(box);
   render();
   onLangChange(render);
-  fetchRegistered();
-  setInterval(function(){ if(bannerOpen()) refreshOnline(); }, ONLINE_REFRESH_MS);
-  setInterval(function(){ if(bannerOpen()) fetchRegistered(); }, REGISTERED_REFRESH_MS);
+  whenPrivacyAccepted(function(){
+    fetchRegistered();
+    setInterval(function(){ if(bannerOpen()) refreshOnline(); }, ONLINE_REFRESH_MS);
+    setInterval(function(){ if(bannerOpen()) fetchRegistered(); }, REGISTERED_REFRESH_MS);
+  });
 }

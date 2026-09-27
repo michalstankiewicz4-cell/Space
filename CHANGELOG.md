@@ -4,6 +4,12 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.18.3]
+
+### Fixed
+- Before the privacy policy was accepted, the start screen's player
+  counter showed in English and without its icon, whatever the language.
+
 ## [2.18.2]
 
 ### Changed
