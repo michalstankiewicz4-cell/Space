@@ -9,10 +9,11 @@
 #smLine{ left:12px; right:12px; top:44px; }
 #smSide{ left:12px; top:54px; width:18px; height:264px; border-radius:0 0 0 12px; }
 #setupTabs{ left:40px; top:56px; width:428px; height:30px; }
-#setupTabs button{ position:absolute; top:0; height:30px; width:101px; font-family:var(--uiFontLabel); font-weight:500;
-  font-size:16px; color:#0c1440; border-radius:8px 8px 3px 8px; transition:filter .15s; }
-#setupTabs button:nth-child(1){ left:0; } #setupTabs button:nth-child(2){ left:109px; }
-#setupTabs button:nth-child(3){ left:218px; } #setupTabs button:nth-child(4){ left:327px; }
+#setupTabs button{ position:absolute; top:0; height:30px; width:80px; font-family:var(--uiFontLabel); font-weight:500;
+  font-size:15px; color:#0c1440; border-radius:8px 8px 3px 8px; transition:filter .15s; }
+#setupTabs button:nth-child(1){ left:0; } #setupTabs button:nth-child(2){ left:87px; }
+#setupTabs button:nth-child(3){ left:174px; } #setupTabs button:nth-child(4){ left:261px; }
+#setupTabs button:nth-child(5){ left:348px; }
 #setupTabs button:hover{ filter:brightness(1.12); }
 #setupTabs button.active{ border-radius:3px 18px 0 0; }
 .setupTabPanel{ left:40px; top:100px; width:428px; height:210px; }
@@ -52,4 +53,10 @@
   background:linear-gradient(180deg,#b8c5ff,#5f77f7 55%,#3a50d2); box-shadow:0 0 6px rgb(95 119 247 / .7); }
 #setupModal #setupTabGraphics .setupCheckRow{ font-size:16px; }
 #gfxSoon{ left:0; width:428px; font-size:13px; line-height:17px; color:#93a6ff; }
+/* Privacy tab (ui/privacy.js) */
+#privacyText{ left:0; top:2px; width:428px; font-size:15px; line-height:21px; color:#c7d0ff; }
+#privacyPolicyLink{ left:0; top:96px; font-size:16px; color:#9fb1ff; text-decoration:none; border-bottom:1px solid #3c55d8; }
+#deleteDataBtn{ left:0; top:132px; height:32px; padding:0 16px; font-size:15px; }
+#deleteDataBtn.armed{ border-color:#e04b50; color:#ffb3b5; box-shadow:0 0 8px rgb(224 75 80 / .5); }
+#deleteDataStatus{ left:0; top:172px; width:428px; font-size:14px; line-height:18px; color:#f8bb56; }
 #setupHelpText{ left:0; top:4px; width:428px; font-size:17px; line-height:30px; color:#c7d0ff; }

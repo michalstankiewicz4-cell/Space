@@ -2,6 +2,7 @@
 // opened from the start screen's [?] button. Its texts are set by
 // ui/i18nApply.js; it closes via its ✕, a click on the backdrop, or Escape
 // (ui/escapeKey.js).
+import { privacyUrl } from "./privacy.js";
 export function isAboutOpen(){
   return !document.getElementById("aboutModal").classList.contains("hidden");
 }
@@ -16,6 +17,8 @@ export function closeAbout(){
 
 export function initAbout(){
   const win = document.getElementById("aboutModal");
+  const privacyLink = document.getElementById("aboutPrivacyLink");
+  privacyLink.addEventListener("click", function(){ privacyLink.href = privacyUrl(); });
   document.getElementById("aboutBtn").addEventListener("click", openAbout);
   document.getElementById("aboutCloseBtn").addEventListener("click", closeAbout);
   win.addEventListener("click", function(e){ if(e.target === win) closeAbout(); });

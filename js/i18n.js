@@ -41,6 +41,7 @@ const STRINGS = {
       tabLanguage: "Language",
       tabMouse: "Mouse",
       tabHelp: "Help",
+      tabPrivacy: "Privacy",
       invertX: "Invert X (right-drag)",
       invertY: "Invert Y (right-drag)",
       swapButtons: "Swap left/right mouse button",
@@ -57,7 +58,20 @@ const STRINGS = {
       made: "Created with vibe coding.",
       authors: "Authors",
       contact: "Contact",
-      phone: "Phone"
+      phone: "Phone",
+      legal: "Legal",
+      license: "Open source, MIT license"
+    },
+    privacy: {
+      notice: "No ads, no tracking. Your progress stays in this browser; the server keeps your nickname and, only when abuse is detected, a shortened IP address.",
+      policy: "Privacy policy",
+      text: "Your progress and settings stay in this browser. On the server: your nickname (180 days after your last visit) and an anonymous account; a shortened IP address only when abuse is detected (30 days).",
+      deleteBtn: "Delete my data",
+      confirmDelete: "Yes, delete everything",
+      confirmHint: "This removes your nickname and account from the server and ALL game data (progress too) from this browser. Click again to confirm.",
+      deleting: "Deleting…",
+      deleted: "Done — your data has been deleted. Reloading…",
+      serverFailed: "The data in this browser was deleted, but the server couldn't be reached. Write to michalstankiewicz@onet.eu and we'll delete the rest."
     },
     telemetry: {
       title: "SWARM PROTOCOL // TELEMETRY",
@@ -394,6 +408,7 @@ const STRINGS = {
       tabLanguage: "Język",
       tabMouse: "Mysz",
       tabHelp: "Pomoc",
+      tabPrivacy: "Prywatność",
       invertX: "Odwróć X (obrót PPM)",
       invertY: "Odwróć Y (obrót PPM)",
       swapButtons: "Zamień lewy/prawy przycisk myszy",
@@ -410,7 +425,20 @@ const STRINGS = {
       made: "Stworzone przy pomocy vibecodingu.",
       authors: "Autorzy",
       contact: "Kontakt",
-      phone: "Tel."
+      phone: "Tel.",
+      legal: "Informacje prawne",
+      license: "Otwarte źródło, licencja MIT"
+    },
+    privacy: {
+      notice: "Bez reklam i śledzenia. Twój postęp zostaje w tej przeglądarce; serwer przechowuje twój nick, a skrócony adres IP tylko przy wykryciu nadużyć.",
+      policy: "Polityka prywatności",
+      text: "Twój postęp i ustawienia zostają w tej przeglądarce. Na serwerze: twój nick (180 dni od ostatniej wizyty) i anonimowe konto; skrócony adres IP tylko przy wykryciu nadużyć (30 dni).",
+      deleteBtn: "Usuń moje dane",
+      confirmDelete: "Tak, usuń wszystko",
+      confirmHint: "To usunie twój nick i konto z serwera oraz WSZYSTKIE dane gry (także postęp) z tej przeglądarki. Kliknij jeszcze raz, żeby potwierdzić.",
+      deleting: "Usuwanie…",
+      deleted: "Gotowe — twoje dane zostały usunięte. Wczytuję ponownie…",
+      serverFailed: "Dane w tej przeglądarce zostały usunięte, ale nie udało się połączyć z serwerem. Napisz na michalstankiewicz@onet.eu, a usuniemy resztę."
     },
     telemetry: {
       title: "SWARM PROTOCOL // TELEMETRIA",

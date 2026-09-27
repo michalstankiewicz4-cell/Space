@@ -4,6 +4,21 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.18.0]
+
+### Added
+- **Privacy policy** (Polish and English) and a short notice on the first
+  visit: no ads, no tracking, what the server keeps and for how long.
+- **Setup → Privacy → Delete my data**: removes your nickname and
+  anonymous account from the server and all game data from the browser.
+- The About window shows an e-mail contact, the privacy policy and the
+  license: the game's code is now open source under the MIT license.
+
+### Changed
+- The server keeps less: only a shortened IP address is ever recorded
+  (and only when abuse is detected), security logs are deleted after 30
+  days and nicknames 180 days after a player's last visit.
+
 ## [2.17.1]
 
 ### Fixed

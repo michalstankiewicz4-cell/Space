@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.17.1">
+<link rel="stylesheet" href="css/style.css?v=2.18.0">
 </head>
 <body>
 
@@ -208,6 +208,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
         <button type="button" data-tab="mouse" class="mat blueT">Mouse</button>
         <button type="button" data-tab="graphics" class="mat blueT">Graphics</button>
         <button type="button" data-tab="help" class="mat blueT">Help</button>
+        <button type="button" data-tab="privacy" class="mat blueT">Privacy</button>
       </div>
 
       <div id="setupTabLanguage" class="setupTabPanel" data-tab="language">
@@ -234,6 +235,14 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
         <div class="gfxTicks" style="top:120px"><span>20%</span><span>100%</span><span>200%</span></div>
         <label class="setupCheckRow" style="top:148px"><input type="checkbox" id="unitLightsCheck"><span class="chk"></span><span id="unitLightsLabel">Ship glow lights</span></label>
         <div id="gfxSoon" style="top:184px">Coming soon</div>
+      </div>
+
+      <!-- Setup -> Privacy (ui/privacy.js): the policy and "Delete my data". -->
+      <div id="setupTabPrivacy" class="setupTabPanel hidden" data-tab="privacy">
+        <div id="privacyText">The game keeps your progress in this browser. On the server: your nickname and an anonymous account; a shortened IP only when abuse is detected (30 days).</div>
+        <a id="privacyPolicyLink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a>
+        <button type="button" class="oBtn" id="deleteDataBtn">Delete my data</button>
+        <div id="deleteDataStatus"></div>
       </div>
 
       <div id="setupTabHelp" class="setupTabPanel hidden" data-tab="help">
@@ -477,6 +486,12 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
       <ul class="aboutList">
         <li><span id="aboutPhoneLabel">Tel.</span>: <a href="tel:+48797486355">+48 797 486 355</a></li>
         <li>GH: <a href="https://github.com/michalstankiewicz4-cell/Space/discussions" target="_blank" rel="noopener noreferrer">github.com/michalstankiewicz4-cell/Space/discussions</a></li>
+        <li>E-mail: <a href="mailto:michalstankiewicz@onet.eu">michalstankiewicz@onet.eu</a></li>
+      </ul>
+      <div class="aboutHd" id="aboutLegalHd">Legal</div>
+      <ul class="aboutList">
+        <li><a id="aboutPrivacyLink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></li>
+        <li><span id="aboutLicense">Open source, MIT license</span> — <a href="https://github.com/michalstankiewicz4-cell/Space" target="_blank" rel="noopener noreferrer">GitHub</a></li>
       </ul>
     </div>
   </section>
@@ -646,6 +661,12 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.17.1"></script>
+<script type="module" src="js/main.js?v=2.18.0"></script>
+<!-- First-visit privacy notice (ui/privacy.js), dismissed once per browser. -->
+<div id="privacyNotice" class="hidden">
+  <span id="privacyNoticeText">No ads, no tracking. Your progress stays in this browser; the server keeps your nickname and, only when abuse is detected, a shortened IP address.</span>
+  <a id="privacyNoticeLink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a>
+  <button type="button" class="mat gold" id="privacyNoticeOk">OK</button>
+</div>
 </body>
 </html>

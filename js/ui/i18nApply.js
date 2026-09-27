@@ -32,6 +32,15 @@ export function applyStaticText(){
   document.querySelector('#setupTabs button[data-tab="language"]').textContent = t("setup.tabLanguage");
   document.querySelector('#setupTabs button[data-tab="mouse"]').textContent = t("setup.tabMouse");
   document.querySelector('#setupTabs button[data-tab="help"]').textContent = t("setup.tabHelp");
+  document.querySelector('#setupTabs button[data-tab="privacy"]').textContent = t("setup.tabPrivacy");
+  document.getElementById("privacyText").textContent = t("privacy.text");
+  document.getElementById("privacyPolicyLink").textContent = t("privacy.policy");
+  document.getElementById("deleteDataBtn").textContent = t("privacy.deleteBtn");
+  document.getElementById("privacyNoticeText").textContent = t("privacy.notice");
+  document.getElementById("privacyNoticeLink").textContent = t("privacy.policy");
+  document.getElementById("aboutLegalHd").textContent = t("about.legal");
+  document.getElementById("aboutPrivacyLink").textContent = t("privacy.policy");
+  document.getElementById("aboutLicense").textContent = t("about.license");
   document.querySelector('#setupTabs button[data-tab="graphics"]').textContent = t("setup.tabGraphics");
   document.getElementById("gfxQualityLabel").textContent = t("setup.renderQuality");
   document.getElementById("gfxDetailLabel").textContent = t("setup.geometryDetail");

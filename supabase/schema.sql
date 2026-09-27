@@ -343,6 +343,8 @@ begin
     return;
   end if;
 
+  perform purge_old_data();   -- storage limitation, see "Privacy" at the end
+
   v_count := bump_activity_rate(v_actor, 'set_nick', interval '30 seconds');
   if v_count > 5 then
     insert into activity_log (actor, event_type, detail)
@@ -384,6 +386,34 @@ $$;
 -- nothing to read (and fails closed to nulls) when this schema itself is
 -- applied via the Management API's own SQL execution, which has no HTTP
 -- request to expose.
+-- Data minimisation (GDPR, see privacy.html): only a shortened IP is ever
+-- stored — IPv4 without its last octet (a.b.c.0), IPv6 cut to its first
+-- three groups (a:b:c::). Still enough to tell repeat abusers apart.
+-- x-forwarded-for can be a list: the first entry is the client.
+create or replace function shorten_ip(p_ip text)
+returns text
+language plpgsql
+immutable
+as $$
+declare
+  v text := trim(split_part(coalesce(p_ip, ''), ',', 1));
+  parts text[];
+begin
+  if v = '' then
+    return null;
+  end if;
+  if position(':' in v) > 0 then
+    parts := string_to_array(v, ':');
+    return concat_ws(':', parts[1], parts[2], parts[3]) || '::';
+  end if;
+  parts := string_to_array(v, '.');
+  if array_length(parts, 1) = 4 then
+    return parts[1] || '.' || parts[2] || '.' || parts[3] || '.0';
+  end if;
+  return null;
+end;
+$$;
+
 create or replace function request_meta()
 returns jsonb
 language plpgsql
@@ -400,7 +430,7 @@ begin
     return jsonb_build_object('ip', null, 'user_agent', null, 'country', null);
   end if;
   return jsonb_build_object(
-    'ip', coalesce(v_headers->>'cf-connecting-ip', v_headers->>'x-forwarded-for'),
+    'ip', shorten_ip(coalesce(v_headers->>'cf-connecting-ip', v_headers->>'x-forwarded-for')),
     'user_agent', v_headers->>'user-agent',
     'country', v_headers->>'cf-ipcountry'
   );
@@ -724,5 +754,63 @@ begin
     left join actor_nicks n on n.actor = l.actor
     order by l.created_at desc
     limit least(greatest(p_limit, 1), 500);
+end;
+$$;
+
+-- ============================================================================
+-- Privacy (GDPR) — see privacy.html and docs/security.md, "Privacy".
+-- Data minimisation: request_meta() (above) stores a shortened IP. Storage
+-- limitation: purge_old_data() drops security-log entries after 30 days and
+-- nicknames 180 days after the player's last visit (no pg_cron: it runs from
+-- set_my_nick(), i.e. whenever anyone connects — cheap on these small tables).
+-- The right to erasure: delete_my_data(), the game's Setup -> Privacy ->
+-- "Delete my data" button.
+-- ============================================================================
+
+-- Old rows out. Security definer: the tables have RLS with zero policies.
+-- Also clears stale rate-limit windows (they're only meaningful for seconds).
+create or replace function purge_old_data()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from activity_log where created_at < now() - interval '30 days';
+  delete from actor_nicks where updated_at < now() - interval '180 days';
+  delete from activity_rate where window_start < now() - interval '1 day';
+  delete from bite_rate_limit where window_start < now() - interval '1 day';
+end;
+$$;
+
+-- The caller's own data, and only theirs (auth.uid() — a client can't name
+-- anyone else): their nickname, their rate-limit counters and their
+-- anonymous account itself. Their security-log entries stay until
+-- purge_old_data() expires them (30 days) — the Art. 17(3) GDPR exception,
+-- so deleting an account can't erase traces of abuse. Rate-limited like
+-- every other write here. Deleting the account just means the next visit
+-- signs in as a fresh anonymous user — nothing a player couldn't already get
+-- by clearing their browser, so it opens no new abuse path.
+create or replace function delete_my_data()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_count int;
+begin
+  if v_actor is null then
+    return;
+  end if;
+  v_count := bump_activity_rate(v_actor, 'delete_me', interval '60 seconds');
+  if v_count > 3 then
+    return;
+  end if;
+  delete from actor_nicks where actor = v_actor;
+  delete from activity_rate where actor = v_actor;
+  delete from bite_rate_limit where actor = v_actor;
+  delete from auth.users where id = v_actor;
 end;
 $$;

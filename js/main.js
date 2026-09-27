@@ -21,6 +21,7 @@ import { spawnInitialFleet, updateShips, reconcileFleetSize } from "./ships/swar
 import { initBanner } from "./ui/banner.js";
 import { initSetupModal } from "./ui/setupModal.js";
 import { initAbout } from "./ui/about.js";
+import { initPrivacyNotice, initPrivacySettings } from "./ui/privacy.js";
 import { initPlayerCounts } from "./ui/playerCounts.js";
 import { initEscapeKey } from "./ui/escapeKey.js";
 import { applyStaticText } from "./ui/i18nApply.js";
@@ -60,6 +61,8 @@ applyStaticText();
 onLangChange(applyStaticText);
 initSetupModal();
 initAbout();
+initPrivacySettings();
+initPrivacyNotice();
 initPlayerCounts();
 initBanner();
 initEscapeKey();

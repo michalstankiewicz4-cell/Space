@@ -283,3 +283,11 @@ JS/CSS file's browser cache entry before navigating (a hand-maintained
 added to `js/` or `css/`, including every stylesheet index.html links),
 plus an "or Ctrl+Shift+R" hint underneath either way, since a static
 site with no build step can't guarantee a clean cache bypass on its own.
+
+## License and privacy
+
+The code is released under the [MIT License](LICENSE); the third-party
+components (Three.js, supabase-js, the fonts, the GLSL noise) keep their
+own licenses, listed in the same file. What the game stores about players
+and for how long: [privacy.html](privacy.html) (Polish and English), with
+the implementation notes in `docs/security.md` ("Privacy (GDPR)").

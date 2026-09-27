@@ -19,6 +19,7 @@ then read just that range.
 - [bite_body rate limit](#bitebody-rate-limit)
 - [Anonymous-auth spam](#anonymous-auth-spam)
 - [Public player counter](#public-player-counter)
+- [Privacy (GDPR)](#privacy-gdpr)
 
 ## No client-writable UPDATE policy
 
@@ -319,3 +320,53 @@ then read just that range.
   means every anonymous account that ever connected (one row per
   actor, upserted by `set_my_nick()`), test sessions included — an
   approximate public number, not an audited one.
+
+## Privacy (GDPR)
+
+Added in v2.18.0 (2026-09-27, the user's request). The public policy is
+`privacy.html` (Polish `#pl`, English `#en`); **keep it in sync with what
+the game and this schema actually store** — it's a legal statement, not
+marketing.
+
+- **What's personal data here**: the anonymous account id (Supabase
+  Auth), the nickname (`actor_nicks`), and in `activity_log` the IP,
+  browser and country (`request_meta()`), recorded only when an abuse
+  trigger fires. Game state (positions, colour, points) only travels over
+  Realtime broadcast/presence, never stored. Progress/settings stay in the
+  player's `localStorage`.
+- **No consent banner needed, an information notice instead**: no
+  analytics, ads or tracking; `localStorage` is strictly necessary;
+  the security log rests on legitimate interest (Art. 6(1)(f)). The
+  first-visit bar (`ui/privacy.js#initPrivacyNotice`, key
+  `roj-privacy-ok`) only informs and links the policy. Fonts and libraries
+  are self-hosted (v2.12.1), so no third-party requests (the Google Fonts
+  ruling doesn't apply).
+- **Data minimisation**: `shorten_ip()` — IPv4 a.b.c.0, IPv6 cut to its
+  first three groups (a:b:c::), first entry of an `x-forwarded-for`
+  list; `request_meta()` stores only that. Existing log rows were
+  shortened once at deploy.
+- **Storage limitation**: `purge_old_data()` deletes `activity_log` rows
+  older than 30 days, `actor_nicks` rows not refreshed for 180 days and
+  stale rate-limit windows. No pg_cron: `set_my_nick()` calls it, i.e.
+  on every player connection — cheap on these small tables. (Side effect:
+  the start-screen "registered players" number, if `player_count()` is
+  ever deployed, counts players seen in the last 180 days.)
+- **Right to erasure**: `delete_my_data()` (Setup → Privacy → "Delete my
+  data", two clicks) deletes the caller's `actor_nicks`, `activity_rate`
+  and `bite_rate_limit` rows and their `auth.users` row, then the client
+  signs out, removes every `roj-` / `sb-` localStorage key and reloads.
+  **Safe by construction**: security definer, but it only ever acts on
+  `auth.uid()` — a client can't name another player; rate-limited (3 per
+  60 s). The caller's `activity_log` rows are deliberately kept until they
+  expire (30 days, Art. 17(3) GDPR), so deleting an account can't wipe
+  evidence of abuse. A fresh anonymous account on the next visit is
+  nothing new — clearing the browser already gave that.
+- **Where**: the Supabase project is in **eu-west-1 (Ireland)**; GitHub
+  Pages hosts the site. Both named in the policy as processors.
+- **Controller / contact**: Michał Stankiewicz,
+  michalstankiewicz@onet.eu (also in the About window).
+- **History**: on 2026-09-27, at the user's request, all player data was
+  wiped once (303 anonymous accounts, 268 nicks, 2962 log rows, rate-limit
+  rows; the world tables untouched) — most of it test traffic.
+- **License**: the code is MIT (`LICENSE`, with the third-party
+  components listed there).

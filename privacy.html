@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swarm Protocol // Polityka prywatności · Privacy policy</title>
+<link rel="stylesheet" href="css/fonts.css">
+<!-- The game's privacy policy, Polish first, English below (#pl / #en).
+     Linked from the game's first-visit notice, the About window and
+     Setup -> Privacy. Keep it in sync with what the game and
+     supabase/schema.sql actually store (docs/security.md, "Privacy"). -->
+<style>
+  :root{ color-scheme:dark; }
+  html,body{ margin:0; background:#02030a; color:#d8ddff; }
+  body{ font-family:"Roboto Condensed","Arial Narrow",sans-serif; font-size:17px; line-height:1.6; }
+  main{ max-width:820px; margin:0 auto; padding:36px 22px 80px; }
+  h1{ font-family:"Antonio","Arial Narrow",sans-serif; font-weight:700; letter-spacing:.5px; color:#f8bb56; font-size:32px; margin:0 0 4px; }
+  h2{ font-family:"Oswald","Arial Narrow",sans-serif; font-weight:500; color:#8fa2ff; font-size:21px; margin:30px 0 8px;
+      border-bottom:1px solid #1c3bb4; padding-bottom:4px; }
+  h3{ font-family:"Oswald","Arial Narrow",sans-serif; font-weight:500; color:#4fe3c6; font-size:17px; margin:18px 0 4px; }
+  a{ color:#4fe3c6; }
+  .meta{ color:#8a93c4; font-size:15px; margin:0 0 18px; }
+  .lang{ display:flex; gap:10px; margin:12px 0 26px; }
+  .lang a{ font-family:"Oswald",sans-serif; text-decoration:none; padding:4px 14px; border:1px solid #3c55d8; border-radius:6px; color:#d8ddff; }
+  .lang a:hover{ border-color:#f8bb56; color:#ffe2a8; }
+  table{ width:100%; border-collapse:collapse; font-size:15.5px; margin:8px 0; }
+  th,td{ text-align:left; vertical-align:top; padding:6px 8px; border-bottom:1px solid #16205a; }
+  th{ color:#8fa2ff; font-weight:600; }
+  ul{ padding-left:22px; }
+  .box{ background:#070b22; border:1px solid #1c3bb4; border-radius:8px; padding:12px 16px; margin:14px 0; }
+  hr{ border:0; border-top:1px solid #1c3bb4; margin:56px 0 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>SWARM PROTOCOL</h1>
+<div class="lang"><a href="#pl">Polski</a><a href="#en">English</a><a href="index.html">← Gra / Game</a></div>
+
+<!-- ================================================================== PL -->
+<section id="pl" lang="pl">
+<h1>Polityka prywatności</h1>
+<p class="meta">Obowiązuje od 27 września 2026 r.</p>
+
+<div class="box">W skrócie: gra nie ma reklam, analityki ani śledzenia. Twój postęp zostaje w
+twojej przeglądarce. Na serwerze trzymamy tylko to, co jest potrzebne do gry z innymi
+graczami i do ochrony przed nadużyciami, i usuwamy to po określonym czasie. Swoje dane
+możesz w każdej chwili usunąć sam: <b>Ustawienia → Prywatność → Usuń moje dane</b>.</div>
+
+<h2>1. Administrator danych</h2>
+<p>Administratorem danych jest Michał Stankiewicz, twórca gry.
+Kontakt: <a href="mailto:michalstankiewicz@onet.eu">michalstankiewicz@onet.eu</a>.</p>
+
+<h2>2. Jakie dane przetwarzamy i po co</h2>
+<table>
+<tr><th>Dane</th><th>Cel</th><th>Podstawa prawna</th><th>Jak długo</th></tr>
+<tr><td>Anonimowy identyfikator konta (losowy, bez e-maila i hasła)</td>
+    <td>działanie gry wieloosobowej: rozpoznanie, czyje są statki i działania</td>
+    <td>art. 6 ust. 1 lit. b RODO (świadczenie usługi — gry)</td>
+    <td>do usunięcia przez ciebie</td></tr>
+<tr><td>Nick (pseudonim), który sam wybierasz</td>
+    <td>pokazanie go innym graczom; licznik graczy; rozpoznanie sprawcy nadużyć</td>
+    <td>art. 6 ust. 1 lit. b i f RODO</td>
+    <td>180 dni od ostatniego wejścia do gry</td></tr>
+<tr><td>Pozycje statków, drona i stacji, kolor, punkty</td>
+    <td>pokazanie ich innym graczom w czasie rzeczywistym</td>
+    <td>art. 6 ust. 1 lit. b RODO</td>
+    <td>nie są zapisywane — tylko przesyłane na żywo</td></tr>
+<tr><td>Skrócony adres IP (bez ostatniego fragmentu), typ przeglądarki, kraj</td>
+    <td>ochrona gry przed nadużyciami (np. spam, zbyt częste akcje, próby złamania zabezpieczeń) —
+        zapisywane <b>tylko</b> wtedy, gdy wykryjemy takie zdarzenie</td>
+    <td>art. 6 ust. 1 lit. f RODO (prawnie uzasadniony interes: bezpieczeństwo)</td>
+    <td>30 dni</td></tr>
+<tr><td>Dane w pamięci przeglądarki (localStorage): postęp gry, ustawienia, język, identyfikator, nick, kolor</td>
+    <td>zapamiętanie gry i ustawień między wizytami</td>
+    <td>niezbędne do działania gry</td>
+    <td>zostają na twoim urządzeniu, dopóki ich nie usuniesz</td></tr>
+</table>
+<p>Nie używamy plików cookie reklamowych ani analitycznych. Czcionki i biblioteki gry są
+serwowane z naszego serwera, a nie z serwerów firm trzecich.</p>
+
+<h2>3. Komu powierzamy dane</h2>
+<ul>
+<li><b>Supabase Inc.</b> — baza danych, konta anonimowe i komunikacja na żywo między graczami (podmiot przetwarzający). Baza gry znajduje się w Unii Europejskiej (region Irlandia, eu-west-1).</li>
+<li><b>GitHub, Inc.</b> — hosting strony gry (GitHub Pages).</li>
+</ul>
+<p>Obaj dostawcy mogą technicznie rejestrować adresy IP w swoich logach serwerowych,
+zgodnie z własnymi politykami prywatności. Mogą przetwarzać dane poza Europejskim Obszarem
+Gospodarczym na podstawie standardowych klauzul umownych. Blog gry
+(swarmprotocol.blogspot.com) to osobna strona Google Blogger z własną polityką prywatności.</p>
+
+<h2>4. Twoje prawa</h2>
+<p>Masz prawo do dostępu do swoich danych, ich sprostowania, usunięcia, ograniczenia
+przetwarzania, przenoszenia oraz do sprzeciwu wobec przetwarzania opartego na prawnie
+uzasadnionym interesie. Masz też prawo wnieść skargę do Prezesa Urzędu Ochrony Danych
+Osobowych (ul. Stawki 2, 00-193 Warszawa, <a href="https://uodo.gov.pl" target="_blank" rel="noopener">uodo.gov.pl</a>).</p>
+
+<h3>Jak usunąć swoje dane</h3>
+<p>W grze: <b>Ustawienia → Prywatność → Usuń moje dane</b>. Usuwa to twój nick i anonimowe konto
+z serwera oraz wszystkie dane gry z tej przeglądarki (także postęp). Wpisy dziennika
+bezpieczeństwa z ostatnich 30 dni zostają do końca tego okresu — to wyjątek przewidziany w
+art. 17 ust. 3 RODO, żeby usunięcie danych nie pozwalało zatrzeć śladów nadużyć.
+Możesz też napisać na <a href="mailto:michalstankiewicz@onet.eu">michalstankiewicz@onet.eu</a>.</p>
+
+<h2>5. Dobra rada</h2>
+<p>Nie używaj swojego prawdziwego imienia i nazwiska jako nicku — gra nie potrzebuje żadnych
+danych, które by cię identyfikowały.</p>
+
+<h2>6. Zmiany</h2>
+<p>Jeśli zmieni się to, jakie dane przetwarza gra, zaktualizujemy tę stronę i datę na górze.</p>
+</section>
+
+<hr>
+
+<!-- ================================================================== EN -->
+<section id="en" lang="en">
+<h1>Privacy policy</h1>
+<p class="meta">Effective from 27 September 2026.</p>
+
+<div class="box">In short: the game has no ads, no analytics and no tracking. Your progress stays
+in your browser. On the server we keep only what's needed to play with others and to protect
+the game from abuse, and we delete it after a set time. You can delete your data yourself at
+any time: <b>Setup → Privacy → Delete my data</b>.</div>
+
+<h2>1. Data controller</h2>
+<p>The data controller is Michał Stankiewicz, the game's author.
+Contact: <a href="mailto:michalstankiewicz@onet.eu">michalstankiewicz@onet.eu</a>.</p>
+
+<h2>2. What data we process and why</h2>
+<table>
+<tr><th>Data</th><th>Purpose</th><th>Legal basis</th><th>How long</th></tr>
+<tr><td>Anonymous account identifier (random, no e-mail or password)</td>
+    <td>running the multiplayer game: knowing whose ships and actions are whose</td>
+    <td>Art. 6(1)(b) GDPR (providing the service — the game)</td>
+    <td>until you delete it</td></tr>
+<tr><td>The nickname you choose</td>
+    <td>showing it to other players; the player counter; identifying abuse</td>
+    <td>Art. 6(1)(b) and (f) GDPR</td>
+    <td>180 days after your last visit</td></tr>
+<tr><td>Positions of your ships, drone and station, colour, points</td>
+    <td>showing them to other players live</td>
+    <td>Art. 6(1)(b) GDPR</td>
+    <td>not stored — only sent live</td></tr>
+<tr><td>Shortened IP address (last part removed), browser type, country</td>
+    <td>protecting the game from abuse (e.g. spam, too-frequent actions, attempts to break
+        security) — recorded <b>only</b> when such an event is detected</td>
+    <td>Art. 6(1)(f) GDPR (legitimate interest: security)</td>
+    <td>30 days</td></tr>
+<tr><td>Browser storage (localStorage): game progress, settings, language, identifier, nickname, colour</td>
+    <td>remembering your game and settings between visits</td>
+    <td>strictly necessary for the game to work</td>
+    <td>stays on your device until you delete it</td></tr>
+</table>
+<p>We use no advertising or analytics cookies. The game's fonts and libraries are served from
+our own server, not from third parties.</p>
+
+<h2>3. Who processes data for us</h2>
+<ul>
+<li><b>Supabase Inc.</b> — database, anonymous accounts and live communication between players (processor). The game's database is in the European Union (Ireland, eu-west-1).</li>
+<li><b>GitHub, Inc.</b> — hosting of the game's website (GitHub Pages).</li>
+</ul>
+<p>Both may technically log IP addresses in their server logs under their own privacy
+policies, and may process data outside the European Economic Area under standard contractual
+clauses. The game's devlog (swarmprotocol.blogspot.com) is a separate Google Blogger site with
+its own privacy policy.</p>
+
+<h2>4. Your rights</h2>
+<p>You have the right to access your data, to rectify, erase and restrict it, to data
+portability, and to object to processing based on legitimate interest. You may also lodge a
+complaint with a supervisory authority — in Poland the President of the Personal Data
+Protection Office (UODO, ul. Stawki 2, 00-193 Warszawa, <a href="https://uodo.gov.pl" target="_blank" rel="noopener">uodo.gov.pl</a>).</p>
+
+<h3>How to delete your data</h3>
+<p>In the game: <b>Setup → Privacy → Delete my data</b>. It removes your nickname and anonymous
+account from the server and all game data from this browser (including your progress).
+Security log entries from the last 30 days remain until that period ends — an exception
+allowed by Art. 17(3) GDPR, so that deleting your data can't erase traces of abuse.
+You can also write to <a href="mailto:michalstankiewicz@onet.eu">michalstankiewicz@onet.eu</a>.</p>
+
+<h2>5. A piece of advice</h2>
+<p>Don't use your real name as your nickname — the game needs nothing that identifies you.</p>
+
+<h2>6. Changes</h2>
+<p>If what the game processes changes, we'll update this page and the date at the top.</p>
+</section>
+</main>
+</body>
+</html>
