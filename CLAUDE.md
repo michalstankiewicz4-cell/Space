@@ -96,13 +96,13 @@ shared live via Supabase; a player's own points/upgrades stay local
 - **No trademarked franchise names** in code, comments, or docs (e.g. not
   "Kerbal-style", "DS9-style") — generic descriptions instead. Already
   named references may stay in already-published blog posts, but nothing
-  new goes in this repo. (`test.html`, a separate scratch prototype not
-  part of this repo's own code, is exempt — it's off-limits to edit at
-  all, see below.)
-- **`test.html`**: a standalone scratch prototype the user built in
-  another conversation (patched-conics orbital mechanics + visual block
-  programming, see `IDEAS.md`'s "Deep economy" section) — **never modify,
-  delete, or commit it**. It's untracked on purpose.
+  new goes in this repo.
+- **`test.html`** (the user's untracked orbital-mechanics + block-
+  programming prototype) was **deleted on 2026-09-27 at the user's
+  request** — its ideas are all in the game now (the 9-orbit system,
+  patched-conics gravity, block programs, trajectory preview in
+  `program/simulate.js`). Code comments saying "port of test.html" just
+  record where something came from.
 
 ## Architecture
 

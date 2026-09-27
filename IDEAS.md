@@ -174,7 +174,8 @@ trading, orbits affect how you reach the bodies you mine, scripting is what
 lets players automate the resulting complexity).
 
 **Update (2026-09-23)**: the user built a standalone prototype (`test.html`,
-still local-only, not checked into this repo) exploring the orbital-physics
+local-only, never checked in; deleted 2026-09-27 once everything it
+prototyped was in the game) exploring the orbital-physics
 and programming-model pieces together — a small solar system (sun +
 planets on real elliptical/inclined orbits, two with moons), patched-conics
 gravity (the ship is pulled by exactly one dominant body at a time,
