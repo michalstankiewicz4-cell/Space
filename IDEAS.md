@@ -367,3 +367,32 @@ piece that's still genuinely open:
   identity than today's local-only points ever was, which loops back to the
   Google-login discussion already floated for the community ship-voting
   idea (`nickGoogleBtn` in `index.html`, currently a disabled placeholder).
+
+## Privacy policy version history
+
+The user's idea (2026-09-27), for later — there's only one version of the
+policy so far, so nothing to switch between yet.
+
+A styled dropdown in `privacy.html`'s pinned top bar (next to the
+Polski / English / ← Gra buttons, in the same look) to pick which version
+of the policy to read: "Current", then past versions by the period they
+were in force, e.g. "2026–2028", "2028–2029".
+
+- **Where old versions live**: frozen copies next to the page, e.g.
+  `privacy/2026-09-27.html` (the date the version took effect), never
+  edited after they're replaced. `privacy.html` stays the current one, so
+  every existing link (the game's notice, About, Setup → Privacy) keeps
+  working.
+- **The list**: a small hand-maintained array in the page itself
+  (`{ from, to, file }`), newest first; picking an entry navigates to that
+  file and keeps the `#pl` / `#en` hash. An archived copy shows a banner
+  "This is an archived version — see the current policy" with a link back.
+- **Nice extra**: a short "What changed" line per version, so a player
+  doesn't have to diff two legal texts by eye.
+- **When it becomes worth doing**: at the first real policy change (the
+  policy already promises to update the effective date and announce
+  significant changes in the game or on the devlog — keeping the old text
+  reachable is the natural companion to that). Plain HTML, no server
+  side; the page is outside the game bundle's `versionCheck.js` list, but
+  a change to it still gets the usual version bump (it's served to
+  players).
