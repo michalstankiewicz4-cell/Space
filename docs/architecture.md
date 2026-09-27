@@ -86,6 +86,9 @@ then read just that range.
 
 ## Camera modes
 
+- **Scale** — the full picture (numbers, what depends on what, problems
+  found, a checklist for the next change) is in `docs/scale.md`; the two
+  steps in brief:
 - **Scale, step 1 (v2.16.0)**: toward a more realistic (not literal)
   scale, units shrank to half — ship `SHIP_MODEL_LENGTH` 0.9 → 0.45,
   drone 1.4 → 0.7, station 10 → 5 (its ring now smaller than a planet)

@@ -11,7 +11,8 @@ found and fixed, exact function names) lives in `docs/`:
 [`docs/security.md`](docs/security.md),
 [`docs/gotchas.md`](docs/gotchas.md), [`docs/blogger.md`](docs/blogger.md);
 the standalone ship/body labs are documented in [`docs/ship.md`](docs/ship.md)
-and [`docs/bodies.md`](docs/bodies.md).
+and [`docs/bodies.md`](docs/bodies.md); sizes/distances and what depends on
+them (an ongoing, step-by-step topic) in [`docs/scale.md`](docs/scale.md).
 Read the relevant one with the Read tool before modifying that subsystem —
 the summaries here are for orientation, not enough detail to safely change
 the code. Don't read the long ones whole: `docs/architecture.md` and
