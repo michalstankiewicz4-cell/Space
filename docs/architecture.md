@@ -26,6 +26,7 @@ then read just that range.
 - [Ship cam](#ship-cam)
 - [Sky backdrop (nebulae, stars, pulsars)](#sky-backdrop-nebulae-stars-pulsars)
 - [Programmable drone](#programmable-drone)
+- [Programmable ships, unit view and trajectories](#programmable-ships-unit-view-and-trajectories)
 - [Space station](#space-station)
 - [UI kit (start screen and setup modal)](#ui-kit-start-screen-and-setup-modal)
 - [In-game HUD](#in-game-hud)
@@ -805,6 +806,86 @@ then read just that range.
     block+slot) — that map is what drag & drop uses to detach/insert.
     Drag measures with `getBoundingClientRect` and divides by the window's
     scale (`ratio()`), since the window is scaled by `--uiScale`.
+
+## Programmable ships, unit view and trajectories
+
+Added in v2.19.0 (the user's request: every ship programmable like the
+drone, a camera on a ship "like on a planet", the cockpit view under it,
+and the prototype's two trajectory lines from `test.html`, shown only in
+that ship view — "the drone too").
+
+- **One runner, per-unit builtins** (`js/program/`): `runner.js` runs a
+  program on any unit (`runUnitProgram` / `stopUnitProgram` /
+  `stepUnitProgram`, the runaway-step guard); what the builtins do comes
+  from `unit.api` = `{ start, advance, prepare? }` — `drone.js#DRONE_API`,
+  `ships/shipProgram.js#SHIP_API`. Shared pieces: `unitMotion.js`
+  (move/turn/wait math, nearest body, "near" = radius + `DRONE_DOCK_GAP`),
+  `unitBite.js` (attack(): one bite + the kill rules, moved out of
+  drone.js), `unitPrint.js` (print(): log, cooldown, profanity check, the
+  gas+laser effect, broadcast). The language and interpreter stay
+  `drone/dsl.js` + `drone/interpreter.js` — still one interpreter.
+- **Ships vs the drone**: ships have no fuel (fuel()/maxFuel() report
+  100, so drone scripts run unchanged), move at their cruise speed (Speed
+  upgrade), and attack() bites like eating does (Bite upgrade × thermal
+  efficiency, `swarm.js#eatEfficiency`, in `DRONE_ATTACK_COOLDOWN_S`
+  slices) — a program can't dodge the heat-resistance upgrades. START
+  = all stop (`SHIP_API.prepare`: no order, velocity 0, heading from the
+  mesh). While `sh.running`, `updateShips` hands the ship to
+  `updateProgrammedShip` (mesh turned by `heading`, +Z forward); a click
+  order stops the program (`controls.js#commandTo`).
+- **Gravity on a flown unit is a drift, not a velocity** (drone and
+  programmed ships, `solarGravity.js#applyGravityToOne(…, false)`), and a
+  programmed ship isn't pulled home (`stationField.js`). Measured: a
+  programmed ship accumulating gravity in its velocity fell sunward at
+  dozens of units/s within 30 s of leaving the station field.
+- **Ordered ships are now truly gravity- and pull-immune** (skipped in
+  `solarGravity.js` and `stationField.js` while `sh.commandedTarget`).
+  Before, both were added to the velocity and only partly steered away by
+  the 8%/frame lerp: measured 0.4–0.6 instead of the 0.97 cruise speed
+  beyond the station, varying with the frame rate — so the flight could
+  be neither predicted nor trusted (the user: "should be like the drone").
+  This is the "commanded ships stay gravity-immune" rule finally done as
+  written.
+- **Programs per unit** (`program/unitPrograms.js`): script, mode and
+  block project under the drone's original keys (`roj-drone-script /
+  -mode / -blocks`, so existing programs survive) and `roj-ship-script-N /
+  -mode-N / -blocks-N` for "Ship N" (its place in the fleet).
+  `blocks/blockProject.js` keeps one project per key: `useProject(key)`
+  makes one active for the editor, `withProject(key, fn)` compiles
+  another (the compiler resolves definitions through the active one).
+  `drone/droneMode.js` is gone (mode is per unit now).
+  `ui/windows/droneScript.js`: the panel's START/STOP/SCRIPT act on the
+  unit the panel shows (`unitPanel.js#getProgramUnit`), the editor
+  windows on the unit they were opened for (titles "Ship N script",
+  "PROGRAMMING: SHIP N").
+- **Unit panel** (`ui/hud/unitPanel.js`): a single ship or the drone
+  shows VIEW (eye) above COCKPIT (camera) right of the miniature, and the
+  START/STOP/SCRIPT row (a ship's four "soon" quick orders now only show
+  for a group). VIEW = `controls.js#focusCameraOnUnit` — the "focus"
+  camera with one stable target object per unit (`{ unit, mesh, radius,
+  focusDistance, zoomRange, alive() }`); again → the base view.
+  `unitInView()` answers "which unit is the camera on". COCKPIT =
+  `scene/shipcam.js`, now for the drone too (its own offset); the unit's
+  selection ring is hidden for that render pass (it cut across the view).
+  PIP label "COCKPIT".
+- **Trajectories** (`program/simulate.js`, drawn by
+  `scene/unitTrajectory.js`, only while `unitInView()`): cyan = as things
+  stand (`predictCurrentPath`: idle drift + station pull, or an order's
+  flight), violet = if its program started now (`predictProgramPath`:
+  the real interpreter on a copy of the unit, `unitMotion` for motion,
+  `solarGravity.js#gravityAccelAt(pos, t)` — the same capped patched-
+  conics pull, with bodies at their future positions; attack() only waits
+  its cooldown, print() does nothing). While a program runs, violet is
+  the route planned at START (`planUnitRoute`; a running generator can't
+  be copied to re-predict mid-run) and cyan is hidden. 0.2 s steps, 120 s
+  ahead, refreshed every 0.4 s; lines `toneMapped: false` (the filmic
+  tone mapping dimmed them). Measured accuracy: 0.2–0.5 units off after
+  40 s of a programmed flight out of the field; an ordered flight matches
+  to 0.1.
+- **Found on the way**: the drone's print() read its color from
+  `drone.mesh.material`, but since the ShipKit model (v2.8.0) `mesh` is a
+  Group without a material — print() threw and ended the script. It now
+  uses the player's color, the same one other players see.
 
 ## Space station
 

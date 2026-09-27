@@ -2,7 +2,11 @@ import { readStorage, writeStorage } from "../core/utils.js";
 import { SPECS, FILE_COLORS } from "./blockSpecs.js";
 
 // The block program: a small "virtual file system" plus the names shared
-// by every file. Persisted as JSON under its own localStorage key.
+// by every file. Persisted as JSON under its own localStorage key — one
+// project per programmable unit (program/unitPrograms.js#unitBlocksKey):
+// the drone's under roj-drone-blocks, each swarm ship's under its own key.
+// One of them is "active" (the one the block editor shows, useProject());
+// the helpers below all work on the active one.
 //
 //   project = {
 //     seq,                                 last id handed out
@@ -19,8 +23,10 @@ import { SPECS, FILE_COLORS } from "./blockSpecs.js";
 // Ids ("b12", "v3", "f7", "p9") double as the identifiers the compiled
 // script uses, so the names players type can be anything (Polish letters,
 // spaces) without ever reaching the DSL's lexer.
-const STORAGE_KEY = "roj-drone-blocks";
+const DEFAULT_KEY = "roj-drone-blocks";
+let activeKey = DEFAULT_KEY;
 let project = null;
+const loaded = {};   // key -> project, loaded once per key and kept in memory
 
 export function newId(prefix){ project.seq += 1; return prefix + project.seq; }
 
@@ -85,18 +91,47 @@ function valid(p){
   return p && Array.isArray(p.files) && p.files.length && Array.isArray(p.vars) && Array.isArray(p.defs) && typeof p.seq === "number";
 }
 
-export function getProject(){
-  if(project) return project;
+function loadProject(key){
+  if(loaded[key]) return loaded[key];
+  const prev = project;
+  project = null;
   try{
-    const raw = JSON.parse(readStorage(STORAGE_KEY) || "null");
+    const raw = JSON.parse(readStorage(key) || "null");
     if(valid(raw)) project = raw;
   }catch(e){}
   if(!project) defaultProject();
   if(!project.files.some(function(f){ return f.main; })) project.files[0].main = true;
+  const p = project;
+  project = prev;
+  loaded[key] = p;
+  return p;
+}
+
+// Makes the project stored under `key` the active one (the block editor
+// calls this for the unit it's opened for).
+export function useProject(key){
+  activeKey = key || DEFAULT_KEY;
+  project = loadProject(activeKey);
   return project;
 }
 
-export function saveProject(){ writeStorage(STORAGE_KEY, JSON.stringify(project)); }
+export function getProject(){
+  if(!project) project = loadProject(activeKey);
+  return project;
+}
+
+// Runs fn(p) with the project under `key` temporarily active — the
+// compiler (blocks/blockCompile.js) resolves definitions through the
+// active project, so compiling another unit's program needs this.
+export function withProject(key, fn){
+  const prevKey = activeKey, prev = project;
+  activeKey = key;
+  project = loadProject(key);
+  try{ return fn(project); }
+  finally{ activeKey = prevKey; project = prev; }
+}
+
+export function saveProject(){ writeStorage(activeKey, JSON.stringify(project)); }
 
 export function findFile(id){ return project.files.find(function(f){ return f.id === id; }); }
 export function findDef(id){ return project.defs.find(function(d){ return d.id === id; }); }

@@ -130,7 +130,9 @@ the full detail behind each of these.
   a minimap click on a body selects it as before and flies the camera
   there; every mode change glides (~1 s), a lost target falls back to
   "system". The black hole is selectable too (world + minimap, own info
-  panel) but never a course target.
+  panel) but never a course target. The unit panel's VIEW puts the focus
+  camera on a ship/the drone (`focusCameraOnUnit`), with its trajectory
+  lines (`scene/unitTrajectory.js`) — only in that view.
 - **The world is a fixed 9-orbit solar system** (`world/solarSystem.js`),
   not a random pool — Sun + 9 hand-placed orbit slots (2 volcanic, 2
   neutral, 2 ice, 1 meteoroid, 1 permanent black hole, orbit 4 = the
@@ -154,7 +156,10 @@ the full detail behind each of these.
   reverted twice (bounded steering, then capped-gravity-under-the-old-
   lerp): both let a ship never arrive at a target after a close SOI
   encounter. Reliable point-to-point travel is load-bearing, confirmed by
-  testing, not just cautious.
+  testing, not just cautious. **Since v2.19.0 they're skipped outright**
+  in `solarGravity.js`/`stationField.js` (before, the added pull halved
+  their speed, frame-rate dependent). Units flown by a program (drone,
+  programmed ships) get gravity as a position drift, not velocity.
 - **Comets are the one body genuinely SIMULATED, not closed-form**
   (`world/cometPhysics.js`) — real gravity-curved swing-by, replayed via
   `advanceComet()` for late joiners. Exactly one exists at a time
@@ -192,7 +197,12 @@ the full detail behind each of these.
   body lab's SKY tab; follows the camera, purely decorative.
 - **Programmable drone** (`js/drone/*.js`): a single extra ship that only
   moves via a player-written script in a small custom DSL
-  (`dsl.js`/`interpreter.js`, generator-based, not JS/eval). Full
+  (`dsl.js`/`interpreter.js`, generator-based, not JS/eval). **Every swarm
+  ship is programmable too (v2.19.0)**: one runner for all
+  (`js/program/runner.js`, builtins per unit via `unit.api`), programs
+  stored per unit (`program/unitPrograms.js`), trajectory preview =
+  the real interpreter on a copy (`program/simulate.js`) — docs/
+  architecture.md "Programmable ships, unit view and trajectories". Full
   gotchas (runaway-script safety net, click-priority bug history, the
   `.hidden`/`display:none` CSS trap, `pointerdown` vs `click`) in the doc.
   A visual **block editor** (`js/blocks/`, `ui/windows/block*.js`)

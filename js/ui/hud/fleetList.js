@@ -15,6 +15,8 @@ import { t } from "../../i18n.js";
 let builtFor = -1;
 
 function statusText(sh){
+  if(sh.error) return t("drone.error");
+  if(sh.running) return t("hud.programRunning");
   if(sh.boltCore && sh.boltCore.visible) return t("hud.feeding");
   return sh.commandedTarget ? t("hud.enRoute") : t("hud.idle");
 }

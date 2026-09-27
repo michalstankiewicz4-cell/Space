@@ -1,39 +1,61 @@
 import { ctx } from "../../core/context.js";
-import { setDroneScript, runDroneScript, stopDroneScript } from "../../drone/drone.js";
-import { getDroneMode, setDroneMode } from "../../drone/droneMode.js";
-import { isDronePanelOpen, closeDronePanel, updateUnitPanel } from "../hud/unitPanel.js";
+import { runUnitProgram, stopUnitProgram } from "../../program/runner.js";
+import { getUnitScript, setUnitScript, getUnitMode, setUnitMode, unitBlocksKey, activeProgramSource } from "../../program/unitPrograms.js";
+import { useProject } from "../../blocks/blockProject.js";
+import { planUnitRoute } from "../../scene/unitTrajectory.js";
+import { isDronePanelOpen, closeDronePanel, updateUnitPanel, getProgramUnit } from "../hud/unitPanel.js";
 import { discover } from "../../core/discovery.js";
 import { scriptFeatures } from "../../drone/scriptFeatures.js";
-import { initBlockEditor, openBlockEditor, closeBlockEditor, refreshBlockEditor, compiledBlocks } from "./blockEditor.js";
+import { initBlockEditor, openBlockEditor, closeBlockEditor, refreshBlockEditor } from "./blockEditor.js";
 import { t, onLangChange } from "../../i18n.js";
 
-// The drone script window (the DSL editor, its help, error and log) plus
-// the drone's Start/Stop/Script buttons in the HUD's SELECTED UNIT panel —
-// that panel itself (and "is the drone selected") is ui/hud/unitPanel.js.
-// Also owns the SCRIPT/BLOCKS switch shown in both editor windows: the
-// drone keeps a text script AND a block program, and the mode
-// (drone/droneMode.js) only decides which one START runs and which window
-// the SCRIPT button opens.
+// The program windows of a programmable unit — the drone or a swarm ship —
+// the text-script window (the DSL editor, its help, error and log) plus
+// the Start/Stop/Script buttons in the HUD's SELECTED UNIT panel (that
+// panel, and which unit it shows, is ui/hud/unitPanel.js). Also owns the
+// SCRIPT/BLOCKS switch shown in both editor windows: every unit keeps a
+// text script AND a block program (program/unitPrograms.js), and its mode
+// only decides which one START runs and which window SCRIPT opens.
+//
+// The panel's buttons act on the unit the panel shows; the editor windows
+// on the unit they were opened for (editorUnit).
+let editorUnit = null;
+
+function unitAlive(u){ return !!u && (u === ctx.drone || ctx.ships.indexOf(u) >= 0); }
+
+function unitTitle(u){
+  return u === ctx.drone ? null : ctx.ships.indexOf(u) + 1;
+}
+
 export function isDroneScriptModalOpen(){
   return !document.getElementById("droneScriptModal").classList.contains("hidden");
 }
 
-function updateScriptStatus(drone){
+function updateScriptStatus(u){
   const errEl = document.getElementById("droneScriptError");
-  if(drone.error){
-    errEl.textContent = drone.error;
+  if(u.error){
+    errEl.textContent = u.error;
     errEl.classList.remove("hidden");
   } else {
     errEl.classList.add("hidden");
   }
-  document.getElementById("droneScriptLog").textContent = drone.logs.join("\n");
+  document.getElementById("droneScriptLog").textContent = u.logs.join("\n");
 }
 
-function openDroneScriptModal(){
-  const drone = ctx.drone;
-  if(!drone) return;
-  document.getElementById("droneScriptInput").value = drone.script || "";
-  updateScriptStatus(drone);
+function paintTitles(){
+  const n = editorUnit && unitAlive(editorUnit) ? unitTitle(editorUnit) : null;
+  document.getElementById("droneScriptModalTitle").textContent = n ? t("drone.scriptTitleShip")(n) : t("drone.scriptTitle");
+}
+
+function blocksTitle(){
+  const n = editorUnit && unitAlive(editorUnit) ? unitTitle(editorUnit) : null;
+  return n ? t("blocks.titleShip")(n) : t("blocks.title");
+}
+
+function openScriptModal(u){
+  document.getElementById("droneScriptInput").value = getUnitScript(u);
+  updateScriptStatus(u);
+  paintTitles();
   document.getElementById("droneScriptModal").classList.remove("hidden");
 }
 
@@ -41,14 +63,21 @@ export function closeDroneScriptModal(){
   document.getElementById("droneScriptModal").classList.add("hidden");
 }
 
-// Opens whichever editor the current mode uses.
-function openDroneEditor(){
-  if(getDroneMode() === "blocks") openBlockEditor();
-  else openDroneScriptModal();
+// Opens whichever editor the unit's mode uses, for that unit.
+function openEditorFor(u){
+  if(!u) return;
+  editorUnit = u;
+  paintModeSwitches();
+  if(getUnitMode(u) === "blocks"){
+    useProject(unitBlocksKey(u));
+    openBlockEditor(blocksTitle);
+  } else {
+    openScriptModal(u);
+  }
 }
 
 function paintModeSwitches(){
-  const mode = getDroneMode();
+  const mode = editorUnit ? getUnitMode(editorUnit) : "script";
   document.querySelectorAll(".droneModeSwitch").forEach(function(sw){
     sw.title = t("blocks.modeTitle");
     sw.querySelectorAll("button").forEach(function(b){
@@ -59,55 +88,60 @@ function paintModeSwitches(){
 }
 
 function switchMode(mode){
-  if(mode === getDroneMode()) return;
-  setDroneMode(mode);
-  paintModeSwitches();
+  const u = editorUnit;
+  if(!unitAlive(u) || mode === getUnitMode(u)) return;
+  setUnitMode(u, mode);
   closeDroneScriptModal();
   closeBlockEditor();
-  openDroneEditor();
+  openEditorFor(u);
 }
 
-// Runs the program of the current mode — the text script as typed, or the
-// block project compiled to the same language.
-// Also fills in the Wiki: every command the program uses counts as
-// discovered once the program actually starts (not on a parse error).
-function runActive(drone){
-  const blocks = getDroneMode() === "blocks";
-  const src = blocks ? compiledBlocks() : drone.script;
-  runDroneScript(drone, blocks ? src : undefined);
+// Runs the unit's program of its current mode — the text script as typed,
+// or the block project compiled to the same language — after fixing the
+// route it will fly (scene/unitTrajectory.js). Also fills in the Wiki:
+// every command the program uses counts as discovered once the program
+// actually starts (not on a parse error).
+function runActive(u){
+  const blocks = getUnitMode(u) === "blocks";
+  const src = activeProgramSource(u);
+  planUnitRoute(u);
+  runUnitProgram(u, src);
   discover("tech:droneScript");
-  if(drone.error && !drone.running) return;
+  if(u.error && !u.running) return;
   scriptFeatures(src).forEach(function(k){ discover("prog:" + k); });
   if(blocks) discover("prog:cmdBlocks");
 }
 
-function afterRunOrStop(drone){
-  if(isDroneScriptModalOpen()) updateScriptStatus(drone);
-  refreshBlockEditor(drone);
+function afterRunOrStop(u){
+  if(isDroneScriptModalOpen() && u === editorUnit) updateScriptStatus(u);
+  refreshBlockEditor(editorUnit);
   updateUnitPanel(true);
 }
 
 // Called every ~0.4s alongside the other HUD refreshes (ui/hud/hud.js) —
-// the drone's stats themselves are shown by ui/hud/unitPanel.js.
+// the units' stats themselves are shown by ui/hud/unitPanel.js.
 export function refreshDroneScript(){
-  const drone = ctx.drone;
-  if(!drone){
-    if(isDronePanelOpen()) closeDronePanel();
+  if(!ctx.drone && isDronePanelOpen()) closeDronePanel();
+  if(editorUnit && !unitAlive(editorUnit)){        // destroyed while its editor was open
+    editorUnit = null;
+    closeDroneScriptModal();
+    closeBlockEditor();
     return;
   }
-  if(isDroneScriptModalOpen()) updateScriptStatus(drone);
-  refreshBlockEditor(drone);
+  if(!editorUnit) return;
+  if(isDroneScriptModalOpen()) updateScriptStatus(editorUnit);
+  refreshBlockEditor(editorUnit);
 }
 
 export function initDroneScript(){
-  document.getElementById("droneScriptBtn").addEventListener("click", openDroneEditor);
+  document.getElementById("droneScriptBtn").addEventListener("click", function(){ openEditorFor(getProgramUnit()); });
   document.getElementById("droneScriptCloseBtn").addEventListener("click", closeDroneScriptModal);
 
   // Save on every keystroke, not just on Run - closing the editor (or
   // using the side panel's Run/Stop shortcuts right after) used to lose
   // whatever was typed since the last Run.
   document.getElementById("droneScriptInput").addEventListener("input", function(e){
-    if(ctx.drone) setDroneScript(ctx.drone, e.target.value);
+    if(unitAlive(editorUnit)) setUnitScript(editorUnit, e.target.value);
   });
 
   document.getElementById("droneScriptHelpBtn").addEventListener("click", function(){
@@ -121,20 +155,20 @@ export function initDroneScript(){
     if(e.target === modal) closeDroneScriptModal();
   });
 
-  function run(){ const drone = ctx.drone; if(!drone) return; runActive(drone); afterRunOrStop(drone); }
-  function stop(){ const drone = ctx.drone; if(!drone) return; stopDroneScript(drone); afterRunOrStop(drone); }
+  function run(u){ if(!unitAlive(u)) return; runActive(u); afterRunOrStop(u); }
+  function stop(u){ if(!unitAlive(u)) return; stopUnitProgram(u); afterRunOrStop(u); }
 
-  // The editor windows' Run/Stop and the SELECTED UNIT panel's START/STOP
-  // shortcuts all do the same thing: run or stop the current mode's program.
-  document.getElementById("droneScriptRunBtn").addEventListener("click", run);
-  document.getElementById("droneScriptStopBtn").addEventListener("click", stop);
-  document.getElementById("droneRunBtn").addEventListener("click", run);
-  document.getElementById("droneStopBtn").addEventListener("click", stop);
-  initBlockEditor(run, stop);
+  // The editor windows' Run/Stop act on their unit; the SELECTED UNIT
+  // panel's START/STOP on the unit it shows.
+  document.getElementById("droneScriptRunBtn").addEventListener("click", function(){ run(editorUnit); });
+  document.getElementById("droneScriptStopBtn").addEventListener("click", function(){ stop(editorUnit); });
+  document.getElementById("droneRunBtn").addEventListener("click", function(){ run(getProgramUnit()); });
+  document.getElementById("droneStopBtn").addEventListener("click", function(){ stop(getProgramUnit()); });
+  initBlockEditor(function(){ run(editorUnit); }, function(){ stop(editorUnit); });
 
   document.querySelectorAll(".droneModeSwitch button").forEach(function(b){
     b.addEventListener("click", function(){ switchMode(b.dataset.mode); });
   });
   paintModeSwitches();
-  onLangChange(paintModeSwitches);
+  onLangChange(function(){ paintModeSwitches(); paintTitles(); });
 }

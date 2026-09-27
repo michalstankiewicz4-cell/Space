@@ -26,6 +26,12 @@ export function applyStationField(dt){
   if(!ctx.station) return;
   for(let i=0;i<ctx.ships.length;i++){
     const sh = ctx.ships[i];
+    // A ship flown by its program goes where the program says, like the
+    // drone (see above) — pulled home only once the program ends.
+    if(sh.running) continue;
+    // Nor a ship flying to an order — it's going somewhere on purpose (see
+    // world/solarGravity.js for what the pull did to its speed).
+    if(sh.commandedTarget) continue;
     const d = sh.pos.distanceTo(ctx.station.pos);
     if(d > STATION_FIELD_RADIUS){
       toStationScratch.subVectors(ctx.station.pos, sh.pos).normalize();

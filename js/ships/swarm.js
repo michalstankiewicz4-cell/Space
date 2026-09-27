@@ -13,6 +13,7 @@ import { triggerBreakup } from "../fx/breakup.js";
 import { showToast } from "../ui/hud/eventLog.js";
 import { refreshResearch } from "../ui/windows/research.js";
 import { t } from "../i18n.js";
+import { SHIP_API, updateProgrammedShip } from "./shipProgram.js";
 
 // Reused every frame across every ship in updateShips() instead of several
 // fresh `new THREE.Vector3()`s per ship per frame (same pattern as
@@ -121,13 +122,23 @@ export function spawnShip(){
     boltGlow: null,
     boltPulse: 0,
     boltJitterOffsets: null,
-    boltJitterTimer: 0
+    boltJitterTimer: 0,
+    // its program (ships/shipProgram.js, run by program/runner.js)
+    api: SHIP_API,
+    heading: 0,
+    running: false,
+    error: null,
+    logs: [],
+    gen: null,
+    pending: null,
+    lastPrintAt: -Infinity,
+    attackReadyIn: 0
   };
   built.pickMesh.userData.ship = ship;
   ctx.ships.push(ship);
 }
 
-function eatEfficiency(stats, planet){
+export function eatEfficiency(stats, planet){
   if(planet.temp > 0.15){
     const need = planet.temp;
     return Math.min(1, 0.25 + stats.heat) >= need ? 1 : Math.max(0.15, 0.25+stats.heat);
@@ -248,6 +259,9 @@ export function updateShips(dt){
     sh.visual.forceDetail = sh.selected || camTarget === sh;
     // the glow light follows the engines (power is last frame's, eased by shipVisual.js)
     sh.light.intensity = SHIP_LIGHT_INTENSITY * (0.55 + 0.45 * sh.visual.throttle);
+
+    // A ship running its program is flown by it (ships/shipProgram.js).
+    if(sh.running){ updateProgrammedShip(sh, dt); continue; }
 
     // Ships only ever move on an explicit player order (commandTo() in
     // scene/controls.js) — no automatic nearest-planet targeting.

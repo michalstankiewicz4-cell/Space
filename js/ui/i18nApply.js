@@ -85,6 +85,9 @@ export function applyStaticText(){
   ["unitCloseBtn", "infoCloseBtn", "shipCamCloseBtn"].forEach(function(id){ $(id).title = t("hud.close"); });
   document.querySelectorAll("#unitBtns .uBtn").forEach(function(b){ b.title = t("cmd." + b.dataset.cmd) + " — " + t("soon"); });
   $("unitCamBtn").title = t("hud.shipCam");
+  $("unitCamBtn").querySelector("span").textContent = t("hud.cockpitBtn");
+  $("unitViewBtn").title = t("hud.viewTitle");
+  $("unitViewBtn").querySelector("span").textContent = t("hud.viewBtn");
   $("droneRunBtn").querySelector("span").textContent = t("hud.droneStart");
   $("droneStopBtn").querySelector("span").textContent = t("hud.droneStop");
   $("droneScriptBtn").querySelector("span").textContent = t("hud.droneScript");

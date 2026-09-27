@@ -7,6 +7,8 @@ import { bodyVariantKey } from "../../world/bodyParams.js";
 import { t } from "../../i18n.js";
 import { fillIcons, svgIcon } from "../icons.js";
 import { setShipCamTarget, clearShipCamTarget, getShipCamTarget } from "../../scene/shipcam.js";
+import { focusCameraOnUnit, unitInView, setCameraMode } from "../../scene/controls.js";
+import { shipMoveSpeed } from "../../ships/shipProgram.js";
 
 // The HUD's SELECTED UNIT panel (#unitPanel). Shows, in priority order:
 // the drone (while it's selected — openDronePanel/closeDronePanel below),
@@ -51,6 +53,15 @@ export function closeDronePanel(){
   updateUnitPanel(true);
 }
 
+// The unit whose program the Start/Stop/Script buttons and the editor
+// windows work on (ui/windows/droneScript.js): the shown drone or single
+// ship, else null.
+export function getProgramUnit(){
+  const u = currentUnit();
+  if(!u) return null;
+  return u.kind === "drone" ? u.drone : u.kind === "ship" ? u.ship : null;
+}
+
 // For scene/unitThumb.js: {ship} / {drone}, or null for no live miniature.
 export function getUnitThumbTarget(){
   const u = currentUnit();
@@ -68,7 +79,15 @@ function isFeeding(sh){
   return !!(sh.boltCore && sh.boltCore.visible);
 }
 
+// A program moves its ship directly (move()), outside its velocity.
+function shipSpeed(sh){
+  const programMove = sh.running && sh.pending && sh.pending.name === "move" ? shipMoveSpeed() : 0;
+  return sh.vel.length() + programMove;
+}
+
 function shipStatus(sh){
+  if(sh.error) return t("drone.error");
+  if(sh.running) return t("hud.programRunning");
   if(isFeeding(sh)) return t("hud.feeding");
   return sh.commandedTarget ? t("hud.enRoute") : t("hud.idle");
 }
@@ -106,13 +125,14 @@ function render(u){
     el("unitEmpty").textContent = t("hud.unitEmpty");
     return;
   }
-  const isDrone = u.kind === "drone";
-  el("unitBtns").classList.toggle("hidden", isDrone);
-  el("droneBtns").classList.toggle("hidden", !isDrone);
-  el("unitThumb").classList.toggle("hidden", u.kind === "group");
-  el("unitCamBtn").classList.toggle("hidden", u.kind !== "ship");
-  el("unitCamBtn").classList.toggle("active", u.kind === "ship" && getShipCamTarget() === u.ship);
-  el("unitBars").classList.toggle("hidden", u.kind === "group");
+  const single = u.kind !== "group";
+  el("unitBtns").classList.toggle("hidden", single);
+  el("droneBtns").classList.toggle("hidden", !single);
+  el("unitThumb").classList.toggle("hidden", !single);
+  el("unitViewBtn").classList.toggle("hidden", !single);
+  el("unitCamBtn").classList.toggle("hidden", !single);
+  paintCamButtons(u);
+  el("unitBars").classList.toggle("hidden", !single);
 
   if(u.kind === "ship"){
     const sh = u.ship;
@@ -125,7 +145,7 @@ function render(u){
     setStats([
       [t("hud.status"), shipStatus(sh)],
       [t("hud.target"), bodyName(sh.commandedTarget || sh.target)],
-      [t("hud.velocity"), sh.vel.length().toFixed(1)],
+      [t("hud.velocity"), shipSpeed(sh).toFixed(1)],
       [t("hud.bite"), (5.5 * stats.power).toFixed(1)]
     ]);
   } else if(u.kind === "group"){
@@ -156,14 +176,24 @@ function render(u){
   }
 }
 
+function unitOf(u){ return !u ? null : u.kind === "ship" ? u.ship : u.kind === "drone" ? u.drone : null; }
+
+// VIEW / COCKPIT lit while the camera / the cockpit view is on this unit.
+function paintCamButtons(u){
+  const unit = unitOf(u);
+  el("unitViewBtn").classList.toggle("active", !!unit && unitInView() === unit);
+  el("unitCamBtn").classList.toggle("active", !!unit && getShipCamTarget() === unit);
+}
+
 // force=true re-renders even if the same unit is still shown (stats tick,
 // language change); otherwise only when the shown unit changes.
 export function updateUnitPanel(force){
   const u = currentUnit();
   const key = !u ? "none" : u.kind === "ship" ? "ship" + u.index : u.kind === "group" ? "group" + u.ships.length : "drone";
-  // Cheap enough per frame: keeps CAM's lit state in sync however the ship
-  // cam was toggled (this button, the fleet list, the cam's own ✕, Escape).
-  el("unitCamBtn").classList.toggle("active", !!u && u.kind === "ship" && getShipCamTarget() === u.ship);
+  // Cheap enough per frame: keeps VIEW/COCKPIT lit in sync however the
+  // camera or the cockpit view changed (these buttons, the fleet list, the
+  // cam's own ✕, Escape, the camera mode buttons).
+  paintCamButtons(u);
   if(!force && key === lastKey) return;
   lastKey = key;
   render(u);
@@ -174,14 +204,24 @@ export function updateUnitPanel(force){
 export function initUnitPanel(){
   fillIcons(el("unitBtns"), { target: "url(#gGoldIcon)", formup: "url(#gBlueIcon)", shield: "#c7d0ff", scan2: "url(#gBlueIcon)" });
   fillIcons(el("droneBtns"));
+  el("unitViewBtn").insertAdjacentHTML("afterbegin", svgIcon("eye"));
   el("unitCamBtn").insertAdjacentHTML("afterbegin", svgIcon("camera"));
-  // Ship cam on/off for the selected ship — also reachable by clicking the
-  // ship's card in the fleet list, but that's the only other way in.
+  // VIEW: the camera orbits and follows the unit, with its trajectories
+  // (like a minimap click on a planet); again: back to the base view.
+  el("unitViewBtn").addEventListener("click", function(){
+    const unit = unitOf(currentUnit());
+    if(!unit) return;
+    if(unitInView() === unit) setCameraMode("base");
+    else focusCameraOnUnit(unit);
+    updateUnitPanel(true);
+  });
+  // COCKPIT: the picture-in-picture view from the unit's cockpit — for a
+  // ship also reachable by clicking its card in the fleet list.
   el("unitCamBtn").addEventListener("click", function(){
-    const u = currentUnit();
-    if(!u || u.kind !== "ship") return;
-    if(getShipCamTarget() === u.ship) clearShipCamTarget();
-    else setShipCamTarget(u.ship);
+    const unit = unitOf(currentUnit());
+    if(!unit) return;
+    if(getShipCamTarget() === unit) clearShipCamTarget();
+    else setShipCamTarget(unit);
     updateUnitPanel(true);
   });
   // pointerdown, not click: confirmed by direct A/B testing on the old

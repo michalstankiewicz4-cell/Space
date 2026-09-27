@@ -4,6 +4,29 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.19.0]
+
+### Added
+- **Every swarm ship can be programmed**, like the drone: select a ship
+  and use START / STOP / SCRIPT in the unit panel. Each ship keeps its own
+  text script and block program; the same commands work (ships need no
+  fuel, move at their cruise speed and bite with their Bite upgrade).
+  A normal click order takes the ship back from its program.
+- **VIEW**: the camera orbits and follows the selected ship or drone, like
+  a planet after a minimap click. Under it, **COCKPIT** opens the view
+  from its cockpit — now for the drone too.
+- **Trajectories** in that view: a cyan line shows where the unit is
+  heading now, a violet one where its program would take it if started
+  (while it runs: the route it planned at the start).
+
+### Fixed
+- Ships flying to an order were slowed to about half speed once they left
+  the station, by an amount that depended on the frame rate: they now fly
+  at their full cruise speed, as intended.
+- The drone's `print()` ended its script with an error.
+- The cockpit view no longer shows the unit's own selection ring across
+  the picture.
+
 ## [2.18.4]
 
 ### Changed

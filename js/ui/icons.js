@@ -52,6 +52,9 @@ const ICONS = {
   drone: () => `
     <path d="M12 2 L20 12 L12 22 L4 12 Z" fill="url(#gGoldIcon)"/>
     <path d="M12 2 L12 22 M4 12 L20 12" stroke="#7a4a12" stroke-width="1" opacity=".6"/>`,
+  eye: () => `
+    <path d="M1.8 12 C5 6.5 19 6.5 22.2 12 C19 17.5 5 17.5 1.8 12 Z" fill="none" stroke="url(#gBlueIcon)" stroke-width="1.8" stroke-linejoin="round"/>
+    <circle cx="12" cy="12" r="3.3" fill="url(#gGoldIcon)"/>`,
   camera: () => `
     <path d="M2.5 7.5 H15.5 V17.5 H2.5 Z" fill="none" stroke="url(#gBlueIcon)" stroke-width="1.8" stroke-linejoin="round"/>
     <path d="M15.5 10.5 L21.5 7 V18 L15.5 14.5 Z" fill="url(#gGoldIcon)"/>

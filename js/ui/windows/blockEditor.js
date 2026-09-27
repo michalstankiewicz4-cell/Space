@@ -9,8 +9,10 @@ import { t, onLangChange } from "../../i18n.js";
 import { readStorage, writeStorage } from "../../core/utils.js";
 import { discover } from "../../core/discovery.js";
 
-// The drone's block editor window (#blocksModal): a visual way to write
-// the same drone programs the text editor does. Four columns — virtual
+// The block editor window (#blocksModal) of a programmable unit (the
+// drone or a swarm ship; ui/windows/droneScript.js makes that unit's
+// project the active one before opening): a visual way to write the same
+// programs the text editor does. Four columns — virtual
 // files, block categories, the category's palette, and the workspace of
 // the selected file. The project model lives in blocks/blockProject.js,
 // the compiler to the drone DSL in blocks/blockCompile.js; this file is
@@ -22,6 +24,7 @@ let codeOpen = false;
 let wsCtx = { map: {} };
 let deleteArmed = null;
 let flashTimer = 0;
+let titleFn = null;   // the window title for the unit it's open for
 const CODE_WIDTH_KEY = "roj-blocks-code-width";
 
 function el(id){ return document.getElementById(id); }
@@ -34,12 +37,14 @@ function mk(tag, cls, text){
 
 export function isBlockEditorOpen(){ return !el("blocksModal").classList.contains("hidden"); }
 export function closeBlockEditor(){ el("blocksModal").classList.add("hidden"); }
-export function openBlockEditor(){
+export function openBlockEditor(title){
+  titleFn = title || null;
+  curFileId = null;   // another unit's project: start at its main file
+  el("blocksTitle").textContent = titleFn ? titleFn() : t("blocks.title");
   el("blocksModal").classList.remove("hidden");
   renderAll();
 }
 
-export function compiledBlocks(){ return compileProject(getProject()).code; }
 
 function curFile(){
   const p = getProject();
@@ -277,7 +282,7 @@ export function refreshBlockEditor(drone){
 }
 
 function applyLang(){
-  el("blocksTitle").textContent = t("blocks.title");
+  el("blocksTitle").textContent = titleFn ? titleFn() : t("blocks.title");
   el("blocksCodeBtn").textContent = t("blocks.code");
   el("blocksCodeBtn").title = t("blocks.codeTitle");
   el("blocksTidyBtn").title = t("blocks.tidy");

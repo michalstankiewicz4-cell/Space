@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.18.4">
+<link rel="stylesheet" href="css/style.css?v=2.19.0">
 </head>
 <body>
 
@@ -335,8 +335,12 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
     <div id="unitBody" class="hidden">
       <div id="unitName"></div>
       <div id="unitClass"></div>
-      <!-- Ship cam toggle for the selected ship (scene/shipcam.js). -->
-      <button type="button" class="oBtn" id="unitCamBtn" data-icon="camera"><span>CAM</span></button>
+      <!-- Camera on the selected ship or drone: VIEW orbits and follows it,
+           with its trajectories (scene/controls.js#focusCameraOnUnit,
+           scene/unitTrajectory.js); COCKPIT is the picture-in-picture view
+           from its cockpit (scene/shipcam.js). -->
+      <button type="button" class="oBtn" id="unitViewBtn"><span>VIEW</span></button>
+      <button type="button" class="oBtn" id="unitCamBtn"><span>COCKPIT</span></button>
       <div id="unitThumb"></div>
       <div id="unitBars">
         <div class="barRow" id="unitBar1"><span></span><div class="bar"><i class="mat green"></i></div><b></b></div>
@@ -350,14 +354,15 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
         <dt id="unitStat3L"></dt><dd id="unitStat3V"></dd>
         <dt id="unitStat4L"></dt><dd id="unitStat4V"></dd>
       </dl>
-      <!-- Ship quick orders: not wired up yet (see the command bar). -->
+      <!-- Group quick orders: not wired up yet (see the command bar). -->
       <div id="unitBtns">
         <button type="button" class="uBtn gold soon" data-icon="target" data-cmd="attack"></button>
         <button type="button" class="uBtn blue soon" data-icon="formup" data-cmd="formUp"></button>
         <button type="button" class="uBtn gold soon" data-icon="shield" data-cmd="defend"></button>
         <button type="button" class="uBtn blue soon" data-icon="scan2" data-cmd="scan"></button>
       </div>
-      <!-- Drone script controls (live). -->
+      <!-- Program controls of the selected ship or drone (live,
+           ui/windows/droneScript.js). -->
       <div id="droneBtns" class="hidden">
         <button type="button" class="uBtn gold" id="droneRunBtn" data-icon="play"><span></span></button>
         <button type="button" class="uBtn red" id="droneStopBtn" data-icon="stop"><span></span></button>
@@ -661,7 +666,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.18.4"></script>
+<script type="module" src="js/main.js?v=2.19.0"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

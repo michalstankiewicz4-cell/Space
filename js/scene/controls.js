@@ -15,6 +15,8 @@ import { initTooltip, showTooltip, showBlackHoleTooltip, hideTooltip } from "./t
 import { getViewRect, isInViewRect } from "./viewRect.js";
 import { t } from "../i18n.js";
 import { settings } from "../settings.js";
+import { stopUnitProgram } from "../program/runner.js";
+import { SHIP_MODEL_LENGTH, DRONE_MODEL_LENGTH } from "../config.js";
 
 // Camera: RIGHT button = rotate, scroll = zoom (unless the player swapped
 // the buttons in Setup — see rotateButton()/selectButton() below). Two
@@ -121,7 +123,30 @@ export function focusCameraOn(body){
   refreshCamModeButtons();
 }
 
+// "focus" on one of the player's own units (the unit panel's VIEW button):
+// the same orbit-and-follow camera, framed for something ship-sized. One
+// stable target object per unit, so "is this unit in view" is a plain
+// comparison (isUnitInView(), scene/unitTrajectory.js).
+const unitTargets = new WeakMap();
+export function focusCameraOnUnit(unit){
+  let tgt = unitTargets.get(unit);
+  if(!tgt){
+    const len = unit === ctx.drone ? DRONE_MODEL_LENGTH : SHIP_MODEL_LENGTH;
+    tgt = { unit: unit, mesh: unit.mesh, radius: len / 2, focusDistance: len * 7, zoomRange: [len * 1.5, 400],
+      alive: function(){ return unit === ctx.drone || ctx.ships.indexOf(unit) >= 0; } };
+    unitTargets.set(unit, tgt);
+  }
+  focusCameraOn(tgt);
+}
+
+// The unit the camera is looking at in "focus" mode, or null.
+export function unitInView(){
+  const tgt = camState.mode === "focus" ? camState.target : null;
+  return tgt && tgt.unit && tgt.alive() ? tgt.unit : null;
+}
+
 function focusZoomRange(){
+  if(camState.target && camState.target.zoomRange) return camState.target.zoomRange;
   const r = camState.target ? camState.target.radius : 2;
   return [Math.max(2, r * 1.6), Math.max(60, r * 80)];
 }
@@ -288,7 +313,8 @@ let cmdFlashEl = null;
 
 function commandTo(planet, list){
   if(!planet || list.length===0) return;
-  list.forEach(function(sh){ sh.commandedTarget = planet; sh.target = planet; });
+  // an order takes a ship back from its program (ships/shipProgram.js)
+  list.forEach(function(sh){ if(sh.running) stopUnitProgram(sh); sh.commandedTarget = planet; sh.target = planet; });
   const sp = screenPos(planet.mesh.position);
   cmdFlashEl.style.left = sp.x+"px";
   cmdFlashEl.style.top = sp.y+"px";

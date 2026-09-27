@@ -87,7 +87,7 @@ const STRINGS = {
     fleet: {
       title: "Fleet",
       ship: function(n){ return "Ship " + n; },
-      shipCamLabel: "SHIP CAM"
+      shipCamLabel: "COCKPIT"
     },
     body: {
       ice: "Ice planet", neutral: "Neutral planet", volcanic: "Volcanic planet",
@@ -137,19 +137,20 @@ const STRINGS = {
       printBlocked: "print() blocked: message contains inappropriate language",
       printCooldown: "print() is on cooldown — wait a moment before printing again",
       scriptTitle: "Drone Script",
+      scriptTitleShip: function(n){ return "Ship " + n + " Script"; },
       run: "▶ Run",
       stop: "■ Stop",
       placeholder: "while (fuel() > 10) {\n  move(5)\n  if (nearPlanet()) {\n    attack()\n  }\n}",
       help: {
         movementTitle: "Movement",
-        move: "Move forward n units in a straight line (costs 1 fuel per unit)",
+        move: "Move forward n units in a straight line (the drone spends 1 fuel per unit; ships need no fuel)",
         turn: "Rotate by deg degrees (positive = one way, negative = the other)",
         wait: "Pause the script for s seconds",
         sensorsTitle: "Sensors & actions",
-        fuel: "Current fuel, 0 to maxFuel()",
+        fuel: "Current fuel, 0 to maxFuel() (a ship always reports a full 100)",
         maxFuelFn: "Fuel tank capacity",
         near: "1 if a planet/sun is close enough to attack() or refuel, else 0",
-        attackFn: "Bite the nearest body in range for this drone's Attack stat (at most 4 times a second — it waits if called sooner)",
+        attackFn: "Bite the nearest body in range — the drone with its Attack stat, a ship with its Bite upgrade (at most 4 times a second — it waits if called sooner)",
         print: "Write x to the log below the buttons, and release a gas puff from the nose with a laser writing x into it — visible to other players too",
         syntaxTitle: "Syntax",
         syntax: "if (…) { … } else { … } · while (…) { … } · repeat (n) { … } · x = 5 · def name(a, b) { … return a + b } · \"text\" (print() only) · + - * / < > <= >= == != && || !",
@@ -205,7 +206,10 @@ const STRINGS = {
       yourBase: "Your base", playerBase: "Another player's base", sun: "Sun",
       zoomIn: "Zoom in", zoomOut: "Zoom out",
       droneStart: "START", droneStop: "STOP", droneScript: "SCRIPT",
-      shipCam: "Ship cam (cockpit view) on/off"
+      programRunning: "Program",
+      viewBtn: "VIEW", cockpitBtn: "COCKPIT",
+      viewTitle: "Camera on this unit, with its trajectories (click again: back to the base view)",
+      shipCam: "Cockpit view on/off"
     },
     cmd: {
       tactical: "TACTICAL", movement: "MOVEMENT", build: "BUILD", special: "SPECIAL",
@@ -213,6 +217,7 @@ const STRINGS = {
     },
     blocks: {
       title: "DRONE PROGRAMMING",
+      titleShip: function(n){ return "PROGRAMMING: SHIP " + n; },
       mode: { script: "SCRIPT", blocks: "BLOCKS" },
       modeTitle: "Which program START runs — the other one is kept, not deleted",
       run: "▶ START", stop: "■ STOP", code: "</> CODE", codeTitle: "Show the script the blocks turn into",
@@ -455,7 +460,7 @@ const STRINGS = {
     fleet: {
       title: "Flota",
       ship: function(n){ return "Statek " + n; },
-      shipCamLabel: "KAMERA STATKU"
+      shipCamLabel: "KOKPIT"
     },
     body: {
       ice: "Planeta lodowa", neutral: "Planeta neutralna", volcanic: "Planeta wulkaniczna",
@@ -505,19 +510,20 @@ const STRINGS = {
       printBlocked: "print() zablokowany: treść zawiera niedozwolone słowa",
       printCooldown: "print() na chłodzeniu — poczekaj chwilę przed kolejnym użyciem",
       scriptTitle: "Skrypt drona",
+      scriptTitleShip: function(n){ return "Skrypt statku " + n; },
       run: "▶ Uruchom",
       stop: "■ Stop",
       placeholder: "while (fuel() > 10) {\n  move(5)\n  if (nearPlanet()) {\n    attack()\n  }\n}",
       help: {
         movementTitle: "Ruch",
-        move: "Leci prosto do przodu o n jednostek (koszt: 1 paliwo za jednostkę)",
+        move: "Leci prosto do przodu o n jednostek (dron: 1 paliwo za jednostkę; statki nie potrzebują paliwa)",
         turn: "Obraca się o deg stopni (dodatnie = w jedną stronę, ujemne = w drugą)",
         wait: "Wstrzymuje skrypt na s sekund",
         sensorsTitle: "Czujniki i akcje",
-        fuel: "Aktualne paliwo, od 0 do maxFuel()",
+        fuel: "Aktualne paliwo, od 0 do maxFuel() (statek zawsze podaje pełne 100)",
         maxFuelFn: "Pojemność zbiornika paliwa",
         near: "1 jeśli planeta/słońce jest wystarczająco blisko, by zaatakować lub zatankować, inaczej 0",
-        attackFn: "Gryzie najbliższe ciało w zasięgu, siłą równą statystyce Atak drona (najwyżej 4 razy na sekundę — wywołany wcześniej, czeka)",
+        attackFn: "Gryzie najbliższe ciało w zasięgu — dron siłą swojego Ataku, statek siłą ulepszenia Gryz (najwyżej 4 razy na sekundę — wywołany wcześniej, czeka)",
         print: "Wypisuje x w logu pod przyciskami i wypuszcza obłok gazu z dzioba, w który laser wpisuje x — widoczne też dla innych graczy",
         syntaxTitle: "Składnia",
         syntax: "if (…) { … } else { … } · while (…) { … } · repeat (n) { … } · x = 5 · def nazwa(a, b) { … return a + b } · \"tekst\" (tylko print()) · + - * / < > <= >= == != && || !",
@@ -573,7 +579,10 @@ const STRINGS = {
       yourBase: "Twoja baza", playerBase: "Baza innego gracza", sun: "Słońce",
       zoomIn: "Przybliż", zoomOut: "Oddal",
       droneStart: "START", droneStop: "STOP", droneScript: "SKRYPT",
-      shipCam: "Kamera statku (widok z kokpitu) wł./wył."
+      programRunning: "Program",
+      viewBtn: "WIDOK", cockpitBtn: "KOKPIT",
+      viewTitle: "Kamera na tę jednostkę, z jej trajektoriami (kliknij jeszcze raz: powrót do widoku bazy)",
+      shipCam: "Widok z kokpitu wł./wył."
     },
     cmd: {
       tactical: "TAKTYKA", movement: "RUCH", build: "BUDOWA", special: "SPECJALNE",
@@ -581,6 +590,7 @@ const STRINGS = {
     },
     blocks: {
       title: "PROGRAMOWANIE DRONA",
+      titleShip: function(n){ return "PROGRAMOWANIE: STATEK " + n; },
       mode: { script: "SKRYPT", blocks: "KLOCKI" },
       modeTitle: "Który program uruchamia START — drugi zostaje zachowany, nie jest usuwany",
       run: "▶ START", stop: "■ STOP", code: "</> KOD", codeTitle: "Pokaż skrypt, w który zamieniają się klocki",

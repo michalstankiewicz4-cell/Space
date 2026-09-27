@@ -50,15 +50,9 @@ function refreshBodyPositions(t){
   }
 }
 
-// `applyToVel`: true for ships (accumulate into entity.vel, consumed by
-// ships/swarm.js#updateShips' own position integration next), false for the
-// drone (write straight into entity.pos instead) — the drone has no
-// velocity/integration step at all, it only ever moves via explicit
-// move()/turn() DSL calls (js/drone/drone.js), so a `drone.vel` field
-// wouldn't be read by anything. This mirrors exactly how
-// world/blackholes.js's own existing gravity loop already treats the drone
-// differently from ships for the same reason.
-function applyGravityToOne(entity, dt, applyToVel){
+// The ambient gravity acceleration at `pos` (per second², capped), given
+// every body's position in `positions` (same order as SOLAR_BODIES).
+function accelInto(pos, positions, out){
   let primary = null, primaryDist = Infinity, primaryPos = null;
   for(let i=0;i<SOLAR_BODIES.length;i++){
     const b = SOLAR_BODIES[i];
@@ -82,20 +76,40 @@ function applyGravityToOne(entity, dt, applyToVel){
     // exemption made "does gravity work AT ALL past the field" a much
     // easier thing to actually observe.
     if(b.kind === "blackhole" || b.kind === "sun") continue;
-    const d = entity.pos.distanceTo(bodyPosScratches[i]);
-    if(d < b.soiRadius && d < primaryDist){ primary = b; primaryDist = d; primaryPos = bodyPosScratches[i]; }
+    const d = pos.distanceTo(positions[i]);
+    if(d < b.soiRadius && d < primaryDist){ primary = b; primaryDist = d; primaryPos = positions[i]; }
   }
   const gm = primary ? primary.gm : GM_SUN;
-  // bodyPosScratches[0] is always the sun (slot 0, first entry) — used as
-  // the fallback source whenever the entity is outside every other SOI.
-  const srcPos = primary ? primaryPos : bodyPosScratches[0];
-  toSrcScratch.subVectors(srcPos, entity.pos);
+  // positions[0] is always the sun (slot 0, first entry) — used as the
+  // fallback source whenever the entity is outside every other SOI.
+  const srcPos = primary ? primaryPos : positions[0];
+  out.subVectors(srcPos, pos);
   const minR = primary ? primary.radius * 0.6 : 3;
-  const r = Math.max(toSrcScratch.length(), minR);
-  toSrcScratch.normalize();
-  const accel = Math.min(gm / (r * r), MAX_GRAVITY_ACCEL) * dt;
-  if(applyToVel) entity.vel.addScaledVector(toSrcScratch, accel);
-  else entity.pos.addScaledVector(toSrcScratch, accel);
+  const r = Math.max(out.length(), minR);
+  return out.normalize().multiplyScalar(Math.min(gm / (r * r), MAX_GRAVITY_ACCEL));
+}
+
+// `applyToVel`: true for ships (accumulate into entity.vel, consumed by
+// ships/swarm.js#updateShips' own position integration next), false for the
+// drone (write straight into entity.pos instead) — the drone has no
+// velocity/integration step at all, it only ever moves via explicit
+// move()/turn() DSL calls (js/drone/drone.js), so a `drone.vel` field
+// wouldn't be read by anything. This mirrors exactly how
+// world/blackholes.js's own existing gravity loop already treats the drone
+// differently from ships for the same reason.
+function applyGravityToOne(entity, dt, applyToVel){
+  accelInto(entity.pos, bodyPosScratches, toSrcScratch);
+  if(applyToVel) entity.vel.addScaledVector(toSrcScratch, dt);
+  else entity.pos.addScaledVector(toSrcScratch, dt);
+}
+
+// The same acceleration at `pos` at simulated time `t` (seconds, like
+// nowSimTime()), for the trajectory preview (program/simulate.js) — so a
+// predicted path feels exactly the gravity the game will apply.
+const predictPosScratches = SOLAR_BODIES.map(function(){ return new THREE.Vector3(); });
+export function gravityAccelAt(pos, t, out){
+  for(let i = 0; i < SOLAR_BODIES.length; i++) bodyPosAt(SOLAR_BODIES[i].slot, t, predictPosScratches[i]);
+  return accelInto(pos, predictPosScratches, out);
 }
 
 // Same radius as station/stationField.js's own containment pull-back
@@ -109,7 +123,7 @@ function applyGravityToOne(entity, dt, applyToVel){
 // drifted or traveled away. Covers the drone too (v2.0.8) - it's "kind of
 // a ship" too, per the user's own framing, and now spawns right next to
 // the station the same way (drone.js#spawnDrone()).
-function insideStationField(pos){
+export function insideStationField(pos){
   return !!ctx.station && pos.distanceTo(ctx.station.pos) < STATION_FIELD_RADIUS;
 }
 
@@ -118,7 +132,18 @@ export function updateSolarGravity(dt){
   for(let i=0;i<ctx.ships.length;i++){
     const sh = ctx.ships[i];
     if(insideStationField(sh.pos)) continue;
-    applyGravityToOne(sh, dt, true);
+    // A ship flying to an order is gravity-immune while it cruises
+    // (ships/swarm.js#updateShips) — skipped here outright: added to its
+    // velocity and only partly steered away again, gravity (and the
+    // station's pull) still slowed an ordered ship to about half its cruise
+    // speed, by an amount that depended on the frame rate (measured,
+    // v2.19.0), so its flight could be neither predicted nor trusted.
+    if(sh.commandedTarget) continue;
+    // A ship flown by its program drifts like the drone (position, not
+    // velocity): accumulated, the Sun's pull would have it falling sunward
+    // at dozens of units/s within half a minute (measured), with no station
+    // pull-back to catch it while the program runs (station/stationField.js).
+    applyGravityToOne(sh, dt, !sh.running);
   }
   if(ctx.drone && !insideStationField(ctx.drone.pos)) applyGravityToOne(ctx.drone, dt, false);
 }

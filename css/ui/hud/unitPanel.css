@@ -10,11 +10,14 @@
 #unitBody > *{ position:absolute; }
 #unitName{ left:27px; right:10px; top:37px; font-size:16px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #unitClass{ left:27px; right:10px; top:55px; font-size:14.5px; color:var(--uiText2); white-space:nowrap; }
-#unitCamBtn{ right:10px; top:39px; width:64px; height:28px; display:flex; align-items:center; justify-content:center; gap:5px;
-  font-size:13.5px; }
-#unitCamBtn svg{ width:18px; height:18px; }
-/* Live 3D render target (scene/unitThumb.js). */
-#unitThumb{ left:27px; top:74px; width:194px; height:66px; }
+/* VIEW (camera on the unit) and COCKPIT under it, right of the miniature. */
+#unitViewBtn, #unitCamBtn{ right:8px; width:78px; height:28px; display:flex; align-items:center; justify-content:center; gap:4px;
+  font-size:12.5px; padding:0 4px; }
+#unitViewBtn{ top:76px; }
+#unitCamBtn{ top:108px; }
+#unitViewBtn svg, #unitCamBtn svg{ width:17px; height:17px; flex:none; }
+/* Live 3D render target (scene/unitThumb.js); full width for a group. */
+#unitThumb{ left:27px; top:74px; width:112px; height:66px; }
 #unitBars{ left:27px; top:145px; width:198px; }
 .barRow{ position:relative; height:18px; font-size:14px; color:#c7d0ff; }
 .barRow span{ position:absolute; left:0; top:0; }
