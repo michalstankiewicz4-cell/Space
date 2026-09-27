@@ -87,7 +87,7 @@ export function drawMinimap(){
     const pos = p.mesh.position;
     const ringR = p.orbitSlot != null ? ringRadius(p.orbitSlot) : schematicRadius(Math.hypot(pos.x, pos.z));
     const pt = project(ringR, angleOf(pos));
-    const rad = (p.kind === "comet" ? 2.6 : 2.2 + p.radius * 0.9) * Math.sqrt(zoom);
+    const rad = (p.kind === "comet" ? 2.6 : 2.2 + (p.size || p.radius) * 0.9) * Math.sqrt(zoom);   // schematic: gameplay size
     const name = t("body." + bodyVariantKey(p));
     out += '<g class="mmPick"><title>' + esc(name) + "</title>" +
       (p.selected ? '<circle cx="' + pt.x + '" cy="' + pt.y + '" r="' + (rad + 3.5) + '" fill="none" stroke="#f5bd5c" stroke-width="1.5"/>' : "") +

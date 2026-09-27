@@ -3,7 +3,7 @@ import { disposeMesh } from "../core/utils.js";
 import { gfxUnitLights } from "../scene/graphics.js";
 import { makeShipVisual } from "./shipVisual.js";
 import { getShipCamTarget } from "../scene/shipcam.js";
-import { ORBIT_RADIUS, SHIP_MODEL_LENGTH, SHIP_LIGHT_INTENSITY, SHIP_LIGHT_RANGE } from "../config.js";
+import { EAT_ORBIT_GAP, SHIP_MODEL_LENGTH, SHIP_LIGHT_INTENSITY, SHIP_LIGHT_RANGE } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { state, swarmStats, save } from "../core/gameState.js";
 import { paintScorch, destroyPlanet, applyHealthVisual } from "../world/bodies.js";
@@ -269,7 +269,7 @@ export function updateShips(dt){
 
     const toTarget = toTargetScratch.subVectors(sh.target.mesh.position, sh.pos);
     const dist = toTarget.length();
-    const eatRange = ORBIT_RADIUS;
+    const eatRange = sh.target.radius + EAT_ORBIT_GAP;   // just above the surface, whatever the body's size
 
     if(dist > eatRange){
       hideBolt(sh);

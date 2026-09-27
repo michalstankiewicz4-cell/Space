@@ -4,6 +4,15 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.17.0]
+
+### Changed
+- Scale, step 2: the Sun is three times and the planets two and a half
+  times bigger (the meteoroid a bit bigger), so they finally tower over
+  the swarm and the station. Gravity, points and health stay the same;
+  ships now eat from just above a body's surface, and the drone docks
+  near it the same way, whatever its size.
+
 ## [2.16.0]
 
 ### Changed

@@ -65,7 +65,7 @@ export function bodyVariantKey(p){
 // SOLAR_BODIES table instead. Comets (orbitSlot == null) are unchanged.
 export function bodyValueEstimate(p){
   const shape = p.orbitSlot != null ? SOLAR_BODY_BY_SLOT[p.orbitSlot] : p;
-  return Math.round(shape.radius*14 + Math.abs(shape.temp)*8 + (p.valueBonus||0));
+  return Math.round((shape.size || shape.radius)*14 + Math.abs(shape.temp)*8 + (p.valueBonus||0));   // gameplay size
 }
 
 export function tempColor(t){

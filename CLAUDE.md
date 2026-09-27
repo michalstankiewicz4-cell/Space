@@ -134,7 +134,9 @@ the full detail behind each of these.
   not a random pool — Sun + 9 hand-placed orbit slots (2 volcanic, 2
   neutral, 2 ice, 1 meteoroid, 1 permanent black hole, orbit 4 = the
   player-station ring). Position is closed-form from wall-clock time
-  (`bodyPosAt`); health regenerates from a checkpoint
+  (`bodyPosAt`); bodies are drawn bigger than their gameplay `size`
+  (`BODY_VISUAL_SCALE`, v2.17.0 — gravity, value and health use `size`,
+  the eating orbit is `radius + EAT_ORBIT_GAP`); health regenerates from a checkpoint
   (`SOLAR_REGEN_RATE`) via `bite_solar_body`, never destroyed.
   Patched-conics gravity on ships/drone lives in `world/solarGravity.js`;
   orbit lines in `scene/orbitLines.js`. **The Sun must stay excluded from

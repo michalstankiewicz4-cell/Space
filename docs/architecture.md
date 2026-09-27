@@ -94,9 +94,20 @@ then read just that range.
   pick radius / label / focus distance, ship spawn spiral (3 + 0.55·√i)
   and `STATION_FIELD_RADIUS` (8), the ship cam's canopy offset, the unit
   miniature distance, and the base camera (radius 11, zoom 3–150).
-  Planets, orbits, gravity and the database are untouched. Step 2
-  (planned): bigger planets/Sun with the eating orbit, gravity and zoom
-  decoupled from the radius.
+  Planets, orbits, gravity and the database are untouched.
+- **Scale, step 2 (v2.17.0)**: bodies are drawn bigger than their
+  gameplay size — `world/solarSystem.js#BODY_VISUAL_SCALE` (Sun ×3,
+  planets ×2.5, meteoroid ×1.5, black hole ×1). Each solar body keeps its
+  original radius as `size`, from which gravity (`gm`, SOI), its point
+  value (`bodyValueEstimate`), its offline max health and the Sun's
+  PointLight range are computed, so the balance and the database don't
+  change; `radius` (drawn, picked, camera focus, gravity's near-clamp) is
+  the scaled one. `p.size` rides along on every body (a comet's = its
+  radius). What used to be fixed distances became "above the surface":
+  the eating orbit is `radius + EAT_ORBIT_GAP` (1.6; was a fixed 3.6
+  that a bigger planet would swallow), the drone's dock range `radius +
+  DRONE_DOCK_GAP` (4; was ×3.2). Scorch blots shrink by size/radius so
+  they keep their world size. The minimap still draws gameplay sizes.
 
 - **"focus" mode (v2.14.0)**: `scene/controls.js#focusCameraOn(body)`
   orbits one body from `ctx.planets` (planet, Sun, meteoroid, comet) and
@@ -610,7 +621,7 @@ then read just that range.
     `camState`/`ctx.camera`. Keep it that way; RTS-style "select a unit,
     camera stays put" was an explicit requirement.
   - Fuel only refills by proximity-docking near a planet/sun (no passive
-    regen) — see `DRONE_DOCK_RANGE_MULT`/`DRONE_REFUEL_RATE` in config.js.
+    regen) — see `DRONE_DOCK_GAP` (radius + gap since v2.17.0)/`DRONE_REFUEL_RATE` in config.js.
   - **The script text itself is persisted** (`localStorage["roj-drone-script"]`,
     `drone.js#setDroneScript()`/`spawnDrone()`) — everything else about the
     drone (fuel, position, running state) resets fresh every session like

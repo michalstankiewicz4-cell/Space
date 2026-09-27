@@ -16,7 +16,7 @@ import { parseDroneScript } from "./dsl.js";
 import { runProgram } from "./interpreter.js";
 import { spawnPrintEffect } from "./dronePrintFx.js";
 import { broadcastDronePrint } from "../net/shipsBroadcast.js";
-import { DRONE_MAX_FUEL, DRONE_FUEL_PER_MOVE_UNIT, DRONE_MOVE_SPEED, DRONE_TURN_SPEED, DRONE_BASE_ATTACK, DRONE_BASE_DEFENSE, DRONE_DOCK_RANGE_MULT, DRONE_REFUEL_RATE, DRONE_PRINT_MAX_LEN, DRONE_PRINT_COOLDOWN_S, DRONE_ATTACK_COOLDOWN_S, DRONE_MODEL_LENGTH } from "../config.js";
+import { DRONE_MAX_FUEL, DRONE_FUEL_PER_MOVE_UNIT, DRONE_MOVE_SPEED, DRONE_TURN_SPEED, DRONE_BASE_ATTACK, DRONE_BASE_DEFENSE, DRONE_DOCK_GAP, DRONE_REFUEL_RATE, DRONE_PRINT_MAX_LEN, DRONE_PRINT_COOLDOWN_S, DRONE_ATTACK_COOLDOWN_S, DRONE_MODEL_LENGTH } from "../config.js";
 
 // Runaway-script guard: a script with no move()/turn()/wait() in a while
 // loop (e.g. `while(true){ attack() }`) would otherwise resolve instant
@@ -216,12 +216,12 @@ function nearestBody(drone){
 
 function isDocked(drone){
   const { body, dist } = nearestBody(drone);
-  return !!body && dist <= body.radius * DRONE_DOCK_RANGE_MULT;
+  return !!body && dist <= body.radius + DRONE_DOCK_GAP;
 }
 
 function applyAttack(drone){
   const { body, dist } = nearestBody(drone);
-  if(!body || dist > body.radius * DRONE_DOCK_RANGE_MULT) return 0;
+  if(!body || dist > body.radius + DRONE_DOCK_GAP) return 0;
 
   const healthBeforeDamage = body.health;
   const dmg = drone.attackPower;

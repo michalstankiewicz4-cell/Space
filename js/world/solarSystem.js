@@ -59,9 +59,19 @@ export const SOLAR_BODIES = [
 // still pull noticeably).
 export const GM_SUN = 60000;
 
+// Scale step 2 (v2.17.0): bodies are drawn bigger than their gameplay size.
+// `size` keeps each body's original radius — what gravity (gm, SOI), its
+// point value and its offline health are computed from, so the balance
+// doesn't change — while `radius` (what's drawn, picked, orbited while
+// eating) is size × the kind's BODY_VISUAL_SCALE. The black hole keeps its
+// size: its pull and kill radius come from it.
+export const BODY_VISUAL_SCALE = { sun: 3, volcanic: 2.5, neutral: 2.5, ice: 2.5, meteoroid: 1.5, blackhole: 1 };
+
 SOLAR_BODIES.forEach(function(b){
+  b.size = b.radius;
+  b.radius = b.size * (BODY_VISUAL_SCALE[b.kind] || 1);
   b.b = b.a * Math.sqrt(1 - b.e * b.e);
-  b.gm = Math.pow(b.radius, 3) * 0.9;
+  b.gm = Math.pow(b.size, 3) * 0.9;
   b.soiRadius = b.a > 0 ? b.a * Math.pow(b.gm / GM_SUN, 0.4) : Infinity;
 });
 

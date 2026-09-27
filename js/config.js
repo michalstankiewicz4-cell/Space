@@ -4,7 +4,9 @@
 // system below lives well inside it) — it used to also bound the old
 // randomly-scattered planet pool, which no longer exists.
 export const FIELD_RADIUS = 34;
-export const ORBIT_RADIUS = 3.6; // fixed eating-orbit distance, independent of planet size
+// Ships eat from an orbit this far above the body's surface (its drawn
+// radius + this) — bodies come in very different sizes since v2.17.0.
+export const EAT_ORBIT_GAP = 1.6;
 export const MAX_PARTICLES = 420;
 
 // Comets are the only body kind still spawned/despawned at all (see
@@ -76,7 +78,7 @@ export const DRONE_MOVE_SPEED = 4; // units/second while a move() is in progress
 export const DRONE_TURN_SPEED = 120; // degrees/second while a turn() is in progress
 export const DRONE_BASE_ATTACK = 6; // bite power per attack() call
 export const DRONE_BASE_DEFENSE = 1; // survival odds multiplier vs. a black hole's pull (see world/blackholes.js)
-export const DRONE_DOCK_RANGE_MULT = 3.2; // x radius of the nearest body = "close enough to refuel/attack"
+export const DRONE_DOCK_GAP = 4; // within the nearest body's radius + this = "close enough to refuel/attack"
 export const DRONE_REFUEL_RATE = 18; // fuel/second while docked at a planet/sun
 export const DRONE_PRINT_MAX_LEN = 32; // print()'s in-world gas+laser message, clamped (see drone/dronePrintFx.js)
 export const DRONE_ATTACK_COOLDOWN_S = 0.25; // min seconds between attack() hits (see drone.js#startBuiltin) — without it a loop could land ~2000 hits in one frame

@@ -48,15 +48,18 @@ export function applyHealthVisual(obj){
 // position, still carrying the body's color (bite particles, debris).
 export function materializePlanet(row, pos, vel, elapsedSec){
   const orbitSlot = row.orbit_slot != null ? row.orbit_slot : null;
-  let kind, radius, temp;
+  // radius = drawn size; size = gameplay size (gravity, value, health —
+  // see world/solarSystem.js#BODY_VISUAL_SCALE; a comet's are the same)
+  let kind, radius, size, temp;
   if(orbitSlot != null){
     const solar = SOLAR_BODY_BY_SLOT[orbitSlot];
     kind = contentKindFor(solar.kind);
     radius = solar.radius;
+    size = solar.size;
     temp = solar.temp;
   } else {
     kind = row.kind;
-    radius = row.radius;
+    radius = size = row.radius;
     temp = row.temp;
   }
   const params = bodyParams(kind, temp);
@@ -89,7 +92,7 @@ export function materializePlanet(row, pos, vel, elapsedSec){
 
   // the Sun lights the game's own (standard-material) objects: ships,
   // the station; BodyKit bodies light themselves from its position
-  if(kind === "sun") mesh.add(new THREE.PointLight(0xffcf8a, 1.6, radius*40));
+  if(kind === "sun") mesh.add(new THREE.PointLight(0xffcf8a, 1.6, size*40));
 
   // The comet's own "orbit" line (see scene/orbitLines.js) - a separate,
   // top-level scene object (not a mesh child), since it shows the WHOLE
@@ -148,7 +151,7 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     dbId: orbitSlot != null ? null : row.id,
     orbitSlot: orbitSlot,
     kind: kind,
-    mesh: mesh, radius: radius, temp: temp,
+    mesh: mesh, radius: radius, size: size, temp: temp,
     health: health,
     maxHealth: maxHealth,
     healthBase: healthBase,
@@ -237,7 +240,9 @@ export function paintScorch(planet, worldPoint, intensity){
   const v = 0.5 - Math.asin(Math.max(-1,Math.min(1,local.y)))/Math.PI;
   const size = planet.scorchCanvas.width;
   const x = u*size, y = v*size;
-  const r = 9 + intensity*7;
+  // the same size in the world on any body: the texture wraps the drawn
+  // sphere, so a body drawn bigger than its gameplay size gets smaller blots
+  const r = (9 + intensity*7) * (planet.size || planet.radius) / planet.radius;
   const ctx2d = planet.scorchCtx;
   ctx2d.globalCompositeOperation = "lighter";
   function blot(px){
@@ -375,7 +380,7 @@ export function seedLocalWorld(){
       return;
     }
     const healthMult = bodyParams(contentKindFor(solar.kind), solar.temp).healthMult;
-    const maxHealth = solar.radius*healthMult;
+    const maxHealth = solar.size*healthMult;   // gameplay size, not the drawn radius
     const pos = bodyPosAt(solar.slot, nowSimTime());
     materializePlanet({
       orbit_slot: solar.slot, kind: solar.kind,
