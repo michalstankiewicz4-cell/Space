@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.18.2]
+
+### Changed
+- Privacy policy: a new section on policy changes and game resets
+  (a "wipe" of server data and progress, e.g. with a major update or
+  after abuse).
+
 ## [2.18.1]
 
 ### Security
