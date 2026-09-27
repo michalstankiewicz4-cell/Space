@@ -334,11 +334,16 @@ marketing.
   trigger fires. Game state (positions, colour, points) only travels over
   Realtime broadcast/presence, never stored. Progress/settings stay in the
   player's `localStorage`.
-- **No consent banner needed, an information notice instead**: no
-  analytics, ads or tracking; `localStorage` is strictly necessary;
-  the security log rests on legitimate interest (Art. 6(1)(f)). The
-  first-visit bar (`ui/privacy.js#initPrivacyNotice`, key
-  `roj-privacy-ok`) only informs and links the policy. Fonts and libraries
+- **Accepting the policy is required before playing (the user's call)**,
+  although legally no consent is needed (no analytics, ads or tracking;
+  `localStorage` is strictly necessary; the security log rests on
+  legitimate interest, Art. 6(1)(f)). The first-visit bar
+  (`ui/privacy.js#initPrivacyNotice`, key `roj-privacy-ok`, button
+  "Accept") keeps "ENTER ORBIT" locked (`ui/banner.js`) and — the part
+  that matters — **nothing connects to Supabase before it's accepted**:
+  `initNet()` and the player counter wait for `whenPrivacyAccepted()`
+  (main.js). Verified: 0 requests to supabase.co before the click. "Delete
+  my data" clears the key too, so acceptance starts over. Fonts and libraries
   are self-hosted (v2.12.1), so no third-party requests (the Google Fonts
   ruling doesn't apply).
 - **Data minimisation**: `shorten_ip()` — IPv4 a.b.c.0, IPv6 cut to its

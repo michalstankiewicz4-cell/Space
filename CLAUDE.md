@@ -292,8 +292,10 @@ post-mortems and live-verification detail behind each:
   sync with what's stored. Only a shortened IP is logged (`shorten_ip()`),
   `purge_old_data()` (run from `set_my_nick()`) keeps logs 30 days and
   nicks 180 days, `delete_my_data()` erases only the caller's own data
-  (logs stay until expiry). First-visit notice + Setup → Privacy in
-  `ui/privacy.js`. Code license: MIT (`LICENSE`). Details: docs/security.md
+  (logs stay until expiry). The policy must be accepted before playing
+  and **nothing connects to Supabase until then** (`whenPrivacyAccepted()`
+  gates `initNet()`, main.js) — keep new server calls behind it. Notice +
+  Setup → Privacy in `ui/privacy.js`. Code license: MIT (`LICENSE`). Details: docs/security.md
   "Privacy (GDPR)".
 - **`admin.html`** renders every cell with `textContent`, never
   `innerHTML` — nickname/IP/browser are all client-controlled data (a

@@ -21,7 +21,7 @@ import { spawnInitialFleet, updateShips, reconcileFleetSize } from "./ships/swar
 import { initBanner } from "./ui/banner.js";
 import { initSetupModal } from "./ui/setupModal.js";
 import { initAbout } from "./ui/about.js";
-import { initPrivacyNotice, initPrivacySettings } from "./ui/privacy.js";
+import { initPrivacyNotice, initPrivacySettings, whenPrivacyAccepted } from "./ui/privacy.js";
 import { initPlayerCounts } from "./ui/playerCounts.js";
 import { initEscapeKey } from "./ui/escapeKey.js";
 import { applyStaticText } from "./ui/i18nApply.js";
@@ -63,7 +63,7 @@ initSetupModal();
 initAbout();
 initPrivacySettings();
 initPrivacyNotice();
-initPlayerCounts();
+whenPrivacyAccepted(initPlayerCounts);   // no server request before the policy is accepted
 initBanner();
 initEscapeKey();
 // rAF + setTimeout: resumes right after the next frame is actually painted.
@@ -103,10 +103,14 @@ initHudWorld();
 initUnitThumb();
 initInfoThumb();
 
+// Nothing reaches the server (anonymous account, presence, broadcasts)
+// before the player accepts the privacy policy (ui/privacy.js).
 if(NET_ENABLED){
-  initNet();
-  setInterval(flushDamage, NET_DAMAGE_FLUSH_MS);
-  setInterval(flushSolarDamage, NET_DAMAGE_FLUSH_MS);
+  whenPrivacyAccepted(function(){
+    initNet();
+    setInterval(flushDamage, NET_DAMAGE_FLUSH_MS);
+    setInterval(flushSolarDamage, NET_DAMAGE_FLUSH_MS);
+  });
 }
 
 /* ---------------------------------------------------------

@@ -7,8 +7,9 @@ shown next to the title on the start screen and in the browser tab title
 ## [2.18.0]
 
 ### Added
-- **Privacy policy** (Polish and English) and a short notice on the first
-  visit: no ads, no tracking, what the server keeps and for how long.
+- **Privacy policy** (Polish and English), to accept on the first visit
+  before playing: no ads, no tracking, what the server keeps and for how
+  long. Until it's accepted the game doesn't connect to the server at all.
 - **Setup → Privacy → Delete my data**: removes your nickname and
   anonymous account from the server and all game data from the browser.
 - The About window shows an e-mail contact, the privacy policy and the

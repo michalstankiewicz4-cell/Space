@@ -662,11 +662,12 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
 <script type="module" src="js/main.js?v=2.18.0"></script>
-<!-- First-visit privacy notice (ui/privacy.js), dismissed once per browser. -->
+<!-- First-visit privacy policy acceptance (ui/privacy.js): required before
+     playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">
   <span id="privacyNoticeText">No ads, no tracking. Your progress stays in this browser; the server keeps your nickname and, only when abuse is detected, a shortened IP address.</span>
   <a id="privacyNoticeLink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a>
-  <button type="button" class="mat gold" id="privacyNoticeOk">OK</button>
+  <button type="button" class="mat gold" id="privacyNoticeOk">Accept</button>
 </div>
 </body>
 </html>

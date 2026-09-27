@@ -63,7 +63,8 @@ const STRINGS = {
       license: "Open source, MIT license"
     },
     privacy: {
-      notice: "No ads, no tracking. Your progress stays in this browser; the server keeps your nickname and, only when abuse is detected, a shortened IP address.",
+      notice: "To play, please accept the privacy policy. No ads, no tracking: your progress stays in this browser; the server keeps your nickname and, only when abuse is detected, a shortened IP address. Nothing is sent before you accept.",
+      accept: "Accept",
       policy: "Privacy policy",
       text: "Your progress and settings stay in this browser. On the server: your nickname (180 days after your last visit) and an anonymous account; a shortened IP address only when abuse is detected (30 days).",
       deleteBtn: "Delete my data",
@@ -430,7 +431,8 @@ const STRINGS = {
       license: "Otwarte źródło, licencja MIT"
     },
     privacy: {
-      notice: "Bez reklam i śledzenia. Twój postęp zostaje w tej przeglądarce; serwer przechowuje twój nick, a skrócony adres IP tylko przy wykryciu nadużyć.",
+      notice: "Aby grać, zaakceptuj politykę prywatności. Bez reklam i śledzenia: postęp zostaje w tej przeglądarce, serwer przechowuje twój nick, a skrócony adres IP tylko przy wykryciu nadużyć. Przed akceptacją nic nie jest wysyłane.",
+      accept: "Akceptuję",
       policy: "Polityka prywatności",
       text: "Twój postęp i ustawienia zostają w tej przeglądarce. Na serwerze: twój nick (180 dni od ostatniej wizyty) i anonimowe konto; skrócony adres IP tylko przy wykryciu nadużyć (30 dni).",
       deleteBtn: "Usuń moje dane",

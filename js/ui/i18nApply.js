@@ -38,6 +38,7 @@ export function applyStaticText(){
   document.getElementById("deleteDataBtn").textContent = t("privacy.deleteBtn");
   document.getElementById("privacyNoticeText").textContent = t("privacy.notice");
   document.getElementById("privacyNoticeLink").textContent = t("privacy.policy");
+  document.getElementById("privacyNoticeOk").textContent = t("privacy.accept");
   document.getElementById("aboutLegalHd").textContent = t("about.legal");
   document.getElementById("aboutPrivacyLink").textContent = t("privacy.policy");
   document.getElementById("aboutLicense").textContent = t("about.license");

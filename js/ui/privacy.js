@@ -3,29 +3,45 @@ import { supabase } from "../supabaseClient.js";
 import { readStorage, writeStorage } from "../core/utils.js";
 import { getLang, t } from "../i18n.js";
 
-// Privacy (docs/security.md, "Privacy"): the one-time notice at the bottom
-// of the screen on the first visit, links to privacy.html in the current
-// language, and Setup -> Privacy -> "Delete my data".
+// Privacy (docs/security.md, "Privacy"): accepting the policy on the first
+// visit (nothing connects to the server before that — main.js waits for
+// whenPrivacyAccepted()), links to privacy.html in the current language,
+// and Setup -> Privacy -> "Delete my data" (which also resets acceptance).
 const NOTICE_KEY = "roj-privacy-ok";
+const acceptedListeners = [];
+
+export function hasAcceptedPrivacy(){
+  return readStorage(NOTICE_KEY) === "1";
+}
+
+// Runs fn now if the policy is already accepted, else once it is.
+export function whenPrivacyAccepted(fn){
+  if(hasAcceptedPrivacy()) fn();
+  else acceptedListeners.push(fn);
+}
 
 // privacy.html in the player's language (#pl / #en).
 export function privacyUrl(){
   return "privacy.html#" + (getLang() === "pl" ? "pl" : "en");
 }
 
-// A short, dismissible notice — information, not a consent request: the
-// game has no tracking to consent to (localStorage is strictly necessary,
-// the security log rests on legitimate interest).
+// The first-visit bar: the policy must be accepted before playing (the
+// user's call) — until then "ENTER ORBIT" stays locked (ui/banner.js) and
+// the game doesn't connect to the server at all (main.js). Legally the game
+// needs no consent (no tracking; localStorage is strictly necessary; the
+// security log rests on legitimate interest) — this is acknowledgement of
+// the policy, which also keeps any data off the server until then.
 export function initPrivacyNotice(){
   const bar = document.getElementById("privacyNotice");
   document.getElementById("privacyNoticeLink").addEventListener("click", function(e){
     e.currentTarget.href = privacyUrl();
   });
-  if(readStorage(NOTICE_KEY) === "1") return;
+  if(hasAcceptedPrivacy()) return;
   bar.classList.remove("hidden");
   document.getElementById("privacyNoticeOk").addEventListener("click", function(){
     writeStorage(NOTICE_KEY, "1");
     bar.classList.add("hidden");
+    acceptedListeners.splice(0).forEach(function(fn){ fn(); });
   });
 }
 
