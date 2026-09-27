@@ -288,6 +288,37 @@ toggle("btnOutlines", function(on){ outlinesRoot.visible = on; });
 toggle("btnDetail", function(on, b){ detailHigh = on; b.textContent = "Detail: " + (on ? "high" : "low"); buildModels(); });
 document.getElementById("btnFit").addEventListener("click", function(){ fit(0, rowEnd); });
 
+// For scripts (recordings, tests): the row and the view. flyTo(name,
+// seconds) glides the camera to one object — the zoom eased in log space,
+// so it looks even from the whole row down to a ship.
+let flight = null;
+window.scaleLab = {
+  items: items, view: view, applyView: applyView, fitAll: function(){ fit(0, rowEnd); },
+  flyTo: function(name, seconds){
+    const it = items.find(function(i){ return i.name === name; });
+    if(!it) return;
+    const r = it.extent * 1.5;
+    const to = Math.max(r * 2 / window.innerWidth, r * 2 / (window.innerHeight - 60));
+    flight = { t: 0, dur: seconds || 3, from: { cx: view.cx, cy: view.cy, upp: view.unitsPerPx }, to: { cx: it.x, cy: 0, upp: to } };
+  }
+};
+function stepFlight(dt){
+  if(!flight) return;
+  flight.t = Math.min(1, flight.t + dt / flight.dur);
+  const k = flight.t < 0.5 ? 2 * flight.t * flight.t : 1 - Math.pow(-2 * flight.t + 2, 2) / 2;
+  const a = flight.from, b = flight.to;
+  view.unitsPerPx = Math.exp(Math.log(a.upp) + (Math.log(b.upp) - Math.log(a.upp)) * k);
+  // the zoom is exponential: keep the target within 30% of the screen width
+  // from the center all along, or mid-flight it'd be far off screen
+  const maxOff = 0.3 * window.innerWidth * view.unitsPerPx;
+  const dx = b.cx - a.cx, dy = b.cy - a.cy;
+  const remX = Math.min(Math.abs(dx) * (1 - k), maxOff), remY = Math.min(Math.abs(dy) * (1 - k), maxOff);
+  view.cx = b.cx - Math.sign(dx) * remX;
+  view.cy = b.cy - Math.sign(dy) * remY;
+  applyView();
+  if(flight.t >= 1) flight = null;
+}
+
 // ---------- loop ----------
 buildModels();
 fit(0, rowEnd);
@@ -298,6 +329,7 @@ function frame(){
   const dt = Math.min(0.05, clock.getDelta());
   t += dt;
   live.forEach(function(l){ l.update(t, dt); });
+  stepFlight(dt);
   renderer.render(scene, camera);
   placeLabels();
   frames++; fpsT += dt;
