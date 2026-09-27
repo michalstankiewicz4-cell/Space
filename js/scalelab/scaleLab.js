@@ -151,12 +151,12 @@ function circle(x, r, color, dashed){
   for(let i = 0; i <= 160; i++){ const a = i / 160 * Math.PI * 2; pts.push(new THREE.Vector3(x + Math.cos(a) * r, Math.sin(a) * r, 0)); }
   const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat(color, dashed));
   if(dashed) line.computeLineDistances();
-  line.renderOrder = 10;
+  line.renderOrder = 1000;   // over the models (BodyKit draws some layers late)
   return line;
 }
 function segment(a, b, color){
   const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([a, b]), lineMat(color, false));
-  line.renderOrder = 10;
+  line.renderOrder = 1000;   // over the models (BodyKit draws some layers late)
   return line;
 }
 items.forEach(function(it){
