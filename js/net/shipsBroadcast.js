@@ -9,7 +9,7 @@ import { containsProfanity } from "../moderation.js";
 import { t } from "../i18n.js";
 import { spawnPrintEffect } from "../drone/dronePrintFx.js";
 import { makeStationVisual } from "../station/stationVisual.js";
-import { STATION_PICK_RADIUS } from "../config.js";
+import { STATION_PICK_RADIUS, DRONE_MODEL_LENGTH } from "../config.js";
 import { buildDroneModel } from "../drone/drone.js";
 import { makeShipVisual, makeOwnerMarker } from "../ships/shipVisual.js";
 import { sRGBTexture } from "../core/utils.js";
@@ -67,7 +67,7 @@ function makeGhostDrone(rp){
   const mesh = new THREE.Group();
   const built = buildDroneModel(GHOST_DRONE_DETAIL);
   mesh.add(built.holder);
-  mesh.add(makeOwnerMarker(rp.color, 1.1));
+  mesh.add(makeOwnerMarker(rp.color, DRONE_MODEL_LENGTH * 0.8));
   ctx.scene.add(mesh);
   rp.droneModel = built.model;
   rp.dronePower = 0;
@@ -105,7 +105,7 @@ function lerpGhost(mesh, dt){
 // Another player's station: the same ShipKit model as ours
 // (station/stationVisual.js), not tinted — like their drone, a name label
 // with a bar in the owner's color floats above it.
-const STATION_LABEL = { y: 5.2, width: 5 };
+const STATION_LABEL = { y: 2.7, width: 3 };
 
 function makeGhostStation(rp){
   const mesh = new THREE.Group();
@@ -125,7 +125,7 @@ function makeGhostStation(rp){
   // use; alive() turns false when the owner leaves or stops sending it.
   rp.stationRef = {
     kind: "remoteStation", rp: rp, group: mesh, pickMesh: pickMesh,
-    radius: STATION_PICK_RADIUS, frameRadius: STATION_PICK_RADIUS, focusDistance: 16,
+    radius: STATION_PICK_RADIUS, frameRadius: STATION_PICK_RADIUS, focusDistance: 8,
     selected: false,
     alive: function(){ return rp.stationMesh === mesh && !!ctx.remotePlayers[rp.id]; }
   };

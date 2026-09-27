@@ -59,7 +59,7 @@ function makeDroneMesh(){
   mesh.add(built.holder);
 
   // selection ring, same pattern as ships/swarm.js — visible only while selected
-  const ringGeo = new THREE.RingGeometry(0.95, 1.05, 32);
+  const ringGeo = new THREE.RingGeometry(DRONE_MODEL_LENGTH * 0.68, DRONE_MODEL_LENGTH * 0.75, 32);
   const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false });
   const ring = new THREE.Mesh(ringGeo, ringMat);
   ring.rotation.x = Math.PI/2;
@@ -70,7 +70,7 @@ function makeDroneMesh(){
   // smaller than a ship's (0.55): the drone sits apart from the swarm (see
   // spawnDrone()) specifically so an oversized hitbox can't "steal" clicks
   // meant for nearby ships/planets during normal fleet-commanding.
-  const pickGeo = new THREE.SphereGeometry(0.6, 8, 8);
+  const pickGeo = new THREE.SphereGeometry(DRONE_MODEL_LENGTH * 0.5, 8, 8);
   const pickMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 });
   const pickMesh = new THREE.Mesh(pickGeo, pickMat);
   mesh.add(pickMesh);
@@ -127,7 +127,7 @@ export function spawnDrone(){
   // it clearly clear of the ships' own small +-1.5 vertical spread at any
   // fleet size, without needing its own spot in that spiral.
   const pos = ctx.station
-    ? ctx.station.pos.clone().add(new THREE.Vector3(0, 6, 0))
+    ? ctx.station.pos.clone().add(new THREE.Vector3(0, 3.5, 0))
     : new THREE.Vector3(Math.cos(Math.random()*Math.PI*2)*6, 3, Math.sin(Math.random()*Math.PI*2)*6);
   built.mesh.position.copy(pos);
   ctx.scene.add(built.mesh);

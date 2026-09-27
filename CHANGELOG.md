@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.16.0]
+
+### Changed
+- A step toward a more realistic scale: ships, the drone and the
+  station are half their size — the station is now smaller than a planet
+  and the swarm reads as a swarm next to the bodies it works on. The
+  selection rings, markers, beams, the base view and the ship cam follow.
+
 ## [2.15.0]
 
 ### Added

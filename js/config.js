@@ -56,8 +56,12 @@ export const TREE = {
 // player writes. Kept separate from the swarm's own TREE/
 // upgrade stats since the drone isn't part of that economy.
 export const DRONE_MAX_FUEL = 100;
-export const SHIP_MODEL_LENGTH = 0.9;   // the swarm ship model's length (the old cone's)
-export const SHIP_LOD_DISTANCE = 45;    // closer than this to the camera: full model, else the light cone
+// Scale (v2.16.0, step 1 of a more realistic scale): units are small next
+// to the bodies — a ship is a fraction of a planet, the station smaller than
+// one. Everything sized around a unit (rings, pick spheres, labels, the ship
+// cam, the base camera) follows these lengths.
+export const SHIP_MODEL_LENGTH = 0.45;  // the swarm ship model's length
+export const SHIP_LOD_DISTANCE = 30;    // closer than this to the camera: full model, else the light cone
 // Ship glow light (Setup -> Graphics, off by default): behind the engines,
 // lighting the hull, nearby ships, the station and (through BodyKit) the
 // bodies it flies by or bites. Brightness follows the engine power.
@@ -66,7 +70,7 @@ export const SHIP_LIGHT_RANGE = 7;
 // A comet's coma and tails at this distance from the Sun have activity 1
 // (world/bodyVisual.js#cometActivity): 1.5 near perihelion (~60), 0.3 far out.
 export const COMET_ACTIVITY_DISTANCE = 100;
-export const DRONE_MODEL_LENGTH = 1.4; // the ShipKit drone model's length in world units (ships are 0.9)
+export const DRONE_MODEL_LENGTH = 0.7; // the ShipKit drone model's length in world units (ships are 0.45)
 export const DRONE_FUEL_PER_MOVE_UNIT = 1; // fuel spent per unit of move() distance
 export const DRONE_MOVE_SPEED = 4; // units/second while a move() is in progress
 export const DRONE_TURN_SPEED = 120; // degrees/second while a turn() is in progress
@@ -88,8 +92,8 @@ export const DRONE_PRINT_COOLDOWN_S = 1.5; // min seconds between print() calls 
 // along the solar truss in world units (the habitat ring is ~0.28 of it),
 // and the radius of its pick sphere / selection ring — around the ring, not
 // the truss tips, so it doesn't steal clicks meant for ships parked nearby.
-export const STATION_MODEL_LENGTH = 10;
-export const STATION_PICK_RADIUS = 3.4;
+export const STATION_MODEL_LENGTH = 5;
+export const STATION_PICK_RADIUS = 1.7;
 // The story's station is a ruin: it starts at this damage (0..1 — ShipKit's
 // damage stages: dark windows from 0.1, a broken panel from 0.2, the torn
 // ring from 0.3, plus smoke and sparks). Repairs are meant to bring it down.
@@ -100,7 +104,7 @@ export const STATION_START_DAMAGE = 0.35;
 // ctx.station, once ambient solar gravity (world/solarGravity.js) can
 // actually move an idle ship on its own. Radius/strength are a starting
 // point for visual tuning, same as everything in world/solarSystem.js.
-export const STATION_FIELD_RADIUS = 11;
+export const STATION_FIELD_RADIUS = 8;
 export const STATION_FIELD_STRENGTH = 4;
 
 // Planet selection (see world/bodies.js#setPlanetSelected, ui/hud/planetPanel.js)

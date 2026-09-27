@@ -35,8 +35,8 @@ import { settings } from "../settings.js";
 
 const SYSTEM_CAM_DEFAULT = { az: 0.6, pol: 1.05, radius: 950 };
 const SYSTEM_ZOOM_RANGE = [20, 2500];
-const BASE_CAM_RADIUS_DEFAULT = 20;
-const BASE_ZOOM_RANGE = [8, 150];
+const BASE_CAM_RADIUS_DEFAULT = 11;     // around a STATION_MODEL_LENGTH 5 station
+const BASE_ZOOM_RANGE = [3, 150];
 // How much higher the camera climbs above the station's own orbital
 // elevation, relative to the dead-center "Sun exactly hidden behind the
 // station" angle - see setCameraMode()'s own comment for the geometry.

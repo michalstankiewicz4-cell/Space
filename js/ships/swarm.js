@@ -40,8 +40,8 @@ const surfacePointScratch = new THREE.Vector3();
 // upgrade) and each new ship still lands in its own non-overlapping slot,
 // same as the initial fleet spawning all at once.
 const SHIP_SPAWN_GOLDEN_ANGLE = 2.399963229728653; // radians, ~137.5°
-const SHIP_SPAWN_BASE_RADIUS = 5; // clears the station's own physical model (silhouette radius ~4.3)
-const SHIP_SPAWN_RADIUS_STEP = 0.9; // keeps even a full ~23-ship fleet (TREE.fleet's max) well inside STATION_FIELD_RADIUS (11, config.js), so the whole formation starts inside the gravity-free field (world/solarGravity.js)
+const SHIP_SPAWN_BASE_RADIUS = 3; // clears the station's own model (STATION_PICK_RADIUS 1.7 around its ring, the truss reaches 2.5)
+const SHIP_SPAWN_RADIUS_STEP = 0.55; // keeps even a full ~23-ship fleet (TREE.fleet's max) well inside STATION_FIELD_RADIUS (8, config.js), so the whole formation starts inside the gravity-free field (world/solarGravity.js)
 
 // Not a per-frame hot loop (only called at startup and when a Fleet
 // upgrade adds a ship), so this returns a fresh Vector3 rather than
@@ -78,7 +78,7 @@ function makeShipMesh(){
   group.add(glow);
 
   // selection ring (visible only when the ship is selected)
-  const ringGeo = new THREE.RingGeometry(0.42, 0.5, 24);
+  const ringGeo = new THREE.RingGeometry(0.26, 0.31, 24);
   const ringMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.9, side:THREE.DoubleSide, depthWrite:false });
   const ring = new THREE.Mesh(ringGeo, ringMat);
   ring.rotation.x = Math.PI/2;
@@ -86,7 +86,7 @@ function makeShipMesh(){
   group.add(ring);
 
   // invisible sphere for raycasting - makes it easier to click a small unit
-  const pickGeo = new THREE.SphereGeometry(0.55, 8, 8);
+  const pickGeo = new THREE.SphereGeometry(0.4, 8, 8);   // a bit bigger than the ship: easier to click
   const pickMat = new THREE.MeshBasicMaterial({ transparent:true, opacity:0 });
   const pickMesh = new THREE.Mesh(pickGeo, pickMat);
   group.add(pickMesh);
@@ -186,11 +186,11 @@ function regenBolt(sh, surfacePoint){
   const tubularSeg = pts.length*3;
 
   const oldCore = sh.boltCore.geometry;
-  sh.boltCore.geometry = new THREE.TubeGeometry(curve, tubularSeg, 0.045, 5, false);
+  sh.boltCore.geometry = new THREE.TubeGeometry(curve, tubularSeg, 0.03, 5, false);
   oldCore.dispose();
 
   const oldGlow = sh.boltGlow.geometry;
-  sh.boltGlow.geometry = new THREE.TubeGeometry(curve, tubularSeg, 0.13, 6, false);
+  sh.boltGlow.geometry = new THREE.TubeGeometry(curve, tubularSeg, 0.08, 6, false);
   oldGlow.dispose();
 
   sh.boltCore.visible = true;

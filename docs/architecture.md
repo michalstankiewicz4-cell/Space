@@ -86,6 +86,18 @@ then read just that range.
 
 ## Camera modes
 
+- **Scale, step 1 (v2.16.0)**: toward a more realistic (not literal)
+  scale, units shrank to half — ship `SHIP_MODEL_LENGTH` 0.9 → 0.45,
+  drone 1.4 → 0.7, station 10 → 5 (its ring now smaller than a planet)
+  — with everything sized around them: ship ring/pick sphere, LOD cone,
+  owner markers, bite beams, the drone's ring/pick/spawn offset, station
+  pick radius / label / focus distance, ship spawn spiral (3 + 0.55·√i)
+  and `STATION_FIELD_RADIUS` (8), the ship cam's canopy offset, the unit
+  miniature distance, and the base camera (radius 11, zoom 3–150).
+  Planets, orbits, gravity and the database are untouched. Step 2
+  (planned): bigger planets/Sun with the eating orbit, gravity and zoom
+  decoupled from the radius.
+
 - **"focus" mode (v2.14.0)**: `scene/controls.js#focusCameraOn(body)`
   orbits one body from `ctx.planets` (planet, Sun, meteoroid, comet) and
   follows it along its orbit — pivot = the body's live position,
@@ -809,7 +821,7 @@ then read just that range.
     diverge. A spinning habitat ring on spokes, the central spine with the
     greenhouse dome, a solar truss along X, radiators, a comms dish, the
     docking port; merged static meshes (≈30 draw calls), effects in the
-    scene, `STATION_MODEL_LENGTH` (10) world units along the truss via
+    scene, `STATION_MODEL_LENGTH` (5 since v2.16.0, was 10) world units along the truss via
     `makeGameHolder`. It replaced the old primitive-built
     `station/stationModel.js` (deleted).
   - **The ruin is the damage (a story choice by the user)**: the model's own
@@ -819,7 +831,7 @@ then read just that range.
     `STATION_START_DAMAGE` (0.35, config.js) — a ruin, as the story says —
     and repairs are meant to lower it later; `visual.setDamage(d)` keeps
     the value across rebuilds.
-  - **Pick sphere and selection ring**: `STATION_PICK_RADIUS` (3.4 world
+  - **Pick sphere and selection ring**: `STATION_PICK_RADIUS` (1.7 world
     units, config.js) around the habitat ring, not the truss tips — the
     station is picked before ships, so a sphere as wide as the truss would
     steal clicks meant for ships parked nearby. The station's own group is
@@ -846,7 +858,7 @@ then read just that range.
     radians per step, radius growing with `sqrt(index)`) centered on
     `ctx.station.pos`, sized so even a full ~23-ship fleet
     (`TREE.fleet`'s max level) stays well inside `STATION_FIELD_RADIUS`
-    (11, `config.js`). `index` is just `ctx.ships.length` at spawn time —
+    (8 since v2.16.0, `config.js`). `index` is just `ctx.ships.length` at spawn time —
     no upfront fleet-size knowledge needed, so `reconcileFleetSize()`
     (buying a Fleet upgrade) adding one ship at a time still gives each
     new ship its own non-overlapping slot, same as the initial fleet
@@ -1150,7 +1162,7 @@ then read just that range.
 - **The drone** (`drone/drone.js#buildDroneModel`) is ShipKit's DR-01
   SCRIBE: built with `merge: true` (static meshes merged per material,
   see `docs/ship.md`), effects in the scene (`fxRoot`), wrapped by
-  `makeGameHolder` to +Z forward and `DRONE_MODEL_LENGTH` (1.4) units,
+  `makeGameHolder` to +Z forward and `DRONE_MODEL_LENGTH` (0.7 since v2.16.0) units,
   inside the old holder group with the game's pick sphere (0.6) and
   selection ring. No PointLight of its own any more (glow sprites
   instead). `updateDrone()` feeds it: engine power eased toward 1 during
@@ -1181,7 +1193,7 @@ then read just that range.
   numbers. All untrusted: power clamped to 0..1, shots only acted on when
   they increase, at most 2 per update, coordinates through `safeCoord`.
 - **Swarm ships** (v2.9.0, `ships/shipVisual.js`): ShipKit's SW-01
-  SWARMER up close, the old light cone beyond `SHIP_LOD_DISTANCE` (45)
+  SWARMER up close, the old light cone beyond `SHIP_LOD_DISTANCE` (30)
   from the camera; the model is built lazily (merged, effects in the
   scene, detail = graphics detail x 0.5, remote x 0.3) and always shown
   for a selected ship or the ship cam's (`forceDetail`). Engine power:

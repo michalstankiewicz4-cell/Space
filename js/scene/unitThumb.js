@@ -1,5 +1,6 @@
 import { getUnitThumbTarget } from "../ui/hud/unitPanel.js";
 import { renderIntoElement } from "./viewRect.js";
+import { SHIP_MODEL_LENGTH, DRONE_MODEL_LENGTH } from "../config.js";
 
 // Live miniature of the selected unit (one ship, or the drone) in the
 // SELECTED UNIT panel, rendered into #unitThumb's box on the main canvas
@@ -24,7 +25,7 @@ export function renderUnitThumb(){
   DIR.copy(POS).negate().setY(0);
   if(DIR.lengthSq() < 1e-6) DIR.set(1, 0, 0);
   DIR.normalize().applyAxisAngle(UP, 0.7);
-  const dist = t.ship ? 1.6 : 3.4;
+  const dist = t.ship ? SHIP_MODEL_LENGTH * 1.8 : DRONE_MODEL_LENGTH * 2.4;
   camera.position.copy(POS).addScaledVector(DIR, dist);
   camera.position.y += dist * 0.45;
   camera.lookAt(POS);

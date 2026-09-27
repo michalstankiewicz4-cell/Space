@@ -1,5 +1,6 @@
 import { ctx } from "../core/context.js";
 import { renderIntoElement } from "./viewRect.js";
+import { SHIP_MODEL_LENGTH } from "../config.js";
 
 // Picture-in-picture "cockpit" camera for a single ship, rendered as a
 // second pass into #shipCam's on-screen box (a corner of the HUD's 3D
@@ -22,7 +23,7 @@ const UP = new THREE.Vector3();
 const FLIP_Y180 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
 
 export function initShipCam(){
-  shipCamera = new THREE.PerspectiveCamera(65, 1.5, 0.05, 300);
+  shipCamera = new THREE.PerspectiveCamera(65, 1.5, 0.02, 300);
   pipEl = document.getElementById("shipCam");
   document.getElementById("shipCamCloseBtn").addEventListener("click", clearShipCamTarget);
 }
@@ -53,7 +54,8 @@ export function updateShipCam(){
   if(ctx.ships.indexOf(target) === -1){ clearShipCamTarget(); return; }
   FORWARD.set(0, 0, 1).applyQuaternion(target.mesh.quaternion);
   UP.set(0, 1, 0).applyQuaternion(target.mesh.quaternion);
-  shipCamera.position.copy(target.mesh.position).addScaledVector(FORWARD, 0.15).addScaledVector(UP, 0.05);
+  // at the canopy, in proportion to the ship's size
+  shipCamera.position.copy(target.mesh.position).addScaledVector(FORWARD, SHIP_MODEL_LENGTH * 0.17).addScaledVector(UP, SHIP_MODEL_LENGTH * 0.055);
   shipCamera.quaternion.copy(target.mesh.quaternion).multiply(FLIP_Y180);
 }
 

@@ -46,7 +46,7 @@ export function makeOwnerMarker(colorHex, y){
 
 function makeCone(){
   const mat = new THREE.MeshStandardMaterial({ color: 0x4fe3c6, emissive: 0x1fae95, emissiveIntensity: 0.9, roughness: 0.35, metalness: 0.4 });
-  const cone = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.9, 8), mat);
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(0.31 * SHIP_MODEL_LENGTH, SHIP_MODEL_LENGTH, 8), mat);
   cone.rotation.x = Math.PI / 2;
   return cone;
 }
@@ -59,7 +59,7 @@ export function makeShipVisual(opts){
   root.add(cone);
   let marker = null;
   if(remote && opts.markerColor){
-    marker = makeOwnerMarker(opts.markerColor, 0.65);
+    marker = makeOwnerMarker(opts.markerColor, SHIP_MODEL_LENGTH * 0.75);
     root.add(marker);
   }
   const v = {
