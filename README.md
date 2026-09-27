@@ -96,7 +96,10 @@ labs for procedural ships and celestial bodies; their models live in
 `js/shipkit/` and `js/bodykit/`, shared with the game (they replaced the
 older `planetEditor.html` and `shipEditor.html`, removed in v2.2.1) — see
 [`docs/ship.md`](docs/ship.md) and
-[`docs/bodies.md`](docs/bodies.md). `tools/` holds small standalone dev
+[`docs/bodies.md`](docs/bodies.md). `scale.html` (+ `js/scalelab/`) is the
+scale lab: every game object in one row at its in-game size, sizes
+imported from the game's own modules (needs the local server) — see
+[`docs/scale.md`](docs/scale.md). `tools/` holds small standalone dev
 utilities (e.g. `grainTexture.html`, which regenerates `css/ui/grain.png`). `blog/` isn't part of the game at all — see "Devlog"
 below.
 

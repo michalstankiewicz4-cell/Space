@@ -99,6 +99,10 @@ export const DRONE_PRINT_COOLDOWN_S = 1.5; // min seconds between print() calls 
 // along the solar truss in world units (the habitat ring is ~0.28 of it),
 // and the radius of its pick sphere / selection ring — around the ring, not
 // the truss tips, so it doesn't steal clicks meant for ships parked nearby.
+// The black hole's reach, in multiples of its radius (world/blackholes.js):
+// its pull starts at GRAVITY, a unit closer than KILL is lost.
+export const BLACKHOLE_GRAVITY_RADIUS_MULT = 7.5;
+export const BLACKHOLE_KILL_RADIUS_MULT = 1.35;
 export const STATION_MODEL_LENGTH = 5;
 export const STATION_PICK_RADIUS = 1.7;
 // The story's station is a ruin: it starts at this damage (0..1 — ShipKit's

@@ -11,6 +11,7 @@ import { destroyDroneMesh } from "../drone/drone.js";
 import { stopUnitProgram } from "../program/runner.js";
 import { SOLAR_BODY_BY_SLOT, bodyPosAt, nowSimTime } from "./solarSystem.js";
 import { t } from "../i18n.js";
+import { BLACKHOLE_GRAVITY_RADIUS_MULT, BLACKHOLE_KILL_RADIUS_MULT } from "../config.js";
 
 // The black hole is now a single permanent fixture on orbit 9 (see
 // world/solarSystem.js) — no more spawn timer, expiry, fade-out or
@@ -48,8 +49,8 @@ export function materializeBlackHole(radius, orbitSlot){
     group: group, look: look, pickMesh: pickMesh,
     selected: false,   // selectable like a planet (scene/controls.js#clickBlackHole, scene/selectionBrackets.js)
     radius: radius,
-    gravityRadius: radius*7.5,
-    killRadius: radius*1.35
+    gravityRadius: radius * BLACKHOLE_GRAVITY_RADIUS_MULT,
+    killRadius: radius * BLACKHOLE_KILL_RADIUS_MULT
   };
   ctx.blackholes.push(bh);
   showToast(t("toast.blackholeDetected"), "alert");

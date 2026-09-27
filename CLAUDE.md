@@ -12,7 +12,9 @@ found and fixed, exact function names) lives in `docs/`:
 [`docs/gotchas.md`](docs/gotchas.md), [`docs/blogger.md`](docs/blogger.md);
 the standalone ship/body labs are documented in [`docs/ship.md`](docs/ship.md)
 and [`docs/bodies.md`](docs/bodies.md); sizes/distances and what depends on
-them (an ongoing, step-by-step topic) in [`docs/scale.md`](docs/scale.md).
+them (an ongoing, step-by-step topic) in [`docs/scale.md`](docs/scale.md),
+with the scale lab (`scale.html`: every object in one row at game size,
+numbers imported from the game's own modules).
 Read the relevant one with the Read tool before modifying that subsystem —
 the summaries here are for orientation, not enough detail to safely change
 the code. Don't read the long ones whole: `docs/architecture.md` and
@@ -56,7 +58,7 @@ shared live via Supabase; a player's own points/upgrades stay local
   oversights — the common thread is "doesn't change what a player's
   browser actually loads/runs"):
   - `admin.html` (+ `js/admin/`, `css/admin.css`, `css/devTheme.css`),
-    the `ship.html`/`bodies.html` labs, plus
+    the `ship.html`/`bodies.html`/`scale.html` labs (+ `js/scalelab/`), plus
     `tools/` (e.g. `grainTexture.html`, regenerates `css/ui/grain.png`) —
     standalone dev tools with no version-check mechanism of their own
     (`js/versionCheck.js` only ever watches the *game's* `js/version.js`).

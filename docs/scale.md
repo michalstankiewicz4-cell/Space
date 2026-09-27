@@ -20,6 +20,7 @@ Contents:
 - [What has been done](#what-has-been-done)
 - [Problems found along the way](#problems-found-along-the-way)
 - [What depends on what](#what-depends-on-what)
+- [Scale lab (scale.html)](#scale-lab-scalehtml)
 - [Checklist for the next change](#checklist-for-the-next-change)
 - [Possible next steps](#possible-next-steps)
 
@@ -208,9 +209,45 @@ one:
   2500), the far plane (12000) and sky radius (9000), the fog density;
 - float precision is fine up to far larger systems (it isn't the limit).
 
+## Scale lab (scale.html)
+
+The user's idea (2026-09-27): every object of the game side by side in
+one row, at its in-game size, to see precisely what should grow and what
+should shrink. `scale.html` + `js/scalelab/scaleLab.js`.
+
+- **Numbers from the game, never copied**: it imports
+  `world/solarSystem.js` (drawn `radius` and gameplay `size` per slot),
+  `config.js` (unit lengths, `EAT_ORBIT_GAP`, `DRONE_DOCK_GAP`, station
+  pick/field radius, `BLACKHOLE_*_RADIUS_MULT` — moved there from
+  `world/blackholes.js` for this, same values) and `bodies/comet.js`
+  (comet radius range). Change a constant and the lab shows it. Being an
+  ES module it needs the local server like the game (`/scale.html`); it
+  can't be opened from disk like the other labs.
+- **Row**: Sun, planets by size, black hole, meteoroid, comet (largest;
+  the smallest as a dashed ring), station, drone, ship — each spaced by
+  its widest ring. **Orthographic camera** (no perspective: sizes compare
+  exactly anywhere on screen). Wheel zooms at the cursor, drag pans,
+  double-click fits one object, "Fit all" the row.
+- **Models** (the game's ShipKit/BodyKit, one light for all, the station
+  at `STATION_START_DAMAGE`) and **Outlines** toggle independently:
+  drawn radius, gameplay size (dashed, where it differs), eating orbit,
+  drone dock range, black hole no-return and pull, station click radius
+  and field. A ruler in world units under the row (each object's width
+  marked on it), a scale bar in the corner for when the ruler is off
+  screen, labels with the numbers once there's room.
+- **Performance**: ~13 objects, fewer than the game draws at once —
+  measured 165 FPS (the screen's cap) at low detail (~20k triangles) and
+  high (~35k). No placeholders needed; the outlines exist because they
+  show more than the models.
+- **First look** (2026-09-27): the Sun's eating orbit (14.2) sits just
+  above its drawn surface (12.6); the black hole's pull (11.25) is wider
+  than any planet; the station (5) is about the meteoroid's diameter
+  (3.3) and ~11× a ship.
+
 ## Checklist for the next change
 
-1. Read this file and the relevant `docs/architecture.md` sections.
+1. Read this file and the relevant `docs/architecture.md` sections;
+   look at the row in the scale lab (`scale.html`) before and after.
 2. Change constants in one place (`config.js`, `world/solarSystem.js`),
    derive the rest from them — no new magic numbers sized in world units.
 3. Anything "near a body": `radius + gap`. Anything tied to a unit:
