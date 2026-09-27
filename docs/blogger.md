@@ -54,3 +54,29 @@ Supabase Management API token.
   intentional manual publish. **Confirm with the user before assuming a
   status change was caused by an API call and reverting it** — it may
   just be their own concurrent action in the Blogger UI.
+
+## Video clips (instead of GIFs)
+
+The user's call (2026-09-27), after a same-scene test: a looping video
+beat an animated GIF on every count (GIF 800×450, 256 colours, stuttering,
+5.2 MB; WebM 1280×720, full colour, 1.3 MB).
+
+- **Record** with Playwright's `recordVideo` (a new browser context with
+  `recordVideo: { dir, size: { width: 1280, height: 720 } }`; the file is
+  `page.video().path()` after the context closes). Drive the scene from
+  the script — the scale lab has `window.scaleLab.flyTo(name, seconds)`
+  for smooth camera flights; in the game, the camera functions in
+  `scene/controls.js`.
+- **The recording skips time while the page stalls** (shader compiles at
+  load): a session 28 s long on the clock gave a 16.7 s file. Trim from
+  the END (`-ss <duration − clip length>`), not by wall-clock offsets.
+- **Trim/re-encode** with the ffmpeg Playwright ships
+  (`%LOCALAPPDATA%/ms-playwright/ffmpeg-*/ffmpeg-win64.exe`): it only
+  encodes VP8/WebM, e.g. `-ss 7.3 -i in.webm -c:v libvpx -b:v 1500k -crf 12
+  -an out.webm`. MP4 would need a full ffmpeg install — WebM plays in
+  Chrome, Firefox, Edge and Android; older Safari/iOS may not.
+- **Host** in `blog/` like images; embed as
+  `<video src="…/blog/<file>.webm" autoplay loop muted playsinline
+  style="max-width:100%;height:auto;display:block;"></video>` — Blogger
+  keeps the tag (verified by reading the saved draft back through the
+  API). Keep clips short (≤10 s) and captioned like screenshots.
