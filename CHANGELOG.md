@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.18.4]
+
+### Changed
+- Privacy policy page: the title and the language / back-to-game buttons
+  stay at the top while the policy scrolls.
+- On a phone, the policy's data table scrolls sideways on its own instead
+  of widening the whole page.
+
 ## [2.18.3]
 
 ### Fixed
