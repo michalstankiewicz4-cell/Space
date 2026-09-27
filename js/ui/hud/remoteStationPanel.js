@@ -1,6 +1,7 @@
 import { t } from "../../i18n.js";
 import { showInfo, hideInfo, getInfoOwner, setInfoRow, setInfoButtons } from "./infoPanel.js";
 import { STATION_PICK_RADIUS } from "../../config.js";
+import { focusCameraOn } from "../../scene/controls.js";
 
 // Another player's station in the HUD's PLANET INFO slot (like our own,
 // ui/hud/stationPanel.js, but read-only): whose it is, their fleet size,
@@ -37,5 +38,5 @@ export function refreshRemoteStationPanel(){
   setInfoRow(1, t("station.fleet"), String(rp.meshes.length));
   setInfoRow(2, t("topbar.points"), String(rp.points || 0));
   setInfoRow(3, t("topbar.eaten"), String(rp.eaten || 0));
-  setInfoButtons([]);
+  setInfoButtons([null, null, { text: t("hud.viewBtn"), onClick: function(){ if(current && current.alive()) focusCameraOn(current); } }]);
 }

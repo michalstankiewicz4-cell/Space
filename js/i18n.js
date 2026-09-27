@@ -205,11 +205,11 @@ const STRINGS = {
       value: function(n){ return "Value ~" + n + " pts"; },
       yourBase: "Your base", playerBase: "Another player's base", sun: "Sun",
       zoomIn: "Zoom in", zoomOut: "Zoom out",
-      droneStart: "START", droneStop: "STOP", droneScript: "SCRIPT",
+      droneStart: "Start the program", droneStop: "Stop the program", droneScript: "Edit the program (script or blocks)",
       programRunning: "Program",
       viewBtn: "VIEW", cockpitBtn: "COCKPIT",
-      viewTitle: "Camera on this unit, with its trajectories (click again: back to the base view)",
-      shipCam: "Cockpit view on/off"
+      viewTitle: "the camera orbits and follows this unit",
+      shipCam: "the view from its cockpit, on/off"
     },
     cmd: {
       tactical: "TACTICAL", movement: "MOVEMENT", build: "BUILD", special: "SPECIAL",
@@ -578,11 +578,11 @@ const STRINGS = {
       value: function(n){ return "Wartość ~" + n + " pkt"; },
       yourBase: "Twoja baza", playerBase: "Baza innego gracza", sun: "Słońce",
       zoomIn: "Przybliż", zoomOut: "Oddal",
-      droneStart: "START", droneStop: "STOP", droneScript: "SKRYPT",
+      droneStart: "Uruchom program", droneStop: "Zatrzymaj program", droneScript: "Edytuj program (skrypt lub klocki)",
       programRunning: "Program",
       viewBtn: "WIDOK", cockpitBtn: "KOKPIT",
-      viewTitle: "Kamera na tę jednostkę, z jej trajektoriami (kliknij jeszcze raz: powrót do widoku bazy)",
-      shipCam: "Widok z kokpitu wł./wył."
+      viewTitle: "kamera krąży wokół tej jednostki i za nią podąża",
+      shipCam: "widok z jej kokpitu, wł./wył."
     },
     cmd: {
       tactical: "TAKTYKA", movement: "RUCH", build: "BUDOWA", special: "SPECJALNE",

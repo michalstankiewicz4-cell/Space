@@ -6,7 +6,7 @@ import { bodyPosAt, nowSimTime, SOLAR_BODY_BY_SLOT } from "../world/solarSystem.
 
 // Trajectory lines, one rule (the user's): the object the camera is on
 // ("focus" mode — a ship or the drone via VIEW, a body via the minimap)
-// plus every selected object. The station and the Sun don't move; a comet
+// plus every selected object (ships only when a single one is selected). The station and the Sun don't move; a comet
 // already draws its own full trajectory (world/cometPhysics.js). Lines:
 //   cyan   — where it goes in the next HORIZON_S: a unit's drift or flight
 //            to its order (program/simulate.js#predictCurrentPath), a
@@ -20,7 +20,7 @@ const PROGRAM_COLOR = 0xb48cf0;
 const REFRESH_S = 0.4;
 const HORIZON_S = 120;          // the same look-ahead as a unit's preview
 const BODY_STEPS = 120;
-const MAX_TRACKED = 12;         // a big group selection: the first few ships
+const MAX_TRACKED = 12;         // a safety cap (planets can be multi-selected)
 // A layer only the main camera sees: the miniatures (scene/unitThumb.js,
 // infoThumb.js) and the cockpit view (shipcam.js) render layer 0 only —
 // an arc drawn on top would otherwise cut across a planet's miniature.
@@ -76,7 +76,10 @@ function tracked(){
   function add(o){ if(o && list.indexOf(o) === -1 && list.length < MAX_TRACKED) list.push(o); }
   add(objectInView());
   if(ctx.drone && ctx.drone.selected) add(ctx.drone);
-  ctx.ships.forEach(function(sh){ if(sh.selected) add(sh); });
+  // ships only when exactly one is selected — a group's lines would just
+  // be clutter (the user's call)
+  const selShips = ctx.ships.filter(function(sh){ return sh.selected; });
+  if(selShips.length === 1) add(selShips[0]);
   ctx.planets.forEach(function(p){ if(p.selected && !p.dying) add(p); });
   ctx.blackholes.forEach(function(bh){ if(bh.selected) add(bh); });
   return list;

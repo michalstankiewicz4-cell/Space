@@ -866,11 +866,18 @@ that ship view — "the drone too").
   windows on the unit they were opened for (titles "Ship N script",
   "PROGRAMMING: SHIP N").
 - **Unit panel** (`ui/hud/unitPanel.js`): a single ship or the drone
-  shows VIEW (eye) above COCKPIT (camera) right of the miniature, and the
-  START/STOP/SCRIPT row (a ship's four "soon" quick orders now only show
-  for a group). VIEW = `controls.js#focusCameraOnUnit` — the "focus"
-  camera with one stable target object per unit (`{ unit, mesh, radius,
-  focusDistance, zoomRange, alive() }`); again → the base view.
+  shows COCKPIT (camera icon) top right and a bottom row VIEW (eye) /
+  START / STOP / SCRIPT — **icons only, the name is the tooltip** (the
+  user's call; labels stay as visually-hidden spans). A ship's four
+  "soon" quick orders now only show for a group. VIEW =
+  `controls.js#focusCameraOnUnit` — the "focus" camera with one stable
+  target object per unit (`{ unit, mesh, radius, focusDistance,
+  zoomRange, alive() }`).
+- **VIEW is the same everywhere** (the user's "jednolicie"): the info
+  panel's wide gold button C (`infoPanel.js#setInfoButtons`) is VIEW on
+  the planet panel (replacing the placeholder COLONIZE), the black hole
+  and a remote station (`focusCameraOn`) and the own station (base
+  view).
   `unitInView()` answers "which unit is the camera on". COCKPIT =
   `scene/shipcam.js`, now for the drone too (its own offset); the unit's
   selection ring is hidden for that render pass (it cut across the view).
@@ -878,8 +885,8 @@ that ship view — "the drone too").
 - **Trajectories** (`program/simulate.js`, drawn by
   `scene/trajectories.js`) — **one rule (the user's): the object the
   camera is on (the "focus" target: a unit via VIEW, a body via the
-  minimap) plus every selected object** (capped at 12: a big group shows
-  its first ships). A fixed body (planet, meteoroid, black hole) gets its
+  minimap) plus every selected object** — ships only when exactly one is
+  selected (a group's lines were clutter, the user's call). A fixed body (planet, meteoroid, black hole) gets its
   way along the orbit over the same 120 s (closed-form `bodyPosAt`); the
   Sun and the station don't move; a comet already draws its full path.
   Lines come from a reused pool, shared materials (one per kind —

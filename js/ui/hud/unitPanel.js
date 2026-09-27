@@ -7,7 +7,7 @@ import { bodyVariantKey } from "../../world/bodyParams.js";
 import { t } from "../../i18n.js";
 import { fillIcons, svgIcon } from "../icons.js";
 import { setShipCamTarget, clearShipCamTarget, getShipCamTarget } from "../../scene/shipcam.js";
-import { focusCameraOnUnit, unitInView, setCameraMode } from "../../scene/controls.js";
+import { focusCameraOnUnit, unitInView } from "../../scene/controls.js";
 import { shipMoveSpeed } from "../../ships/shipProgram.js";
 
 // The HUD's SELECTED UNIT panel (#unitPanel). Shows, in priority order:
@@ -129,7 +129,6 @@ function render(u){
   el("unitBtns").classList.toggle("hidden", single);
   el("droneBtns").classList.toggle("hidden", !single);
   el("unitThumb").classList.toggle("hidden", !single);
-  el("unitViewBtn").classList.toggle("hidden", !single);
   el("unitCamBtn").classList.toggle("hidden", !single);
   paintCamButtons(u);
   el("unitBars").classList.toggle("hidden", !single);
@@ -204,15 +203,13 @@ export function updateUnitPanel(force){
 export function initUnitPanel(){
   fillIcons(el("unitBtns"), { target: "url(#gGoldIcon)", formup: "url(#gBlueIcon)", shield: "#c7d0ff", scan2: "url(#gBlueIcon)" });
   fillIcons(el("droneBtns"));
-  el("unitViewBtn").insertAdjacentHTML("afterbegin", svgIcon("eye"));
   el("unitCamBtn").insertAdjacentHTML("afterbegin", svgIcon("camera"));
-  // VIEW: the camera orbits and follows the unit, with its trajectories
-  // (like a minimap click on a planet); again: back to the base view.
+  // VIEW (first in the bottom row): the camera orbits and follows the unit,
+  // like VIEW in the info panel or a minimap click on a planet.
   el("unitViewBtn").addEventListener("click", function(){
     const unit = unitOf(currentUnit());
     if(!unit) return;
-    if(unitInView() === unit) setCameraMode("base");
-    else focusCameraOnUnit(unit);
+    focusCameraOnUnit(unit);
     updateUnitPanel(true);
   });
   // COCKPIT: the picture-in-picture view from the unit's cockpit — for a

@@ -8,6 +8,7 @@ import { t } from "../../i18n.js";
 import { openTechModal } from "../windows/windows.js";
 import { openFleetModal } from "../windows/fleet.js";
 import { showInfo, hideInfo, getInfoOwner, setInfoRow, setInfoButtons } from "./infoPanel.js";
+import { setCameraMode } from "../../scene/controls.js";
 
 // The player's station shown in the HUD's PLANET INFO slot (ui/hud/infoPanel.js).
 // Visibility tracks selection, RTS-style: selecting the station (see
@@ -58,6 +59,7 @@ export function refreshStationPanel(){
   setInfoRow(3, t("station.upgrades"), upgradesSummary());
   setInfoButtons([
     { text: t("station.techBtn"), onClick: openTechModal },
-    { text: t("station.fleetBtn"), onClick: openFleetModal }
+    { text: t("station.fleetBtn"), onClick: openFleetModal },
+    { text: t("hud.viewBtn"), onClick: function(){ setCameraMode("base"); } }   // VIEW: the base camera
   ]);
 }

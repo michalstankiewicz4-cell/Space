@@ -84,13 +84,15 @@ export function applyStaticText(){
   $("mmOut").title = t("hud.zoomOut");
   ["unitCloseBtn", "infoCloseBtn", "shipCamCloseBtn"].forEach(function(id){ $(id).title = t("hud.close"); });
   document.querySelectorAll("#unitBtns .uBtn").forEach(function(b){ b.title = t("cmd." + b.dataset.cmd) + " — " + t("soon"); });
-  $("unitCamBtn").title = t("hud.shipCam");
+  $("unitCamBtn").title = t("hud.cockpitBtn") + " — " + t("hud.shipCam");
   $("unitCamBtn").querySelector("span").textContent = t("hud.cockpitBtn");
-  $("unitViewBtn").title = t("hud.viewTitle");
-  $("unitViewBtn").querySelector("span").textContent = t("hud.viewBtn");
-  $("droneRunBtn").querySelector("span").textContent = t("hud.droneStart");
-  $("droneStopBtn").querySelector("span").textContent = t("hud.droneStop");
-  $("droneScriptBtn").querySelector("span").textContent = t("hud.droneScript");
+  $("unitViewBtn").title = t("hud.viewBtn") + " — " + t("hud.viewTitle");
+  $("unitViewBtn").querySelector("span").textContent = t("hud.viewBtn");   // (in #droneBtns)
+  // icon-only buttons: the name is the tooltip (and the hidden label)
+  [["droneRunBtn", "hud.droneStart"], ["droneStopBtn", "hud.droneStop"], ["droneScriptBtn", "hud.droneScript"]].forEach(function(p){
+    $(p[0]).querySelector("span").textContent = t(p[1]);
+    $(p[0]).title = t(p[1]);
+  });
   ["Tactical", "Movement", "Build", "Special"].forEach(function(k){ $("tab" + k).textContent = t("cmd." + k.toLowerCase()); });
   document.querySelectorAll("#cmdBtns .aBtn").forEach(function(b){
     b.querySelector("span").textContent = t("cmd." + b.dataset.cmd);

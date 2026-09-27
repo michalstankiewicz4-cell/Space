@@ -12,14 +12,20 @@ shown next to the title on the start screen and in the browser tab title
   text script and block program; the same commands work (ships need no
   fuel, move at their cruise speed and bite with their Bite upgrade).
   A normal click order takes the ship back from its program.
-- **VIEW**: the camera orbits and follows the selected ship or drone, like
-  a planet after a minimap click. Under it, **COCKPIT** opens the view
-  from its cockpit — now for the drone too.
+- **VIEW** everywhere: the camera orbits and follows the selected ship or
+  drone (the eye, first in the unit panel's bottom row), planet, black
+  hole or another player's station (the big gold button in the info
+  panel, where COLONIZE used to be — like a minimap click); on your
+  station it switches to the base view. The unit panel keeps only
+  **COCKPIT** at the top — the view from its cockpit, now for the drone
+  too.
+- The unit panel's buttons are icons now; their names show on hover.
 - **Trajectories** of whatever the camera is on and whatever is selected:
   for a ship or the drone a cyan line shows where it's heading, a violet
   one where its program would take it if started (while it runs: the
   route it planned at the start); for a planet, the meteoroid or the black
-  hole, its way along its orbit over the next two minutes.
+  hole, its way along its orbit over the next two minutes. With several
+  ships selected their lines stay hidden, to keep the view clear.
 
 ### Changed
 - The station's field now only shields from gravity — it no longer pulls

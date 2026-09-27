@@ -56,8 +56,10 @@ export function setInfoRow(i, label, value, barFrac){
   }
 }
 
-// btns: [{text, onClick?}] for infoBtnA/B/C; a missing entry hides that
-// button, an entry without onClick is shown as not-yet-available.
+// btns: [{text, onClick?}] for infoBtnA/B/C; a missing (or null) entry
+// hides that button, an entry without onClick is shown as not-yet-available.
+// Button C (the wide gold one) is VIEW on every panel that has something
+// to look at — the camera goes there, the same everywhere.
 const handlers = {};
 export function setInfoButtons(btns){
   ["infoBtnA", "infoBtnB", "infoBtnC"].forEach(function(id, i){

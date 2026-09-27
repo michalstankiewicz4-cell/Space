@@ -2,6 +2,7 @@ import { bodyVariantKey, bodyValueEstimate } from "../../world/bodyParams.js";
 import { t } from "../../i18n.js";
 import { showInfo, hideInfo, getInfoOwner, setInfoRow, setInfoButtons } from "./infoPanel.js";
 import { discover } from "../../core/discovery.js";
+import { focusCameraOn } from "../../scene/controls.js";
 
 // Which planet the PLANET INFO panel is currently showing — module-local,
 // not on ctx, since (unlike the drone/station) this is transient UI focus
@@ -57,5 +58,7 @@ export function refreshPlanetPanel(){
   // shown as degrees/second, a more readable unit than raw radians.
   setInfoRow(3, t("planet.spin"), (p.spin * 180 / Math.PI).toFixed(1) + "°/s");
   // Mockup actions — not wired up yet.
-  setInfoButtons([{ text: t("planet.waypoint") }, { text: t("planet.scan") }, { text: t("planet.colonize") }]);
+  // VIEW: the camera flies to the planet and follows it, like a minimap click
+  setInfoButtons([{ text: t("planet.waypoint") }, { text: t("planet.scan") },
+    { text: t("hud.viewBtn"), onClick: function(){ if(currentPlanet) focusCameraOn(currentPlanet); } }]);
 }

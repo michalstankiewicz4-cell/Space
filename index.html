@@ -335,11 +335,8 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
     <div id="unitBody" class="hidden">
       <div id="unitName"></div>
       <div id="unitClass"></div>
-      <!-- Camera on the selected ship or drone: VIEW orbits and follows it,
-           with its trajectories (scene/controls.js#focusCameraOnUnit,
-           scene/unitTrajectory.js); COCKPIT is the picture-in-picture view
-           from its cockpit (scene/shipcam.js). -->
-      <button type="button" class="oBtn" id="unitViewBtn"><span>VIEW</span></button>
+      <!-- The picture-in-picture view from the selected ship's or drone's
+           cockpit (scene/shipcam.js). -->
       <button type="button" class="oBtn" id="unitCamBtn"><span>COCKPIT</span></button>
       <div id="unitThumb"></div>
       <div id="unitBars">
@@ -361,9 +358,11 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
         <button type="button" class="uBtn gold soon" data-icon="shield" data-cmd="defend"></button>
         <button type="button" class="uBtn blue soon" data-icon="scan2" data-cmd="scan"></button>
       </div>
-      <!-- Program controls of the selected ship or drone (live,
-           ui/windows/droneScript.js). -->
+      <!-- The selected ship or drone: VIEW (the camera orbits and follows
+           it, scene/controls.js#focusCameraOnUnit — like VIEW in the info
+           panel) and its program controls (ui/windows/droneScript.js). -->
       <div id="droneBtns" class="hidden">
+        <button type="button" class="uBtn blue" id="unitViewBtn" data-icon="eye"><span></span></button>
         <button type="button" class="uBtn gold" id="droneRunBtn" data-icon="play"><span></span></button>
         <button type="button" class="uBtn red" id="droneStopBtn" data-icon="stop"><span></span></button>
         <button type="button" class="uBtn blue" id="droneScriptBtn" data-icon="script"><span></span></button>

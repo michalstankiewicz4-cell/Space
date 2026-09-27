@@ -1,6 +1,7 @@
 import { t } from "../../i18n.js";
 import { showInfo, hideInfo, getInfoOwner, setInfoRow, setInfoButtons } from "./infoPanel.js";
 import { discover } from "../../core/discovery.js";
+import { focusCameraOn } from "../../scene/controls.js";
 
 // The black hole in the HUD's PLANET INFO slot (same slot as planets and
 // the station, ui/hud/infoPanel.js): what it is and how close is too
@@ -36,5 +37,5 @@ export function refreshBlackHolePanel(){
   setInfoRow(1, t("planet.radius"), current.radius.toFixed(1));
   setInfoRow(2, t("blackhole.pull"), current.gravityRadius.toFixed(1));
   setInfoRow(3, t("blackhole.noReturn"), current.killRadius.toFixed(1));
-  setInfoButtons([]);
+  setInfoButtons([null, null, { text: t("hud.viewBtn"), onClick: function(){ if(current) focusCameraOn(current); } }]);
 }
