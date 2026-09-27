@@ -1,5 +1,5 @@
 import { gfxDetail, gfxQuality, onGraphicsChange } from "../scene/graphics.js";
-import { COMET_ACTIVITY_DISTANCE } from "../config.js";
+import { COMET_ACTIVITY_DISTANCE, SHIP_LIGHT_INTENSITY, SHIP_BODY_LIGHT_INTENSITY, SHIP_BODY_LIGHT_RANGE } from "../config.js";
 import { ctx } from "../core/context.js";
 
 // Every body's look comes from BodyKit (js/bodykit/bodykit.js, the body
@@ -66,7 +66,10 @@ function gatherShipLights(){
     if(!lightPool[lightCount]) lightPool[lightCount] = { position: new THREE.Vector3(), color: null, intensity: 0, distance: 0 };
     const l = lightPool[lightCount++];
     light.getWorldPosition(l.position);
-    l.color = light.color; l.intensity = light.intensity; l.distance = light.distance;
+    // the body light: its own strength and reach, the engine power from the scene light
+    l.color = light.color;
+    l.intensity = SHIP_BODY_LIGHT_INTENSITY * light.intensity / SHIP_LIGHT_INTENSITY;
+    l.distance = SHIP_BODY_LIGHT_RANGE;
   }
 }
 

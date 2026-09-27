@@ -349,8 +349,9 @@ Sun, the meteoroid, comets, the black hole) and since v2.12.0 the sky
    frame time, draw calls and triangles live.
 10. **Ship glow lights** (v2.11.1, Setup → Graphics, off by default):
     `updateBodyLooks()` gathers the visible ship lights (`ships/swarm.js`:
-    behind the engines, intensity following the engine power,
-    `SHIP_LIGHT_INTENSITY` / `SHIP_LIGHT_RANGE`) once per frame and gives
+    behind the engines, intensity following the engine power; bodies get
+    `SHIP_BODY_LIGHT_INTENSITY` / `SHIP_BODY_LIGHT_RANGE`, stronger than the
+    scene light's own) once per frame and gives
     every body the nearest ones that reach it (at most 4) as
     `opts.lights`. The lab's **SHIP LIGHT** toggle circles the same kind
     of light around the body.

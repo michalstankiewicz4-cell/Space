@@ -1263,7 +1263,12 @@ then read just that range.
   config.js, intensity × eased engine power), and `world/bodyVisual.js`
   passes the nearest visible ship lights to each body (`opts.lights`,
   max 4, BodyKit's `pointLightAt()`). Toggling it still recompiles the
-  game's standard-material shaders once (a light count change).
+  game's standard-material shaders once (a light count change). **Since
+  v2.17.1 the two parts differ**: the scene PointLight is short and weak
+  (`SHIP_LIGHT_INTENSITY` 0.8, `SHIP_LIGHT_RANGE` 2.2 — after the units
+  shrank, the old 1.5 / 7 bathed the whole smaller station in teal), the
+  body light keeps `SHIP_BODY_LIGHT_INTENSITY` 1.5 / `SHIP_BODY_LIGHT_RANGE`
+  7 (scaled by the same eased engine power).
 - **Dev Tools -> Performance stats** (`ui/hud/perfStats.js`): FPS, frame
   time, worst frame, CPU time (update + render), draw calls and
   triangles summed over all of a frame's render passes (main view, ship

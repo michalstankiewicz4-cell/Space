@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.17.1]
+
+### Fixed
+- With ship glow lights on, the (now smaller) station glowed teal-green
+  all over: the ships' light only lights their own hull and nearest
+  neighbours now, while planets still light up under a biting swarm.
+
 ## [2.17.0]
 
 ### Changed
