@@ -4,6 +4,16 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.18.1]
+
+### Security
+- Internal database helper functions can no longer be called directly
+  from a browser. One of them could inflate another player's rate-limit
+  counters (e.g. stop their nickname from saving).
+- Other players' nicknames are checked against the same allowed
+  characters as your own (letters, digits, spaces) when they arrive;
+  anything else shows as the default name.
+
 ## [2.18.0]
 
 ### Added

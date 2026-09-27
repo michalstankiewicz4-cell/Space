@@ -814,3 +814,24 @@ begin
   delete from auth.users where id = v_actor;
 end;
 $$;
+
+-- ============================================================================
+-- Internal helpers are not a client API. Supabase grants EXECUTE on every
+-- new public function to anon/authenticated by default — so, e.g.,
+-- bump_activity_rate(p_actor, ...) (security definer) could be called
+-- straight from a browser with someone else's actor id, inflating their rate
+-- counters (blocking their nickname, say) or flooding activity_rate with
+-- random ids. Only the functions below the client actually calls stay
+-- public: bite_body, bite_solar_body, set_my_nick, delete_my_data,
+-- player_count, admin_activity_log (secret-gated), claim_world_init
+-- (one-way flag). Security definer callers still use these helpers — they
+-- run as the owner. Trigger functions can't be called directly anyway;
+-- revoked for tidiness.
+-- ============================================================================
+revoke execute on function bump_activity_rate(uuid, text, interval) from public, anon, authenticated;
+revoke execute on function purge_old_data() from public, anon, authenticated;
+revoke execute on function request_meta() from public, anon, authenticated;
+revoke execute on function shorten_ip(text) from public, anon, authenticated;
+revoke execute on function log_body_insert_if_bursty() from public, anon, authenticated;
+revoke execute on function log_body_delete_if_bursty() from public, anon, authenticated;
+revoke execute on function enforce_bodies_cap() from public, anon, authenticated;

@@ -20,6 +20,7 @@ then read just that range.
 - [Anonymous-auth spam](#anonymous-auth-spam)
 - [Public player counter](#public-player-counter)
 - [Privacy (GDPR)](#privacy-gdpr)
+- [Function EXECUTE grants](#function-execute-grants)
 
 ## No client-writable UPDATE policy
 
@@ -375,3 +376,34 @@ marketing.
   rows; the world tables untouched) — most of it test traffic.
 - **License**: the code is MIT (`LICENSE`, with the third-party
   components listed there).
+
+## Function EXECUTE grants
+
+Found in the v2.18.1 audit (2026-09-27). **Supabase grants EXECUTE on
+every new `public` function to `anon` and `authenticated` by default**,
+and PostgREST exposes each one as `/rest/v1/rpc/<name>`. So internal
+helpers were a client API too. The real hole: `bump_activity_rate(p_actor,
+p_action, p_window)` is `security definer` and takes the actor as a
+parameter, so a browser could call it **with someone else's actor id**.
+That would inflate their rate counters (e.g. push them over the
+`set_nick` limit so their nickname stops saving) or flood `activity_rate`
+with random ids. Pre-existing since the rate limits were added; no sign
+of use.
+
+**Fix**: the end of `supabase/schema.sql` revokes EXECUTE from `public`,
+`anon` and `authenticated` on every internal function:
+`bump_activity_rate`, `purge_old_data`, `request_meta`, `shorten_ip` and
+the trigger functions `log_body_insert_if_bursty`,
+`log_body_delete_if_bursty` and `enforce_bodies_cap`. Security-definer
+callers (`set_my_nick`, `bite_body`, …) still reach them, because inside a
+definer function the check runs as the owner. Verified live: a direct
+`rpc("bump_activity_rate")` / `rpc("purge_old_data")` now returns 42501,
+and `set_my_nick`, `bite_solar_body`, comet insert/delete and
+`delete_my_data` still work.
+
+**Rule for new functions**: a helper that isn't meant to be called from
+the browser gets its own `revoke execute ... from public, anon,
+authenticated` line in that block. A client-callable one takes its actor
+from `auth.uid()`, never from a parameter. Check with
+`has_function_privilege('anon', oid, 'EXECUTE')` over `pg_proc` in the
+`public` schema.

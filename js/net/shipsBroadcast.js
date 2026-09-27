@@ -1,7 +1,7 @@
 import { ctx } from "../core/context.js";
 import { disposeMesh } from "../core/utils.js";
 import { NET_SHIP_BROADCAST_MS, NET_REMOTE_PLAYER_TIMEOUT_MS, NET_GHOST_LERP_SPEED, NET_MAX_REMOTE_SHIPS, NET_MAX_REMOTE_PLAYERS, NET_MAX_NICK_LENGTH, DRONE_PRINT_MAX_LEN } from "../config.js";
-import { clientId, myIdentity } from "./identity.js";
+import { clientId, myIdentity, isAcceptableNick } from "./identity.js";
 import { state } from "../core/gameState.js";
 import { updatePlayersHud } from "../ui/hud/topBar.js";
 import { roomChannel } from "./connect.js";
@@ -173,12 +173,13 @@ export function handleRemoteShips(payload){
   }
   rp.lastSeen = Date.now();
   if(typeof payload.nick === "string" && payload.nick.trim()){
-    // Own-nick confirmation already blocks profanity (see net/identity.js),
-    // but that's a courtesy, not a security boundary — a modified client
-    // can broadcast anything straight over the WebSocket. Re-checking here
-    // means everyone else still sees a clean fallback name regardless.
+    // Own-nick confirmation already enforces the charset and blocks
+    // profanity (see net/identity.js), but that's a courtesy, not a security
+    // boundary — a modified client can broadcast anything straight over the
+    // WebSocket. Re-checking the same rule here means everyone else still
+    // sees a clean fallback name regardless.
     const candidate = payload.nick.trim().slice(0, NET_MAX_NICK_LENGTH);
-    rp.nick = containsProfanity(candidate) ? t("players.defaultName") : candidate;
+    rp.nick = isAcceptableNick(candidate) ? candidate : t("players.defaultName");
   }
   rp.points = Number.isFinite(Number(payload.points)) ? Number(payload.points) : rp.points;
   rp.eaten = Number.isFinite(Number(payload.eaten)) ? Number(payload.eaten) : rp.eaten;

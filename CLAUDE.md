@@ -288,6 +288,11 @@ post-mortems and live-verification detail behind each:
   anon user on every page load (this was a real bug, fixed).
 - **`player_count()`** (start screen counter) is the only client read
   path into `actor_nicks` and returns just a number — keep it that way.
+- **Every new DB function is callable from the browser by default**
+  (Supabase grants EXECUTE to anon/authenticated). Internal helpers get a
+  `revoke execute` line at the end of `schema.sql`; client-callable ones
+  take the actor from `auth.uid()`, never a parameter (v2.18.1, see
+  docs/security.md "Function EXECUTE grants").
 - **Privacy (GDPR, v2.18.0)**: `privacy.html` is the policy — keep it in
   sync with what's stored. Only a shortened IP is logged (`shorten_ip()`),
   `purge_old_data()` (run from `set_my_nick()`) keeps logs 30 days and

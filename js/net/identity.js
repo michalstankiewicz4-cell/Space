@@ -28,9 +28,15 @@ export function hasConfirmedNick(){
   return !!readStorage("roj-nick");
 }
 
+// One rule for our own nick and for every nick arriving from other players
+// (net/shipsBroadcast.js): allowed characters, no profanity.
+export function isAcceptableNick(nick){
+  return !!nick && NICK_PATTERN.test(nick) && !containsProfanity(nick);
+}
+
 export function confirmNick(nick){
   const trimmed = (nick||"").trim().slice(0, NET_MAX_NICK_LENGTH);
-  if(!trimmed || !NICK_PATTERN.test(trimmed) || containsProfanity(trimmed)) return null;
+  if(!isAcceptableNick(trimmed)) return null;
   myIdentity.nick = trimmed;
   writeStorage("roj-nick", trimmed);
   return trimmed;
