@@ -141,6 +141,18 @@ runs "free" and instantly every frame.
   `move()`/`wait()` wouldn't feel very different either way, since those
   were already paced by real-world speed constants.
 
+### Story hook (the user's idea, 2026-09-27)
+
+The in-world reason computers are slow here: **the black hole distorts
+time across the system** — in the story it's the wreck of something
+built, not a natural one, so "its field is strange" carries the physics
+(gravity alone from a small black hole at these distances would do next
+to nothing). That makes the CPU budget a lore feature, not an arbitrary
+anti-spam cap. Possible mechanic: the per-frame budget shrinks the closer
+the drone is to the black hole (`world/solarSystem.js` already knows its
+position), and the CPU upgrade reads as a time-correction module rebuilt
+on the station. Full story notes are in the local, untracked `FABULA.md`.
+
 ### Open questions
 
 - Does this apply only to the drone, or also to whatever "hacking" scripts
