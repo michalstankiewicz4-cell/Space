@@ -876,7 +876,14 @@ that ship view — "the drone too").
   selection ring is hidden for that render pass (it cut across the view).
   PIP label "COCKPIT".
 - **Trajectories** (`program/simulate.js`, drawn by
-  `scene/unitTrajectory.js`, only while `unitInView()`): cyan = as things
+  `scene/trajectories.js`) — **one rule (the user's): the object the
+  camera is on (the "focus" target: a unit via VIEW, a body via the
+  minimap) plus every selected object** (capped at 12: a big group shows
+  its first ships). A fixed body (planet, meteoroid, black hole) gets its
+  way along the orbit over the same 120 s (closed-form `bodyPosAt`); the
+  Sun and the station don't move; a comet already draws its full path.
+  Lines come from a reused pool, two shared materials (one per color —
+  `colorManagement.js` converts each once). For a unit: cyan = as things
   stand (`predictCurrentPath`: idle drift + station pull, or an order's
   flight), violet = if its program started now (`predictProgramPath`:
   the real interpreter on a copy of the unit, `unitMotion` for motion,

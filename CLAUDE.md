@@ -131,8 +131,10 @@ the full detail behind each of these.
   there; every mode change glides (~1 s), a lost target falls back to
   "system". The black hole is selectable too (world + minimap, own info
   panel) but never a course target. The unit panel's VIEW puts the focus
-  camera on a ship/the drone (`focusCameraOnUnit`), with its trajectory
-  lines (`scene/unitTrajectory.js`) — only in that view.
+  camera on a ship/the drone (`focusCameraOnUnit`). Trajectory lines
+  (`scene/trajectories.js`) show for the object in view + everything
+  selected (user's rule): units' predicted/program paths, bodies' orbit
+  arcs.
 - **The world is a fixed 9-orbit solar system** (`world/solarSystem.js`),
   not a random pool — Sun + 9 hand-placed orbit slots (2 volcanic, 2
   neutral, 2 ice, 1 meteoroid, 1 permanent black hole, orbit 4 = the

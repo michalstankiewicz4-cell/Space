@@ -44,7 +44,7 @@ import { initInfoThumb, renderInfoThumb } from "./scene/infoThumb.js";
 import { updateLightMarkers } from "./scene/lightMarkers.js";
 import { updateDistanceLines } from "./scene/planetDistanceLines.js";
 import { updateLightsToggle } from "./scene/lightsToggle.js";
-import { updateUnitTrajectory } from "./scene/unitTrajectory.js";
+import { updateTrajectories } from "./scene/trajectories.js";
 
 load();
 
@@ -141,7 +141,7 @@ function tick(){
   updateDrone(dt);
   updateDroneWreckage(dt);
   updateDronePrintFx(dt);
-  updateUnitTrajectory(dt);     // trajectory lines of the unit in view (VIEW on a ship/the drone)
+  updateTrajectories(dt);       // trajectory lines: the object in view + everything selected
   updateLightMarkers();
   updateDistanceLines();
   updateLightsToggle();

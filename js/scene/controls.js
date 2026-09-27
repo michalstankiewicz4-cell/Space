@@ -126,7 +126,7 @@ export function focusCameraOn(body){
 // "focus" on one of the player's own units (the unit panel's VIEW button):
 // the same orbit-and-follow camera, framed for something ship-sized. One
 // stable target object per unit, so "is this unit in view" is a plain
-// comparison (isUnitInView(), scene/unitTrajectory.js).
+// comparison (unitInView(); the VIEW button's lit state).
 const unitTargets = new WeakMap();
 export function focusCameraOnUnit(unit){
   let tgt = unitTargets.get(unit);

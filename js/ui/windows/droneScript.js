@@ -2,7 +2,7 @@ import { ctx } from "../../core/context.js";
 import { runUnitProgram, stopUnitProgram } from "../../program/runner.js";
 import { getUnitScript, setUnitScript, getUnitMode, setUnitMode, unitBlocksKey, activeProgramSource } from "../../program/unitPrograms.js";
 import { useProject } from "../../blocks/blockProject.js";
-import { planUnitRoute } from "../../scene/unitTrajectory.js";
+import { planUnitRoute } from "../../scene/trajectories.js";
 import { isDronePanelOpen, closeDronePanel, updateUnitPanel, getProgramUnit } from "../hud/unitPanel.js";
 import { discover } from "../../core/discovery.js";
 import { scriptFeatures } from "../../drone/scriptFeatures.js";
@@ -98,7 +98,7 @@ function switchMode(mode){
 
 // Runs the unit's program of its current mode — the text script as typed,
 // or the block project compiled to the same language — after fixing the
-// route it will fly (scene/unitTrajectory.js). Also fills in the Wiki:
+// route it will fly (scene/trajectories.js). Also fills in the Wiki:
 // every command the program uses counts as discovered once the program
 // actually starts (not on a parse error).
 function runActive(u){

@@ -11,7 +11,7 @@ import { EAT_ORBIT_GAP, DRONE_MOVE_SPEED, DRONE_TURN_SPEED, DRONE_FUEL_PER_MOVE_
   DRONE_ATTACK_COOLDOWN_S } from "../config.js";
 
 // Trajectory preview for the drone and swarm ships (drawn by
-// scene/unitTrajectory.js) — the game's counterpart of the prototype's
+// scene/trajectories.js) — the game's counterpart of the prototype's
 // orbit line and "orbit + program" line (test.html's predictTrajectory /
 // predictTrajectoryWithProgram). Both step a COPY of the unit forward in
 // time with the game's own rules, never touching the real one:
