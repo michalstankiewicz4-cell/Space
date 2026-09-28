@@ -30,6 +30,7 @@ then read just that range.
 - [Space station](#space-station)
 - [UI kit (start screen and setup modal)](#ui-kit-start-screen-and-setup-modal)
 - [Skin lab](#skin-lab)
+- [Research trees](#research-trees)
 - [In-game HUD](#in-game-hud)
 - [Load order and first paint](#load-order-and-first-paint)
 - [Rendering and ShipKit models](#rendering-and-shipkit-models)
@@ -1112,6 +1113,40 @@ game, skins by race vs. by the player) is in
 ` inside the string — a real line break
   there is a syntax error that silently leaves a non-English start panel
   blank (it happened once).
+
+## Research trees
+
+v2.20.0, from the user's concept art (`UpgradeTree.png`, an AI image kept
+untracked in the repo root: a circuit-board tree with round badge nodes).
+The Research window (`#techModal`, BADANIA / the station's Research
+button) shows one tree at a time, ◀ ▶ to switch.
+
+- **Shape = data** (`ui/windows/techTreeData.js#TECH_TREES`): nested
+  nodes `{ id, kind: root|hub|upgrade|soon, upgrade?, icon, children }`,
+  no coordinates — to grow a tree, add a node (a branch point is just a
+  node with children, of any kind). Names/descriptions in i18n
+  `upgrades.tree.<id>` / `<id>Desc` (an upgrade node uses
+  `upgrades.<key>` for its name). Working upgrades point at
+  `config.js#TREE` (cost, levels, effect unchanged).
+- **Layout** (`ui/windows/techTree.js#layout`): leaves spread evenly over
+  a fan (`FAN`, 170°→10°) in depth-first order, every other node at the
+  mean angle of its children, one radius per depth (`RING`), the root at
+  `ROOT`. Branches are PCB-routed (`trace()`: straight along the longer
+  axis, then 45°).
+- **Drawing**: one SVG rebuilt by `refreshResearch()` (after every
+  purchase/reset/language change): seeded stars, hex-grid corners, a
+  planet horizon with an atmosphere glow, a trunk of five traces with
+  roots, copper traces with a teal core and `stroke-dashoffset` pulses on
+  live ones, nodes with a gold (steel when planned) metal rim, rivets,
+  a level ring, a cost pill; states `affordable` (pulsing gold halo),
+  `poor`, `owned`, `maxed`, `soon` (locked). Tooltip is HTML over the
+  SVG. Styles: `css/ui/windows/research.css`.
+- **Buying/reset** stay in `ui/windows/research.js` (`buy()`,
+  `resetUpgrades()`), the tree calls back into it.
+- **Background**: procedural for now; an AI-generated backdrop was
+  offered (a prompt for the user to run) — if one is added, it goes under
+  the SVG's stars layer and needs the blog-style "AI image" rule only for
+  the devlog, not the game.
 
 ## In-game HUD
 

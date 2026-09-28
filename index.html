@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.19.0">
+<link rel="stylesheet" href="css/style.css?v=2.20.0">
 </head>
 <body>
 
@@ -507,7 +507,20 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
     <div class="mat blueV uiWinSide"></div>
     <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="techModalTitle">Tech Tree</h2><button type="button" class="mat red closePill" id="techCloseBtn" aria-label="Close">✕</button></header>
     <div class="hdLine"></div>
-    <div class="uiWinBody"><div id="dock"></div></div>
+    <!-- The upgrade trees (ui/windows/techTree.js; their shape is
+         techTreeData.js): ◀ ▶ switch trees, hover a node for its details,
+         click an upgrade to buy it. -->
+    <div class="uiWinBody" id="techBody">
+      <div id="ttBar">
+        <button type="button" class="ttArrow" id="ttPrev" aria-label="Previous tree">◀</button>
+        <div id="ttTitle"></div>
+        <span id="ttPage"></span>
+        <button type="button" class="ttArrow" id="ttNext" aria-label="Next tree">▶</button>
+        <span id="ttPoints"></span>
+        <button type="button" class="oBtn" id="ttReset"></button>
+      </div>
+      <div id="ttWrap"><svg id="ttSvg" viewBox="0 0 1100 640" preserveAspectRatio="xMidYMid meet"></svg><div id="ttTip" class="hidden"></div></div>
+    </div>
   </section>
 </div>
 
@@ -665,7 +678,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.19.0"></script>
+<script type="module" src="js/main.js?v=2.20.0"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

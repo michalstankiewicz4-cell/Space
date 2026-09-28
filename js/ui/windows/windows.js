@@ -1,7 +1,7 @@
 import { renderPlayersList } from "./players.js";
 import { initFleet } from "./fleet.js";
 import { initDroneScript, refreshDroneScript } from "./droneScript.js";
-import { refreshResearch } from "./research.js";
+import { refreshResearch, initResearch } from "./research.js";
 import { initWiki } from "./wiki.js";
 import { onLangChange } from "../../i18n.js";
 
@@ -44,6 +44,7 @@ export function initWindows(){
   initFleet();
   initDroneScript();
   initWiki();
+  initResearch();
   refreshResearch();
   onLangChange(refreshResearch);
 }

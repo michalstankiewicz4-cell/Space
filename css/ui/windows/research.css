@@ -1,24 +1,82 @@
-/* Research window: the upgrade tree (ui/windows/research.js). */
-#techModalBox{ width:660px; }
-#dock{ display:flex; flex-wrap:wrap; gap:10px; padding:2px; }
-.node{
-  width:140px; padding:10px 12px 11px; cursor:pointer; user-select:none;
-  border:1.5px solid #1d36a0; border-radius:8px;
-  background:linear-gradient(180deg,#040a26,#01030f);
-  transition:border-color .15s, box-shadow .15s, transform .12s;
-}
-.node:hover{ border-color:#f5bd5c; box-shadow:0 0 8px rgb(245 189 92 / .45); transform:translateY(-2px); }
-.node:active{ transform:none; }
-.node.disabled{ opacity:.45; cursor:not-allowed; }
-.node.disabled:hover{ border-color:#1d36a0; box-shadow:none; transform:none; }
-.node .icon{ font-size:20px; line-height:1; }
-.node .name{ font-family:var(--uiFontLabel); font-size:15px; letter-spacing:.3px; margin:7px 0 1px; color:#fff; }
-.node .lvl{ font-size:13px; color:var(--uiText2); }
-.node .cost{ font-family:var(--uiFontLabel); font-size:15px; margin-top:6px; color:#ffd98f; }
-.node.disabled .cost{ color:#7f8fd6; }
-.node .bar{ height:6px; margin-top:7px; background:#0b1a5c; border-radius:3px; overflow:hidden; }
-.node .bar i{ position:static; display:block; height:100%; border-radius:3px;
-  background:linear-gradient(180deg,#ffda92,#f8bb56 55%,#d38b37); }
-.node.node-reset{ border-color:#a83a48; }
-.node.node-reset:hover{ border-color:#f08995; box-shadow:0 0 8px rgb(224 75 80 / .5); }
-.node.node-reset .name, .node.node-reset .icon{ color:#ff8a8d; }
+/* Research window: the upgrade trees (ui/windows/techTree.js, shape in
+   techTreeData.js) — one SVG per tree: a planet's horizon, a trunk of
+   circuit traces, PCB-routed branches with light pulses, metal-rimmed
+   round nodes. Colours: the UI kit's gold, blue and teal. */
+#techModalBox{ width:1180px; }
+#techBody{ display:flex; flex-direction:column; gap:8px; overflow:hidden; }
+
+#ttBar{ display:flex; align-items:center; gap:12px; flex:none; height:34px; }
+#ttTitle{ font-family:var(--uiFontHead); font-size:24px; letter-spacing:1.5px; color:#ffd98f; min-width:230px; text-align:center;
+  text-shadow:0 0 10px rgb(248 187 86 / .35); }
+#ttPage{ font-family:var(--uiFontLabel); font-size:14px; color:var(--uiText2); }
+.ttArrow{ width:38px; height:30px; border-radius:7px; border:1.5px solid #3c55d8; background:linear-gradient(180deg,#0a1440,#02061a);
+  color:#c7d0ff; font-size:14px; cursor:pointer; transition:border-color .15s, box-shadow .15s, color .15s; }
+.ttArrow:hover{ border-color:#f5bd5c; color:#ffe2a8; box-shadow:0 0 10px rgb(245 189 92 / .45); }
+#ttPoints{ margin-left:auto; font-family:var(--uiFontLabel); font-size:17px; color:#ffd98f; }
+#ttReset{ height:30px; padding:0 12px; font-size:13.5px; border-color:#a83a48; color:#ff9ea2; }
+#ttReset:hover{ border-color:#f08995; box-shadow:0 0 8px rgb(224 75 80 / .5); }
+
+#ttWrap{ position:relative; width:1110px; height:646px; border-radius:10px; overflow:hidden;
+  border:1.5px solid #1c3bb4; box-shadow:inset 0 0 30px rgb(0 0 0 / .6); }
+#ttSvg{ display:block; width:100%; height:100%; font-family:var(--uiFontLabel); user-select:none; }
+
+/* twinkling stars */
+#ttSvg .tw{ animation:ttTwinkle 3.5s ease-in-out infinite; }
+@keyframes ttTwinkle{ 50%{ opacity:.1; } }
+
+/* traces: a copper base with a thin lit core, pulses on the live ones */
+#ttSvg .tr-base{ fill:none; stroke:url(#ttCopper); stroke-width:6; stroke-linecap:round; stroke-linejoin:round; opacity:.85; }
+#ttSvg .tr-base.root{ stroke-width:5; opacity:.6; }
+#ttSvg .tr-core{ fill:none; stroke:#4fe3c6; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round; opacity:.55; }
+#ttSvg .tr-base.dim{ stroke:#39406a; opacity:.7; }
+#ttSvg .tr-core.dim{ stroke:#6d79b5; opacity:.35; stroke-dasharray:3 5; }
+#ttSvg .pulse{ fill:none; stroke:#bff8ff; stroke-width:3; stroke-linecap:round; stroke-dasharray:10 150;
+  filter:drop-shadow(0 0 4px #4fe3c6); animation:ttPulse 2.6s linear infinite; }
+#ttSvg .pulse.up{ stroke-dasharray:14 70; animation-duration:1.6s; }
+@keyframes ttPulse{ to{ stroke-dashoffset:-160; } }
+
+/* nodes */
+#ttSvg .tt-node{ cursor:default; outline:none; }
+#ttSvg .tt-node .halo{ fill:none; stroke:none; }
+#ttSvg .tt-node .inner{ fill:none; stroke:#4fe3c6; stroke-width:1.5; opacity:.55; }
+#ttSvg .tt-node .rivet{ fill:#ffe7b0; opacity:.85; }
+#ttSvg .tt-node .ic{ fill:none; stroke:#9ff3e3; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; filter:drop-shadow(0 0 3px rgb(79 227 198 / .6)); }
+#ttSvg .tt-node .ic .f{ fill:#9ff3e3; stroke:none; }
+#ttSvg .tt-node .lbl-in{ fill:#eef1ff; font-size:13.5px; text-anchor:middle; letter-spacing:.3px; }
+#ttSvg .tt-node .lbl-in.root{ font-family:var(--uiFontHead); font-size:17px; letter-spacing:2px; fill:#ffd98f; }
+#ttSvg .tt-node .lbl{ fill:#dfe5ff; font-size:13px; text-anchor:middle; paint-order:stroke; stroke:#02030c; stroke-width:3px; }
+#ttSvg .tt-node .lvl{ fill:#c7d0ff; font-size:11.5px; text-anchor:middle; }
+#ttSvg .tt-node .cost-bg{ fill:#0a1440; stroke:#3c55d8; stroke-width:1; }
+#ttSvg .tt-node .cost{ fill:#ffd98f; font-size:11.5px; text-anchor:middle; }
+#ttSvg .tt-node .ring-bg{ fill:none; stroke:#1a2560; stroke-width:4; }
+#ttSvg .tt-node .ring{ fill:none; stroke:#f8bb56; stroke-width:4; stroke-linecap:round; filter:drop-shadow(0 0 3px rgb(248 187 86 / .7)); }
+#ttSvg .tt-node .spin{ fill:none; stroke:#f8bb56; stroke-width:1.5; stroke-dasharray:6 10; opacity:.7;
+  transform-box:fill-box; transform-origin:center; animation:ttSpin 18s linear infinite; }
+@keyframes ttSpin{ to{ transform:rotate(360deg); } }
+
+/* states */
+#ttSvg .tt-node.affordable{ cursor:pointer; }
+#ttSvg .tt-node.affordable .halo{ stroke:#f8bb56; stroke-width:2; opacity:.0; animation:ttReady 1.8s ease-in-out infinite; }
+@keyframes ttReady{ 50%{ opacity:.8; } }
+#ttSvg .tt-node.affordable:hover .rim, #ttSvg .tt-node.affordable:focus .rim{ filter:drop-shadow(0 0 10px rgb(248 187 86 / .8)); }
+#ttSvg .tt-node.poor .rim, #ttSvg .tt-node.poor .ic{ opacity:.6; }
+#ttSvg .tt-node.poor .cost{ fill:#7f8fd6; }
+#ttSvg .tt-node.maxed .inner{ stroke:#f8bb56; opacity:.9; }
+#ttSvg .tt-node.maxed .ic{ stroke:#ffe2a8; filter:drop-shadow(0 0 4px rgb(248 187 86 / .8)); }
+#ttSvg .tt-node.soon .ic{ stroke:#8d98c9; filter:none; }
+#ttSvg .tt-node.soon .ic .f{ fill:#8d98c9; }
+#ttSvg .tt-node.soon .inner{ stroke:#6d79b5; opacity:.35; }
+#ttSvg .tt-node.soon .rivet{ fill:#a8b3d8; opacity:.5; }
+#ttSvg .tt-node.soon .lbl, #ttSvg .tt-node.soon .lbl-in{ fill:#9aa5d6; }
+#ttSvg .tt-node.hub .rim{ filter:drop-shadow(0 0 8px rgb(79 227 198 / .35)); }
+#ttSvg .tt-node.root .rim{ filter:drop-shadow(0 0 14px rgb(248 187 86 / .45)); }
+
+/* tooltip */
+#ttTip{ position:absolute; z-index:2; width:240px; transform:translate(-50%, calc(-100% - 52px)); pointer-events:none;
+  padding:9px 12px 10px; border-radius:9px; border:1.5px solid #3c55d8; background:rgb(2 6 26 / .94);
+  box-shadow:0 6px 20px rgb(0 0 0 / .5), 0 0 10px rgb(40 80 255 / .3); font-size:13.5px; line-height:1.35; }
+#ttTip b{ font-family:var(--uiFontLabel); font-weight:500; font-size:16px; color:#fff; }
+#ttTip p{ margin:4px 0 0; color:#c7d0ff; }
+#ttTip p.k{ color:var(--uiText2); }
+#ttTip p.c{ color:#ffd98f; }
+#ttTip p.s{ color:#9aa5d6; font-style:italic; }

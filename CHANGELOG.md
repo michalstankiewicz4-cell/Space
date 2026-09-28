@@ -4,6 +4,17 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.20.0]
+
+### Changed
+- **Research is a real tree now.** The upgrades grow out of a planet's
+  horizon as a circuit tree: round metal-rimmed nodes on glowing traces,
+  a ring showing each upgrade's level, a golden pulse on the ones you can
+  afford, details on hover. Click an upgrade to buy it, as before.
+- ◀ ▶ switch between trees: the swarm's upgrades (all as before) and a
+  first look at the **Programming** tree — CPU speed, memory, link
+  bandwidth, threads and their branches — coming in a future update.
+
 ## [2.19.0]
 
 ### Added

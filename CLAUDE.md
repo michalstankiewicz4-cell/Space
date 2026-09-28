@@ -256,6 +256,11 @@ the full detail behind each of these.
   data (a `bodies` entry / a new parameter), never a copied shader**;
   classification lives once in `GLSL_PLANET` (rules in `docs/bodies.md`
   "Building blocks and rules").
+- **Research trees** (v2.20.0): the Research window draws trees from
+  data — `ui/windows/techTreeData.js` (nodes, branch points, no
+  coordinates; ◀ ▶ switch trees), laid out and drawn as SVG by
+  `ui/windows/techTree.js`; buying stays in `research.js`. Grow a tree by
+  adding nodes there (+ i18n `upgrades.tree.<id>`).
 - **Wiki** (`ui/windows/wiki*.js`): read-only, filled in by play via
   `core/discovery.js` (`"tab:key"` ids, localStorage). Texts in i18n
   `wiki.entries.<key>` — **the key after the colon must be unique across
