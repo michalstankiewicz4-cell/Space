@@ -1,6 +1,6 @@
 # Swarm Protocol
 
-3D space game built with Three.js. You're an AI waking up on a ruined station after the humans are gone, with a swarm of ships and a whole solar system to explore — and a story to piece back together from recovered memory fragments. For now the swarm eats planets, suns, comets and meteoroids for points (select ships, then click a target to send them — they never move on their own); avoid black holes. A programmable drone (text scripts or blocks) and an in-game Wiki you fill in by playing round it out.
+3D space game built with Three.js. You're an AI waking up on a ruined station after the humans are gone, with a swarm of ships and a whole solar system to explore — and a story to piece back together from recovered memory fragments. For now the swarm eats planets, suns, comets and meteoroids for points (select ships, then click a target to send them — they never move on their own), and every ship as well as a drone can run a program (text scripts or blocks) with its flight previewed as a trajectory; avoid black holes. Upgrades grow on circuit-board trees in the Research window, and an in-game Wiki you fill in by playing rounds it out.
 
 Play: https://michalstankiewicz4-cell.github.io/Space/
 
@@ -45,7 +45,8 @@ js/
                      state (discovery.js) + small utilities
   scene/             camera, renderer, the 3D view's rect inside the HUD + miniature render passes
                      (viewRect.js, unitThumb.js, infoThumb.js), mouse controls/selection, hover tooltip,
-                     ship cam (picture-in-picture cockpit view),
+                     ship cam (picture-in-picture cockpit view, ships and the drone),
+                     trajectory lines of the object in view + the selected ones (trajectories.js),
                      the sky backdrop (skybox.js, BodyKit's SKY: nebulae, stars, pulsars),
                      the 9 fixed orbit lines + each comet's own trajectory line (orbitLines.js)
   world/             celestial body logic — the 9-orbit solar system's fixed bodies
@@ -59,12 +60,16 @@ js/
                      hand-placed body in the solar system (see docs/architecture.md)
   content.js         aggregates js/bodies/ into one place the game reads from
   fx/                particles, debris, shockwaves, dust — planet-breakup effects
-  ships/             player's ship swarm (movement, eating, bite-beam)
+  ships/             player's ship swarm (movement, eating, bite-beam; shipProgram.js: a ship
+                     flown by its program)
   drone/             the programmable drone — its own DSL (dsl.js), a generator-based
-                     interpreter (interpreter.js), the entity/script driver (drone.js),
-                     which editor's program runs (droneMode.js), which commands a
-                     program uses, for the Wiki (scriptFeatures.js), and the print()
-                     gas+laser effect (dronePrintFx.js) — see "Programmable drone" below
+                     interpreter (interpreter.js), the entity and its program builtins
+                     (drone.js), which commands a program uses, for the Wiki
+                     (scriptFeatures.js), and the print() gas+laser effect (dronePrintFx.js)
+                     — see "Programmable units" below
+  program/           running programs on any unit (runner.js), per-unit programs and mode
+                     (unitPrograms.js), shared builtins (unitMotion/unitBite/unitPrint.js),
+                     and the trajectory preview (simulate.js: the real interpreter on a copy)
   blocks/            the drone's block programs: block catalog (blockSpecs.js), the
                      project with its virtual files (blockProject.js), the compiler to
                      the drone DSL (blockCompile.js) and the example programs
@@ -172,11 +177,13 @@ Publishing goes through the Blogger API (OAuth credentials in the
 gitignored `pass` file, same pattern as the Supabase Management API
 token) rather than the Blogger web UI.
 
-## Programmable drone
+## Programmable units
 
-Every player also has one drone (a distinct gold octahedron, spawned next
-to the player's own station, offset above the ship swarm's own formation
-there) that never moves on its own — select it (it shows up in the HUD's
+Every player also has one drone (ShipKit's DR-01 SCRIBE, spawned next
+to the player's own station, just above the ship swarm's own formation
+there) that never moves on its own — and since v2.19 every swarm ship can
+run a program the same way (while it runs, the program flies the ship; a
+click order takes it back). Select one (it shows up in the HUD's
 SELECTED UNIT panel) and press SCRIPT to write a small program for it (`if`/`while`/`repeat`/variables/
 your own functions with `def`/`return`, plus `move()`, `turn()`, `wait()`, `attack()` — at most 4 hits a
 second — `fuel()`, `nearPlanet()`,
@@ -184,7 +191,9 @@ second — `fuel()`, `nearPlanet()`,
 examples). `print()` doesn't just log the text — it puffs gas from the
 drone's nose and writes the message into it with a laser, visible to
 other players too, not just you. The panel's START/STOP buttons
-restart or stop the last saved script without reopening the editor. It's not JavaScript: `js/drone/dsl.js`
+restart or stop the last saved script without reopening the editor.
+Ships use the same commands (they have no fuel: `fuel()` reports a full
+100). It's not JavaScript: `js/drone/dsl.js`
 parses this tiny language into an AST, and `js/drone/interpreter.js` walks
 it as a generator, so a script's `move()`/`wait()` calls can pause
 execution for real time without blocking the game loop or the browser tab.
@@ -195,35 +204,37 @@ Engine, Logic, Variables, My blocks, Examples; your own variables,
 procedures and functions; programs split into virtual files with color
 markers, the ★ main file being the one that runs). The blocks compile to
 the very same script language (`js/blocks/blockCompile.js`), so there's
-still exactly one interpreter. Both programs are kept — the switch only
-picks which one START runs.
+still exactly one interpreter. Both programs are kept, per unit — the
+switch only picks which one START runs.
 
 ## Space station
 
-Every player also has one static space station (a ring-and-hub structure,
-built entirely from primitive geometry — no model files) that
-spawns once and never moves. Select it (in the view or on the minimap)
+Every player also has one static space station (ShipKit's ST-04 HAVEN: a
+spinning habitat ring, a greenhouse dome, solar panels — a ruin at the
+start, as the story says) that spawns once and never moves. Select it (in the view or on the minimap)
 and the HUD's PLANET INFO panel shows a read-only overview (fleet size,
 evolution points, upgrade levels) with shortcuts into the Research and
 Fleet windows — no separate resource
 economy, just a window onto the same points/upgrades everything else
 already uses. The ship swarm and drone both spawn arranged around it,
-inside a small zone where ambient gravity doesn't apply, so a fresh
-fleet doesn't immediately start drifting toward the Sun.
+inside a small protective field where ambient gravity doesn't apply, so
+a fresh fleet doesn't immediately start drifting toward the Sun. The
+field only shields — it doesn't pull anything back: a ship left idle
+outside it feels real gravity.
 
 ## Game UI
 
 The in-game HUD is laid out in a fixed style that scales with the window
 (the side columns stick to the edges, the middle stretches): a top bar
 with points / units / planets devoured / players online; a left menu
-(FLEET, PLANETS — the Wiki's planets tab, RESEARCH — upgrades, BUILD,
-DIPLOMACY — players online, WIKI, SETTINGS); the fleet list and the selected unit (a ship with a ship-cam
-toggle, a group, or the drone with START/STOP/SCRIPT) on the left; the 3D
-view with the camera switch, ship cam and Dev Tools in its corners and
-the command bar under it; planet info (a planet or your station), the
-event log (every in-game message) and a clickable minimap on the right.
-Some controls are placeholders for now (BUILD, the command bar's orders,
-a planet's Waypoint/Scan/Colonize). Details in docs/architecture.md's
+(FLEET, PLANETS — the Wiki's planets tab, RESEARCH — the upgrade trees, BUILD,
+DIPLOMACY — players online, WIKI, SETTINGS); the fleet list and the selected unit (a ship
+or the drone with icon buttons VIEW / START / STOP / SCRIPT and COCKPIT, or a group) on the
+left; the 3D view with the camera switch, ship cam and Dev Tools in its corners and
+the command bar under it; object info (a planet, the black hole, your or another
+player's station — each with a VIEW button), the event log (every in-game message) and a
+clickable minimap on the right. Some controls are placeholders for now (BUILD, the
+command bar's orders, a planet's Waypoint/Scan). Details in docs/architecture.md's
 "In-game HUD" section.
 
 The **Wiki** is a read-only encyclopedia filled in by playing: the Story
@@ -239,7 +250,10 @@ Top-center of the 3D view, a toggle switches between two fully mouse-
 controlled camera modes (drag to rotate, scroll to zoom either way):
 **Base** (the default) orbits the player's own station, framed so the
 Sun sits behind and a little above it; **System** orbits the Sun,
-showing the whole solar system at once.
+showing the whole solar system at once. A third mode, **focus**, orbits
+and follows one object: a minimap click on a body, or VIEW on a ship,
+the drone, a planet or the black hole. Trajectory lines show for the
+object in view and the selected ones (a single ship, not a group).
 
 ## Multiplayer / Supabase setup
 

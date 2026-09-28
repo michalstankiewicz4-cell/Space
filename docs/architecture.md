@@ -532,7 +532,8 @@ then read just that range.
   can broadcast anything straight over the WebSocket regardless of what
   its own UI would allow. `print()`'s gas+laser effect (see the drone
   bullets below) follows the same two-check shape: the courtesy check in
-  `drone.js`'s `triggerPrintFx()` logs *why* nothing showed up (this one
+  `program/unitPrint.js#unitPrint` (`drone.js#triggerPrintFx` before
+  v2.19.0) logs *why* nothing showed up (this one
   has a player right there to explain it to, unlike a nickname box), and
   `net/shipsBroadcast.js`'s `handleRemoteDronePrint()` re-checks on
   arrival and just silently drops it if flagged — same reasoning, same
@@ -599,7 +600,9 @@ then read just that range.
   - `dsl.js` (hand-rolled lexer + recursive-descent parser, not eval/
     Function — the DSL is intentionally not JavaScript) produces an AST;
     `interpreter.js` walks it as a **generator**, where every builtin call
-    is a `yield` and `drone.js`'s `driveGenerator()` decides whether to
+    is a `yield` and `driveGenerator()` (in `drone.js` until v2.19.0, now
+    `program/runner.js`, shared with the ships; the builtins themselves
+    are `drone.js#DRONE_API`) decides whether to
     resolve it instantly (`fuel()`, `attack()`, ...) or spread it over
     several frames by holding off on the next `.next()` call (`move()`/
     `turn()`/`wait()`, tracked in `drone.pending`).
@@ -629,7 +632,9 @@ then read just that range.
   - Fuel only refills by proximity-docking near a planet/sun (no passive
     regen) — see `DRONE_DOCK_GAP` (radius + gap since v2.17.0)/`DRONE_REFUEL_RATE` in config.js.
   - **The script text itself is persisted** (`localStorage["roj-drone-script"]`,
-    `drone.js#setDroneScript()`/`spawnDrone()`) — everything else about the
+    `drone.js#setDroneScript()`/`spawnDrone()` back then; since v2.19.0
+    `program/unitPrograms.js#getUnitScript/setUnitScript`, same key) —
+    everything else about the
     drone (fuel, position, running state) resets fresh every session like
     the rest of `ctx`, but losing a written script on every browser close
     would be a real loss of player work, unlike those. A separate key, not
@@ -648,8 +653,10 @@ then read just that range.
     `net/shipsBroadcast.js` sends its `[x,y,z,heading]` as its own `drone`
     field on the broadcast payload, separate from the `ships` array (this
     was missed when the drone shipped — other players simply never saw it
-    until fixed). A remote drone renders as a ghost octahedron
-    (`makeGhostDroneMesh`) tinted by owner color, tracked as
+    until fixed). A remote drone rendered as a ghost octahedron
+    (`makeGhostDroneMesh`) tinted by owner color — **superseded**: since
+    v2.8.0 it's ShipKit's DR-01 model, never tinted, with the owner's
+    diamond marker (v2.13.1; see "Rendering and ShipKit models") — tracked as
     `remotePlayers[id].droneMesh` — a single mesh, not an array like
     `.meshes` — since there's only ever one drone per player; disposed on
     both `payload.drone === null` and the same
@@ -716,7 +723,8 @@ then read just that range.
     plus `containsProfanity()` on the text — same defense-in-depth
     pattern as remote nicknames).
   - **`print()` has a `DRONE_PRINT_COOLDOWN_S` (1.5s) client-side cooldown
-    (`drone.lastPrintAt`, checked in `triggerPrintFx()`) — the only lever
+    (`drone.lastPrintAt`, checked in `triggerPrintFx()` — since v2.19.0
+    `program/unitPrint.js#unitPrint`, per unit) — the only lever
     against print-spam that exists, and a limited one.** Broadcast
     messages never touch the database at all, so there's nothing there to
     rate-limit against the way `bite_body`/`bodies` inserts are (1.9.2) —
@@ -780,9 +788,10 @@ then read just that range.
   `ui/windows/blockEditor.js` + `blockPalette.js`/`blockRender.js`/
   `blockDrag.js` = the window). **Blocks compile to the text DSL**
   (`blockCompile.js#compileProject`) and run through the same
-  `runDroneScript(drone, src)` — never add a second interpreter.
-  - **Two programs, one switch**: `drone/droneMode.js` ("script" |
-    "blocks", localStorage `roj-drone-mode`) picks which one START runs
+  `runUnitProgram(unit, src)` (`program/runner.js`; `runDroneScript` before v2.19.0) — never add a second interpreter.
+  - **Two programs, one switch** (since v2.19.0 per unit, in
+    `program/unitPrograms.js`; this was `drone/droneMode.js`, now gone)
+    ("script" | "blocks", localStorage `roj-drone-mode`) picks which one START runs
     and which window SCRIPT opens; `drone.script` (text, `roj-drone-script`)
     and the block project (`roj-drone-blocks`) are both always kept. The
     user explicitly asked that switching must never delete either.
@@ -1015,7 +1024,7 @@ that ship view — "the drone too").
     treatment in v2.0.8** (`drone/drone.js#spawnDrone()`,
     `world/solarGravity.js#updateSolarGravity()`) — the user's own
     framing, "it's kind of a ship too." Spawns at a fixed `station.pos +
-    (0, 6, 0)` offset rather than joining the ships' own golden-angle
+    (0, 3.5, 0)` offset (6 before the v2.16.0 scale step) rather than joining the ships' own golden-angle
     spiral there: the old reasoning for spawning it away from the swarm
     in the first place (picking the drone is checked *before* ships/
     planets on every click, see `scene/controls.js` — overlapping the
@@ -1026,7 +1035,9 @@ that ship view — "the drone too").
     both spawn near the station instead of near the origin — a fixed
     vertical offset keeps it clearly clear of the ships' own small
     `+-1.5` vertical spread at any fleet size, without needing its own
-    slot in that spiral. **Deliberately does NOT get
+    slot in that spiral. (Moot since v2.19.0 — there's no pull-back at
+    all any more, the field only shields; kept for the history.)
+    **Deliberately did NOT get
     `stationField.js`'s pull-back-if-wandered treatment, unlike ships** —
     a ship that's wandered off is always either idle (safe to nudge home)
     or actively eating something, in which case `updateShips()` overwrites
@@ -1214,8 +1225,8 @@ button) shows one tree at a time, ◀ ▶ to switch.
   always-visible FLEET LIST panel, same click behavior); Setup ->
   SETTINGS; camera Base/System toggle -> top-center of the viewport; Dev
   Tools -> wrench in the viewport's bottom-right; ship cam -> the
-  viewport's top-right, toggled by the fleet-list card or the CAM button
-  in SELECTED UNIT; drone panel -> SELECTED UNIT in drone mode
+  viewport's top-right, toggled by the fleet-list card or the COCKPIT
+  button in SELECTED UNIT (the CAM button until v2.19.0); drone panel -> SELECTED UNIT in drone mode
   (Start/Stop/Script buttons, `ui/windows/droneScript.js` keeps its old open/close
   API on top of `ui/hud/unitPanel.js`); station and planet panels -> the
   shared PLANET INFO slot (`ui/hud/infoPanel.js`, owner-tracked so a late

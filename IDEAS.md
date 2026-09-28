@@ -108,7 +108,9 @@ brute-force-y scripts without any server involvement.
 
 ### Where this hooks into the existing interpreter
 
-Today, `js/drone/drone.js`'s `driveGenerator()` resolves every *instant*
+Today, `js/program/runner.js`'s `driveGenerator()` (shared by the drone
+and every ship since v2.19.0; it lived in `js/drone/drone.js` before)
+resolves every *instant*
 builtin (`fuel()`, `attack()`, arithmetic, comparisons, the `while` loop's
 `__tick__` checkpoint, ...) synchronously, in a single JS call, up to
 `MAX_INSTANT_STEPS_PER_FRAME` (currently 2000) — that constant exists purely
@@ -320,10 +322,10 @@ ported into the game) or trade with other players.
 meteoroid, black hole) toward more astronomically real variety — moons
 orbiting planets, pulsars as an actual body type, maybe asteroid belts.
 
-- **Pulsars already exist visually** (`js/scene/pulsars.js`) but are purely
-  decorative background dressing — small sprites with a randomized
-  brightness pulse, not part of `ctx.planets`, not edible, not spawned
-  through the `CONTENT` system at all (see CLAUDE.md's "Pulsars" note).
+- **Pulsars already exist visually** — ~3 points in BodyKit's SKY
+  (`scene/skybox.js`; the old sprite `js/scene/pulsars.js` is gone) — but
+  are purely decorative background dressing, not part of `ctx.planets`,
+  not edible, not spawned through the `CONTENT` system at all.
   Turning them into a real gameplay body would mean moving them into the
   same data-driven pipeline as everything else in `js/bodies/*.js`, which
   they deliberately aren't today.

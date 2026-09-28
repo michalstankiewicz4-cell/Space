@@ -124,7 +124,7 @@ the full detail behind each of these.
 - **Ships only ever move on an explicit order** (`commandTo()` in
   `scene/controls.js` → `commandedTarget`) — no automatic nearest-planet
   fallback. Don't reintroduce one; it was removed deliberately.
-- **Camera has two modes** (top-center HUD toggle, `scene/controls.js#
+- **Camera modes: two on the toggle, plus "focus"** (top-center HUD toggle, `scene/controls.js#
   setCameraMode()`): "base" (default) orbits the player's own station,
   framed so the Sun sits behind and a bit above it; "system" orbits the
   Sun. Same spherical-orbit math either way (`camState.az/pol/radius`),
@@ -212,8 +212,9 @@ the full detail behind each of these.
   `.hidden`/`display:none` CSS trap, `pointerdown` vs `click`) in the doc.
   A visual **block editor** (`js/blocks/`, `ui/windows/block*.js`)
   compiles to that same DSL — one interpreter only. Text script and
-  block program are both kept; `drone/droneMode.js` only picks which one
-  runs (never delete either on a mode switch — explicit user call).
+  block program are both kept per unit; its mode (`program/unitPrograms.js`
+  #getUnitMode) only picks which one runs (never delete either on a mode
+  switch — explicit user call).
 - **New-style UI kit** (`css/ui/`): start screen, setup modal and the
   whole in-game HUD (v2.2.0, ported from a standalone mockup since
   deleted — the game itself is now the reference). `.uiStage` (fixed 1536x1024),
@@ -308,6 +309,9 @@ post-mortems and live-verification detail behind each:
   anon user on every page load (this was a real bug, fixed).
 - **`player_count()`** (start screen counter) is the only client read
   path into `actor_nicks` and returns just a number — keep it that way.
+  **Not deployed to the live DB yet (user's call)**: the counter shows
+  "—" and a 404 for it in the console is expected. Deploy only the
+  specific functions asked for, never the whole schema.sql.
 - **Every new DB function is callable from the browser by default**
   (Supabase grants EXECUTE to anon/authenticated). Internal helpers get a
   `revoke execute` line at the end of `schema.sql`; client-callable ones

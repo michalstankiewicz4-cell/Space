@@ -310,6 +310,12 @@ then read just that range.
 
 ## Public player counter
 
+**Not deployed to the live database yet — the user's call.** The function
+is in `supabase/schema.sql`, but deploys touch only specific functions
+(never the whole file), and this one waits for the user's go-ahead. Until
+then the start screen shows "—" for registered players and the browser
+console logs a 404 for `rpc/player_count` — expected, not a failure.
+
 - **`player_count()` is the one read path into `actor_nicks`, and it
   returns only a number** (v2.2.0, for the start screen's "registered
   players" counter). `actor_nicks` itself keeps RLS enabled with zero

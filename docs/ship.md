@@ -118,7 +118,8 @@ broken hanging panel from 0.2, a torn ring segment with debris from 0.3.
 
 The first ship meant for the game: a replacement for the drone's plain
 gold octahedron (`js/drone/drone.js#makeDroneMesh`), keeping its identity
-as a gold, faceted octahedral hull. It has not been moved into the game yet.
+as a gold, faceted octahedral hull. In the game since v2.8.0 (the drone's
+model, and other players' drones).
 
 | | |
 |---|---|
