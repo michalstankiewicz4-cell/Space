@@ -141,6 +141,15 @@ runs "free" and instantly every frame.
   `move()`/`wait()` wouldn't feel very different either way, since those
   were already paced by real-world speed constants.
 
+### In the Research window already (v2.20.0)
+
+The Research window's second tree, PROGRAMMING (`ui/windows/
+techTreeData.js`), shows this idea's upgrades as planned, locked nodes:
+CPU speed (→ overclock, cache), memory (→ deeper stack, compression),
+link bandwidth (→ relays, control range), threads (→ parallelism,
+synchronization). Making one real = giving the node `kind: "upgrade"` and
+an entry in `config.js#TREE`, plus what the upgrade does.
+
 ### Story hook (the user's idea, 2026-09-27)
 
 The in-world reason computers are slow here: **the black hole distorts

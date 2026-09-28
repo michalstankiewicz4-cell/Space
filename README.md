@@ -80,9 +80,10 @@ js/
     hud/             the in-game HUD, one module per panel (topBar, nav, fleetList, unitPanel,
                      infoPanel + planetPanel/stationPanel, eventLog, connectionStatus, minimap,
                      commandBar, devTools); hud.js is main.js's single entry point into it
-    windows/         the windows opened from the HUD (windows.js entry point + research, fleet,
-                     players, droneScript, wiki + wikiEntries/wikiArt, and the block
-                     editor: blockEditor + blockPalette/blockRender/blockDrag)
+    windows/         the windows opened from the HUD (windows.js entry point + research with
+                     the upgrade trees techTree/techTreeData, fleet, players, droneScript,
+                     wiki + wikiEntries/wikiArt, and the block editor: blockEditor +
+                     blockPalette/blockRender/blockDrag)
   net/               multiplayer: identity, "steward" election, world sync, ship broadcast,
                      Realtime reconnect handling
   main.js            entry point — wires the modules together and runs the game loop

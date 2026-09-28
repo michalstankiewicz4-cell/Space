@@ -1116,8 +1116,9 @@ game, skins by race vs. by the player) is in
 
 ## Research trees
 
-v2.20.0, from the user's concept art (`UpgradeTree.png`, an AI image kept
-untracked in the repo root: a circuit-board tree with round badge nodes).
+v2.20.0, from the user's concept art (`UpgradeTree.png`, an AI image of a
+circuit-board tree with round badge nodes and a "programming" branch —
+never committed, deleted by the user once the tree was built).
 The Research window (`#techModal`, BADANIA / the station's Research
 button) shows one tree at a time, ◀ ▶ to switch.
 
@@ -1180,9 +1181,9 @@ button) shows one tree at a time, ◀ ▶ to switch.
   `initHudShell()` (before the scene), `initHudWorld()` (after it) and
   `updateHud(dt)` (every frame; runs the ~0.1s/0.4s refresh timers).
   `js/ui/windows/` is the same for the windows (`windows.js#
-  initWindows/refreshWindows` + research, fleet, players, droneScript,
-  wiki + wikiEntries/wikiArt, blockEditor + blockPalette/blockRender/
-  blockDrag).
+  initWindows/refreshWindows` + research (+ techTree/techTreeData, the
+  upgrade trees), fleet, players, droneScript, wiki + wikiEntries/wikiArt,
+  blockEditor + blockPalette/blockRender/blockDrag).
   CSS mirrors it one file per component in `css/ui/hud/` and
   `css/ui/windows/`, each its own `<link>` in index.html's `<head>`, in
   cascade order (style.css last). `showToast()` lives in `ui/hud/eventLog.js` (it only feeds the
