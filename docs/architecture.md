@@ -1143,10 +1143,13 @@ button) shows one tree at a time, ◀ ▶ to switch.
   SVG. Styles: `css/ui/windows/research.css`.
 - **Buying/reset** stay in `ui/windows/research.js` (`buy()`,
   `resetUpgrades()`), the tree calls back into it.
-- **Background**: procedural for now; an AI-generated backdrop was
-  offered (a prompt for the user to run) — if one is added, it goes under
-  the SVG's stars layer and needs the blog-style "AI image" rule only for
-  the devlog, not the game.
+- **Background**: `css/ui/windows/researchBg.jpg` (1248×832), an
+  AI-generated picture the user made from a prompt we wrote (a planet's
+  horizon with circuit lines, a nebula, hexagon corners). `techTree.js#BG`
+  places it so its horizon (measured at y = 579 px in the picture) meets
+  the trunk's base (`HORIZON_Y`); ~70 seeded stars twinkle on top. A new
+  picture: update `BG` (size and the horizon's y). The devlog's "AI
+  image" caption rule is for blog posts, not the game.
 
 ## In-game HUD
 

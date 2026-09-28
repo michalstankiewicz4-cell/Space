@@ -9,7 +9,8 @@ import { TECH_TREES } from "./techTreeData.js";
 // branches routed like PCB traces (straight, then 45°) with light pulses
 // running along the live ones, round metal-rimmed nodes. The layout is
 // computed from the data (see layout()); nothing here knows a specific
-// node. Buying is research.js's job (onBuy).
+// node. Buying is research.js's job (onBuy). The picture behind it all:
+// background().
 const W = 1100, H = 640;
 const ROOT = { x: W / 2, y: 452 };
 const RING = [0, 205, 365, 470];            // radius per depth
@@ -116,46 +117,36 @@ function wrap(text, max){
   return lines.slice(0, 3);
 }
 
-// Seeded stars, the same every time the window opens.
+// Seeded stars, the same every time the window opens (over the picture's
+// own: a few, some twinkling).
 function stars(){
   let s = 7, out = "";
   function rnd(){ s = (s * 16807) % 2147483647; return s / 2147483647; }
-  for(let i = 0; i < 140; i++){
+  for(let i = 0; i < 70; i++){
     const x = rnd() * W, y = rnd() * (HORIZON_Y - 10), r = rnd() < 0.1 ? 1.4 : 0.8, o = 0.25 + rnd() * 0.6;
     out += '<circle cx="' + x.toFixed(0) + '" cy="' + y.toFixed(0) + '" r="' + r + '" fill="#dfe6ff" opacity="' + o.toFixed(2) + '"' + (rnd() < 0.25 ? ' class="tw" style="animation-delay:' + (rnd() * 4).toFixed(1) + 's"' : "") + "/>";
   }
   return out;
 }
 
+// The backdrop: an AI-generated picture (css/ui/windows/researchBg.jpg,
+// 1248x832, made from a prompt at the user's request) — a planet's
+// horizon with circuit lines on its surface, a nebula, hexagon corners —
+// placed so its horizon (at 69.6% of its height, measured) meets the
+// trunk's base at HORIZON_Y. Twinkling stars on top keep it alive.
+const BG = { href: "css/ui/windows/researchBg.jpg", w: 1248, h: 832, horizon: 579 };
 function background(){
+  const scale = W / BG.w, h = BG.h * scale, y = HORIZON_Y - BG.horizon * scale;
   return (
     '<defs>' +
-      '<radialGradient id="ttNebA" cx="0.22" cy="0.25" r="0.6"><stop offset="0" stop-color="#3d2a8c" stop-opacity=".55"/><stop offset="1" stop-color="#3d2a8c" stop-opacity="0"/></radialGradient>' +
-      '<radialGradient id="ttNebB" cx="0.82" cy="0.35" r="0.55"><stop offset="0" stop-color="#1c6f8c" stop-opacity=".45"/><stop offset="1" stop-color="#1c6f8c" stop-opacity="0"/></radialGradient>' +
-      '<radialGradient id="ttPlanet" cx="0.5" cy="0" r="0.55"><stop offset="0" stop-color="#1b2d6b"/><stop offset="0.35" stop-color="#0a1233"/><stop offset="1" stop-color="#02040f"/></radialGradient>' +
-      '<linearGradient id="ttAtmo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4fe3c6" stop-opacity=".0"/><stop offset=".5" stop-color="#4fb6ff" stop-opacity=".35"/><stop offset="1" stop-color="#4fe3c6" stop-opacity="0"/></linearGradient>' +
       '<linearGradient id="ttRimGold" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#ffe7b0"/><stop offset=".45" stop-color="#f8bb56"/><stop offset=".7" stop-color="#9a6127"/><stop offset="1" stop-color="#e9ab55"/></linearGradient>' +
       '<linearGradient id="ttRimSteel" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#a8b3d8"/><stop offset=".5" stop-color="#4c5680"/><stop offset=".75" stop-color="#262c48"/><stop offset="1" stop-color="#7580ad"/></linearGradient>' +
       '<radialGradient id="ttFace" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#16214f"/><stop offset=".6" stop-color="#070c24"/><stop offset="1" stop-color="#02040f"/></radialGradient>' +
       '<linearGradient id="ttCopper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2a25a"/><stop offset="1" stop-color="#8a5226"/></linearGradient>' +
-      '<pattern id="ttHex" width="42" height="24.25" patternUnits="userSpaceOnUse"><path d="M0 12.1L7 0H21L28 12.1L21 24.25H7Z" fill="none" stroke="#3c55d8" stroke-width="1"/></pattern>' +
-      '<filter id="ttGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
-      '<filter id="ttSoft"><feGaussianBlur stdDeviation="8"/></filter>' +
-      '<radialGradient id="ttHexFade" cx="0" cy="0" r="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>' +
-      '<mask id="ttHexMaskL"><rect width="' + W + '" height="' + H + '" fill="url(#ttHexFadeL)"/></mask>' +
-      '<radialGradient id="ttHexFadeL" cx="0.05" cy="0.05" r="0.35"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>' +
-      '<mask id="ttHexMaskR"><rect width="' + W + '" height="' + H + '" fill="url(#ttHexFadeR)"/></mask>' +
-      '<radialGradient id="ttHexFadeR" cx="0.95" cy="0.08" r="0.3"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>' +
     '</defs>' +
-    '<rect width="' + W + '" height="' + H + '" fill="#02030c"/>' +
-    '<rect width="' + W + '" height="' + H + '" fill="url(#ttNebA)"/><rect width="' + W + '" height="' + H + '" fill="url(#ttNebB)"/>' +
-    stars() +
-    '<rect width="' + W + '" height="' + H + '" fill="url(#ttHex)" opacity=".35" mask="url(#ttHexMaskL)"/>' +
-    '<rect width="' + W + '" height="' + H + '" fill="url(#ttHex)" opacity=".35" mask="url(#ttHexMaskR)"/>' +
-    // the planet the tree grows from, and its atmosphere
-    '<circle cx="' + W / 2 + '" cy="' + (HORIZON_Y + 1400) + '" r="1400" fill="url(#ttPlanet)"/>' +
-    '<circle cx="' + W / 2 + '" cy="' + (HORIZON_Y + 1400) + '" r="1404" fill="none" stroke="#4fb6ff" stroke-width="10" opacity=".35" filter="url(#ttSoft)"/>' +
-    '<circle cx="' + W / 2 + '" cy="' + (HORIZON_Y + 1400) + '" r="1400.5" fill="none" stroke="#9fe8ff" stroke-width="1.2" opacity=".7"/>'
+    '<rect width="' + W + '" height="' + H + '" fill="#080b1a"/>' +
+    '<image href="' + BG.href + '" x="0" y="' + y.toFixed(1) + '" width="' + W + '" height="' + h.toFixed(1) + '" preserveAspectRatio="none"/>' +
+    stars()
   );
 }
 
