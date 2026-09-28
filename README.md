@@ -101,7 +101,8 @@ scale lab: every game object in one row at its in-game size, sizes
 imported from the game's own modules (needs the local server) — see
 [`docs/scale.md`](docs/scale.md). `skins.html` is the skin lab: a standalone
 prototype of the in-game HUD in two new looks (a green CRT terminal and a
-colourful code-editor theme), switchable, not yet part of the game.
+colourful code-editor theme), switchable, not yet part of the game — see
+[`docs/skins.md`](docs/skins.md).
 `tools/` holds small standalone dev
 utilities (e.g. `grainTexture.html`, which regenerates `css/ui/grain.png`). `blog/` isn't part of the game at all — see "Devlog"
 below.

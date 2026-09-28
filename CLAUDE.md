@@ -14,7 +14,8 @@ the standalone ship/body labs are documented in [`docs/ship.md`](docs/ship.md)
 and [`docs/bodies.md`](docs/bodies.md); sizes/distances and what depends on
 them (an ongoing, step-by-step topic) in [`docs/scale.md`](docs/scale.md),
 with the scale lab (`scale.html`: every object in one row at game size,
-numbers imported from the game's own modules).
+numbers imported from the game's own modules); the skin lab
+(`skins.html`, HUD look prototypes) in [`docs/skins.md`](docs/skins.md).
 Read the relevant one with the Read tool before modifying that subsystem —
 the summaries here are for orientation, not enough detail to safely change
 the code. Don't read the long ones whole: `docs/architecture.md` and
