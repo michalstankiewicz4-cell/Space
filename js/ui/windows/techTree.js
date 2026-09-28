@@ -142,7 +142,18 @@ function background(){
       '<linearGradient id="ttRimGold" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#ffe7b0"/><stop offset=".45" stop-color="#f8bb56"/><stop offset=".7" stop-color="#9a6127"/><stop offset="1" stop-color="#e9ab55"/></linearGradient>' +
       '<linearGradient id="ttRimSteel" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#a8b3d8"/><stop offset=".5" stop-color="#4c5680"/><stop offset=".75" stop-color="#262c48"/><stop offset="1" stop-color="#7580ad"/></linearGradient>' +
       '<radialGradient id="ttFace" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#16214f"/><stop offset=".6" stop-color="#070c24"/><stop offset="1" stop-color="#02040f"/></radialGradient>' +
-      '<linearGradient id="ttCopper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2a25a"/><stop offset="1" stop-color="#8a5226"/></linearGradient>' +
+      // worn copper: edges wobbled by noise, darker oxidised patches on top
+      '<filter id="ttRough" x="-2%" y="-2%" width="104%" height="104%">' +
+        '<feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="3" result="n"/>' +
+        '<feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" xChannelSelector="R" yChannelSelector="G" result="d"/>' +
+        '<feTurbulence type="fractalNoise" baseFrequency="0.18" numOctaves="3" seed="11" result="n2"/>' +
+        '<feColorMatrix in="n2" type="matrix" values="0 0 0 0 0.06  0 0 0 0 0.03  0 0 0 0 0.01  1.9 0 0 0 -0.78" result="spots"/>' +
+        '<feComposite in="spots" in2="d" operator="in" result="spotsIn"/>' +
+        '<feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="1" seed="5" result="grain"/>' +
+        '<feColorMatrix in="grain" type="matrix" values="0 0 0 0 1  0 0 0 0 0.85  0 0 0 0 0.6  1.2 0 0 0 -0.82" result="glints"/>' +
+        '<feComposite in="glints" in2="d" operator="in" result="glintsIn"/>' +
+        '<feMerge><feMergeNode in="d"/><feMergeNode in="spotsIn"/><feMergeNode in="glintsIn"/></feMerge>' +
+      '</filter>' +
     '</defs>' +
     '<rect width="' + W + '" height="' + H + '" fill="#080b1a"/>' +
     '<image href="' + BG.href + '" x="0" y="' + y.toFixed(1) + '" width="' + W + '" height="' + h.toFixed(1) + '" preserveAspectRatio="none"/>' +
@@ -153,18 +164,26 @@ function background(){
 // The trunk: a bundle of traces from the horizon up to the root, spreading
 // into roots along the surface.
 function trunk(){
-  let out = "";
-  const offs = [-18, -9, 0, 9, 18];
+  const parts = { metal: "", core: "" };
+  const offs = [-2, -1, 0, 1, 2];
   offs.forEach(function(o, i){
-    const x0 = ROOT.x + o * 0.55, xb = ROOT.x + o * 1.3;
+    const x0 = ROOT.x + o * 11, xb = ROOT.x + o * 20;
     const d = "M" + x0 + " " + (ROOT.y + R.root - 4) + " L" + x0 + " " + (HORIZON_Y - 40) + " L" + xb + " " + (HORIZON_Y - 10) + " L" + xb + " " + (HORIZON_Y + 6);
-    out += '<path class="tr-base" d="' + d + '"/><path class="tr-core" d="' + d + '"/>';
+    addTrace(parts, d, "");
     // roots along the surface
-    const dir = o === 0 ? (i % 2 ? 1 : -1) : Math.sign(o), len = 60 + Math.abs(o) * 7;
+    const dir = o === 0 ? (i % 2 ? 1 : -1) : Math.sign(o), len = 60 + Math.abs(o) * 35;
     const root = "M" + xb + " " + (HORIZON_Y + 6) + " L" + (xb + dir * len) + " " + (HORIZON_Y + 6 + len * 0.18) + " L" + (xb + dir * (len + 40)) + " " + (HORIZON_Y + 6 + len * 0.18);
-    out += '<path class="tr-base root" d="' + root + '"/><path class="tr-core" d="' + root + '"/>';
+    addTrace(parts, root, "root");
   });
-  return out + '<path class="pulse up" d="M' + ROOT.x + " " + (HORIZON_Y + 6) + " L" + ROOT.x + " " + (ROOT.y + R.root) + '"/>';
+  parts.core += '<path class="pulse up" d="M' + ROOT.x + " " + (HORIZON_Y + 6) + " L" + ROOT.x + " " + (ROOT.y + R.root) + '"/>';
+  return parts;
+}
+
+// One copper trace: a dark edge, the copper, a highlight along its crown
+// (these three get the worn-metal filter) and the lit core on top.
+function addTrace(parts, d, cls){
+  parts.metal += '<path class="tr-edge ' + cls + '" d="' + d + '"/><path class="tr-base ' + cls + '" d="' + d + '"/><path class="tr-hi ' + cls + '" d="' + d + '"/>';
+  parts.core += '<path class="tr-core ' + cls + '" d="' + d + '"/>';
 }
 
 function nodeSvg(n, i){
@@ -219,19 +238,19 @@ function draw(){
   const nodes = layout(tree);
   const infos = {};
   nodes.forEach(function(n){ infos[n.id] = info(n); });
-  let traces = "";
+  const parts = trunk();
   nodes.forEach(function(n){
     if(!n._parent) return;
     const d = trace(n._parent, n);
     const cls = stateClass(n, infos[n.id]);
     const live = cls === "owned" || cls === "affordable" || cls === "maxed" || cls === "hub" || (n.kind === "hub");
-    traces += '<path class="tr-base ' + (cls === "soon" ? "dim" : "") + '" d="' + d + '"/><path class="tr-core ' + (cls === "soon" ? "dim" : "") + '" d="' + d + '"/>';
-    if(live) traces += '<path class="pulse" d="' + d + '" style="animation-delay:' + (-(n._angle % 7) * 0.4).toFixed(2) + 's"/>';
+    addTrace(parts, d, cls === "soon" ? "dim" : "");
+    if(live) parts.core += '<path class="pulse" d="' + d + '" style="animation-delay:' + (-(n._angle % 7) * 0.4).toFixed(2) + 's"/>';
   });
   let nodeMarkup = "";
   nodes.slice().reverse().forEach(function(n){ nodeMarkup += nodeSvg(n, infos[n.id]); });
   const svg = document.getElementById("ttSvg");
-  svg.innerHTML = background() + trunk() + traces + nodeMarkup;
+  svg.innerHTML = background() + '<g filter="url(#ttRough)">' + parts.metal + "</g>" + parts.core + nodeMarkup;
   svg.querySelectorAll(".tt-node").forEach(function(g){
     const n = nodes.find(function(x){ return x.id === g.dataset.id; });
     g.addEventListener("mouseenter", function(){ showTip(n, infos[n.id]); });

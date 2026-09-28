@@ -1137,7 +1137,11 @@ button) shows one tree at a time, ◀ ▶ to switch.
   purchase/reset/language change): seeded stars, hex-grid corners, a
   planet horizon with an atmosphere glow, a trunk of five traces with
   roots, copper traces with a teal core and `stroke-dashoffset` pulses on
-  live ones, nodes with a gold (steel when planned) metal rim, rivets,
+  live ones (since v2.20.1 each trace is an edge, flat copper and a
+  highlight under the `#ttRough` filter — low-frequency displacement for
+  uneven edges, noise patches and glints; **flat colour, not a gradient**:
+  an objectBoundingBox gradient paints nothing on a perfectly vertical or
+  horizontal path), nodes with a gold (steel when planned) metal rim, rivets,
   a level ring, a cost pill; states `affordable` (pulsing gold halo),
   `poor`, `owned`, `maxed`, `soon` (locked). Tooltip is HTML over the
   SVG. Styles: `css/ui/windows/research.css`.

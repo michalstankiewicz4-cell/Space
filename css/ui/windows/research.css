@@ -24,11 +24,21 @@
 #ttSvg .tw{ animation:ttTwinkle 3.5s ease-in-out infinite; }
 @keyframes ttTwinkle{ 50%{ opacity:.1; } }
 
-/* traces: a copper base with a thin lit core, pulses on the live ones */
-#ttSvg .tr-base{ fill:none; stroke:url(#ttCopper); stroke-width:6; stroke-linecap:round; stroke-linejoin:round; opacity:.85; }
-#ttSvg .tr-base.root{ stroke-width:5; opacity:.6; }
-#ttSvg .tr-core{ fill:none; stroke:#4fe3c6; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round; opacity:.55; }
-#ttSvg .tr-base.dim{ stroke:#39406a; opacity:.7; }
+/* traces: worn copper (a dark edge, the copper, a highlight along the crown
+   — the #ttRough filter wobbles their edges and adds oxidised patches) with
+   a thin lit core, pulses on the live ones */
+#ttSvg .tr-edge, #ttSvg .tr-base, #ttSvg .tr-hi, #ttSvg .tr-core{ fill:none; stroke-linecap:round; stroke-linejoin:round; }
+#ttSvg .tr-edge{ stroke:#2b170a; stroke-width:11; }
+/* a flat copper, not a gradient: an objectBoundingBox gradient paints nothing
+   on a perfectly vertical or horizontal path (its box has zero width/height) */
+#ttSvg .tr-base{ stroke:#bd7a3c; stroke-width:9; }
+#ttSvg .tr-hi{ stroke:#ffd9a0; stroke-width:2.4; opacity:.45; }
+#ttSvg .tr-core{ stroke:#4fe3c6; stroke-width:1.6; opacity:.6; }
+#ttSvg path.root{ opacity:.75; }   /* the trunk's roots (not the root node) */
+#ttSvg .tr-edge.root{ stroke-width:9; } #ttSvg .tr-base.root{ stroke-width:7; }
+#ttSvg .tr-edge.dim{ stroke:#141830; }
+#ttSvg .tr-base.dim{ stroke:#3b4370; }
+#ttSvg .tr-hi.dim{ stroke:#8d98c9; opacity:.25; }
 #ttSvg .tr-core.dim{ stroke:#6d79b5; opacity:.35; stroke-dasharray:3 5; }
 #ttSvg .pulse{ fill:none; stroke:#bff8ff; stroke-width:3; stroke-linecap:round; stroke-dasharray:10 150;
   filter:drop-shadow(0 0 4px #4fe3c6); animation:ttPulse 2.6s linear infinite; }

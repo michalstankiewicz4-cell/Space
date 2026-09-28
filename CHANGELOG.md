@@ -4,6 +4,16 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.20.1]
+
+### Changed
+- Research trees: the copper traces are thicker and look like worn metal —
+  slightly uneven edges, darker oxidised patches, a highlight along the top.
+
+### Fixed
+- Perfectly straight (vertical or horizontal) traces in the tree were
+  drawn without their copper, as a thin line only.
+
 ## [2.20.0]
 
 ### Changed
