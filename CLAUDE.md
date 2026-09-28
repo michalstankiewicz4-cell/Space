@@ -1,364 +1,181 @@
 # Project brief: Swarm Protocol
 
-Condensed context for picking this project back up. See [`README.md`](README.md)
-for structure/setup and [`CHANGELOG.md`](CHANGELOG.md) for version history.
-
-**This file is a lean index, kept short on purpose since it's loaded into
-every session automatically.** The full history/verification behind each
-architecture and security bullet below (why a design was chosen, live bugs
-found and fixed, exact function names) lives in `docs/`:
-[`docs/architecture.md`](docs/architecture.md),
-[`docs/security.md`](docs/security.md),
-[`docs/gotchas.md`](docs/gotchas.md), [`docs/blogger.md`](docs/blogger.md);
-the standalone ship/body labs are documented in [`docs/ship.md`](docs/ship.md)
-and [`docs/bodies.md`](docs/bodies.md); sizes/distances and what depends on
-them (an ongoing, step-by-step topic) in [`docs/scale.md`](docs/scale.md),
-with the scale lab (`scale.html`: every object in one row at game size,
-numbers imported from the game's own modules); the skin lab
-(`skins.html`, HUD look prototypes) in [`docs/skins.md`](docs/skins.md).
-Read the relevant one with the Read tool before modifying that subsystem —
-the summaries here are for orientation, not enough detail to safely change
-the code. Don't read the long ones whole: `docs/architecture.md` and
-`docs/security.md` have one `## ` section per subsystem (listed in a
-Contents block at the top) — grep `^## ` for line numbers, then read
-only the section you need.
+A lean index, loaded into every session — rules and pointers only. The
+why and the history behind each item live in `docs/`:
+[`architecture.md`](docs/architecture.md), [`security.md`](docs/security.md),
+[`gotchas.md`](docs/gotchas.md), [`blogger.md`](docs/blogger.md),
+[`ship.md`](docs/ship.md) / [`bodies.md`](docs/bodies.md) (the labs),
+[`scale.md`](docs/scale.md) (sizes; `scale.html`), [`skins.md`](docs/skins.md)
+(`skins.html`). **Read the relevant doc before changing a subsystem** —
+the long ones have a Contents block: grep `^## ` and read only that section.
+[`README.md`](README.md) has the file map, [`CHANGELOG.md`](CHANGELOG.md)
+the versions, [`IDEAS.md`](IDEAS.md) the plans and open threads.
 
 ## What this is
 
-A 3D space game built with Three.js (r128, classic UMD `THREE` global).
-Static site, no build step, no npm — native ES modules loaded via
-`<script type="module" src="js/main.js">`. No CDN at runtime: Three.js
-and supabase-js are local copies in `vendor/` (version in the file name,
-see `vendor/README.md`; admin.html → "Check library updates"), fonts in
-`fonts/`. Deployed on GitHub Pages by
-pushing to `main` (repo: `michalstankiewicz4-cell/Space`).
-
-Gameplay: the player's swarm of ships eats planets/suns/comets/meteoroids
-for points, spent on upgrades (speed, bite power, thermal resistance,
-swarm size); black holes are a hazard to avoid. The world is a fixed
-9-orbit solar system (see "Architecture" below); other players' ships are
-shared live via Supabase; a player's own points/upgrades stay local
-(`localStorage`).
+A 3D space game: Three.js r128 (classic UMD `THREE` global), a static site
+with no build step and no npm — native ES modules from `js/main.js`. No
+CDN at runtime: Three.js and supabase-js in `vendor/`, fonts in `fonts/`.
+Deployed on GitHub Pages by pushing to `main`
+(`michalstankiewicz4-cell/Space`). The player's swarm eats bodies of a
+fixed 9-orbit solar system for points spent on upgrades; ships and the
+drone run player programs; other players are shared live via Supabase;
+the player's own progress stays in `localStorage`.
 
 ## Working conventions
 
-- **Language**: the user writes in Polish; reply to them in Polish. All UI
-  text in the game itself, all project docs (README, CHANGELOG, this file,
-  `docs/`, commit messages), and **all inline code comments** (JS and the
-  SQL schema) are in **English** — the `pl` dictionary in `js/i18n.js` is
-  the one deliberate exception, since that's translation data, not a
-  comment.
-- **Versioning**: bump `js/version.js` and add a `CHANGELOG.md` entry for
-  every meaningful change (feature, balance change, notable fix) **to the
-  game itself or `supabase/schema.sql`** — this is how two GitHub Pages
-  deploys of the actual game are told apart after a push. Also bump the
-  `?v=` cache-busting query param on `css/style.css` and `js/main.js` in
-  `index.html` to the same value (see `docs/gotchas.md`) — it's a
-  hardcoded literal, not read from `js/version.js`, so it's easy to
-  forget. **Explicitly excluded** (all explicit user calls, not
-  oversights — the common thread is "doesn't change what a player's
-  browser actually loads/runs"):
-  - `admin.html` (+ `js/admin/`, `css/admin.css`, `css/devTheme.css`),
-    the `ship.html`/`bodies.html`/`scale.html`/`skins.html` labs (+ `js/scalelab/`), plus
-    `tools/` (e.g. `grainTexture.html`, regenerates `css/ui/grain.png`) —
-    standalone dev tools with no version-check mechanism of their own
-    (`js/versionCheck.js` only ever watches the *game's* `js/version.js`).
-  - The devlog (`blog/` folder, and publishing via the Blogger API — see
-    `docs/blogger.md`) — a completely separate site on a separate host.
-  - **Pure documentation edits** — a change touching only `.md` files
-    (`README.md`, this file, `IDEAS.md`, `docs/*.md`, or a `CHANGELOG.md`
-    edit *not* accompanying an actual game/schema change) — nothing about
-    the deployed game bundle changed, so there's nothing for a version
-    bump to distinguish.
+- **Language**: reply to the user in Polish. Everything in the repo — UI
+  text, docs, commit messages, code comments (JS and SQL) — is English;
+  the only exception is the `pl` dictionary in `js/i18n.js`.
+- **Versioning**: every meaningful change to the game or
+  `supabase/schema.sql` → bump `js/version.js`, a `CHANGELOG.md` entry,
+  and the `?v=` params on `css/style.css` and `js/main.js` in `index.html`
+  (hardcoded, easy to forget). **Not** for: `admin.html` (+ `js/admin/`,
+  `css/admin.css`, `css/devTheme.css`), the labs `ship.html` /
+  `bodies.html` / `scale.html` (+ `js/scalelab/`) / `skins.html`,
+  `tools/`, the devlog (`blog/`, Blogger), and `.md`-only edits — those are
+  plain commits, no changelog entry.
+- **A new `js/`/`css/` game file → add it to
+  `js/versionCheck.js#MODULE_FILES`** (incl. every stylesheet index.html
+  links), or "Refresh now" silently misses it.
+- **Testing**: no test suite. A local server (`python -m http.server
+  8877`) + a throwaway Playwright script in the scratchpad (screenshots,
+  console/pageerror listeners). It hits the **live** Supabase — keep
+  traffic light. Test "hidden" with `getComputedStyle(el).display` or a
+  screenshot, never a class name.
+- **Git**: new commits (amend only before anything is pushed); every
+  commit ends with `Co-Authored-By: Claude Sonnet 5
+  <noreply@anthropic.com>`. Ask before pushing; push to `main` after
+  visual verification.
+- **No trademarked franchise names** in code, comments or docs — generic
+  descriptions instead (already-published blog posts may keep theirs).
+- **New 3D assets / big UI changes: prototype first** — a standalone page
+  (a lab or a throwaway file) to settle the look, then move the shared
+  code into `js/`, then retire the throwaway prototype (ask before
+  deleting). The labs themselves stay.
+- **Never commit**: `pass` (tokens, DB password), the local story draft
+  `FABULA.md` (in `.git/info/exclude`). The Supabase **anon key** in
+  `js/env.js` is public by design.
 
-  `CHANGELOG.md` follows the same split, since its own header frames it
-  as "changes to the game, version by version" — none of the above have
-  a version number to file themselves under, so they're just a plain git
-  commit, not a changelog entry.
+## Architecture (map — details in docs/architecture.md)
 
-  **New `js/`/`css/` file → add it to `js/versionCheck.js#MODULE_FILES`**
-  (incl. every stylesheet index.html links) — hand-maintained, easy to forget, and
-  forgetting silently breaks the "Refresh now" cache refresh for that
-  file (see `docs/gotchas.md`).
-- **Testing before commit**: there's no test suite. Verify changes with a
-  local static server (`python -m http.server 8877` from the repo root)
-  and a throwaway Playwright script in the scratchpad dir (headless
-  Chromium, screenshot-based checks, console/pageerror listeners). This
-  hits the **live** Supabase backend (see `docs/gotchas.md`), so keep
-  test traffic light. When testing whether a panel/overlay is actually
-  *hidden*, assert on `getComputedStyle(el).display` (or a screenshot),
-  never just `classList.contains("hidden")` — a class can be applied
-  perfectly correctly by JS and still visually do nothing if no CSS rule
-  maps it to `display:none` (see `docs/architecture.md`'s drone bullets
-  for the exact bug this caused, twice).
-- **Git**: create new commits (don't amend, except right after a hook
-  failure on a commit that never happened, or before anything's been
-  pushed). Every commit/PR ends with the `Co-Authored-By: Claude Sonnet 5
-  <noreply@anthropic.com>` trailer. Push to `main` after visual
-  verification.
-- **No trademarked franchise names** in code, comments, or docs (e.g. not
-  "Kerbal-style", "DS9-style") — generic descriptions instead. Already
-  named references may stay in already-published blog posts, but nothing
-  new goes in this repo.
-- **`test.html`** (the user's untracked orbital-mechanics + block-
-  programming prototype) was **deleted on 2026-09-27 at the user's
-  request** — its ideas are all in the game now (the 9-orbit system,
-  patched-conics gravity, block programs, trajectory preview in
-  `program/simulate.js`). Code comments saying "port of test.html" just
-  record where something came from.
+- **Bodies**: 7 kinds, one data file each in `js/bodies/`
+  (`content.js#CONTENT`); only comets are rolled, the other 6 are fixed
+  solar bodies. `world/bodies.js` = lifecycle, `bodyParams.js` = kind
+  math, `bodyVisual.js` = the look (BodyKit). `scene/controls.js` =
+  camera + selection wiring; `picking.js`, `tooltip.js`,
+  `selectionBrackets.js` (HTML overlay).
+- **Ships move only on an explicit order** (`controls.js#commandTo` →
+  `commandedTarget`) or their own program — never an automatic target.
+- **Camera**: "base" (the station, default) and "system" (the Sun) on the
+  toggle, plus "focus" (`focusCameraOn` / `focusCameraOnUnit`: a minimap
+  click, VIEW buttons); every change glides ~1 s; a lost target → system.
+  The black hole is selectable but never a course target. Trajectory lines
+  (`scene/trajectories.js`): the object in view + the selected ones (a
+  single ship, not a group).
+- **Solar system** (`world/solarSystem.js`): the Sun + 9 fixed slots
+  (orbit 4 = the station ring), positions closed-form from wall-clock time
+  (`bodyPosAt`). Bodies are drawn bigger than their gameplay `size`
+  (`BODY_VISUAL_SCALE`): gravity/value/health use `size`, anything "near a
+  body" uses `radius + gap`. Health regenerates, never destroyed
+  (`bite_solar_body`). Gravity: `world/solarGravity.js` (patched conics).
+  **Keep the Sun and the black hole out of the primary-body loop**, and
+  **keep the `MAX_GRAVITY_ACCEL` cap** (both real bugs, see the doc).
+  **Ordered ships are gravity-immune while cruising** (skipped outright
+  since v2.19.0 — tested alternatives never arrived); units flown by a
+  program get gravity as a position drift; idle ships outside the station
+  field feel real gravity.
+- **Comets** are the one simulated body (`world/cometPhysics.js`): one at a
+  time (`net/bodiesSync.js#maintainComet`), replayed for late joiners,
+  their own trajectory line.
+- **Multiplayer**: a steward (smallest `(joined_at, client_id)`) only tops
+  up comets; any steward-driven spawn must be gated on
+  `net/connect.js#isConnected()` + a staleness fallback
+  (`stewardFallback.js`). A comet DELETE can mean eaten or flown out —
+  check the local object's `health`, not the payload.
+- **Settings / identity / i18n** stay three separate modules; all
+  localStorage goes through `core/utils.js#readStorage/writeStorage`.
+- **Nicknames**: checked client-side and again on arrival (a modified
+  client can send anything); `/^[\p{L}\p{N} ]+$/u`, `NET_MAX_NICK_LENGTH`.
+- **Programs**: one DSL and one generator interpreter (`drone/dsl.js`,
+  `interpreter.js`, not eval), one runner for the drone and every ship
+  (`js/program/runner.js`, builtins per unit via `unit.api`), per-unit
+  text script + block program + mode (`program/unitPrograms.js`) —
+  **switching modes never deletes either program** (user's call). Blocks
+  compile to the same DSL. Trajectory preview = the real interpreter on a
+  copy (`program/simulate.js`).
+- **UI kit** (`css/ui/`, v2.2.0): a 1536×1024 design surface scaled by
+  `--uiScale`; the 3D scene renders only into the HUD's `#viewport`
+  (`scene/viewRect.js`) — the unit/planet miniatures and the cockpit view
+  are extra render passes on the same canvas (reset viewport/scissor to the
+  full canvas before the main render; HUD panels have no fill because the
+  miniatures are drawn under them); one JS + one CSS file per HUD panel / window
+  (`js/ui/hud/`, `js/ui/windows/`). Research = data-driven upgrade trees
+  (`ui/windows/techTreeData.js` → `techTree.js`; buying in `research.js`).
+- **Rendering** (v2.8.0): sRGB + ACES + `ShipKit.makeEnvironment`; game
+  colours converted to linear once per material (`scene/colorManagement.js`)
+  — a colour set at runtime must be converted by hand.
+- **ShipKit** (`js/shipkit/shipkit.js`) and **BodyKit**
+  (`js/bodykit/bodykit.js`): one classic-script file each, shared by the
+  lab (`ship.html` / `bodies.html`) and the game — changing them changes
+  the game (version bump). Build ships from ShipKit's building blocks,
+  never copy between ships; a new body is data, never a copied shader
+  (rules in `docs/ship.md` / `docs/bodies.md`). Mark animated parts
+  `userData.dynamic` or merging bakes them.
+- **Other players' ships, drones and stations are never tinted** (user's
+  call): owner-coloured diamond markers; only a station shows the name.
+- **Wiki**: filled in by play (`core/discovery.js`, `"tab:key"` ids; the
+  key after the colon unique across tabs); texts in i18n
+  `wiki.entries.<key>`. Story premise: humanity is gone, only AI and
+  robots — keep lore consistent, no spoilers in game texts.
+- **Station** (`js/station/`): ShipKit's ST-04 HAVEN, starting as a ruin
+  (`STATION_START_DAMAGE`; repairs planned). Ships and the drone spawn
+  inside its gravity-free field (`STATION_FIELD_RADIUS`) — **the field
+  shields, it doesn't pull** (user's call, v2.19.0).
 
-## Architecture
+## Security (Supabase) — details in docs/security.md
 
-High-level map — see [`docs/architecture.md`](docs/architecture.md) for
-the full detail behind each of these.
+- **No client-writable UPDATE policy on `bodies`, `solar_bodies`,
+  `world_meta`**: health changes only via `bite_body` / `bite_solar_body`
+  (security definer RPCs) — a permissive UPDATE reopens a real exploit.
+- **INSERT/DELETE on `bodies` (comets)**: CHECK constraints + burst
+  triggers are the defense; **rescaling distances/speeds means updating
+  those CHECKs too** (missed once, rejected every comet).
+- **Every new DB function is callable from the browser by default** →
+  internal helpers get a `revoke execute` line at the end of
+  `schema.sql`; client-callable ones take the actor from `auth.uid()`.
+- **Deploy only the specific functions asked for**, never the whole
+  `schema.sql`. **`player_count()` is not deployed yet** (user's call) —
+  the start screen's "—" and its console 404 are expected; it must keep
+  returning only a number.
+- Rate limits: `bite_body` 20/s, `set_my_nick` 5/30 s, `delete_my_data`
+  3/60 s — silently dropped. `activity_log` is a passive audit trail
+  (read via `admin.html`, secret-gated; every cell rendered with
+  `textContent`).
+- **Anonymous auth**: reuse the session (`getSession` before
+  `signInAnonymously`).
+- **Privacy (GDPR)**: `privacy.html` must match what's stored (shortened
+  IP only, logs 30 days, nicks 180 days, `delete_my_data` only the
+  caller's own); **nothing connects to Supabase before the policy is
+  accepted** (`ui/privacy.js#whenPrivacyAccepted`) — keep new server calls
+  behind it. Code licence: MIT.
 
-- **Body types**: 7 kinds, one data file each under `js/bodies/`,
-  aggregated by `js/content.js#CONTENT`. Only comets are still randomly
-  rolled — the other 6 are fixed, permanent bodies in the solar system
-  (see below).
-- **`world/bodies.js`** = body lifecycle only; pure kind/temp math lives
-  in `world/bodyParams.js`, the look in `world/bodyVisual.js` (BodyKit),
-  selection frames in `scene/selectionBrackets.js` (an HTML overlay). **`scene/controls.js`** = camera +
-  selection/event-wiring only; raycasts in `scene/picking.js`, hover
-  tooltip in `scene/tooltip.js`.
-- **Ships only ever move on an explicit order** (`commandTo()` in
-  `scene/controls.js` → `commandedTarget`) — no automatic nearest-planet
-  fallback. Don't reintroduce one; it was removed deliberately.
-- **Camera modes: two on the toggle, plus "focus"** (top-center HUD toggle, `scene/controls.js#
-  setCameraMode()`): "base" (default) orbits the player's own station,
-  framed so the Sun sits behind and a bit above it; "system" orbits the
-  Sun. Same spherical-orbit math either way (`camState.az/pol/radius`),
-  just a different pivot — both stay fully player-controlled. A third,
-  "focus" (`focusCameraOn(body)`, v2.14.0), orbits and follows one body —
-  a minimap click on a body selects it as before and flies the camera
-  there; every mode change glides (~1 s), a lost target falls back to
-  "system". The black hole is selectable too (world + minimap, own info
-  panel) but never a course target. The unit panel's VIEW puts the focus
-  camera on a ship/the drone (`focusCameraOnUnit`). Trajectory lines
-  (`scene/trajectories.js`) show for the object in view + everything
-  selected (user's rule): units' predicted/program paths, bodies' orbit
-  arcs.
-- **The world is a fixed 9-orbit solar system** (`world/solarSystem.js`),
-  not a random pool — Sun + 9 hand-placed orbit slots (2 volcanic, 2
-  neutral, 2 ice, 1 meteoroid, 1 permanent black hole, orbit 4 = the
-  player-station ring). Position is closed-form from wall-clock time
-  (`bodyPosAt`); bodies are drawn bigger than their gameplay `size`
-  (`BODY_VISUAL_SCALE`, v2.17.0 — gravity, value and health use `size`,
-  the eating orbit is `radius + EAT_ORBIT_GAP`); health regenerates from a checkpoint
-  (`SOLAR_REGEN_RATE`) via `bite_solar_body`, never destroyed.
-  Patched-conics gravity on ships/drone lives in `world/solarGravity.js`;
-  orbit lines in `scene/orbitLines.js`. **The Sun must stay excluded from
-  the primary-body competition loop there** (`b.kind === "sun"`, same as
-  `"blackhole"`) — it has `soiRadius:Infinity`, so it otherwise always
-  "wins" as primary at its own weak per-body `gm` (~66.7) instead of the
-  real `GM_SUN` (60000), a real ~900x-undershoot bug live since v2.0.0
-  until fixed in v2.0.9 (see docs/architecture.md for the full story).
-  **Raw `GM/r²` accel is capped** (`MAX_GRAVITY_ACCEL`, 20/s²) — a close
-  pass near a body's own `minR` clamp could otherwise spike to
-  thousands/s² in one frame, a real numerical-blowup bug this Sun fix
-  immediately exposed. **Commanded ships still stay gravity-immune while
-  cruising even so** (`ships/swarm.js#updateShips()`) — tested and
-  reverted twice (bounded steering, then capped-gravity-under-the-old-
-  lerp): both let a ship never arrive at a target after a close SOI
-  encounter. Reliable point-to-point travel is load-bearing, confirmed by
-  testing, not just cautious. **Since v2.19.0 they're skipped outright**
-  in `solarGravity.js` (before, the added pull halved their speed,
-  frame-rate dependent). Units flown by a program (drone,
-  programmed ships) get gravity as a position drift, not velocity.
-- **Comets are the one body genuinely SIMULATED, not closed-form**
-  (`world/cometPhysics.js`) — real gravity-curved swing-by, replayed via
-  `advanceComet()` for late joiners. Exactly one exists at a time
-  (`net/bodiesSync.js#maintainComet()`, a 60s cooldown after despawn, not
-  a population pool). Entry velocity is solved via vis-viva + angular
-  momentum for an accurate perihelion. Tail always points away from the
-  Sun, re-oriented every frame. Each comet gets its own precomputed
-  trajectory line, added/removed alongside its mesh.
-- **Multiplayer steward** (Presence member with smallest `(joined_at,
-  client_id)`) now only tops up comets — the 9 fixed bodies are DB-seeded
-  once, never spawned by a client. `net/stewardFallback.js#
-  createStalenessGate` lets any connected client step in if the steward
-  goes quiet too long.
-- **Realtime channel health has no free lunch**: `net/connect.js` exposes
-  `isConnected()` — always gate any steward-driven spawn on it (a dead
-  socket doesn't stop local REST calls like `bite_body`/insert/delete, so
-  a desynced client looks deceptively normal). Don't add a new
-  steward-gated loop without this + a staleness fallback.
-- **A DELETE on `bodies` (comet-only)** can mean eaten OR flown out —
-  `onBodyDeleted()` checks the local object's `health <= 0`, never a
-  field off the DELETE payload itself (Realtime DELETE may omit columns
-  without `REPLICA IDENTITY FULL`).
-- **Settings / identity / i18n** stay three separate small persisted
-  modules on purpose (not merged) — all localStorage access goes through
-  `core/utils.js#readStorage`/`writeStorage`.
-- **Nickname moderation is defense-in-depth**: checked client-side as a
-  courtesy AND again server-side/on-arrival for remote data — a modified
-  client can send anything. Nicknames also restricted to
-  `/^[\p{L}\p{N} ]+$/u`, capped at `NET_MAX_NICK_LENGTH`.
-- **Ship cam** (`scene/shipcam.js`): a second viewport/scissor render pass
-  on the same renderer, not a second `WebGLRenderer` — must reset
-  viewport/scissor to full-canvas before the main render each frame.
-- **Sky** (`scene/skybox.js`): BodyKit's SKY (nebulae + Milky Way baked
-  once into a cube map, stars and ~3 pulsars as points), edited in the
-  body lab's SKY tab; follows the camera, purely decorative.
-- **Programmable drone** (`js/drone/*.js`): a single extra ship that only
-  moves via a player-written script in a small custom DSL
-  (`dsl.js`/`interpreter.js`, generator-based, not JS/eval). **Every swarm
-  ship is programmable too (v2.19.0)**: one runner for all
-  (`js/program/runner.js`, builtins per unit via `unit.api`), programs
-  stored per unit (`program/unitPrograms.js`), trajectory preview =
-  the real interpreter on a copy (`program/simulate.js`) — docs/
-  architecture.md "Programmable ships, unit view and trajectories". Full
-  gotchas (runaway-script safety net, click-priority bug history, the
-  `.hidden`/`display:none` CSS trap, `pointerdown` vs `click`) in the doc.
-  A visual **block editor** (`js/blocks/`, `ui/windows/block*.js`)
-  compiles to that same DSL — one interpreter only. Text script and
-  block program are both kept per unit; its mode (`program/unitPrograms.js`
-  #getUnitMode) only picks which one runs (never delete either on a mode
-  switch — explicit user call).
-- **New-style UI kit** (`css/ui/`): start screen, setup modal and the
-  whole in-game HUD (v2.2.0, ported from a standalone mockup since
-  deleted — the game itself is now the reference). `.uiStage` (fixed 1536x1024),
-  `.uiBar`/`.uiScreen` (stretch with the window), all scaled by
-  `--uiScale` set in an inline `<head>` script. `main.js` inits and
-  paints the start screen *before* `initScene()` (which blocks the main
-  thread); fonts are self-hosted + preloaded. **The 3D scene renders
-  only into the HUD's `#viewport` rect** (`scene/viewRect.js` — picking,
-  miniatures and ship cam all go through it); HUD panels have no fill
-  because miniatures are drawn on the canvas under them. Files mirror the
-  UI: `js/ui/hud/` + `css/ui/hud/` one per panel (`hud/hud.js` is
-  main.js's only entry point), `js/ui/windows/` + `css/ui/windows/` the
-  same for windows. Full detail,
-  gotchas and where every old HUD feature went: docs/architecture.md's
-  "UI kit" and "In-game HUD" sections.
-- **Rendering = the labs' pipeline (v2.8.0)**: sRGB output + ACES tone
-  mapping + `scene.environment` from `ShipKit.makeEnvironment()`. Game
-  colors are converted sRGB->linear once per new material/light by
-  `scene/colorManagement.js` (ShipKit models, `userData.shipkit`, are
-  skipped); every game canvas texture goes through `sRGBTexture()`. A
-  color set at runtime bypasses that — convert it yourself.
-- **ShipKit** (`js/shipkit/shipkit.js`): the procedural ship models, one
-  classic-script file shared by `ship.html` and the game (not copied).
-  The drone is its DR-01 SCRIBE (`merge: true`, `fxRoot: scene`,
-  `makeGameHolder`); other players' drones are the same model, **never
-  tinted** — owners get a diamond marker in their color instead, like
-  their ships; only a station shows the owner's name (user's call). Mark any
-  animated/toggled part `userData.dynamic` or merging bakes it in place.
-  Changing `shipkit.js` changes the game: version bump. **Build ships from
-  its SHIP BUILDING BLOCKS and move any part/behaviour a second ship
-  needs into them — never copy between ships** (rules in `docs/ship.md`
-  "Building blocks").  See `docs/ship.md`.
-- **BodyKit** (`js/bodykit/bodykit.js`): every celestial body (planets,
-  Sun, meteoroid, comets, black hole), one classic-script file shared by
-  `bodies.html` and the game, the same way. A lab body with a `slot` is
-  that orbit's body in the game, one with a `kind` every body of that kind
-  (`world/bodyVisual.js`; `p.mesh` is an invisible pick sphere, damage =
-  the shader's glowing cracks, scorch marks on `surfaceRoot`).
-  Changing `bodykit.js` changes the game: version bump. **A new body is
-  data (a `bodies` entry / a new parameter), never a copied shader**;
-  classification lives once in `GLSL_PLANET` (rules in `docs/bodies.md`
-  "Building blocks and rules").
-- **Research trees** (v2.20.0): the Research window draws trees from
-  data — `ui/windows/techTreeData.js` (nodes, branch points, no
-  coordinates; ◀ ▶ switch trees), laid out and drawn as SVG by
-  `ui/windows/techTree.js`; buying stays in `research.js`. Grow a tree by
-  adding nodes there (+ i18n `upgrades.tree.<id>`).
-- **Wiki** (`ui/windows/wiki*.js`): read-only, filled in by play via
-  `core/discovery.js` (`"tab:key"` ids, localStorage). Texts in i18n
-  `wiki.entries.<key>` — **the key after the colon must be unique across
-  all tabs**. The Story tab's memory fragments come from
-  `core/storyLog.js`, paced (one per 3 min of play). The game's story
-  premise: the humans are gone, only AI and robots remain — the full
-  draft lives in a **local, untracked `FABULA.md`** (in
-  `.git/info/exclude`): never commit it.
-- **Space station** (`js/station/*.js`): one static per-player landmark,
-  read-only info in the HUD's PLANET INFO slot. The look is ShipKit's
-  ST-04 HAVEN (`station/stationVisual.js`, shared by the local station and
-  other players' — never tinted, owners get a name label); its ruin (dark
-  windows, broken panel, torn ring) is the model's damage, and the game
-  starts it at `STATION_START_DAMAGE` (the story; repairs come later). Ships spawn arranged around it on a
-  golden-angle spiral (`ships/swarm.js#shipSpawnPosition()`), inside a
-  gravity-free protective field (`STATION_FIELD_RADIUS`) —
-  `world/solarGravity.js` skips ambient gravity for any ship or the drone
-  inside it. **It shields, it doesn't pull** (v2.19.0, user's call: the old
-  pull-back, `stationField.js`, was removed) — an idle ship outside it
-  feels real gravity and can fall into the Sun or a planet.
+## Devlog
 
-## Security model (Supabase)
+Polish Blogger devlog, published through the API (credentials in `pass`):
+workflow, style and gotchas in [`docs/blogger.md`](docs/blogger.md) —
+drafts by default, real screenshots, WebM clips not GIFs, honest and
+personal tone.
 
-Core rules — see [`docs/security.md`](docs/security.md) for the exploit
-post-mortems and live-verification detail behind each:
+## Known gotchas (full stories in docs/gotchas.md)
 
-- **No client-writable UPDATE policy on `bodies`, `solar_bodies`, or
-  `world_meta`.** Health only changes via `bite_body`/`bite_solar_body`
-  (`SECURITY DEFINER` RPCs). Re-adding a permissive UPDATE policy reopens
-  a real "set health to 0 then land one trivial hit" exploit.
-- **INSERT/DELETE on `bodies` (comet-only) stay permissive but
-  rate-limited** — CHECK constraints (per-kind ranges, `bodies_pos_check`/
-  `bodies_vel_check`) and burst-rejecting triggers (15-in-10s) are the
-  real defense, not the steward-election courtesy. When rescaling
-  distances/speeds, remember these CHECK constraints too — missing this
-  once already silently rejected every real comet spawn for several
-  commits (see `docs/security.md`).
-- **`activity_log` is a passive audit trail** — RLS enabled, zero client
-  policies, nothing auto-bans anyone. View via `admin.html` (gated by a
-  server-side-hashed secret) or the Management API.
-- **`bite_body` rate-limited 20 calls/sec/actor**; `set_my_nick()` 5
-  calls/30s/actor — both silently drop over the limit, no error.
-- **Anonymous-auth**: `initNet()` calls `getSession()` before
-  `signInAnonymously()` — reusing an existing session, not minting a new
-  anon user on every page load (this was a real bug, fixed).
-- **`player_count()`** (start screen counter) is the only client read
-  path into `actor_nicks` and returns just a number — keep it that way.
-  **Not deployed to the live DB yet (user's call)**: the counter shows
-  "—" and a 404 for it in the console is expected. Deploy only the
-  specific functions asked for, never the whole schema.sql.
-- **Every new DB function is callable from the browser by default**
-  (Supabase grants EXECUTE to anon/authenticated). Internal helpers get a
-  `revoke execute` line at the end of `schema.sql`; client-callable ones
-  take the actor from `auth.uid()`, never a parameter (v2.18.1, see
-  docs/security.md "Function EXECUTE grants").
-- **Privacy (GDPR, v2.18.0)**: `privacy.html` is the policy — keep it in
-  sync with what's stored. Only a shortened IP is logged (`shorten_ip()`),
-  `purge_old_data()` (run from `set_my_nick()`) keeps logs 30 days and
-  nicks 180 days, `delete_my_data()` erases only the caller's own data
-  (logs stay until expiry). The policy must be accepted before playing
-  and **nothing connects to Supabase until then** (`whenPrivacyAccepted()`
-  gates `initNet()`, main.js) — keep new server calls behind it. Notice +
-  Setup → Privacy in `ui/privacy.js`. Code license: MIT (`LICENSE`). Details: docs/security.md
-  "Privacy (GDPR)".
-- **`admin.html`** renders every cell with `textContent`, never
-  `innerHTML` — nickname/IP/browser are all client-controlled data (a
-  stored-XSS hole here was found and fixed before ever shipping).
-
-## Devlog (Blogger)
-
-Companion Polish-language devlog at
-[swarmprotocol.blogspot.com](https://swarmprotocol.blogspot.com/),
-published via the Blogger API (credentials in the gitignored `pass`
-file) — see [`docs/blogger.md`](docs/blogger.md) for the publishing
-workflow/gotchas (image hosting, OAuth redirect URI, the
-`Content-Length: 0` requirement, etc.).
-
-## Known gotchas
-
-- `RingGeometry` has **planar** UV mapping — animating
-  `material.map.offset.x` slides the texture, doesn't rotate it; rotate
-  the **mesh** instead (see the black hole accretion disk in
-  `js/world/blackholes.js`).
-- Supabase anonymous sign-in rate-limits (HTTP 429) under repeated
-  sign-ups from heavy same-session testing — space out test runs.
-- All local/Playwright testing hits the **same live Supabase project** as
-  real players — keep test traffic light, test bot nicknames are visible
-  to real users in the players list while a test is running.
-- The `pass` file (gitignored) holds the Supabase **Management API**
-  token / DB password — never commit it. The Supabase **anon key** in
-  `js/env.js`, by contrast, is meant to be public and safe to commit (RLS
-  policies in `supabase/schema.sql` are what actually protect the data).
-- GitHub Pages deploys can look "errored" when they were actually just
-  **cancelled** by a rapid second push (check `gh run list`, not the
-  legacy Pages Builds API); `?v=`/`versionCheck.js` cache-busting isn't
-  fully airtight for files `main.js` transitively `import`s; the
-  `supabase-js` console warning about `Realtime send() ... falling back
-  to REST API` is expected/harmless library behavior, not a dropped
-  message. Full stories for all three in
-  [`docs/gotchas.md`](docs/gotchas.md).
+- `RingGeometry` has planar UVs — rotate the mesh, not the texture offset.
+- Repeated test sign-ups hit Supabase's anonymous sign-in limit (HTTP
+  429); test nicknames are visible to real players while a test runs.
+- A GitHub Pages deploy "error" is often just a cancel by a quick second
+  push — check `gh run list`. `?v=` cache-busting isn't airtight for
+  transitively imported files. The supabase-js "falling back to REST API"
+  warning is harmless.
+- An SVG gradient with the default `objectBoundingBox` units paints
+  nothing on a perfectly vertical or horizontal line (the research tree's
+  traces) — use a flat colour or `userSpaceOnUse`.

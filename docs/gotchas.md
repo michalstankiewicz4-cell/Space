@@ -99,3 +99,14 @@ the one CSS literal to bump instead of one per `<link>`. Binary assets
 never changes under the same name — if one ever needs to change, give
 it a new filename instead. A plain "or Ctrl+Shift+R" hint sits under the button too,
 since even this can only narrow the gap, never fully close it.
+
+## SVG gradients on straight lines
+
+Found 2026-09-28 in the Research window's tree (`ui/windows/techTree.js`):
+the copper traces were stroked with a `linearGradient` in the default
+`gradientUnits="objectBoundingBox"`. A perfectly vertical or horizontal
+path has a bounding box of zero width or height, and the browser then
+paints **nothing** for that gradient — the traces to the nodes straight
+above/beside their parent showed only their thin edge and core. Use a
+flat colour, or `gradientUnits="userSpaceOnUse"` with coordinates.
+

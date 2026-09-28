@@ -80,3 +80,36 @@ beat an animated GIF on every count (GIF 800×450, 256 colours, stuttering,
   style="max-width:100%;height:auto;display:block;"></video>` — Blogger
   keeps the tag (verified by reading the saved draft back through the
   API). Keep clips short (≤10 s) and captioned like screenshots.
+
+## Post style (the user's preferences)
+
+Moved here from the assistant's memory (2026-09-28) so they live with the
+project. Blog: "Swarm Protocol", https://swarmprotocol.blogspot.com/, blog ID
+`4054180551202581680`, **in Polish** (the game's own UI is English-first).
+
+- **Format**: a hero image, then devlog text with section headings and a
+  "what's next" teaser at the end; ~10k characters is fine for a big update.
+- **Images**: real in-game screenshots (Playwright, Polish UI), captioned
+  "Prawdziwy zrzut ekranu z gry…"; before/after shots by running an old
+  commit from a temporary `git worktree` next to the current one. **Mask
+  or avoid other players' nicknames.** An AI-generated image (rare) gets
+  the "not a game asset" caption (see above). Motion: short looping WebM
+  video, never GIFs (see "Video clips").
+- **Tone**: casual, first-person plural ("we"); some technical detail in
+  plain language (not too much); reflections and a light joke or two
+  woven *into* the sections, not a separate "reflections" part.
+- **Personal and honest about the collaboration**: who came up with what
+  (the user's requests and spotted problems, quoted), how an idea went
+  from request to working code, the back-and-forth — never invented
+  moments. Mention bugs, failures and misunderstandings now and then
+  (readers like them), the assistant's own mistakes included; lightly
+  self-deprecating, never inflated.
+- **Lore**: no living humans in the game's world (story premise); don't
+  sell "devouring planets" as the core (the plan is transforming, farming
+  and building on them); no story spoilers (the full draft is the local,
+  untracked `FABULA.md`).
+- **Publishing**: create posts as drafts (`?isDraft=true`) unless the
+  user says to publish right away in that request; the user reviews and
+  publishes. An early publish by mistake isn't a disaster if the content
+  is solid, but drafts are the default.
+

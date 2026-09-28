@@ -420,3 +420,35 @@ were in force, e.g. "2026–2028", "2028–2029".
   side; the page is outside the game bundle's `versionCheck.js` list, but
   a change to it still gets the usual version bump (it's served to
   players).
+
+## Open threads and roadmap
+
+Moved here from the assistant's memory (2026-09-28) — things the user
+wants eventually, not scheduled.
+
+- **Station: from overview to management.** v1 (2026-09-21) was scoped
+  down on purpose to a read-only overview + shortcuts to Research/Fleet;
+  the original ask was a station to *manage* the fleet and resources.
+  Natural next steps: renaming/customizing it, spending points from its
+  panel, a resource of its own distinct from points — and **repairs**:
+  the HAVEN model's ruin is its damage (`STATION_START_DAMAGE`), and
+  repairing should lower it.
+- **A second playable race, Blade**: its own HUD look *and* layout plus
+  its own ships (the first mockup was deleted 2026-09-27, the race stays
+  planned; its role in the story is in the local `FABULA.md`). Build it
+  with shared panel logic (`js/ui/hud/*.js` talk to DOM ids) and a
+  separate markup/CSS layout (e.g. `css/ui/hud-blade/`), ships from the
+  ship lab (ShipKit); the skin lab (`docs/skins.md`) proposes skins tied
+  to race by default.
+- **Visual follow-ups**: a lighting pass (far ships read pale; the LOD
+  stand-in is the old teal cone — a glowing dot and a higher
+  `SHIP_LOD_DISTANCE` were proposed), the old combat effects (bite beams,
+  particles), planet rings as a BodyKit parameter, further scale steps
+  (`docs/scale.md`: comet/black-hole visual size, camera/fog, distances).
+- **A single-player copy of the database** (the admin panel's "Compare
+  database with single player" button is a disabled placeholder for it).
+- **Planets to be transformed, farmed and built on**, not devoured — the
+  current eat-for-points loop is a placeholder for that economy (the
+  Wiki's mines/refineries/shipyards, ores → refined resources →
+  materials already point that way).
+
