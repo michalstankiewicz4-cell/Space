@@ -58,7 +58,7 @@ shared live via Supabase; a player's own points/upgrades stay local
   oversights — the common thread is "doesn't change what a player's
   browser actually loads/runs"):
   - `admin.html` (+ `js/admin/`, `css/admin.css`, `css/devTheme.css`),
-    the `ship.html`/`bodies.html`/`scale.html` labs (+ `js/scalelab/`), plus
+    the `ship.html`/`bodies.html`/`scale.html`/`skins.html` labs (+ `js/scalelab/`), plus
     `tools/` (e.g. `grainTexture.html`, regenerates `css/ui/grain.png`) —
     standalone dev tools with no version-check mechanism of their own
     (`js/versionCheck.js` only ever watches the *game's* `js/version.js`).

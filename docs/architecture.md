@@ -29,6 +29,7 @@ then read just that range.
 - [Programmable ships, unit view and trajectories](#programmable-ships-unit-view-and-trajectories)
 - [Space station](#space-station)
 - [UI kit (start screen and setup modal)](#ui-kit-start-screen-and-setup-modal)
+- [Skin lab](#skin-lab)
 - [In-game HUD](#in-game-hud)
 - [Load order and first paint](#load-order-and-first-paint)
 - [Rendering and ShipKit models](#rendering-and-shipkit-models)
@@ -1041,6 +1042,34 @@ that ship view — "the drone too").
     directly against a drone placed far from the station left its
     position completely untouched (confirmed structurally too — the
     function's loop only ever iterates `ctx.ships`).
+
+## Skin lab
+
+`skins.html` (2026-09-28, the user's request): the in-game HUD's layout
+(1536×1024 surface scaled to the window, the same panels in the same
+places) with static sample data and a live 2D canvas sketch of the solar
+system, in two new looks switched with 1 / 2:
+
+- **TERMINAL** — monochrome green phosphor CRT, "programming" as an old
+  terminal: IBM Plex Mono, glow (text-shadow / canvas shadowBlur), a
+  full-screen CRT layer (scanlines, a slow roll band, vignette, flicker;
+  C toggles it — some players find flicker tiring), box-drawing panel
+  headers, segmented LED bars, `[BRACKET]` buttons that invert on hover,
+  a blinking cursor, vector-display drawing (wireframe planets, polar
+  grid, radar sweep with a conic gradient).
+- **SYNTAX** — a colourful code-editor theme (a made-up palette: keyword
+  pink, function cyan, string green, number orange, type violet, comment
+  slate): editor tabs as panel headers, line-number gutters, `let x = …`
+  stat rows, `attack()` buttons, gradient bars, glass panels
+  (backdrop-filter), an animated conic-gradient rim on the focused panel
+  (`@property --ang`), a gradient-animated title.
+
+The logo keeps its shape in both; only its gradient stops change.
+Standalone, opens from disk, not part of the game. **To adopt a skin**,
+the game's CSS first needs its ~150 hard-coded colours (`css/ui/`,
+`css/ui/hud/`) turned into variables on `:root` (kit.css already has a
+few: `--uiFrame`, `--uiText`, …), so a skin is a set of variables plus
+a few extra rules; the extra effects (CRT layer, gradients) go on top.
 
 ## UI kit (start screen and setup modal)
 

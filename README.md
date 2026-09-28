@@ -99,7 +99,10 @@ older `planetEditor.html` and `shipEditor.html`, removed in v2.2.1) — see
 [`docs/bodies.md`](docs/bodies.md). `scale.html` (+ `js/scalelab/`) is the
 scale lab: every game object in one row at its in-game size, sizes
 imported from the game's own modules (needs the local server) — see
-[`docs/scale.md`](docs/scale.md). `tools/` holds small standalone dev
+[`docs/scale.md`](docs/scale.md). `skins.html` is the skin lab: a standalone
+prototype of the in-game HUD in two new looks (a green CRT terminal and a
+colourful code-editor theme), switchable, not yet part of the game.
+`tools/` holds small standalone dev
 utilities (e.g. `grainTexture.html`, which regenerates `css/ui/grain.png`). `blog/` isn't part of the game at all — see "Devlog"
 below.
 
