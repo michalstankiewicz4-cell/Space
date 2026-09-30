@@ -4,6 +4,23 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.21.0]
+
+### Added
+- **Setup → Graphics has image-quality options**, each adjustable:
+  - **Resolution: AUTO or MANUAL.** AUTO (the new default) follows your
+    frame rate: with power to spare it renders more pixels than the
+    screen shows and scales them down (supersampling — small ships and
+    fine details stop shimmering), and steps back when the game slows
+    down. Set the frame rate to hold and the highest resolution; MANUAL
+    is the old quality slider.
+  - **Smooth lines** for orbits and trajectories — anti-aliased, with an
+    adjustable width.
+  - **Far ships** show as a small glow instead of the old teal cone (or
+    as the cone, or always as the full model), from a distance you set.
+  - **FXAA**: smooths the whole view, thin lines and fine planet detail
+    included (off by default; slightly softer).
+
 ## [2.20.1]
 
 ### Changed

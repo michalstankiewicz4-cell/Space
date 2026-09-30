@@ -9,6 +9,7 @@ players' browsers from reusing a cached old copy.
 | File | Library | Source | License |
 |---|---|---|---|
 | `three-r128.min.js` | Three.js r128 (classic build, global `THREE`) | cdnjs `three.js/r128/three.min.js` | MIT |
+| `three-r128-examples/` | Three.js r128 add-ons from `examples/js`: fat lines (`LineSegmentsGeometry`, `LineGeometry`, `LineMaterial`, `LineSegments2`, `Line2`) and `FXAAShader` — Setup → Graphics (`scene/lines.js`, `scene/viewRect.js`) | jsDelivr `three@0.128.0/examples/js/...` | MIT |
 | `supabase-js-2.117.2.js` | supabase-js 2.117.2 (UMD, global `supabase`) | jsDelivr `@supabase/supabase-js@2.117.2/dist/umd/supabase.js` | MIT |
 
 `admin.html` → **Check library updates** compares these versions (read

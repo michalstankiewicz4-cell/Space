@@ -47,7 +47,9 @@ export function applyStaticText(){
   document.getElementById("gfxDetailLabel").textContent = t("setup.geometryDetail");
   document.getElementById("unitLightsLabel").textContent = t("setup.unitLights");
   document.querySelectorAll("#gfxQualityTicks span").forEach(function(s, i){ s.textContent = t("setup.qualityLevels")[i]; });
-  document.getElementById("gfxSoon").textContent = t("setup.graphicsSoon");
+  [["gfxResLabel", "res"], ["gfxTargetFpsLabel", "targetFps"], ["gfxMaxResLabel", "maxRes"], ["gfxSmoothLinesLabel", "smoothLines"],
+   ["gfxLineWidthLabel", "lineWidth"], ["gfxFarShipsLabel", "farShips"], ["gfxLodLabel", "lodDistance"], ["gfxFxaaLabel", "fxaa"],
+   ["gfxFxaaNote", "fxaaNote"]].forEach(function(p){ document.getElementById(p[0]).textContent = t("setup.gfx." + p[1]); });
 
   document.getElementById("aboutBtn").title = t("about.button");
   document.getElementById("aboutTitle").textContent = t("about.title");

@@ -92,7 +92,7 @@ As of v2.17.1. World units; the whole system spans about ±1200.
 | Eating orbit | body radius + 1.6 | `EAT_ORBIT_GAP` (`ships/swarm.js`) |
 | Drone dock / attack range | body radius + 4 | `DRONE_DOCK_GAP` (`drone/drone.js`) |
 | Ship pick sphere / selection ring | 0.4 / 0.26–0.31 | `ships/swarm.js#makeShipMesh` |
-| Ship LOD (model ↔ cone) | 30 from the camera | `SHIP_LOD_DISTANCE` |
+| Ship LOD (model ↔ far stand-in) | 60 from the camera by default, adjustable | Setup → Graphics (`gfxLodDistance`; was `SHIP_LOD_DISTANCE` 30) |
 | Drone ring / pick sphere | 0.68–0.75 / 0.5 × drone length | `drone/drone.js` |
 | Station pick sphere / selection | 1.7 | `STATION_PICK_RADIUS` |
 | Station field (no gravity; no pull-back since v2.19.0) | 8 | `STATION_FIELD_RADIUS` |

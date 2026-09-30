@@ -51,8 +51,21 @@
   background:linear-gradient(180deg,#b8c5ff,#5f77f7 55%,#3a50d2); box-shadow:0 0 6px rgb(95 119 247 / .7), inset 0 1px 1px rgb(255 255 255 / .5); }
 .gfxSlider::-moz-range-thumb{ width:30px; height:20px; border-radius:4px 10px 10px 4px; border:0;
   background:linear-gradient(180deg,#b8c5ff,#5f77f7 55%,#3a50d2); box-shadow:0 0 6px rgb(95 119 247 / .7); }
-#setupModal #setupTabGraphics .setupCheckRow{ font-size:16px; }
-#gfxSoon{ left:0; width:428px; font-size:13px; line-height:17px; color:#93a6ff; }
+/* Graphics: a scrolling list of sections in normal flow (not the other
+   tabs' absolute layout) */
+#setupTabGraphics{ overflow-y:auto; overflow-x:hidden; padding-right:10px; box-sizing:border-box; width:438px; }
+#setupTabGraphics > *, #setupTabGraphics .gfxSec *{ position:relative; }
+#setupTabGraphics .gfxSec{ padding:4px 0 10px; margin-bottom:6px; border-bottom:1px solid #16205a; }
+#setupTabGraphics .gfxRow{ width:100%; align-items:center; min-height:26px; }
+#setupTabGraphics .gfxSlider{ display:block; width:100%; margin:2px 0 4px; }
+#setupTabGraphics .gfxTicks{ width:100%; margin-bottom:2px; }
+#setupModal #setupTabGraphics .setupCheckRow{ position:relative; top:auto; font-size:16px; margin:4px 0; }
+#setupModal #setupTabGraphics .setupCheckRow .chk::after{ position:absolute; }
+#setupTabGraphics .gfxNote{ font-size:12.5px; line-height:16px; color:#7f8fd6; margin-top:2px; }
+.gfxSeg{ display:flex; gap:3px; }
+.gfxSeg button{ font-family:var(--uiFontLabel); font-size:12.5px; letter-spacing:.4px; padding:3px 10px; border-radius:5px;
+  border:1.5px solid #3c55d8; background:#050d33; color:#9fb1ff; cursor:pointer; }
+.gfxSeg button.on{ border-color:#f5bd5c; color:#ffe2a8; box-shadow:0 0 6px rgb(245 189 92 / .4); }
 /* Privacy tab (ui/privacy.js) */
 #privacyText{ left:0; top:2px; width:428px; font-size:15px; line-height:21px; color:#c7d0ff; }
 #privacyPolicyLink{ left:0; top:96px; font-size:16px; color:#9fb1ff; text-decoration:none; border-bottom:1px solid #3c55d8; }

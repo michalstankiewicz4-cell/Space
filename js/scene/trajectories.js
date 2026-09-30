@@ -1,5 +1,6 @@
 import { ctx } from "../core/context.js";
 import { camState } from "./controls.js";
+import { makeLineMaterial, makeLine, onLinesChange, disposeLineMaterial } from "./lines.js";
 import { predictCurrentPath, predictProgramPath } from "../program/simulate.js";
 import { activeProgramSource } from "../program/unitPrograms.js";
 import { bodyPosAt, nowSimTime, SOLAR_BODY_BY_SLOT } from "../world/solarSystem.js";
@@ -26,34 +27,32 @@ const MAX_TRACKED = 12;         // a safety cap (planets can be multi-selected)
 // an arc drawn on top would otherwise cut across a planet's miniature.
 const TRAJECTORY_LAYER = 2;
 
-const pool = [];                // THREE.Line objects, reused
-const materials = {};           // one per kind, shared (scene/colorManagement.js converts each once)
+const live = [];                // the line objects shown now (rebuilt each refresh)
+let materials = {};             // one per kind, shared (scene/colorManagement.js converts each once)
 let shownKey = "", sinceRefresh = 0;
 
 // `overOrbit`: a body's arc lies exactly on its orbit line
 // (scene/orbitLines.js) — depth-tested, the two lines z-fight and the arc
-// shows up broken and faint, so it's drawn on top instead.
+// shows up broken and faint, so it's drawn on top instead. Plain or smooth
+// lines per Setup -> Graphics (scene/lines.js).
 function material(color, overOrbit){
   const key = color + (overOrbit ? "o" : "");
-  if(!materials[key]) materials[key] = new THREE.LineBasicMaterial({
-    color: color, transparent: true, opacity: 0.9, depthWrite: false, depthTest: !overOrbit, fog: false,
-    toneMapped: false    // full color, not dimmed by the filmic tone mapping
-  });
+  if(!materials[key]) materials[key] = makeLineMaterial({ color: color, opacity: 0.9, depthTest: !overOrbit,
+    toneMapped: false });   // full color, not dimmed by the filmic tone mapping
   return materials[key];
 }
 
-function lineAt(i){
-  if(pool[i]) return pool[i];
-  const line = new THREE.Line(new THREE.BufferGeometry(), material(CURRENT_COLOR));
-  line.frustumCulled = false;
-  line.visible = false;
-  line.renderOrder = 5;
-  line.layers.set(TRAJECTORY_LAYER);
-  ctx.camera.layers.enable(TRAJECTORY_LAYER);
-  ctx.scene.add(line);
-  pool[i] = line;
-  return line;
+function clearLines(){
+  live.forEach(function(l){ ctx.scene.remove(l); l.geometry.dispose(); });
+  live.length = 0;
 }
+
+onLinesChange(function(){
+  clearLines();
+  Object.keys(materials).forEach(function(k){ disposeLineMaterial(materials[k]); });
+  materials = {};
+  shownKey = "";            // rebuilt on the next frame
+});
 
 function isUnit(obj){ return obj === ctx.drone || ctx.ships.indexOf(obj) >= 0; }
 
@@ -108,19 +107,19 @@ function pathsFor(obj){
 }
 
 function refresh(list){
-  let n = 0;
+  clearLines();
   list.forEach(function(obj){
     pathsFor(obj).forEach(function(path){
       if(!path.points || path.points.length < 2) return;
-      const line = lineAt(n++);
-      line.geometry.dispose();
-      line.geometry = new THREE.BufferGeometry().setFromPoints(path.points);
-      line.material = material(path.color, path.overOrbit);
+      const line = makeLine(path.points, material(path.color, path.overOrbit));
+      line.frustumCulled = false;
       line.renderOrder = path.overOrbit ? 999 : 5;
-      line.visible = true;
+      line.layers.set(TRAJECTORY_LAYER);
+      ctx.camera.layers.enable(TRAJECTORY_LAYER);
+      ctx.scene.add(line);
+      live.push(line);
     });
   });
-  for(let i = n; i < pool.length; i++) pool[i].visible = false;
 }
 
 export function updateTrajectories(dt){

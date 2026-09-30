@@ -30,6 +30,7 @@ then read just that range.
 - [Space station](#space-station)
 - [UI kit (start screen and setup modal)](#ui-kit-start-screen-and-setup-modal)
 - [Skin lab](#skin-lab)
+- [Image quality (Setup → Graphics)](#image-quality-setup--graphics)
 - [Research trees](#research-trees)
 - [In-game HUD](#in-game-hud)
 - [Load order and first paint](#load-order-and-first-paint)
@@ -1124,6 +1125,41 @@ game, skins by race vs. by the player) is in
 ` inside the string — a real line break
   there is a syntax error that silently leaves a non-English start panel
   blank (it happened once).
+
+## Image quality (Setup → Graphics)
+
+v2.21.0, the user's request ("everything, each with on/off / adjust /
+manual / auto"). All settings in `settings.js` (`gfxResMode`,
+`gfxTargetFps`, `gfxMaxRes`, `gfxSmoothLines`, `gfxLineWidth`,
+`gfxFarShips`, `gfxLodDistance`, `gfxFxaa`), read through
+`scene/graphics.js` getters, changed with `setGfx(patch)` (listeners get
+the values from before). The Setup tab is a scrolling list; controls with
+`data-key` are bound generically in `ui/setupModal.js#initImageQuality`.
+
+- **Resolution** (`scene/resolution.js`, called every frame before the main
+  render): manual = `pixelRatioFor(gfxQuality)`; auto = starts at the
+  screen density, every 1.5 s +0.1 while fps > 1.2 × target, −0.15 when
+  below 0.92 × target (not in the first 6 s: shader compiles), between 0.6
+  and density × `gfxMaxRes` (above 1 = supersampling). The pixel ratio
+  only changes in steps (it reallocates the drawing buffer).
+  `scene/setup.js` no longer sets it after startup.
+- **Smooth lines** (`scene/lines.js`): `makeLineMaterial(spec)` /
+  `makeLine(points, mat)` give Line2 + LineMaterial (vendor add-ons) or a
+  plain `THREE.Line`; `setLineResolution()` runs before every render pass
+  (`viewRect.js`); `onLinesChange(fn)` rebuilds a caller's lines when the
+  mode changes (width changes apply live). Used by `orbitLines.js`
+  (orbits, comet paths — a live comet keeps its old line until the next)
+  and `trajectories.js` (lines recreated each refresh).
+- **Far ships** (`ships/shipVisual.js#makeFar`): "dot" — an additive glow
+  sprite, constant screen size; "cone" — the old stand-in; "model" — no
+  stand-in, always the model. The distance is `gfxLodDistance` (was the
+  constant `SHIP_LOD_DISTANCE`, removed).
+- **FXAA** (`viewRect.js#renderWithFxaa`): the main view renders into an
+  offscreen target the size of the view rect (multisampled on WebGL2),
+  whose texture is sRGB — so the scene writes its final tone-mapped
+  colours into it — then a quad with `THREE.FXAAShader` copies it to the
+  view rect. Verified: colours identical with it on and off. The
+  miniatures and the cockpit view don't go through it.
 
 ## Research trees
 

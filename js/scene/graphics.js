@@ -36,6 +36,18 @@ export function gfxParticles(){ return QUALITY[gfxQuality()].particles; }
 
 export function gfxUnitLights(){ return settings.gfxUnitLights === true; }
 
+// Image quality (the second half of Setup -> Graphics): each one on/off,
+// adjustable, and — for resolution — automatic or manual.
+function num(v, lo, hi, def){ v = Number(v); return v >= lo && v <= hi ? v : def; }
+export function gfxResMode(){ return settings.gfxResMode === "manual" ? "manual" : "auto"; }
+export function gfxTargetFps(){ return num(settings.gfxTargetFps, 20, 240, 60); }
+export function gfxMaxRes(){ return num(settings.gfxMaxRes, 0.5, 2, 1.5); }
+export function gfxSmoothLines(){ return settings.gfxSmoothLines !== false; }
+export function gfxLineWidth(){ return num(settings.gfxLineWidth, 1, 4, 1.5); }
+export function gfxFarShips(){ return ["dot", "cone", "model"].indexOf(settings.gfxFarShips) >= 0 ? settings.gfxFarShips : "dot"; }
+export function gfxLodDistance(){ return num(settings.gfxLodDistance, 10, 300, 60); }
+export function gfxFxaa(){ return settings.gfxFxaa === true; }
+
 export function pixelRatioFor(level){
   const dpr = window.devicePixelRatio || 1;
   return [0.5, 0.75, 1, Math.max(1, Math.min(dpr, 2)), Math.min(Math.max(1, dpr) * 1.5, 3)][level];
@@ -43,7 +55,19 @@ export function pixelRatioFor(level){
 
 export function onGraphicsChange(fn){ listeners.push(fn); }
 
-function snapshot(){ return { quality: gfxQuality(), detail: gfxDetail(), unitLights: gfxUnitLights() }; }
+function snapshot(){
+  return { quality: gfxQuality(), detail: gfxDetail(), unitLights: gfxUnitLights(), resMode: gfxResMode(),
+    smoothLines: gfxSmoothLines(), lineWidth: gfxLineWidth(), farShips: gfxFarShips(), lodDistance: gfxLodDistance(), fxaa: gfxFxaa() };
+}
+
+// Any of the settings above: setGfx({ gfxLineWidth: 2 }) — saved, then
+// every onGraphicsChange listener gets the values from before.
+export function setGfx(patch){
+  const before = snapshot();
+  Object.keys(patch).forEach(function(k){ settings[k] = patch[k]; });
+  saveSettings();
+  listeners.forEach(function(fn){ fn(before); });
+}
 
 export function setGraphics(quality, detail){
   const before = snapshot();

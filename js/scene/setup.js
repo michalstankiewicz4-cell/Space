@@ -1,4 +1,4 @@
-import { gfxQuality, pixelRatioFor, onGraphicsChange } from "./graphics.js";
+import { gfxQuality, pixelRatioFor } from "./graphics.js";
 import { ctx } from "../core/context.js";
 import { addSkybox } from "./skybox.js";
 import { addOrbitLines } from "./orbitLines.js";
@@ -23,11 +23,9 @@ export function initScene(){
   // rather than a visibly faceted nearby shape (see skybox.js's own note).
   const camera = new THREE.PerspectiveCamera(52, window.innerWidth/window.innerHeight, 0.1, 12000);
   const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
+  // the starting resolution; from then on scene/resolution.js keeps it
+  // (manual: the quality slider, auto: following the frame rate)
   renderer.setPixelRatio(pixelRatioFor(gfxQuality()));
-  onGraphicsChange(function(){
-    renderer.setPixelRatio(pixelRatioFor(gfxQuality()));
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x05060a, 1);
   // Rendered like the ship/body labs (ship.html, bodies.html): sRGB output,

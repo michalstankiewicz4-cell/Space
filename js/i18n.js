@@ -50,6 +50,14 @@ const STRINGS = {
       geometryDetail: "Geometry detail (triangles)",
       unitLights: "Ship glow lights (slower)",
       qualityLevels: ["LOW", "MED", "HIGH", "ULTRA", "MAX"],
+      gfx: {
+        res: "Resolution", targetFps: "Target frame rate", maxRes: "Highest resolution (× screen)",
+        resNow: function(pr, dpr){ return "Now: ×" + (pr / dpr).toFixed(2) + " of the screen's pixels" + (pr / dpr > 1.01 ? " — supersampling" : ""); },
+        smoothLines: "Smooth lines (orbits, trajectories)", lineWidth: "Line width",
+        farShips: "Far ships", lodDistance: "…farther than (distance)",
+        fxaa: "FXAA (smooths the whole view)", fxaaNote: "Also smooths thin lines and fine planet detail; slightly softer image.",
+        seg: { auto: "AUTO", manual: "MANUAL", dot: "DOT", cone: "CONE", model: "MODEL" }
+      },
       graphicsSoon: "Render quality sets the resolution and effects; geometry detail sets how finely the ships are built."
     },
     about: {
@@ -450,6 +458,14 @@ const STRINGS = {
       geometryDetail: "Szczegółowość geometrii (trójkąty)",
       unitLights: "Światła punktowe statków (wolniej)",
       qualityLevels: ["NISKA", "ŚREDNIA", "WYSOKA", "ULTRA", "MAX"],
+      gfx: {
+        res: "Rozdzielczość", targetFps: "Docelowe klatki", maxRes: "Najwyższa rozdzielczość (× ekran)",
+        resNow: function(pr, dpr){ return "Teraz: ×" + (pr / dpr).toFixed(2) + " pikseli ekranu" + (pr / dpr > 1.01 ? " — nadpróbkowanie" : ""); },
+        smoothLines: "Gładkie linie (orbity, trajektorie)", lineWidth: "Grubość linii",
+        farShips: "Dalekie statki", lodDistance: "…dalej niż (odległość)",
+        fxaa: "FXAA (wygładza cały widok)", fxaaNote: "Wygładza też cienkie linie i drobne detale planet; obraz nieco miększy.",
+        seg: { auto: "AUTO", manual: "RĘCZNA", dot: "PUNKT", cone: "STOŻEK", model: "MODEL" }
+      },
       graphicsSoon: "Jakość renderowania ustawia rozdzielczość i efekty; szczegółowość — jak dokładnie zbudowane są statki."
     },
     about: {

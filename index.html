@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.20.1">
+<link rel="stylesheet" href="css/style.css?v=2.21.0">
 </head>
 <body>
 
@@ -225,16 +225,51 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
         <label class="setupCheckRow"><input type="checkbox" id="swapButtonsCheck"><span class="chk"></span><span id="swapButtonsLabel">Swap left/right mouse button</span></label>
       </div>
 
-      <!-- The same two sliders as the ship lab (ship.html); see scene/graphics.js. -->
+      <!-- Graphics (scene/graphics.js): a scrolling list of sections. Controls
+           with data-key are bound generically by ui/setupModal.js to that
+           setting; data-val shows a setting's value. -->
       <div id="setupTabGraphics" class="setupTabPanel hidden" data-tab="graphics">
-        <label class="gfxRow" id="gfxQualityRow" style="top:0"><span id="gfxQualityLabel">Render quality</span><b id="gfxQualityVal">ULTRA</b></label>
-        <input type="range" class="gfxSlider" id="gfxQualitySlider" style="top:24px; --fill:75%" min="0" max="4" step="1" value="3">
-        <div class="gfxTicks" id="gfxQualityTicks" style="top:48px"><span>LOW</span><span>MED</span><span>HIGH</span><span>ULTRA</span><span>MAX</span></div>
-        <label class="gfxRow" style="top:72px"><span id="gfxDetailLabel">Geometry detail (triangles)</span><b id="gfxDetailVal">100%</b></label>
-        <input type="range" class="gfxSlider" id="gfxDetailSlider" style="top:96px; --fill:44.4%" min="0.2" max="2" step="0.05" value="1">
-        <div class="gfxTicks" style="top:120px"><span>20%</span><span>100%</span><span>200%</span></div>
-        <label class="setupCheckRow" style="top:148px"><input type="checkbox" id="unitLightsCheck"><span class="chk"></span><span id="unitLightsLabel">Ship glow lights</span></label>
-        <div id="gfxSoon" style="top:184px">Coming soon</div>
+        <div class="gfxSec">
+          <div class="gfxRow"><span id="gfxResLabel">Resolution</span>
+            <div class="gfxSeg" data-key="gfxResMode"><button type="button" data-v="auto">AUTO</button><button type="button" data-v="manual">MANUAL</button></div></div>
+          <div id="gfxResAuto">
+            <div class="gfxRow"><span id="gfxTargetFpsLabel">Target frame rate</span><b data-val="gfxTargetFps"></b></div>
+            <input type="range" class="gfxSlider" data-key="gfxTargetFps" data-list="30,45,60,90,120,144" min="0" max="5" step="1">
+            <div class="gfxRow"><span id="gfxMaxResLabel">Highest resolution</span><b data-val="gfxMaxRes"></b></div>
+            <input type="range" class="gfxSlider" data-key="gfxMaxRes" min="0.5" max="2" step="0.1">
+            <div class="gfxNote" id="gfxResNow"></div>
+          </div>
+          <div id="gfxResManual">
+            <div class="gfxRow"><span id="gfxQualityLabel">Render quality</span><b id="gfxQualityVal">ULTRA</b></div>
+            <input type="range" class="gfxSlider" id="gfxQualitySlider" min="0" max="4" step="1" value="3">
+            <div class="gfxTicks" id="gfxQualityTicks"><span>LOW</span><span>MED</span><span>HIGH</span><span>ULTRA</span><span>MAX</span></div>
+          </div>
+        </div>
+        <div class="gfxSec">
+          <div class="gfxRow"><span id="gfxDetailLabel">Geometry detail (triangles)</span><b id="gfxDetailVal">100%</b></div>
+          <input type="range" class="gfxSlider" id="gfxDetailSlider" min="0.2" max="2" step="0.05" value="1">
+          <div class="gfxTicks"><span>20%</span><span>100%</span><span>200%</span></div>
+          <label class="setupCheckRow"><input type="checkbox" id="unitLightsCheck"><span class="chk"></span><span id="unitLightsLabel">Ship glow lights</span></label>
+        </div>
+        <div class="gfxSec">
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxSmoothLines"><span class="chk"></span><span id="gfxSmoothLinesLabel">Smooth lines</span></label>
+          <div id="gfxLineWidthBox">
+            <div class="gfxRow"><span id="gfxLineWidthLabel">Line width</span><b data-val="gfxLineWidth"></b></div>
+            <input type="range" class="gfxSlider" data-key="gfxLineWidth" min="1" max="3" step="0.25">
+          </div>
+        </div>
+        <div class="gfxSec">
+          <div class="gfxRow"><span id="gfxFarShipsLabel">Far ships</span>
+            <div class="gfxSeg" data-key="gfxFarShips"><button type="button" data-v="dot">DOT</button><button type="button" data-v="cone">CONE</button><button type="button" data-v="model">MODEL</button></div></div>
+          <div id="gfxLodBox">
+            <div class="gfxRow"><span id="gfxLodLabel">…farther than</span><b data-val="gfxLodDistance"></b></div>
+            <input type="range" class="gfxSlider" data-key="gfxLodDistance" min="15" max="200" step="5">
+          </div>
+        </div>
+        <div class="gfxSec">
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxFxaa"><span class="chk"></span><span id="gfxFxaaLabel">FXAA</span></label>
+          <div class="gfxNote" id="gfxFxaaNote"></div>
+        </div>
       </div>
 
       <!-- Setup -> Privacy (ui/privacy.js): the policy and "Delete my data". -->
@@ -669,6 +704,15 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
 <div id="cmdFlash"></div>
 
 <script defer src="vendor/three-r128.min.js"></script>
+<!-- Three.js r128 add-ons (examples/js, MIT): anti-aliased thick lines for
+     orbits and trajectories (scene/lines.js) and the FXAA shader
+     (scene/viewRect.js) — Setup -> Graphics. -->
+<script defer src="vendor/three-r128-examples/LineSegmentsGeometry.js"></script>
+<script defer src="vendor/three-r128-examples/LineGeometry.js"></script>
+<script defer src="vendor/three-r128-examples/LineMaterial.js"></script>
+<script defer src="vendor/three-r128-examples/LineSegments2.js"></script>
+<script defer src="vendor/three-r128-examples/Line2.js"></script>
+<script defer src="vendor/three-r128-examples/FXAAShader.js"></script>
 <!-- ShipKit: procedural ship models, the same file the ship lab (ship.html) uses -->
 <script defer src="js/shipkit/shipkit.js"></script>
 <script defer src="js/bodykit/bodykit.js"></script>
@@ -678,7 +722,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.20.1"></script>
+<script type="module" src="js/main.js?v=2.21.0"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

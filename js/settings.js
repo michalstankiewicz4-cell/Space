@@ -9,7 +9,16 @@ const DEFAULTS = {
   swapMouseButtons: false,
   gfxQuality: 3,  // render quality 0..4 (see scene/graphics.js)
   gfxDetail: 1,   // ship geometry detail 0.2..2
-  gfxUnitLights: false // a PointLight at every ship (costly; see scene/graphics.js)
+  gfxUnitLights: false, // a PointLight at every ship (costly; see scene/graphics.js)
+  // image quality (Setup -> Graphics, scene/graphics.js)
+  gfxResMode: "auto",   // "auto": resolution follows the frame rate (scene/resolution.js) | "manual": gfxQuality
+  gfxTargetFps: 60,     // auto: the frame rate to hold
+  gfxMaxRes: 1.5,       // auto: the highest resolution, × the screen's pixel density
+  gfxSmoothLines: true, // orbits/trajectories as anti-aliased thick lines (scene/lines.js)
+  gfxLineWidth: 1.5,    // their width in pixels
+  gfxFarShips: "dot",   // far ships: "dot" (a glow) | "cone" (the old stand-in) | "model" (always the full model)
+  gfxLodDistance: 60,   // …beyond this distance from the camera
+  gfxFxaa: false        // FXAA over the main view (scene/viewRect.js)
 };
 
 function load(){

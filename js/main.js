@@ -45,6 +45,7 @@ import { updateLightMarkers } from "./scene/lightMarkers.js";
 import { updateDistanceLines } from "./scene/planetDistanceLines.js";
 import { updateLightsToggle } from "./scene/lightsToggle.js";
 import { updateTrajectories } from "./scene/trajectories.js";
+import { updateResolution } from "./scene/resolution.js";
 
 load();
 
@@ -163,6 +164,7 @@ function tick(){
   // unit/planet miniatures) into their own panels' rects — all on the same
   // full-window canvas (see scene/viewRect.js).
   perfRenderStart();
+  updateResolution();           // manual quality, or auto: following the frame rate
   renderMainView();
   updateShipCam();
   renderShipCamPIP();

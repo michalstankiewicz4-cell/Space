@@ -1,11 +1,12 @@
 import { ctx } from "../core/context.js";
-import { gfxDetail, gfxParticles, onGraphicsChange } from "../scene/graphics.js";
-import { SHIP_MODEL_LENGTH, SHIP_LOD_DISTANCE } from "../config.js";
+import { gfxDetail, gfxParticles, onGraphicsChange, gfxFarShips, gfxLodDistance } from "../scene/graphics.js";
+import { SHIP_MODEL_LENGTH } from "../config.js";
 
 // A swarm ship's look, shared by the player's own ships (ships/swarm.js)
 // and other players' ghosts (net/shipsBroadcast.js): ShipKit's SW-01
-// SWARMER (js/shipkit/shipkit.js, the ship lab's model) up close, and the
-// old light teal cone further than SHIP_LOD_DISTANCE from the camera —
+// SWARMER (js/shipkit/shipkit.js, the ship lab's model) up close, and a
+// stand-in further than Setup's far-ship distance from the camera (a glow
+// dot by default, see makeFar()) —
 // in this solar system's scale ships are specks most of the time, and a
 // few dozen full models would cost far more than they show. The model is
 // built only the first time it's needed (merged static meshes, effects in
@@ -44,6 +45,10 @@ export function makeOwnerMarker(colorHex, y){
   return marker;
 }
 
+// The far stand-in (Setup -> Graphics -> Far ships): "dot" — a small glow,
+// the same size on screen at any distance (a ship far away is a light, not
+// a shape); "cone" — the old teal cone; "model" — none, the full model is
+// always shown (gfxLodDistance is ignored).
 function makeCone(){
   const mat = new THREE.MeshStandardMaterial({ color: 0x4fe3c6, emissive: 0x1fae95, emissiveIntensity: 0.9, roughness: 0.35, metalness: 0.4 });
   const cone = new THREE.Mesh(new THREE.ConeGeometry(0.31 * SHIP_MODEL_LENGTH, SHIP_MODEL_LENGTH, 8), mat);
@@ -51,12 +56,47 @@ function makeCone(){
   return cone;
 }
 
+let glowTex = null;
+function glowTexture(){
+  if(glowTex) return glowTex;
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const g = c.getContext("2d");
+  const grd = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grd.addColorStop(0, "rgba(255,255,255,1)"); grd.addColorStop(0.18, "rgba(200,255,245,.95)");
+  grd.addColorStop(0.45, "rgba(79,227,198,.45)"); grd.addColorStop(1, "rgba(79,227,198,0)");
+  g.fillStyle = grd; g.fillRect(0, 0, 64, 64);
+  glowTex = new THREE.CanvasTexture(c);
+  glowTex.encoding = THREE.sRGBEncoding;
+  return glowTex;
+}
+
+function makeDot(){
+  const dot = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), sizeAttenuation: false, transparent: true,
+    depthWrite: false, blending: THREE.AdditiveBlending }));
+  dot.scale.set(0.011, 0.011, 1);
+  dot.userData.shipkit = true;   // the texture's colours as painted (scene/colorManagement.js)
+  return dot;
+}
+
+function makeFar(){
+  const kind = gfxFarShips();
+  return kind === "cone" ? makeCone() : kind === "dot" ? makeDot() : null;
+}
+
+function disposeFar(o){
+  if(!o) return;
+  if(o.parent) o.parent.remove(o);
+  if(o.geometry && !o.isSprite) o.geometry.dispose();
+  o.material.dispose();
+}
+
 // opts: { remote: true, markerColor: "#rrggbb" } for another player's ship
 export function makeShipVisual(opts){
   const remote = !!(opts && opts.remote);
   const root = new THREE.Group();
-  const cone = makeCone();
-  root.add(cone);
+  let far = makeFar();
+  if(far) root.add(far);
   let marker = null;
   if(remote && opts.markerColor){
     marker = makeOwnerMarker(opts.markerColor, SHIP_MODEL_LENGTH * 0.75);
@@ -79,11 +119,18 @@ export function makeShipVisual(opts){
       ShipKit.disposeShipModel(v.model);
       v.model = v.holder = null;
     },
+    // the far stand-in changed in Setup
+    rebuildFar: function(){
+      disposeFar(far);
+      far = makeFar();
+      if(far) root.add(far);
+    },
     update: function(dt){
       root.getWorldPosition(here);
-      v.near = v.forceDetail || here.distanceTo(camPos) < SHIP_LOD_DISTANCE;
+      const lod = gfxFarShips() === "model" ? Infinity : gfxLodDistance();
+      v.near = v.forceDetail || here.distanceTo(camPos) < lod;
       if(v.near && !v.model) v.build();
-      cone.visible = !v.near;
+      if(far) far.visible = !v.near;
       if(v.holder) v.holder.visible = v.near;
       // eased engine power, also far away (the ship's glow light follows it)
       v.throttle += (v.power - v.throttle) * Math.min(1, dt * 3);
@@ -93,6 +140,7 @@ export function makeShipVisual(opts){
     // Ship removed normally (fleet resized, player left): free everything.
     dispose: function(){
       v.dropModel();
+      disposeFar(far);
       all.delete(v);
       if(marker) marker.material.dispose();
     },
@@ -131,6 +179,7 @@ export function updateShipVisuals(dt){
 
 // Geometry detail changed: drop the models, they rebuild on next use.
 onGraphicsChange(function(before){
+  if(before.farShips !== gfxFarShips()) all.forEach(function(v){ v.rebuildFar(); });
   if(before.detail === gfxDetail()) return;
   all.forEach(function(v){ v.dropModel(); });
 });

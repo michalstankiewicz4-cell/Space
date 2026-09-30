@@ -63,7 +63,6 @@ export const DRONE_MAX_FUEL = 100;
 // one. Everything sized around a unit (rings, pick spheres, labels, the ship
 // cam, the base camera) follows these lengths.
 export const SHIP_MODEL_LENGTH = 0.45;  // the swarm ship model's length
-export const SHIP_LOD_DISTANCE = 30;    // closer than this to the camera: full model, else the light cone
 // Ship glow light (Setup -> Graphics, off by default), brightness following
 // the engine power. Two parts: the scene light behind the engines lights
 // only the ship's own hull and its closest neighbours (short and weak —
