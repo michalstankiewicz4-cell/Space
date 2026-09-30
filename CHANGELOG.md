@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.25.3]
+
+### Changed
+- Presets no longer switch the ship glow lights: turning them on or off
+  recompiles every lit material (a hitch), which AUTO could have caused
+  mid-game. They stay a manual option, and switching them by hand keeps
+  the chosen preset.
+
 ## [2.25.2]
 
 ### Changed

@@ -93,8 +93,9 @@ export function setGraphics(quality, detail){
   setGfx({ gfxQuality: quality, gfxDetail: detail });
 }
 
+// Not part of any preset (see below), so it doesn't make the preset "custom".
 export function setUnitLights(on){
-  setGfx({ gfxUnitLights: !!on });
+  setGfx({ gfxUnitLights: !!on }, true);
 }
 
 // Presets (the top of Setup -> Graphics): MIN / NORMAL / MAX set everything
@@ -102,15 +103,17 @@ export function setUnitLights(on){
 // scene/resolution.js moves it a tier down when even the lowest resolution
 // can't hold the frame rate, or up when the highest one runs with plenty
 // to spare (gfxAutoTier: the tier it's on). Changing any single setting by
-// hand makes it "custom" (none lit).
+// hand makes it "custom" (none lit). Presets never touch the ship glow
+// lights (gfxUnitLights): switching them recompiles every lit material —
+// a hitch AUTO must not cause mid-game — so they stay a manual choice.
 const TIERS = {
-  min: { gfxQuality: 1, gfxDetail: 0.5, gfxUnitLights: false, gfxMsaa: 0, gfxFxaa: true, gfxSmoothLines: false,
+  min: { gfxQuality: 1, gfxDetail: 0.5, gfxMsaa: 0, gfxFxaa: true, gfxSmoothLines: false,
     gfxFarShips: "dot", gfxLodDistance: 30, gfxBloom: false, gfxLensing: false, gfxFlare: false, gfxFilter: false,
     gfxDof: false, gfxTrails: false, gfxEclipses: false, gfxBiteFx: false },
-  normal: { gfxQuality: 3, gfxDetail: 1, gfxUnitLights: false, gfxMsaa: 4, gfxFxaa: false, gfxSmoothLines: true,
+  normal: { gfxQuality: 3, gfxDetail: 1, gfxMsaa: 4, gfxFxaa: false, gfxSmoothLines: true,
     gfxFarShips: "dot", gfxLodDistance: 60, gfxBloom: true, gfxLensing: true, gfxFlare: true, gfxFilter: true,
     gfxDof: true, gfxTrails: true, gfxEclipses: true, gfxBiteFx: true },
-  max: { gfxQuality: 4, gfxDetail: 1.5, gfxUnitLights: true, gfxMsaa: 8, gfxFxaa: true, gfxSmoothLines: true,
+  max: { gfxQuality: 4, gfxDetail: 1.5, gfxMsaa: 8, gfxFxaa: true, gfxSmoothLines: true,
     gfxFarShips: "dot", gfxLodDistance: 150, gfxBloom: true, gfxLensing: true, gfxFlare: true, gfxFilter: true,
     gfxDof: true, gfxTrails: true, gfxEclipses: true, gfxBiteFx: true }
 };

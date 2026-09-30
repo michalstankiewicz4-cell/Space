@@ -1208,7 +1208,9 @@ the values from before). The Setup tab is a scrolling list; controls with
   (max ×1.5); `resolution.js#autoTier` steps `gfxAutoTier` down after 6 s
   at the lowest resolution below 0.9 × target fps, up after 20 s at the
   highest above 1.3 × — only the effects change, the resolution stays
-  automatic, and each step restarts the warm-up.
+  automatic, and each step restarts the warm-up. Presets never set
+  `gfxUnitLights` (v2.25.3): a light-count change recompiles every lit
+  material — a mid-game hitch if AUTO did it.
 - **Layout** (v2.25.2): the tab is grouped (`.gfxHd` headers: picture &
   sharpness, models, light, effects, camera — the preset on top); every
   option has a `.gfxCost` [?] badge, `data-cost` low/mid/high (colour)
