@@ -1279,7 +1279,9 @@ layer 3 themselves, so they still show orbits. **Sensitivity**:
 zoom steps in `controls.js`. **"Coming soon" tooltips**: `ui/soonTip.js`, one
 pointermove listener using `elementsFromPoint` (disabled buttons get no
 mouse events of their own); selector `SOON`; the native titles those
-controls had are gone. **Help**: Setup → Help uses the wide window
+controls had are gone. The same module explains a locked ENTER ORBIT once
+loading is done (`startBlocked`: no nickname, or the privacy policy not
+accepted — the two things `banner.js#updateStartEnabled` waits for). **Help**: Setup → Help uses the wide window
 (`i18n setup.controls`, app-authored HTML) — update it when a control changes.
 
 ## Research trees

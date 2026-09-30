@@ -89,7 +89,8 @@ js/
                      "Space station" below
   ui/                the start screen (banner.js, its live player counters in playerCounts.js,
                      the About window in about.js, the loading bar in its button: loader.js), the Setup modal (setupModal.js), the global
-                     Escape-key chain (escapeKey.js), all static UI text (i18nApply.js), HUD icons
+                     Escape-key chain (escapeKey.js), "coming soon" and locked-start tooltips
+                     (soonTip.js), key C interface modes (hud/uiMode.js), all static UI text (i18nApply.js), HUD icons
                      (icons.js), and:
     hud/             the in-game HUD, one module per panel (topBar, nav, fleetList, unitPanel,
                      infoPanel + planetPanel/stationPanel, eventLog, connectionStatus, minimap,
