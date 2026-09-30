@@ -50,6 +50,9 @@ js/
                      (viewRect.js, unitThumb.js, infoThumb.js), mouse controls/selection, hover tooltip,
                      ship cam (picture-in-picture cockpit view, ships and the drone),
                      trajectory lines of the object in view + the selected ones (trajectories.js),
+                     image quality (Setup → Graphics): graphics.js (settings, presets), resolution.js
+                     (auto resolution, AUTO preset's tier), lines.js (smooth lines), post.js (settings →
+                     PostKit), eclipse.js (planets shading ships/drone/station),
                      the sky backdrop (skybox.js, BodyKit's SKY: nebulae, stars, pulsars),
                      the 9 fixed orbit lines + each comet's own trajectory line (orbitLines.js)
   world/             celestial body logic — the 9-orbit solar system's fixed bodies
@@ -62,7 +65,8 @@ js/
                      Only comets are still randomly rolled; the other 6 are each one fixed,
                      hand-placed body in the solar system (see docs/architecture.md)
   content.js         aggregates js/bodies/ into one place the game reads from
-  fx/                particles, debris, shockwaves, dust — planet-breakup effects
+  fx/                particles (incl. cooling bite sparks), debris, shockwaves, dust — planet-breakup
+                     effects; engine trails (trails.js), the bite beam's hot spot (impact.js)
   ships/             player's ship swarm (movement, eating, bite-beam; shipProgram.js: a ship
                      flown by its program)
   drone/             the programmable drone — its own DSL (dsl.js), a generator-based

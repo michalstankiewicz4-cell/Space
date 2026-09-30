@@ -110,3 +110,31 @@ paints **nothing** for that gradient — the traces to the nodes straight
 above/beside their parent showed only their thin edge and core. Use a
 flat colour, or `gradientUnits="userSpaceOnUse"` with coordinates.
 
+## Post-processing and shading lessons (v2.23–v2.25)
+
+Found while building the image effects (`js/postkit/postkit.js`,
+`js/scene/eclipse.js`):
+
+- **Bloom works on the tone-mapped LDR picture.** The Sun and a sunlit
+  ice planet both reach ~0.95–1.0 there, so a low threshold turns bright
+  planets into white blobs. Kept: threshold 0.93 with a narrow 0.06 ramp
+  (`smoothWidth`); proper selective bloom would need HDR targets or a
+  bloom layer.
+- **Screen-space lensing must not warp the black hole itself.** Warping
+  BodyKit's disk and photon ring (already drawn lensed) made a bullseye;
+  the hole is hidden for the scene pass and drawn over the warp.
+- **Darkening only direct light does nothing to ShipKit models**: they
+  get most of their light from the environment map
+  (`envMapIntensity` 2). The eclipse also scales indirect light (to 30 %).
+- **`onBeforeCompile` needs a matching `customProgramCacheKey`.** r128's
+  default key is the hook's source text — a shared wrapper around
+  different original hooks would make materials share a wrong program;
+  the wrapper keeps the original key plus a suffix.
+- **Several render passes per frame zero `renderer.info`** each time
+  (autoReset): the labs set `autoReset = false` and reset it once per
+  frame, or the triangle/draw-call counters show the last quad only.
+- **Counting frames right after start or a change lies**: shader
+  compiles stall the first seconds. Every automatic step-down (auto
+  resolution, AUTO preset, the labs' AUTO) waits ~6 s first.
+- **Changing the number of lights recompiles every lit material** — why
+  presets never touch the ship glow lights (a mid-game hitch).

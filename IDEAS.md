@@ -440,11 +440,15 @@ wants eventually, not scheduled.
   separate markup/CSS layout (e.g. `css/ui/hud-blade/`), ships from the
   ship lab (ShipKit); the skin lab (`docs/skins.md`) proposes skins tied
   to race by default.
-- **Visual follow-ups**: a lighting pass (far ships read pale; the LOD
-  stand-in is the old teal cone — a glowing dot and a higher
-  `SHIP_LOD_DISTANCE` were proposed), the old combat effects (bite beams,
-  particles), planet rings as a BodyKit parameter, further scale steps
-  (`docs/scale.md`: comet/black-hole visual size, camera/fog, distances).
+- **Visual follow-ups**: planet rings as a BodyKit parameter, further
+  scale steps (`docs/scale.md`: comet/black-hole visual size, camera/fog,
+  distances). Done since: the far-ship glow dot and adjustable LOD
+  distance (v2.21), bite sparks and hot spot (v2.24). Open from the image
+  effects (v2.23–v2.25): eclipses between bodies (BodyKit shaders don't
+  take part yet), depth of field from real depth instead of screen
+  distance, selective (HDR) bloom so bright planets don't glow, trails
+  for other players' ships (neutral colour — never tinted), the Setup
+  tab's small scroll area at lower window sizes.
 - **A single-player copy of the database** (the admin panel's "Compare
   database with single player" button is a disabled placeholder for it).
 - **Planets to be transformed, farmed and built on**, not devoured — the
