@@ -54,11 +54,11 @@ export function gfxBloomThreshold(){ return num(settings.gfxBloomThreshold, 0, 1
 export function gfxLensing(){ return settings.gfxLensing !== false; }
 export function gfxFlare(){ return settings.gfxFlare !== false; }
 export function gfxFlareStrength(){ return num(settings.gfxFlareStrength, 0, 3, 1); }
-export function gfxFilter(){ return settings.gfxFilter !== false; }
+export function gfxFilter(){ return settings.gfxFilter === true; }
 export function gfxVignette(){ return num(settings.gfxVignette, 0, 1, 0.4); }
 export function gfxGrain(){ return num(settings.gfxGrain, 0, 1, 0.25); }
 export function gfxAberration(){ return num(settings.gfxAberration, 0, 1, 0.35); }
-export function gfxDof(){ return settings.gfxDof !== false; }
+export function gfxDof(){ return settings.gfxDof === true; }
 export function gfxDofStrength(){ return num(settings.gfxDofStrength, 0.2, 2, 1); }
 export function gfxBiteFx(){ return settings.gfxBiteFx !== false; }
 export function gfxEclipses(){ return settings.gfxEclipses !== false; }
@@ -111,8 +111,8 @@ const TIERS = {
     gfxFarShips: "dot", gfxLodDistance: 30, gfxBloom: false, gfxLensing: false, gfxFlare: false, gfxFilter: false,
     gfxDof: false, gfxTrails: false, gfxEclipses: false, gfxBiteFx: false },
   normal: { gfxQuality: 3, gfxDetail: 1, gfxMsaa: 4, gfxFxaa: false, gfxSmoothLines: true,
-    gfxFarShips: "dot", gfxLodDistance: 60, gfxBloom: true, gfxLensing: true, gfxFlare: true, gfxFilter: true,
-    gfxDof: true, gfxTrails: true, gfxEclipses: true, gfxBiteFx: true },
+    gfxFarShips: "dot", gfxLodDistance: 60, gfxBloom: true, gfxLensing: true, gfxFlare: true, gfxFilter: false,
+    gfxDof: false, gfxTrails: true, gfxEclipses: true, gfxBiteFx: true },
   max: { gfxQuality: 4, gfxDetail: 1.5, gfxMsaa: 8, gfxFxaa: true, gfxSmoothLines: true,
     gfxFarShips: "dot", gfxLodDistance: 150, gfxBloom: true, gfxLensing: true, gfxFlare: true, gfxFilter: true,
     gfxDof: true, gfxTrails: true, gfxEclipses: true, gfxBiteFx: true }
@@ -140,3 +140,14 @@ export function setAutoTier(tier){
   if(gfxPreset() !== "auto" || !TIERS[tier]) return;
   setGfx(Object.assign({ gfxAutoTier: tier }, TIERS[tier]), true);
 }
+
+// On load, a preset's values are re-applied: when a preset's contents
+// change in an update (v2.25.4: NORMAL without depth of field and the
+// filter), players on that preset get the new ones. "custom" is left alone.
+(function syncPreset(){
+  const p = gfxPreset();
+  if(p === "custom") return;
+  const tier = p === "auto" ? gfxAutoTier() : p;
+  Object.assign(settings, TIERS[tier], p === "auto" ? {} : RES[p]);
+  saveSettings();
+})();

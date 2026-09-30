@@ -158,7 +158,7 @@ const LENS_E = 1.6;   // Einstein radius in horizon radii
 // these; the labs their render-quality level).
 const PRESETS = {
   min:    { msaa: 0, fxaa: true,  bloom: false, lens: false, flare: false, filter: false, dof: false },
-  normal: { msaa: 4, fxaa: false, bloom: true,  lens: true,  flare: true,  filter: true,  dof: true },
+  normal: { msaa: 4, fxaa: false, bloom: true,  lens: true,  flare: true,  filter: false, dof: false },
   max:    { msaa: 8, fxaa: true,  bloom: true,  lens: true,  flare: true,  filter: true,  dof: true },
 };
 

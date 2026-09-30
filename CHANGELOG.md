@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.25.4]
+
+### Changed
+- **NORMAL (and AUTO's normal tier) no longer turn on depth of field
+  and the "robot eyes" filter** — they're off by default now, still one
+  click away or on in MAX. Players on a preset get the new values on
+  their next visit; your own settings stay as they are.
+
 ## [2.25.3]
 
 ### Changed

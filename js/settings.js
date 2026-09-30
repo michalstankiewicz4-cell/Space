@@ -26,11 +26,11 @@ const DEFAULTS = {
   gfxLensing: true,     // the black hole bends the picture behind it (scene/post.js)
   gfxFlare: true,       // the Sun's lens flare
   gfxFlareStrength: 1,
-  gfxFilter: true,      // "robot eyes": vignette, grain, chromatic aberration
+  gfxFilter: false,     // "robot eyes": vignette, grain, chromatic aberration
   gfxVignette: 0.4,
   gfxGrain: 0.25,
   gfxAberration: 0.35,
-  gfxDof: true,         // depth of field in the focus camera
+  gfxDof: false,        // depth of field in the focus camera
   gfxDofStrength: 1,
   gfxTrails: true,      // engine trails behind own ships and the drone (fx/trails.js)
   gfxTrailLength: 2.5,  // …seconds of flight they show

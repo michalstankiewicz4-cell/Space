@@ -1210,7 +1210,10 @@ the values from before). The Setup tab is a scrolling list; controls with
   highest above 1.3 × — only the effects change, the resolution stays
   automatic, and each step restarts the warm-up. Presets never set
   `gfxUnitLights` (v2.25.3): a light-count change recompiles every lit
-  material — a mid-game hitch if AUTO did it.
+  material — a mid-game hitch if AUTO did it. NORMAL has depth of field
+  and the filter off (v2.25.4, user's call; also PostKit's lab NORMAL).
+  On load `syncPreset()` re-applies the current preset's values, so a
+  preset changed in an update reaches its players; "custom" is untouched.
 - **Layout** (v2.25.2): the tab is grouped (`.gfxHd` headers: picture &
   sharpness, models, light, effects, camera — the preset on top); every
   option has a `.gfxCost` [?] badge, `data-cost` low/mid/high (colour)
