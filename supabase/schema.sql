@@ -676,20 +676,10 @@ $$;
 -- the client's own local recompute (used for the health bar between syncs)
 -- would visibly disagree with what the server eventually confirms.
 --
--- `killed` is edge-triggered — but against a 10%-of-max_health THRESHOLD,
--- not a bare `> 0` check. Found live, the hard way: a bare `v_health_now >
--- 0` re-triggered `killed:true` on a second bite sent mere milliseconds
--- after the first, because continuous regen makes health tick up from
--- 0 by a tiny (but strictly positive) sliver almost immediately — a
--- scripted client hammering this RPC could re-collect the full kill
--- reward on nearly every call. Requiring a REAL, meaningful recovery
--- (10% of that body's own max_health, which takes real seconds — for the
--- smallest body, ~6s at v_regen_rate=0.6) before another kill can register
--- closes that: a fresh kill afterward still means the body genuinely
--- regenerated a noticeable amount, not that regen ticked a few
--- milliseconds' worth of a health point. This is the single most
--- load-bearing correctness property in this function — verified live
--- against the actual bug, not just reasoned about.
+-- `killed` must not fire again for a body camped at zero: regen ticks it a
+-- sliver above 0 within milliseconds, and a bare "reached 0" check let a
+-- script collect the kill on nearly every call (found live). A body stays
+-- "spent" until it has grown back past 10 % — see the v_killed line below.
 create or replace function bite_solar_body(p_orbit_slot int, p_amount float)
 returns table(orbit_slot int, health float, killed boolean)
 language plpgsql
@@ -703,6 +693,7 @@ declare
   v_updated_at timestamptz;
   v_health_now float;
   v_new_health float;
+  v_killed boolean;
   v_actor uuid := auth.uid();
   v_amount float := least(greatest(p_amount, 0), 300); -- same clamp as bite_body
   v_count int;
@@ -755,10 +746,17 @@ begin
   update solar_bodies set health = v_new_health, updated_at = now()
     where solar_bodies.orbit_slot = p_orbit_slot;
 
-  if v_health_now > v_max_health * 0.1 and v_new_health <= 0 then
+  -- A kill, unless the body is still spent from the last one: its stored
+  -- health is 0 (that kill) and it has grown back no more than 10 % since —
+  -- the same rule as the game's world/bodies.js#isSpent. (Until v2.28.3 this
+  -- asked "was health above 10 % just before THIS bite?" — bites come every
+  -- 150 ms in small amounts, so the last one never was: kills almost never
+  -- counted.)
+  v_killed := v_new_health <= 0 and not (v_health_before <= 0 and v_health_now <= v_max_health * 0.1);
+  if v_killed then
     perform bump_stats(0, 1, 0);
   end if;
-  return query select p_orbit_slot, v_new_health, (v_health_now > v_max_health * 0.1 and v_new_health <= 0);
+  return query select p_orbit_slot, v_new_health, v_killed;
 end;
 $$;
 

@@ -4,6 +4,23 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.28.3]
+
+### Fixed
+- **Eating a planet almost never counted.** A kill only registered if the
+  body had more than 10 % health just before the last bite — but bites
+  come every 0.15 s in small amounts, so it never had: no points, and the
+  ships kept circling a planet at zero. Now a body counts as eaten when it
+  reaches zero, unless it's still "spent" from the last kill (hasn't grown
+  back past 10 % yet — the protection against camping a body for repeated
+  rewards stays). Fixed in the game and on the server; every ship eating
+  the body is released at the kill.
+
+### Changed
+- Code cleanup: one place awards a kill (was five copies), one damage
+  flusher for comets and planets (was two), static UI text marked in the
+  HTML (`data-i18n`) instead of 130 lines of assignments.
+
 ## [2.28.2]
 
 ### Fixed

@@ -2,12 +2,8 @@ import { ctx } from "../core/context.js";
 import { supabase } from "../supabaseClient.js";
 import { materializePlanet } from "../world/bodies.js";
 import { materializeBlackHole } from "../world/blackholes.js";
-import { bodyValueEstimate } from "../world/bodyParams.js";
 import { SOLAR_BODY_BY_SLOT, bodyPosAt, nowSimTime } from "../world/solarSystem.js";
-import { state, save } from "../core/gameState.js";
-import { showToast } from "../ui/hud/eventLog.js";
-import { t } from "../i18n.js";
-import { takeBiteToken, rotated } from "./biteBudget.js";
+import { createBiteFlusher } from "./biteBudget.js";
 
 // The fixed 9 solar bodies + sun — a permanent set, seeded once by the
 // Supabase migration (see supabase/schema.sql), never inserted/deleted
@@ -57,36 +53,12 @@ export function onSolarBodyUpdated(row){
   obj.maxHealth = row.max_health;
 }
 
-// Same exponential-backoff shape as net/bodiesSync.js#flushDamage, for the
-// same reason (a rejected RPC call must not just retry every interval tick
-// forever).
-let damageFailStreak = 0;
-let damageBackoffUntil = 0;
-
-export function flushSolarDamage(){
-  if(Date.now() < damageBackoffUntil) return;
-  rotated(ctx.planets).forEach(function(p){
-    if(p.orbitSlot == null || !(p.pendingDamage > 0)) return;
-    if(!takeBiteToken()) return;   // over the shared budget: the damage waits for the next flush
-    const amount = p.pendingDamage;
-    p.pendingDamage = 0;
-    supabase.rpc("bite_solar_body", { p_orbit_slot: p.orbitSlot, p_amount: amount }).then(function(res){
-      damageFailStreak = 0;
-      const row = res.data && res.data[0];
-      if(!row) return;
-      if(row.killed){
-        const gained = bodyValueEstimate(p);
-        state.points += gained;
-        state.eaten += 1;
-        showToast(t("toast.eaten")(gained), "arrive");
-        save();
-      }
-      p.healthBase = row.health;
-      p.healthUpdatedAtMs = Date.now();
-    }).catch(function(){
-      p.pendingDamage += amount;
-      damageFailStreak++;
-      damageBackoffUntil = Date.now() + Math.min(10000, 500 * Math.pow(2, damageFailStreak));
-    });
+// Solar-body damage to the server (bite_solar_body; the shared flusher is
+// in net/biteBudget.js): the answer is the new health checkpoint that the
+// local regen (world/bodies.js#updateBodies) counts on from.
+export const flushSolarDamage = createBiteFlusher("bite_solar_body",
+  function(p){ return p.orbitSlot != null ? { p_orbit_slot: p.orbitSlot } : null; },
+  function(p, row){
+    p.healthBase = row.health;
+    p.healthUpdatedAtMs = Date.now();
   });
-}

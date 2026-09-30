@@ -5,17 +5,15 @@ import { makeShipVisual } from "./shipVisual.js";
 import { getShipCamTarget } from "../scene/shipcam.js";
 import { EAT_ORBIT_GAP, SHIP_MODEL_LENGTH, SHIP_LIGHT_INTENSITY, SHIP_LIGHT_RANGE } from "../config.js";
 import { NET_ENABLED } from "../env.js";
-import { state, swarmStats, save } from "../core/gameState.js";
-import { paintScorch, destroyPlanet, applyHealthVisual } from "../world/bodies.js";
-import { bodyValueEstimate } from "../world/bodyParams.js";
+import { swarmStats } from "../core/gameState.js";
+import { paintScorch, applyHealthVisual, isSpent } from "../world/bodies.js";
 import { spawnBiteParticles, spawnSparks } from "../fx/particles.js";
 import { showImpact, hideImpact, disposeImpact } from "../fx/impact.js";
-import { triggerBreakup } from "../fx/breakup.js";
 import { showToast } from "../ui/hud/eventLog.js";
-import { refreshResearch } from "../ui/windows/research.js";
 import { t } from "../i18n.js";
 import { SHIP_API, updateProgrammedShip } from "./shipProgram.js";
 import { stopUnitProgram } from "../program/runner.js";
+import { awardKill } from "../world/rewards.js";
 
 // Reused every frame across every ship in updateShips() instead of several
 // fresh `new THREE.Vector3()`s per ship per frame (same pattern as
@@ -353,7 +351,7 @@ export function updateShips(dt){
       sh.mesh.lookAt(sh.target.mesh.position);
       sh.visual.power = 0.35;                      // orbiting while it eats
 
-      const healthBeforeDamage = sh.target.health;
+      const wasSpent = isSpent(sh.target);   // eaten and not grown back: no second kill (world/bodies.js)
       const eff = eatEfficiency(stats, sh.target);
       const dmg = basePower*eff*dt;
       sh.target.health -= dmg;
@@ -414,20 +412,18 @@ export function updateShips(dt){
       }
 
       if(sh.target.orbitSlot != null){
-        // Fixed solar body: never destroyed/removed - health regenerates
-        // over time instead (world/bodies.js#updateBodies). Edge-triggered
-        // against a 10%-of-maxHealth threshold, exactly like the server's
-        // own bite_solar_body RPC (supabase/schema.sql) - NOT a bare `> 0`
-        // check. Found live (against the server RPC, same bug would apply
-        // here): per-frame regen ticks health up by a tiny sliver almost
-        // immediately after hitting 0, so a bare `>0` check would silently
-        // re-award the kill on nearly every subsequent frame a ship sits
-        // there, instead of once per real kill.
-        if(healthBeforeDamage > sh.target.maxHealth*0.1 && sh.target.health <= 0){
+        // Fixed solar body: never removed, it grows back
+        // (world/bodies.js#updateBodies) — a kill only if it wasn't still
+        // spent from the last one (world/bodies.js#isSpent).
+        if(!wasSpent && sh.target.health <= 0){
           const deadBody = sh.target;
-          hideBolt(sh);
-          sh.target = null;
-          sh.commandedTarget = null;
+          // every ship eating it is done, not just the one that landed the last bite
+          ctx.ships.forEach(function(o){
+            if(o.target !== deadBody && o.commandedTarget !== deadBody) return;
+            hideBolt(o);
+            o.target = null;
+            o.commandedTarget = null;
+          });
           if(NET_ENABLED){
             // Points are awarded later, by net/solarBodiesSync.js's
             // flushSolarDamage() once the server's bite_solar_body RPC
@@ -439,13 +435,7 @@ export function updateShips(dt){
             // same spirit as the offline comet/old-planet branch below,
             // just never calling destroyPlanet (this body isn't going
             // anywhere).
-            const gained = bodyValueEstimate(deadBody);
-            state.points += gained;
-            state.eaten += 1;
-            showToast(t("toast.eaten")(gained), "arrive");
-            triggerBreakup(deadBody);
-            refreshResearch();
-            save();
+            awardKill(deadBody, { breakup: true });
           }
           // Reset the health checkpoint to exactly 0 right now, in both
           // modes - otherwise the very next updateBodies() regen recompute
@@ -459,15 +449,7 @@ export function updateShips(dt){
         if(!NET_ENABLED && !sh.target.dying){
           // offline mode: no server to arbitrate "who landed the last hit",
           // so the kill is resolved immediately, locally, as before
-          const gained = bodyValueEstimate(sh.target);
-          state.points += gained;
-          state.eaten += 1;
-          showToast(t("toast.eaten")(gained), "arrive");
-          const deadPlanet = sh.target;
-          triggerBreakup(deadPlanet);
-          destroyPlanet(deadPlanet);
-          refreshResearch();
-          save();
+          awardKill(sh.target, { breakup: true, remove: true });
         } else {
           // networked mode: the server (bite_body RPC) decides who gets the
           // points; the explosion and cleanup arrive via Realtime DELETE for everyone

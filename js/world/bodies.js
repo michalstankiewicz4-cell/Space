@@ -332,6 +332,18 @@ export function updateBodies(dt){
   }
 }
 
+// A fixed solar body that was eaten and hasn't grown back yet: its health
+// checkpoint is 0 (the kill) and it has regenerated no more than 10 % since.
+// Eating it again then earns nothing — without this, regen ticking a sliver
+// above 0 let a unit camping a body collect the kill over and over. The
+// server applies the same rule (supabase/schema.sql#bite_solar_body).
+// (Until v2.28.3 both sides asked instead "was health above 10 % just
+// before this bite?" — small bites never are, so kills almost never
+// counted, and ships kept circling a body at zero.)
+export function isSpent(p){
+  return p.healthBase != null && p.healthBase <= 0 && p.health <= p.maxHealth * 0.1;
+}
+
 export function destroyPlanet(p){
   p.dying = true;
   ctx.ships.forEach(function(other){

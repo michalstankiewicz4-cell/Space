@@ -482,3 +482,14 @@ only the steward calls it, every 5 min — `net/stewardStats.js`). Read by
 spends two of its five attempts a minute. `peak_online` is self-reported: a
 modified client can inflate it (up to 200), so it's a hint for the charts,
 never a measurement. Purged after 90 days (`purge_old_data`).
+
+## Solar-body kill rule (v2.28.3)
+
+`bite_solar_body` counted a kill only when `v_health_now > 10 % max` just
+before the bite that reached zero. Bites arrive every 150 ms in small
+amounts, so that bite never started above 10 %: kills almost never counted
+(0 in `stats_hourly` over the first day; found in the 2026-10 code review).
+Now: `killed = new health <= 0 and not (stored health <= 0 and regenerated
+<= 10 %)` — a body is "spent" after a kill until it grows back past 10 %,
+which still stops a client camping a body for repeated rewards. The game's
+`world/bodies.js#isSpent` is the same rule. Deployed: `bite_solar_body` only.

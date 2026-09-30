@@ -1,13 +1,8 @@
 import { NET_ENABLED } from "../env.js";
-import { state, save } from "../core/gameState.js";
-import { showToast } from "../ui/hud/eventLog.js";
-import { refreshResearch } from "../ui/windows/research.js";
-import { triggerBreakup } from "../fx/breakup.js";
 import { spawnBiteParticles } from "../fx/particles.js";
-import { applyHealthVisual, destroyPlanet, paintScorch } from "../world/bodies.js";
-import { bodyValueEstimate } from "../world/bodyParams.js";
-import { t } from "../i18n.js";
+import { applyHealthVisual, paintScorch, isSpent } from "../world/bodies.js";
 import { nearestLiveBody, isNearBody } from "./unitMotion.js";
+import { awardKill } from "../world/rewards.js";
 
 // attack() for any programmable unit (the drone, a programmed swarm ship):
 // one bite on the nearest body in range — `dmg` is a number or a
@@ -19,7 +14,7 @@ export function biteNearestBody(unit, dmg, onFire){
   if(!isNearBody(body, dist)) return 0;
   if(typeof dmg === "function") dmg = dmg(body);
 
-  const healthBeforeDamage = body.health;
+  const wasSpent = isSpent(body);   // eaten and not grown back: no second kill (world/bodies.js)
   body.health -= dmg;
   body.pendingDamage = (body.pendingDamage || 0) + dmg;
   applyHealthVisual(body);
@@ -39,34 +34,18 @@ export function biteNearestBody(unit, dmg, onFire){
   paintScorch(body, surfacePoint, 1);
 
   if(body.orbitSlot != null){
-    // Fixed solar body: never destroyed/removed, health regenerates
-    // instead - same edge-triggered kill detection (against a 10%-of-
-    // maxHealth threshold, not a bare >0 check - see
-    // ships/swarm.js#updateShips and supabase/schema.sql#bite_solar_body
-    // for why a bare >0 check was a real, live-confirmed exploit) as
-    // ships/swarm.js#updateShips, so a unit camping a barely-regenerating
-    // body can't re-collect the kill reward every hit.
-    if(healthBeforeDamage > body.maxHealth * 0.1 && body.health <= 0){
-      if(!NET_ENABLED) awardKill(body, false);
+    // Fixed solar body: never removed, it grows back — a kill only if it
+    // wasn't still spent from the last one (world/bodies.js#isSpent).
+    if(!wasSpent && body.health <= 0){
+      if(!NET_ENABLED) awardKill(body, { breakup: true });   // offline: no server to arbitrate the kill
       // else: net/solarBodiesSync.js#flushSolarDamage awards points once
       // the server's bite_solar_body RPC confirms killed:true.
       body.healthBase = 0;
       body.healthUpdatedAtMs = Date.now();
     }
   } else if(!NET_ENABLED && !body.dying && body.health <= 0){
-    awardKill(body, true);
+    awardKill(body, { breakup: true, remove: true });
   }
   return 1;
 }
 
-// Offline only: no server to arbitrate the kill, so it resolves here.
-function awardKill(body, remove){
-  const gained = bodyValueEstimate(body);
-  state.points += gained;
-  state.eaten += 1;
-  showToast(t("toast.eaten")(gained), "arrive");
-  triggerBreakup(body);
-  if(remove) destroyPlanet(body);
-  refreshResearch();
-  save();
-}

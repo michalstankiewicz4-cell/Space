@@ -3,14 +3,10 @@ import { COMET_RESPAWN_DELAY_MS, NET_PLANET_TOPUP_S } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
 import { materializePlanet, requestSpawnComet, spawnCometLocalOnly, despawnLocalOnly, applyHealthVisual, destroyPlanet, pendingSpawnCount } from "../world/bodies.js";
-import { bodyValueEstimate } from "../world/bodyParams.js";
 import { refreshResearch } from "../ui/windows/research.js";
 import { triggerBreakup } from "../fx/breakup.js";
-import { state, save } from "../core/gameState.js";
-import { showToast } from "../ui/hud/eventLog.js";
 import { createStalenessGate } from "./stewardFallback.js";
-import { t } from "../i18n.js";
-import { takeBiteToken, rotated } from "./biteBudget.js";
+import { createBiteFlusher } from "./biteBudget.js";
 
 // Comet-only now — the fixed 9 solar bodies (+ sun) have their own sync
 // module, net/solarBodiesSync.js, since they're a permanent set (only ever
@@ -67,49 +63,17 @@ export function onBodyDeleted(oldRow){
   }
 }
 
-// If bite_body itself is unreachable (server error, timeout, dead socket —
-// reported live as a Cloudflare 522, but any rejection behaves the same),
-// re-queuing the failed damage unconditionally used to mean the very next
-// setInterval(flushDamage, 150) tick fired an identical RPC call again —
-// with nothing to ever break the cycle, a prolonged outage kept the client
-// hammering the server every 150ms indefinitely. Same exponential-backoff
-// shape as net/connect.js's Realtime reconnect (capped lower, since a
-// missed bite is far cheaper to retry than a whole dropped connection):
-// a run of consecutive failures grows the delay before flushDamage()
-// attempts anything again, and a single success resets it back to full
-// speed immediately.
-let damageFailStreak = 0;
-let damageBackoffUntil = 0;
-
-export function flushDamage(){
-  if(Date.now() < damageBackoffUntil) return;
-  rotated(ctx.planets).forEach(function(p){
-    if(p.pendingDamage > 0 && p.dbId){
-      if(!takeBiteToken()) return;   // over the shared budget: the damage waits for the next flush
-      const amount = p.pendingDamage;
-      p.pendingDamage = 0;
-      supabase.rpc("bite_body", { p_body_id: p.dbId, p_amount: amount }).then(function(res){
-        damageFailStreak = 0;
-        const row = res.data && res.data[0];
-        if(!row) return;
-        if(row.killed){
-          const gained = bodyValueEstimate(p);
-          state.points += gained;
-          state.eaten += 1;
-          showToast(t("toast.eaten")(gained), "arrive");
-          save();
-        } else {
-          p.health = Math.min(p.health, row.health);
-          applyHealthVisual(p);
-        }
-      }).catch(function(){
-        p.pendingDamage += amount;
-        damageFailStreak++;
-        damageBackoffUntil = Date.now() + Math.min(10000, 500 * Math.pow(2, damageFailStreak));
-      });
-    }
+// Comet damage to the server (bite_body); the shared flusher is in
+// net/biteBudget.js. A comet that survives the bite takes the server's
+// health if it's lower (another player bit it too); a kill's cleanup comes
+// with the server's DELETE.
+export const flushDamage = createBiteFlusher("bite_body",
+  function(p){ return p.dbId ? { p_body_id: p.dbId } : null; },
+  function(p, row){
+    if(row.killed) return;
+    p.health = Math.min(p.health, row.health);
+    applyHealthVisual(p);
   });
-}
 
 // See net/stewardFallback.js for why this needs both an isConnected() guard
 // and a staleness fallback, not just steward-gating. bump() is called in

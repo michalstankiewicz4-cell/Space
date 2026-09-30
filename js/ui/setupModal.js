@@ -81,13 +81,16 @@ export function initSetupModal(){
   initGraphicsSliders();
 }
 
+// A slider's gold fill up to its value (css/ui/setupModal.css reads --fill).
+function paintFill(s){ s.style.setProperty("--fill", ((s.value - s.min) / (s.max - s.min) * 100) + "%"); }
+
 // Setup -> Mouse: rotation and zoom sensitivity (scene/controls.js reads them live).
 function initMouseSens(){
   [["mouseRotSlider", "mouseRotVal", "mouseRotSens"], ["mouseZoomSlider", "mouseZoomVal", "mouseZoomSens"]].forEach(function(p){
     const s = document.getElementById(p[0]), v = document.getElementById(p[1]);
     const paint = function(){
       v.textContent = "×" + Number(s.value).toFixed(2);
-      s.style.setProperty("--fill", ((s.value - s.min) / (s.max - s.min) * 100) + "%");
+      paintFill(s);
     };
     s.value = Number(settings[p[2]]) || 1;
     paint();
@@ -99,8 +102,7 @@ function initMouseSens(){
 // The detail slider applies when released — it rebuilds ship models.
 function paintGfx(){
   const q = document.getElementById("gfxQualitySlider"), d = document.getElementById("gfxDetailSlider");
-  const fill = function(s){ s.style.setProperty("--fill", ((s.value - s.min) / (s.max - s.min) * 100) + "%"); };
-  fill(q); fill(d);
+  paintFill(q); paintFill(d);
   document.getElementById("gfxQualityVal").textContent = t("setup.qualityLevels")[+q.value];
   document.getElementById("gfxDetailVal").textContent = Math.round(+d.value * 100) + "%";
 }
@@ -166,7 +168,7 @@ function paintImageQuality(){
   box.querySelectorAll("input[type=range][data-key]").forEach(function(s){
     const v = GFX_GET[s.dataset.key](), list = sliderList(s);
     s.value = list ? Math.max(0, list.indexOf(v) >= 0 ? list.indexOf(v) : list.indexOf(60)) : v;
-    s.style.setProperty("--fill", ((s.value - s.min) / (s.max - s.min) * 100) + "%");
+    paintFill(s);
   });
   box.querySelectorAll("input[type=checkbox][data-key]").forEach(function(c){ c.checked = GFX_GET[c.dataset.key](); });
   box.querySelectorAll("[data-val]").forEach(function(b){ b.textContent = GFX_FMT[b.dataset.val](GFX_GET[b.dataset.val]()); });

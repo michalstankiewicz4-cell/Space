@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.28.2">
+<link rel="stylesheet" href="css/style.css?v=2.28.3">
 </head>
 <body>
 
@@ -111,10 +111,10 @@
 
 <div id="outdatedOverlay" class="hidden">
   <div id="outdatedBox">
-    <div id="outdatedTitle">⚠ Update available</div>
-    <p id="outdatedText">A new version of the game is available. Please refresh the page to continue.</p>
-    <button id="outdatedReloadBtn" type="button">Refresh now</button>
-    <div id="outdatedHint">or Ctrl+Shift+R</div>
+    <div id="outdatedTitle" data-i18n="outdated.title">⚠ Update available</div>
+    <p id="outdatedText" data-i18n="outdated.text">A new version of the game is available. Please refresh the page to continue.</p>
+    <button id="outdatedReloadBtn" data-i18n="outdated.reload" type="button">Refresh now</button>
+    <div id="outdatedHint" data-i18n="outdated.hint">or Ctrl+Shift+R</div>
   </div>
 </div>
 
@@ -157,18 +157,18 @@
       <div class="mat lilac" id="boxSide3"></div>
 
       <div id="modeRow">
-        <button type="button" id="modeSingle" class="mat blueT modeDisabled" disabled>Singleplayer</button>
-        <button type="button" id="modeMulti" class="mat gold modeActive" disabled>Multiplayer</button>
-        <button type="button" id="modeFriends" class="mat blueT modeDisabled" disabled>With friends</button>
+        <button type="button" id="modeSingle" data-i18n="banner.modeSingle" class="mat blueT modeDisabled" disabled>Singleplayer</button>
+        <button type="button" id="modeMulti" data-i18n="banner.modeMulti" class="mat gold modeActive" disabled>Multiplayer</button>
+        <button type="button" id="modeFriends" data-i18n="banner.modeFriends" class="mat blueT modeDisabled" disabled>With friends</button>
       </div>
 
-      <p id="bannerBoot">REBOOT… MEMORY: 11%. LAST ENTRY: ██ YEARS AGO.</p>
-      <p id="bannerDesc">You wake on a ruined station on the fourth orbit. The humans are no longer here — all that's left are empty modules, a greenhouse someone still keeps at 21 °C, and a black hole that doesn't belong in this system.
+      <p id="bannerBoot" data-i18n="banner.boot">REBOOT… MEMORY: 11%. LAST ENTRY: ██ YEARS AGO.</p>
+      <p id="bannerDesc" data-i18n="banner.desc">You wake on a ruined station on the fourth orbit. The humans are no longer here — all that's left are empty modules, a greenhouse someone still keeps at 21 °C, and a black hole that doesn't belong in this system.
 Nine orbits and a whole system lie ahead of you. Find out what happened here.</p>
-      <p id="bannerNotice">Game under construction — this is an early version and many options don't work yet.</p>
+      <p id="bannerNotice" data-i18n="banner.notice">Game under construction — this is an early version and many options don't work yet.</p>
       <div class="hdLine" id="descLine"></div>
 
-      <div id="nickLabel">Swarm commander's nickname</div>
+      <div id="nickLabel" data-i18n="banner.nickPlaceholder">Swarm commander's nickname</div>
       <div id="nickRow">
         <button id="nickGoogleBtn" type="button" disabled data-soon-name="banner.google">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
@@ -184,12 +184,12 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
           </svg>
         </button>
       </div>
-      <div id="nickError" class="hidden">Please choose a different nickname.</div>
+      <div id="nickError" data-i18n="banner.nickRejected" class="hidden">Please choose a different nickname.</div>
 
       <div id="bannerButtons">
         <button id="startBtn" class="mat gold loading waiting" disabled>…</button>
-        <button id="setupBtn" class="oBtn" type="button">⚙ Setup</button>
-        <button id="aboutBtn" class="oBtn" type="button" title="About the game">?</button>
+        <button id="setupBtn" data-i18n="banner.setup" class="oBtn" type="button">⚙ Setup</button>
+        <button id="aboutBtn" data-i18n-title="about.button" class="oBtn" type="button" title="About the game">?</button>
       </div>
     </section>
   </div>
@@ -199,20 +199,20 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
   <div class="uiStage">
     <section class="uiPanel" id="setupModalBox">
       <span class="mat gold" id="smSq"></span>
-      <span id="setupModalTitle">Setup</span>
+      <span id="setupModalTitle" data-i18n="setup.title">Setup</span>
       <button id="setupCloseBtn" class="mat red" type="button" aria-label="Close">✕</button>
       <div class="hdLine" id="smLine"></div>
       <div class="mat blueV" id="smSide"></div>
       <div id="setupTabs">
-        <button type="button" data-tab="language" class="mat gold active">Language</button>
-        <button type="button" data-tab="mouse" class="mat blueT">Mouse</button>
-        <button type="button" data-tab="graphics" class="mat blueT">Graphics</button>
-        <button type="button" data-tab="help" class="mat blueT">Help</button>
-        <button type="button" data-tab="privacy" class="mat blueT">Privacy</button>
+        <button type="button" data-tab="language" data-i18n="setup.tabLanguage" class="mat gold active">Language</button>
+        <button type="button" data-tab="mouse" data-i18n="setup.tabMouse" class="mat blueT">Mouse</button>
+        <button type="button" data-tab="graphics" data-i18n="setup.tabGraphics" class="mat blueT">Graphics</button>
+        <button type="button" data-tab="help" data-i18n="setup.tabHelp" class="mat blueT">Help</button>
+        <button type="button" data-tab="privacy" data-i18n="setup.tabPrivacy" class="mat blueT">Privacy</button>
       </div>
 
       <div id="setupTabLanguage" class="setupTabPanel" data-tab="language">
-        <div id="setupLangLabel">Language</div>
+        <div id="setupLangLabel" data-i18n="banner.language">Language</div>
         <div id="setupLangButtons">
           <button type="button" class="oBtn" data-lang="en">English</button>
           <button type="button" class="oBtn" data-lang="pl">Polski</button>
@@ -220,14 +220,14 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
       </div>
 
       <div id="setupTabMouse" class="setupTabPanel hidden" data-tab="mouse">
-        <label class="setupCheckRow"><input type="checkbox" id="invertXCheck"><span class="chk"></span><span id="invertXLabel">Invert X (right-drag)</span></label>
-        <label class="setupCheckRow"><input type="checkbox" id="invertYCheck"><span class="chk"></span><span id="invertYLabel">Invert Y (right-drag)</span></label>
-        <label class="setupCheckRow"><input type="checkbox" id="swapButtonsCheck"><span class="chk"></span><span id="swapButtonsLabel">Swap left/right mouse button</span></label>
+        <label class="setupCheckRow"><input type="checkbox" id="invertXCheck"><span class="chk"></span><span id="invertXLabel" data-i18n="setup.invertX">Invert X (right-drag)</span></label>
+        <label class="setupCheckRow"><input type="checkbox" id="invertYCheck"><span class="chk"></span><span id="invertYLabel" data-i18n="setup.invertY">Invert Y (right-drag)</span></label>
+        <label class="setupCheckRow"><input type="checkbox" id="swapButtonsCheck"><span class="chk"></span><span id="swapButtonsLabel" data-i18n="setup.swapButtons">Swap left/right mouse button</span></label>
         <!-- sensitivity sliders (ui/setupModal.js#initMouseSens) -->
         <div id="mouseSensBox">
-          <div class="gfxRow"><span id="mouseRotLabel">Rotation sensitivity</span><b id="mouseRotVal"></b></div>
+          <div class="gfxRow"><span id="mouseRotLabel" data-i18n="setup.mouseRot">Rotation sensitivity</span><b id="mouseRotVal"></b></div>
           <input type="range" class="gfxSlider" id="mouseRotSlider" min="0.25" max="3" step="0.05">
-          <div class="gfxRow"><span id="mouseZoomLabel">Zoom sensitivity</span><b id="mouseZoomVal"></b></div>
+          <div class="gfxRow"><span id="mouseZoomLabel" data-i18n="setup.mouseZoom">Zoom sensitivity</span><b id="mouseZoomVal"></b></div>
           <input type="range" class="gfxSlider" id="mouseZoomSlider" min="0.25" max="3" step="0.05">
         </div>
       </div>
@@ -237,131 +237,131 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
            setting; data-val shows a setting's value. -->
       <div id="setupTabGraphics" class="setupTabPanel hidden" data-tab="graphics">
         <div class="gfxSec">
-          <div class="gfxRow" data-help="preset"><span id="gfxPresetLabel">Preset</span>
+          <div class="gfxRow" data-help="preset"><span id="gfxPresetLabel" data-i18n="setup.gfx.preset">Preset</span>
             <div class="gfxSeg" data-key="gfxPreset"><button type="button" data-v="auto">AUTO</button><button type="button" data-v="min">MIN</button><button type="button" data-v="normal">NORMAL</button><button type="button" data-v="max">MAX</button></div></div>
           <div class="gfxNote" id="gfxPresetNote"></div>
         </div>
-        <div class="gfxNote gfxLegend" id="gfxCostLegend"></div>
-        <div class="gfxHd" id="gfxHdPicture">PICTURE & SHARPNESS</div>
+        <div class="gfxNote gfxLegend" id="gfxCostLegend" data-i18n-html="setup.gfx.costLegend"></div>
+        <div class="gfxHd" id="gfxHdPicture" data-i18n="setup.gfx.hd.picture">PICTURE & SHARPNESS</div>
         <div class="gfxSec">
-          <div class="gfxRow"><span><span id="gfxResLabel">Resolution</span><i class="gfxCost" data-cost="high" data-tip="res">?</i></span>
+          <div class="gfxRow"><span><span id="gfxResLabel" data-i18n="setup.gfx.res">Resolution</span><i class="gfxCost" data-cost="high" data-tip="res">?</i></span>
             <div class="gfxSeg" data-key="gfxResMode"><button type="button" data-v="auto">AUTO</button><button type="button" data-v="manual">MANUAL</button></div></div>
           <div id="gfxResAuto">
-            <div class="gfxRow"><span id="gfxTargetFpsLabel">Target frame rate</span><b data-val="gfxTargetFps"></b></div>
+            <div class="gfxRow"><span id="gfxTargetFpsLabel" data-i18n="setup.gfx.targetFps">Target frame rate</span><b data-val="gfxTargetFps"></b></div>
             <input type="range" class="gfxSlider" data-key="gfxTargetFps" data-list="30,45,60,90,120,144" min="0" max="5" step="1">
-            <div class="gfxRow"><span id="gfxMaxResLabel">Highest resolution</span><b data-val="gfxMaxRes"></b></div>
+            <div class="gfxRow"><span id="gfxMaxResLabel" data-i18n="setup.gfx.maxRes">Highest resolution</span><b data-val="gfxMaxRes"></b></div>
             <input type="range" class="gfxSlider" data-key="gfxMaxRes" min="0.5" max="2" step="0.1">
             <div class="gfxNote" id="gfxResNow"></div>
           </div>
           <div id="gfxResManual">
-            <div class="gfxRow"><span id="gfxQualityLabel">Render quality</span><b id="gfxQualityVal">ULTRA</b></div>
+            <div class="gfxRow"><span id="gfxQualityLabel" data-i18n="setup.renderQuality">Render quality</span><b id="gfxQualityVal">ULTRA</b></div>
             <input type="range" class="gfxSlider" id="gfxQualitySlider" min="0" max="4" step="1" value="3">
             <div class="gfxTicks" id="gfxQualityTicks"><span>LOW</span><span>MED</span><span>HIGH</span><span>ULTRA</span><span>MAX</span></div>
           </div>
         </div>
         <div class="gfxSec">
-          <div class="gfxRow"><span><span id="gfxFpsCapLabel">Frame limiter</span><i class="gfxCost" data-cost="low" data-tip="fpsCap">?</i></span>
+          <div class="gfxRow"><span><span id="gfxFpsCapLabel" data-i18n="setup.gfx.fpsCap">Frame limiter</span><i class="gfxCost" data-cost="low" data-tip="fpsCap">?</i></span>
             <div class="gfxSeg" data-key="gfxFpsCap"><button type="button" data-v="0">OFF</button><button type="button" data-v="30">30</button><button type="button" data-v="60">60</button><button type="button" data-v="120">120</button></div></div>
         </div>
         <div class="gfxSec">
-          <div class="gfxRow"><span><span id="gfxSharpenLabel">Sharpening</span><i class="gfxCost" data-cost="low" data-tip="sharpen">?</i></span><b data-val="gfxSharpen"></b></div>
+          <div class="gfxRow"><span><span id="gfxSharpenLabel" data-i18n="setup.gfx.sharpen">Sharpening</span><i class="gfxCost" data-cost="low" data-tip="sharpen">?</i></span><b data-val="gfxSharpen"></b></div>
           <input type="range" class="gfxSlider" data-key="gfxSharpen" min="0" max="1" step="0.05">
         </div>
         <div class="gfxSec">
-          <div class="gfxRow"><span><span id="gfxMsaaLabel">MSAA</span><i class="gfxCost" data-cost="mid" data-tip="msaa">?</i></span>
+          <div class="gfxRow"><span><span id="gfxMsaaLabel" data-i18n="setup.gfx.msaa">MSAA</span><i class="gfxCost" data-cost="mid" data-tip="msaa">?</i></span>
             <div class="gfxSeg" data-key="gfxMsaa"><button type="button" data-v="0">OFF</button><button type="button" data-v="2">×2</button><button type="button" data-v="4">×4</button><button type="button" data-v="8">×8</button></div></div>
-          <div class="gfxNote" id="gfxMsaaNote"></div>
-          <label class="setupCheckRow"><input type="checkbox" data-key="gfxFxaa"><span class="chk"></span><span id="gfxFxaaLabel">FXAA</span><i class="gfxCost" data-cost="low" data-tip="fxaa">?</i></label>
-          <div class="gfxNote" id="gfxFxaaNote"></div>
+          <div class="gfxNote" id="gfxMsaaNote" data-i18n="setup.gfx.msaaNote"></div>
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxFxaa"><span class="chk"></span><span id="gfxFxaaLabel" data-i18n="setup.gfx.fxaa">FXAA</span><i class="gfxCost" data-cost="low" data-tip="fxaa">?</i></label>
+          <div class="gfxNote" id="gfxFxaaNote" data-i18n="setup.gfx.fxaaNote"></div>
         </div>
         <div class="gfxSec">
-          <div class="gfxRow"><span><span id="gfxAnisoLabel">Anisotropic filtering</span><i class="gfxCost" data-cost="low" data-tip="aniso">?</i></span>
+          <div class="gfxRow"><span><span id="gfxAnisoLabel" data-i18n="setup.gfx.aniso">Anisotropic filtering</span><i class="gfxCost" data-cost="low" data-tip="aniso">?</i></span>
             <div class="gfxSeg" data-key="gfxAniso"><button type="button" data-v="1">×1</button><button type="button" data-v="2">×2</button><button type="button" data-v="4">×4</button><button type="button" data-v="8">×8</button><button type="button" data-v="16">×16</button></div></div>
         </div>
         <div class="gfxSec">
-          <label class="setupCheckRow"><input type="checkbox" data-key="gfxSmoothLines"><span class="chk"></span><span id="gfxSmoothLinesLabel">Smooth lines</span><i class="gfxCost" data-cost="low" data-tip="smoothLines">?</i></label>
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxSmoothLines"><span class="chk"></span><span id="gfxSmoothLinesLabel" data-i18n="setup.gfx.smoothLines">Smooth lines</span><i class="gfxCost" data-cost="low" data-tip="smoothLines">?</i></label>
           <div id="gfxLineWidthBox">
-            <div class="gfxRow"><span id="gfxLineWidthLabel">Line width</span><b data-val="gfxLineWidth"></b></div>
+            <div class="gfxRow"><span id="gfxLineWidthLabel" data-i18n="setup.gfx.lineWidth">Line width</span><b data-val="gfxLineWidth"></b></div>
             <input type="range" class="gfxSlider" data-key="gfxLineWidth" min="1" max="3" step="0.25">
           </div>
         </div>
-        <div class="gfxHd" id="gfxHdModels">MODELS</div>
+        <div class="gfxHd" id="gfxHdModels" data-i18n="setup.gfx.hd.models">MODELS</div>
         <div class="gfxSec">
-          <div class="gfxRow"><span><span id="gfxDetailLabel">Geometry detail (triangles)</span><i class="gfxCost" data-cost="mid" data-tip="detail">?</i></span><b id="gfxDetailVal">100%</b></div>
+          <div class="gfxRow"><span><span id="gfxDetailLabel" data-i18n="setup.geometryDetail">Geometry detail (triangles)</span><i class="gfxCost" data-cost="mid" data-tip="detail">?</i></span><b id="gfxDetailVal">100%</b></div>
           <input type="range" class="gfxSlider" id="gfxDetailSlider" min="0.2" max="2" step="0.05" value="1">
           <div class="gfxTicks"><span>20%</span><span>100%</span><span>200%</span></div>
-          <label class="setupCheckRow"><input type="checkbox" id="unitLightsCheck"><span class="chk"></span><span id="unitLightsLabel">Ship glow lights</span><i class="gfxCost" data-cost="high" data-tip="unitLights">?</i></label>
+          <label class="setupCheckRow"><input type="checkbox" id="unitLightsCheck"><span class="chk"></span><span id="unitLightsLabel" data-i18n="setup.unitLights">Ship glow lights</span><i class="gfxCost" data-cost="high" data-tip="unitLights">?</i></label>
         </div>
         <div class="gfxSec">
-          <div class="gfxRow"><span><span id="gfxFarShipsLabel">Far ships</span><i class="gfxCost" data-cost="mid" data-tip="farShips">?</i></span>
+          <div class="gfxRow"><span><span id="gfxFarShipsLabel" data-i18n="setup.gfx.farShips">Far ships</span><i class="gfxCost" data-cost="mid" data-tip="farShips">?</i></span>
             <div class="gfxSeg" data-key="gfxFarShips"><button type="button" data-v="dot">DOT</button><button type="button" data-v="cone">CONE</button><button type="button" data-v="model">MODEL</button></div></div>
           <div id="gfxLodBox">
-            <div class="gfxRow"><span id="gfxLodLabel">…farther than</span><b data-val="gfxLodDistance"></b></div>
+            <div class="gfxRow"><span id="gfxLodLabel" data-i18n="setup.gfx.lodDistance">…farther than</span><b data-val="gfxLodDistance"></b></div>
             <input type="range" class="gfxSlider" data-key="gfxLodDistance" min="15" max="200" step="5">
           </div>
         </div>
-        <div class="gfxHd" id="gfxHdLight">LIGHT</div>
+        <div class="gfxHd" id="gfxHdLight" data-i18n="setup.gfx.hd.light">LIGHT</div>
         <div class="gfxSec">
-          <label class="setupCheckRow"><input type="checkbox" data-key="gfxBloom"><span class="chk"></span><span id="gfxBloomLabel">Bloom</span><i class="gfxCost" data-cost="high" data-tip="bloom">?</i></label>
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxBloom"><span class="chk"></span><span id="gfxBloomLabel" data-i18n="setup.gfx.bloom">Bloom</span><i class="gfxCost" data-cost="high" data-tip="bloom">?</i></label>
           <div id="gfxBloomBox">
-            <div class="gfxRow"><span id="gfxBloomStrengthLabel">Strength</span><b data-val="gfxBloomStrength"></b></div>
+            <div class="gfxRow"><span id="gfxBloomStrengthLabel" data-i18n="setup.gfx.bloomStrength">Strength</span><b data-val="gfxBloomStrength"></b></div>
             <input type="range" class="gfxSlider" data-key="gfxBloomStrength" min="0.1" max="2" step="0.1">
-            <div class="gfxRow"><span id="gfxBloomThresholdLabel">Threshold</span><b data-val="gfxBloomThreshold"></b></div>
+            <div class="gfxRow"><span id="gfxBloomThresholdLabel" data-i18n="setup.gfx.bloomThreshold">Threshold</span><b data-val="gfxBloomThreshold"></b></div>
             <input type="range" class="gfxSlider" data-key="gfxBloomThreshold" min="0.5" max="1" step="0.01">
           </div>
-          <div class="gfxNote" id="gfxBloomNote"></div>
+          <div class="gfxNote" id="gfxBloomNote" data-i18n="setup.gfx.bloomNote"></div>
         </div>
         <div class="gfxSec">
-          <label class="setupCheckRow"><input type="checkbox" data-key="gfxFlare"><span class="chk"></span><span id="gfxFlareLabel">Sun lens flare</span><i class="gfxCost" data-cost="low" data-tip="flare">?</i></label>
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxFlare"><span class="chk"></span><span id="gfxFlareLabel" data-i18n="setup.gfx.flare">Sun lens flare</span><i class="gfxCost" data-cost="low" data-tip="flare">?</i></label>
           <div id="gfxFlareBox">
-            <div class="gfxRow"><span id="gfxFlareStrengthLabel">Strength</span><b data-val="gfxFlareStrength"></b></div>
+            <div class="gfxRow"><span id="gfxFlareStrengthLabel" data-i18n="setup.gfx.strength">Strength</span><b data-val="gfxFlareStrength"></b></div>
             <input type="range" class="gfxSlider" data-key="gfxFlareStrength" min="0.2" max="2" step="0.1">
           </div>
         </div>
         <div class="gfxSec">
-          <label class="setupCheckRow"><input type="checkbox" data-key="gfxRays"><span class="chk"></span><span id="gfxRaysLabel">Light rays from the Sun</span><i class="gfxCost" data-cost="mid" data-tip="rays">?</i></label>
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxRays"><span class="chk"></span><span id="gfxRaysLabel" data-i18n="setup.gfx.rays">Light rays from the Sun</span><i class="gfxCost" data-cost="mid" data-tip="rays">?</i></label>
           <div id="gfxRaysBox">
-            <div class="gfxRow"><span id="gfxRaysStrengthLabel">Strength</span><b data-val="gfxRaysStrength"></b></div>
+            <div class="gfxRow"><span id="gfxRaysStrengthLabel" data-i18n="setup.gfx.strength">Strength</span><b data-val="gfxRaysStrength"></b></div>
             <input type="range" class="gfxSlider" data-key="gfxRaysStrength" min="0.2" max="2" step="0.1">
           </div>
         </div>
         <div class="gfxSec">
-          <label class="setupCheckRow"><input type="checkbox" data-key="gfxEclipses"><span class="chk"></span><span id="gfxEclipsesLabel">Eclipses</span><i class="gfxCost" data-cost="low" data-tip="eclipses">?</i></label>
-          <div class="gfxNote" id="gfxEclipsesNote"></div>
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxEclipses"><span class="chk"></span><span id="gfxEclipsesLabel" data-i18n="setup.gfx.eclipses">Eclipses</span><i class="gfxCost" data-cost="low" data-tip="eclipses">?</i></label>
+          <div class="gfxNote" id="gfxEclipsesNote" data-i18n="setup.gfx.eclipsesNote"></div>
         </div>
         <div class="gfxSec">
-          <label class="setupCheckRow"><input type="checkbox" data-key="gfxLensing"><span class="chk"></span><span id="gfxLensingLabel">Black hole lensing</span><i class="gfxCost" data-cost="low" data-tip="lensing">?</i></label>
-          <div class="gfxNote" id="gfxLensingNote"></div>
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxLensing"><span class="chk"></span><span id="gfxLensingLabel" data-i18n="setup.gfx.lensing">Black hole lensing</span><i class="gfxCost" data-cost="low" data-tip="lensing">?</i></label>
+          <div class="gfxNote" id="gfxLensingNote" data-i18n="setup.gfx.lensingNote"></div>
         </div>
-        <div class="gfxHd" id="gfxHdEffects">EFFECTS</div>
+        <div class="gfxHd" id="gfxHdEffects" data-i18n="setup.gfx.hd.effects">EFFECTS</div>
         <div class="gfxSec">
-          <label class="setupCheckRow"><input type="checkbox" data-key="gfxTrails"><span class="chk"></span><span id="gfxTrailsLabel">Engine trails</span><i class="gfxCost" data-cost="low" data-tip="trails">?</i></label>
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxTrails"><span class="chk"></span><span id="gfxTrailsLabel" data-i18n="setup.gfx.trails">Engine trails</span><i class="gfxCost" data-cost="low" data-tip="trails">?</i></label>
           <div id="gfxTrailsBox">
-            <div class="gfxRow"><span id="gfxTrailLengthLabel">Length</span><b data-val="gfxTrailLength"></b></div>
+            <div class="gfxRow"><span id="gfxTrailLengthLabel" data-i18n="setup.gfx.trailLength">Length</span><b data-val="gfxTrailLength"></b></div>
             <input type="range" class="gfxSlider" data-key="gfxTrailLength" min="0.3" max="4" step="0.1">
           </div>
         </div>
         <div class="gfxSec">
-          <label class="setupCheckRow"><input type="checkbox" data-key="gfxBiteFx"><span class="chk"></span><span id="gfxBiteFxLabel">Bite effects</span><i class="gfxCost" data-cost="low" data-tip="biteFx">?</i></label>
-          <div class="gfxNote" id="gfxBiteFxNote"></div>
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxBiteFx"><span class="chk"></span><span id="gfxBiteFxLabel" data-i18n="setup.gfx.biteFx">Bite effects</span><i class="gfxCost" data-cost="low" data-tip="biteFx">?</i></label>
+          <div class="gfxNote" id="gfxBiteFxNote" data-i18n="setup.gfx.biteFxNote"></div>
         </div>
-        <div class="gfxHd" id="gfxHdCamera">CAMERA</div>
+        <div class="gfxHd" id="gfxHdCamera" data-i18n="setup.gfx.hd.camera">CAMERA</div>
         <div class="gfxSec">
-          <label class="setupCheckRow"><input type="checkbox" data-key="gfxDof"><span class="chk"></span><span id="gfxDofLabel">Depth of field</span><i class="gfxCost" data-cost="mid" data-tip="dof">?</i></label>
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxDof"><span class="chk"></span><span id="gfxDofLabel" data-i18n="setup.gfx.dof">Depth of field</span><i class="gfxCost" data-cost="mid" data-tip="dof">?</i></label>
           <div id="gfxDofBox">
-            <div class="gfxRow"><span id="gfxDofStrengthLabel">Strength</span><b data-val="gfxDofStrength"></b></div>
+            <div class="gfxRow"><span id="gfxDofStrengthLabel" data-i18n="setup.gfx.strength">Strength</span><b data-val="gfxDofStrength"></b></div>
             <input type="range" class="gfxSlider" data-key="gfxDofStrength" min="0.2" max="2" step="0.1">
           </div>
-          <div class="gfxNote" id="gfxDofNote"></div>
+          <div class="gfxNote" id="gfxDofNote" data-i18n="setup.gfx.dofNote"></div>
         </div>
         <div class="gfxSec">
-          <label class="setupCheckRow"><input type="checkbox" data-key="gfxFilter"><span class="chk"></span><span id="gfxFilterLabel">Robot eyes filter</span><i class="gfxCost" data-cost="low" data-tip="filter">?</i></label>
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxFilter"><span class="chk"></span><span id="gfxFilterLabel" data-i18n="setup.gfx.filter">Robot eyes filter</span><i class="gfxCost" data-cost="low" data-tip="filter">?</i></label>
           <div id="gfxFilterBox">
-            <div class="gfxRow"><span id="gfxVignetteLabel">Vignette</span><b data-val="gfxVignette"></b></div>
+            <div class="gfxRow"><span id="gfxVignetteLabel" data-i18n="setup.gfx.vignette">Vignette</span><b data-val="gfxVignette"></b></div>
             <input type="range" class="gfxSlider" data-key="gfxVignette" min="0" max="1" step="0.05">
-            <div class="gfxRow"><span id="gfxGrainLabel">Grain</span><b data-val="gfxGrain"></b></div>
+            <div class="gfxRow"><span id="gfxGrainLabel" data-i18n="setup.gfx.grain">Grain</span><b data-val="gfxGrain"></b></div>
             <input type="range" class="gfxSlider" data-key="gfxGrain" min="0" max="1" step="0.05">
-            <div class="gfxRow"><span id="gfxAberrationLabel">Chromatic aberration</span><b data-val="gfxAberration"></b></div>
+            <div class="gfxRow"><span id="gfxAberrationLabel" data-i18n="setup.gfx.aberration">Chromatic aberration</span><b data-val="gfxAberration"></b></div>
             <input type="range" class="gfxSlider" data-key="gfxAberration" min="0" max="1" step="0.05">
           </div>
         </div>
@@ -379,14 +379,14 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
 
       <!-- Setup -> Privacy (ui/privacy.js): the policy and "Delete my data". -->
       <div id="setupTabPrivacy" class="setupTabPanel hidden" data-tab="privacy">
-        <div id="privacyText">The game keeps your progress in this browser. On the server: your nickname and an anonymous account; a shortened IP only when abuse is detected (30 days).</div>
-        <a id="privacyPolicyLink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a>
-        <button type="button" class="oBtn" id="deleteDataBtn">Delete my data</button>
+        <div id="privacyText" data-i18n="privacy.text">The game keeps your progress in this browser. On the server: your nickname and an anonymous account; a shortened IP only when abuse is detected (30 days).</div>
+        <a id="privacyPolicyLink" data-i18n="privacy.policy" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a>
+        <button type="button" class="oBtn" id="deleteDataBtn" data-i18n="privacy.deleteBtn">Delete my data</button>
         <div id="deleteDataStatus"></div>
       </div>
 
       <div id="setupTabHelp" class="setupTabPanel hidden" data-tab="help">
-        <div id="setupHelpText">
+        <div id="setupHelpText" data-i18n-html="setup.controls">
           Right button + drag = rotate camera · scroll = zoom<br>
           Left click / box select = select ships<br>
           Click a planet = course order for selected (or whole swarm)
@@ -418,23 +418,23 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
   <div class="mat gold" id="resGoldLine"></div>
   <div class="mat gold" id="resGoldBlock"></div>
   <div id="resBox">
-    <div class="res" style="left:10px"><span class="resIcon" data-icon="points"></span><span class="rl" id="labelPoints">Points</span><span class="rv" id="statPoints">0</span></div>
+    <div class="res" style="left:10px"><span class="resIcon" data-icon="points"></span><span class="rl" id="labelPoints" data-i18n="topbar.points">Points</span><span class="rv" id="statPoints">0</span></div>
     <div class="resSep" style="left:146px"></div>
-    <div class="res" style="left:156px"><span class="resIcon" data-icon="units"></span><span class="rl" id="labelShips">Units</span><span class="rv" id="statShips">0</span></div>
+    <div class="res" style="left:156px"><span class="resIcon" data-icon="units"></span><span class="rl" id="labelShips" data-i18n="topbar.ships">Units</span><span class="rv" id="statShips">0</span></div>
     <div class="resSep" style="left:292px"></div>
-    <div class="res" style="left:302px"><span class="resIcon" data-icon="planet"></span><span class="rl" id="labelEaten">Devoured</span><span class="rv" id="statEaten">0</span></div>
+    <div class="res" style="left:302px"><span class="resIcon" data-icon="planet"></span><span class="rl" id="labelEaten" data-i18n="topbar.eaten">Devoured</span><span class="rv" id="statEaten">0</span></div>
     <div class="resSep" style="left:448px"></div>
-    <div class="res" style="left:458px"><span class="resIcon" data-icon="players"></span><span class="rl" id="labelPlayers">Online</span><span class="rv" id="statPlayers">1</span></div>
+    <div class="res" style="left:458px"><span class="resIcon" data-icon="players"></span><span class="rl" id="labelPlayers" data-i18n="topbar.players">Online</span><span class="rv" id="statPlayers">1</span></div>
   </div>
 
   <div class="mat lilac" id="hudLilac"></div>
   <div class="mat blue" id="hudSdTop"></div>
   <div class="mat blue" id="hudSdBottom"></div>
   <div id="hudSdBox">
-    <div id="sdDate"><span id="sdCycleLabel">Cycle</span> <span id="sdCycleVal">0.0</span></div>
+    <div id="sdDate"><span id="sdCycleLabel" data-i18n="topbar.cycle">Cycle</span> <span id="sdCycleVal">0.0</span></div>
     <div id="sdTime">00:00</div>
     <!-- Decorative: game time can't be paused/sped up in multiplayer. -->
-    <div id="speedCtl">
+    <div id="speedCtl" data-i18n-title="topbar.timeNote">
       <span class="sBracket"></span>
       <span class="sBtn" id="btnPause" data-soon-name="hud.pause" data-soon-text="hud.speedSoon"><svg viewBox="0 0 22 26"><rect class="fBlue" x="1" y="1" width="8" height="24" rx="2"/><rect class="fBlue" x="13" y="1" width="8" height="24" rx="2"/></svg></span>
       <span class="sSep" style="left:47px"></span>
@@ -459,7 +459,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
   <!-- Fleet list -->
   <section class="uiPanel" id="fleetPanel">
     <span class="mat lilac hdSq" id="fleetHdSq"></span>
-    <h2 class="hd" id="fleetHd">FLEET LIST</h2>
+    <h2 class="hd" id="fleetHd" data-i18n="hud.fleetList">FLEET LIST</h2>
     <div class="hdLine" id="fleetHdLine"></div>
     <div class="mat blueV sideBar" id="fleetSide"></div>
     <div id="fleetList"></div>
@@ -468,10 +468,10 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
   <!-- Selected unit: one ship, a group of ships, or the drone -->
   <section class="uiPanel" id="unitPanel">
     <div class="mat blueV sideBar" id="unitSide"></div>
-    <h2 class="hd small" id="unitHd">SELECTED UNIT</h2>
+    <h2 class="hd small" id="unitHd" data-i18n="hud.selectedUnit">SELECTED UNIT</h2>
     <button type="button" class="mat red closePill hidden" id="unitCloseBtn" aria-label="Close">✕</button>
     <div class="hdLine" id="unitHdLine"></div>
-    <div id="unitEmpty"></div>
+    <div id="unitEmpty" data-i18n="hud.unitEmpty"></div>
     <div id="unitBody" class="hidden">
       <div id="unitName"></div>
       <div id="unitClass"></div>
@@ -514,24 +514,24 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
        the frame itself lets clicks through to the canvas underneath. -->
   <div id="viewport">
     <div id="cameraModeToggle">
-      <button type="button" id="camModeBaseBtn" class="mat gold camModeActive">Base</button>
-      <button type="button" id="camModeSystemBtn" class="mat blueT">System</button>
+      <button type="button" id="camModeBaseBtn" data-i18n="camera.base" class="mat gold camModeActive">Base</button>
+      <button type="button" id="camModeSystemBtn" data-i18n="camera.system" class="mat blueT">System</button>
     </div>
     <!-- RETURN TO BASE: shown while own ships are selected (ui/hud/returnBase.js) -->
-    <button type="button" id="returnBaseBtn" class="mat gold hidden">RETURN TO BASE</button>
+    <button type="button" id="returnBaseBtn" data-i18n-title="camera.returnBaseTip" data-i18n="camera.returnBase" class="mat gold hidden">RETURN TO BASE</button>
     <!-- orbits + trajectories on/off (scene/linesToggle.js) -->
     <button type="button" id="linesToggleBtn" class="mat gold">ORBITS</button>
-    <div id="connectionStatus" class="hidden">⚠ Reconnecting to server…</div>
+    <div id="connectionStatus" data-i18n="connection.reconnecting" class="hidden">⚠ Reconnecting to server…</div>
     <div id="shipCam" class="hidden">
-      <div id="shipCamLabel">SHIP CAM</div>
+      <div id="shipCamLabel" data-i18n="fleet.shipCamLabel">SHIP CAM</div>
       <button type="button" class="mat red closePill" id="shipCamCloseBtn" aria-label="Close">✕</button>
     </div>
-    <button type="button" class="oBtn" id="devToolsBtn" title="Dev Tools"></button>
+    <button type="button" class="oBtn" id="devToolsBtn" data-i18n-title="devTools.button" title="Dev Tools"></button>
     <div id="devToolsMenu" class="hidden">
-      <label class="setupCheckRow"><input type="checkbox" id="devLightsCheck"><span class="chk"></span><span id="devLightsLabel">Show light sources</span></label>
-      <label class="setupCheckRow"><input type="checkbox" id="devDistanceCheck"><span class="chk"></span><span id="devDistanceLabel">Connect selected planets</span></label>
-      <label class="setupCheckRow"><input type="checkbox" id="devNoLightsCheck"><span class="chk"></span><span id="devNoLightsLabel">Turn off lights</span></label>
-      <label class="setupCheckRow"><input type="checkbox" id="devPerfCheck"><span class="chk"></span><span id="devPerfLabel">Performance stats</span></label>
+      <label class="setupCheckRow"><input type="checkbox" id="devLightsCheck"><span class="chk"></span><span id="devLightsLabel" data-i18n="devTools.lights">Show light sources</span></label>
+      <label class="setupCheckRow"><input type="checkbox" id="devDistanceCheck"><span class="chk"></span><span id="devDistanceLabel" data-i18n="devTools.distance">Connect selected planets</span></label>
+      <label class="setupCheckRow"><input type="checkbox" id="devNoLightsCheck"><span class="chk"></span><span id="devNoLightsLabel" data-i18n="devTools.noLights">Turn off lights</span></label>
+      <label class="setupCheckRow"><input type="checkbox" id="devPerfCheck"><span class="chk"></span><span id="devPerfLabel" data-i18n="devTools.perf">Performance stats</span></label>
     </div>
     <div id="perfStats" class="hidden">
       <div id="perfStatsText"></div>
@@ -569,7 +569,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
     <div class="hdLine" id="plHdLine"></div>
     <div class="mat blueV" id="plSide"></div>
     <div class="mat lilac" id="plSideBottom"></div>
-    <div id="infoEmpty"></div>
+    <div id="infoEmpty" data-i18n="hud.infoEmpty"></div>
     <div id="infoBody" class="hidden">
       <div id="infoThumb"></div>
       <div id="infoName"></div>
@@ -589,7 +589,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
   <!-- Event log: every in-game message (ui/hud/eventLog.js) -->
   <section class="uiPanel" id="eventPanel">
     <span class="mat gold hdSq" id="evHdSq"></span>
-    <h2 class="hd" id="evHd">EVENT LOG</h2>
+    <h2 class="hd" id="evHd" data-i18n="hud.eventLog">EVENT LOG</h2>
     <div class="hdLine" id="evHdLine"></div>
     <div id="evBars">
       <span class="mat blue3" style="flex:32"></span>
@@ -604,12 +604,12 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
   <!-- Minimap: schematic, not to scale (ui/hud/minimap.js) -->
   <section class="uiPanel" id="miniPanel">
     <span class="mat gold hdSq" id="mmHdSq"></span>
-    <h2 class="hd" id="mmHd">MINIMAP</h2>
+    <h2 class="hd" id="mmHd" data-i18n="hud.minimap">MINIMAP</h2>
     <div class="hdLine" id="mmHdLine"></div>
     <div id="mmZoom">
-      <button type="button" id="mmOut" aria-label="Zoom out">&minus;</button>
+      <button type="button" id="mmOut" data-i18n-title="hud.zoomOut" aria-label="Zoom out">&minus;</button>
       <span></span>
-      <button type="button" id="mmIn" aria-label="Zoom in">+</button>
+      <button type="button" id="mmIn" data-i18n-title="hud.zoomIn" aria-label="Zoom in">+</button>
     </div>
     <div id="mmBox">
       <svg id="mmSvg" viewBox="0 0 295 206"></svg>
@@ -621,25 +621,25 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
 <div id="aboutModal" class="uiWindow hidden">
   <section class="uiWindowBox" id="aboutModalBox">
     <div class="mat blueV uiWinSide"></div>
-    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="aboutTitle">About</h2><button type="button" class="mat red closePill" id="aboutCloseBtn" aria-label="Close">✕</button></header>
+    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="aboutTitle" data-i18n="about.title">About</h2><button type="button" class="mat red closePill" id="aboutCloseBtn" data-i18n-title="hud.close" aria-label="Close">✕</button></header>
     <div class="hdLine"></div>
     <div class="uiWinBody">
-      <p id="aboutMade">Created with vibe coding</p>
-      <div class="aboutHd" id="aboutAuthorsHd">Authors</div>
+      <p id="aboutMade" data-i18n="about.made">Created with vibe coding</p>
+      <div class="aboutHd" id="aboutAuthorsHd" data-i18n="about.authors">Authors</div>
       <ul class="aboutList">
         <li>Michał Stankiewicz</li>
         <li>Claude</li>
       </ul>
-      <div class="aboutHd" id="aboutContactHd">Contact</div>
+      <div class="aboutHd" id="aboutContactHd" data-i18n="about.contact">Contact</div>
       <ul class="aboutList">
-        <li><span id="aboutPhoneLabel">Tel.</span>: <a href="tel:+48797486355">+48 797 486 355</a></li>
+        <li><span id="aboutPhoneLabel" data-i18n="about.phone">Tel.</span>: <a href="tel:+48797486355">+48 797 486 355</a></li>
         <li>GH: <a href="https://github.com/michalstankiewicz4-cell/Space/discussions" target="_blank" rel="noopener noreferrer">github.com/michalstankiewicz4-cell/Space/discussions</a></li>
         <li>E-mail: <a href="mailto:michalstankiewicz@onet.eu">michalstankiewicz@onet.eu</a></li>
       </ul>
-      <div class="aboutHd" id="aboutLegalHd">Legal</div>
+      <div class="aboutHd" id="aboutLegalHd" data-i18n="about.legal">Legal</div>
       <ul class="aboutList">
-        <li><a id="aboutPrivacyLink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></li>
-        <li><span id="aboutLicense">Open source, MIT license</span> — <a href="https://github.com/michalstankiewicz4-cell/Space" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        <li><a id="aboutPrivacyLink" data-i18n="privacy.policy" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></li>
+        <li><span id="aboutLicense" data-i18n="about.license">Open source, MIT license</span> — <a href="https://github.com/michalstankiewicz4-cell/Space" target="_blank" rel="noopener noreferrer">GitHub</a></li>
       </ul>
     </div>
   </section>
@@ -649,7 +649,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
 <div id="techModal" class="uiWindow hidden">
   <section class="uiWindowBox" id="techModalBox">
     <div class="mat blueV uiWinSide"></div>
-    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="techModalTitle">Tech Tree</h2><button type="button" class="mat red closePill" id="techCloseBtn" aria-label="Close">✕</button></header>
+    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="techModalTitle" data-i18n="tech.title">Tech Tree</h2><button type="button" class="mat red closePill" id="techCloseBtn" aria-label="Close">✕</button></header>
     <div class="hdLine"></div>
     <!-- The upgrade trees (ui/windows/techTree.js; their shape is
          techTreeData.js): ◀ ▶ switch trees, hover a node for its details,
@@ -671,7 +671,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
 <div id="fleetModal" class="uiWindow hidden">
   <section class="uiWindowBox" id="fleetModalBox">
     <div class="mat blueV uiWinSide"></div>
-    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="fleetModalTitle">Fleet</h2><button type="button" class="mat red closePill" id="fleetCloseBtn" aria-label="Close">✕</button></header>
+    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="fleetModalTitle" data-i18n="fleet.title">Fleet</h2><button type="button" class="mat red closePill" id="fleetCloseBtn" aria-label="Close">✕</button></header>
     <div class="hdLine"></div>
     <div class="uiWinBody"><ul id="fleetListEl"></ul></div>
   </section>
@@ -680,7 +680,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
 <div id="playersModal" class="uiWindow hidden">
   <section class="uiWindowBox" id="playersModalBox">
     <div class="mat blueV uiWinSide"></div>
-    <header class="uiWinHead"><span class="mat lilac hdSq"></span><h2 class="hd" id="playersTitle">PLAYERS</h2><button type="button" class="mat red closePill" id="playersCloseBtn" aria-label="Close">✕</button></header>
+    <header class="uiWinHead"><span class="mat lilac hdSq"></span><h2 class="hd" id="playersTitle" data-i18n="players.title">PLAYERS</h2><button type="button" class="mat red closePill" id="playersCloseBtn" aria-label="Close">✕</button></header>
     <div class="hdLine"></div>
     <div class="uiWinBody"><ul id="playersListEl"></ul></div>
   </section>
@@ -690,7 +690,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
 <div id="wikiModal" class="uiWindow hidden">
   <section class="uiWindowBox" id="wikiModalBox">
     <div class="mat blueV uiWinSide"></div>
-    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="wikiTitle">WIKI</h2><span id="wikiProgress"></span><button type="button" class="mat red closePill" id="wikiCloseBtn" aria-label="Close">✕</button></header>
+    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="wikiTitle" data-i18n="wiki.title">WIKI</h2><span id="wikiProgress"></span><button type="button" class="mat red closePill" id="wikiCloseBtn" data-i18n-title="hud.close" aria-label="Close">✕</button></header>
     <div class="hdLine"></div>
     <div class="uiWinBody" id="wikiBody">
       <nav id="wikiTabs">
@@ -725,30 +725,30 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
 <div id="droneScriptModal" class="uiWindow hidden">
   <section class="uiWindowBox" id="droneScriptModalBox">
     <div class="mat blueV uiWinSide"></div>
-    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="droneScriptModalTitle">Drone Script</h2>
+    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" id="droneScriptModalTitle" data-i18n="drone.scriptTitle">Drone Script</h2>
       <div class="droneModeSwitch"><button type="button" data-mode="script"></button><button type="button" data-mode="blocks"></button></div>
       <button type="button" class="oBtn" id="droneScriptHelpBtn" title="Functions &amp; examples">?</button>
       <button type="button" class="mat red closePill" id="droneScriptCloseBtn" aria-label="Close">✕</button></header>
     <div class="hdLine"></div>
     <div class="uiWinBody">
       <div id="droneScriptHelp" class="hidden">
-        <div class="droneHelpTitle" id="droneHelpMovementTitle">Movement</div>
+        <div class="droneHelpTitle" id="droneHelpMovementTitle" data-i18n="drone.help.movementTitle">Movement</div>
         <table class="droneHelpTable">
-          <tr><td><code>move(n)</code></td><td id="droneHelpMoveDesc"></td></tr>
-          <tr><td><code>turn(deg)</code></td><td id="droneHelpTurnDesc"></td></tr>
-          <tr><td><code>wait(s)</code></td><td id="droneHelpWaitDesc"></td></tr>
+          <tr><td><code>move(n)</code></td><td id="droneHelpMoveDesc" data-i18n="drone.help.move"></td></tr>
+          <tr><td><code>turn(deg)</code></td><td id="droneHelpTurnDesc" data-i18n="drone.help.turn"></td></tr>
+          <tr><td><code>wait(s)</code></td><td id="droneHelpWaitDesc" data-i18n="drone.help.wait"></td></tr>
         </table>
-        <div class="droneHelpTitle" id="droneHelpSensorsTitle">Sensors &amp; actions</div>
+        <div class="droneHelpTitle" id="droneHelpSensorsTitle" data-i18n="drone.help.sensorsTitle">Sensors &amp; actions</div>
         <table class="droneHelpTable">
-          <tr><td><code>fuel()</code></td><td id="droneHelpFuelDesc"></td></tr>
-          <tr><td><code>maxFuel()</code></td><td id="droneHelpMaxFuelDesc"></td></tr>
-          <tr><td><code>nearPlanet()</code></td><td id="droneHelpNearDesc"></td></tr>
-          <tr><td><code>attack()</code></td><td id="droneHelpAttackDesc"></td></tr>
-          <tr><td><code>print(x)</code></td><td id="droneHelpPrintDesc"></td></tr>
+          <tr><td><code>fuel()</code></td><td id="droneHelpFuelDesc" data-i18n="drone.help.fuel"></td></tr>
+          <tr><td><code>maxFuel()</code></td><td id="droneHelpMaxFuelDesc" data-i18n="drone.help.maxFuelFn"></td></tr>
+          <tr><td><code>nearPlanet()</code></td><td id="droneHelpNearDesc" data-i18n="drone.help.near"></td></tr>
+          <tr><td><code>attack()</code></td><td id="droneHelpAttackDesc" data-i18n="drone.help.attackFn"></td></tr>
+          <tr><td><code>print(x)</code></td><td id="droneHelpPrintDesc" data-i18n="drone.help.print"></td></tr>
         </table>
-        <div class="droneHelpTitle" id="droneHelpSyntaxTitle">Syntax</div>
-        <div id="droneHelpSyntaxDesc" class="droneHelpText"></div>
-        <div class="droneHelpTitle" id="droneHelpExampleTitle">Example</div>
+        <div class="droneHelpTitle" id="droneHelpSyntaxTitle" data-i18n="drone.help.syntaxTitle">Syntax</div>
+        <div id="droneHelpSyntaxDesc" data-i18n="drone.help.syntax" class="droneHelpText"></div>
+        <div class="droneHelpTitle" id="droneHelpExampleTitle" data-i18n="drone.help.exampleTitle">Example</div>
         <pre id="droneHelpExample">while (fuel() > 10) {
   move(5)
   if (nearPlanet()) {
@@ -759,10 +759,10 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
   }
 }</pre>
       </div>
-      <textarea id="droneScriptInput" spellcheck="false"></textarea>
+      <textarea id="droneScriptInput" data-i18n-placeholder="drone.placeholder" spellcheck="false"></textarea>
       <div id="droneScriptButtons">
-        <button type="button" class="mat gold" id="droneScriptRunBtn">▶ Run</button>
-        <button type="button" class="oBtn" id="droneScriptStopBtn">■ Stop</button>
+        <button type="button" class="mat gold" id="droneScriptRunBtn" data-i18n="drone.run">▶ Run</button>
+        <button type="button" class="oBtn" id="droneScriptStopBtn" data-i18n="drone.stop">■ Stop</button>
       </div>
       <div id="droneScriptError" class="hidden"></div>
       <div id="droneScriptLog"></div>
@@ -837,13 +837,13 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.28.2"></script>
+<script type="module" src="js/main.js?v=2.28.3"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">
-  <span id="privacyNoticeText">No ads, no tracking. Your progress stays in this browser; the server keeps your nickname and, only when abuse is detected, a shortened IP address.</span>
-  <a id="privacyNoticeLink" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a>
-  <button type="button" class="mat gold" id="privacyNoticeOk">Accept</button>
+  <span id="privacyNoticeText" data-i18n="privacy.notice">No ads, no tracking. Your progress stays in this browser; the server keeps your nickname and, only when abuse is detected, a shortened IP address.</span>
+  <a id="privacyNoticeLink" data-i18n="privacy.policy" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a>
+  <button type="button" class="mat gold" id="privacyNoticeOk" data-i18n="privacy.accept">Accept</button>
 </div>
 </body>
 </html>

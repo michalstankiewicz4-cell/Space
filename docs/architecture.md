@@ -33,6 +33,7 @@ then read just that range.
 - [Image quality (Setup → Graphics)](#image-quality-setup--graphics)
 - [Fleet memory and RETURN TO BASE](#fleet-memory-and-return-to-base)
 - [Interface modes, lines toggle, controls help](#interface-modes-lines-toggle-controls-help)
+- [Kills, damage flushing, UI text (v2.28.3 review)](#kills-damage-flushing-ui-text-v2283-review)
 - [Research trees](#research-trees)
 - [In-game HUD](#in-game-hud)
 - [Load order and first paint](#load-order-and-first-paint)
@@ -1287,6 +1288,23 @@ controls had are gone. The same module explains a locked ENTER ORBIT once
 loading is done (`startBlocked`: no nickname, or the privacy policy not
 accepted — the two things `banner.js#updateStartEnabled` waits for). **Help**: Setup → Help uses the wide window
 (`i18n setup.controls`, app-authored HTML) — update it when a control changes.
+
+## Kills, damage flushing, UI text (v2.28.3 review)
+
+- **Kills**: `world/rewards.js#awardKill(body, {breakup, remove})` is the
+  only place a kill pays out (points, eaten, toast, research refresh,
+  save) — the swarm, a program's attack() and the server's confirmation
+  all call it. A fixed body can't be killed again while
+  `world/bodies.js#isSpent` (checkpoint 0 and ≤ 10 % grown back); at a kill
+  every ship on that body is released (`ships/swarm.js`).
+- **Damage to the server**: `net/biteBudget.js#createBiteFlusher(rpc,
+  argsFor, onRow)` — shared budget (15/s), rotation, backoff;
+  `bodiesSync.js#flushDamage` (comets) and `solarBodiesSync.js#
+  flushSolarDamage` are one line each.
+- **Static UI text**: `index.html` elements carry their i18n key
+  (`data-i18n`, `data-i18n-title`, `data-i18n-html` — app HTML only —,
+  `data-i18n-placeholder`); `ui/i18nApply.js` fills them in one loop and
+  handles only text that depends on something.
 
 ## Research trees
 

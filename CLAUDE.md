@@ -94,7 +94,9 @@ the player's own progress stays in `localStorage`.
   (`stewardFallback.js`). A comet DELETE can mean eaten or flown out —
   check the local object's `health`, not the payload.
 - **Settings / identity / i18n** stay three separate modules; all
-  localStorage goes through `core/utils.js#readStorage/writeStorage`.
+  localStorage goes through `core/utils.js#readStorage/writeStorage`. Static UI text in `index.html` carries its key
+  (`data-i18n`, `-title`, `-html`, `-placeholder`); `ui/i18nApply.js` only
+  sets what depends on state.
 - **Nicknames**: checked client-side and again on arrival (a modified
   client can send anything); `/^[\p{L}\p{N} ]+$/u`, `NET_MAX_NICK_LENGTH`.
 - **Programs**: one DSL and one generator interpreter (`drone/dsl.js`,
