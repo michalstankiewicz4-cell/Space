@@ -7,8 +7,9 @@ import { bodyVariantKey } from "../../world/bodyParams.js";
 import { t } from "../../i18n.js";
 import { fillIcons, svgIcon } from "../icons.js";
 import { setShipCamTarget, clearShipCamTarget, getShipCamTarget } from "../../scene/shipcam.js";
-import { focusCameraOnUnit, unitInView } from "../../scene/controls.js";
+import { focusCameraOnUnit, unitInView } from "../../scene/camera.js";
 import { shipMoveSpeed } from "../../ships/shipProgram.js";
+import { isBiting } from "../../ships/biteBeam.js";
 
 // The HUD's SELECTED UNIT panel (#unitPanel). Shows, in priority order:
 // the drone (while it's selected — openDronePanel/closeDronePanel below),
@@ -76,7 +77,7 @@ function bodyName(b){
 }
 
 function isFeeding(sh){
-  return !!(sh.boltCore && sh.boltCore.visible);
+  return isBiting(sh);
 }
 
 // A program moves its ship directly (move()), outside its velocity.

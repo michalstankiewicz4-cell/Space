@@ -1,6 +1,7 @@
 import { ctx } from "../../core/context.js";
 import { SOLAR_BODIES, STATION_RING } from "../../world/solarSystem.js";
-import { camState, clickPlanet, clickStation, clickBlackHole, clickRemoteStation, focusCameraOn, bodyPosition, setCameraMode } from "../../scene/controls.js";
+import { clickPlanet, clickStation, clickBlackHole, clickRemoteStation } from "../../scene/controls.js";
+import { camState, focusCameraOn, bodyPosition, setCameraMode } from "../../scene/camera.js";
 import { bodyVariantKey } from "../../world/bodyParams.js";
 import { t } from "../../i18n.js";
 

@@ -4,7 +4,8 @@ import { startMotion, advanceMotion, nearestLiveBody, isNearBody, headingOfMesh 
 import { biteNearestBody } from "../program/unitBite.js";
 import { unitPrint } from "../program/unitPrint.js";
 import { DRONE_TURN_SPEED, DRONE_ATTACK_COOLDOWN_S } from "../config.js";
-import { eatEfficiency, hideBolt } from "./swarm.js";
+import { eatEfficiency } from "./swarm.js";
+import { hideBolt } from "./biteBeam.js";
 
 // A swarm ship's program — the same language and builtins as the drone's
 // (drone/drone.js), run by program/runner.js, so a script written for one

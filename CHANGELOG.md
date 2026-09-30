@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.28.4]
+
+### Changed
+- Code reorganised, no change in play: the translations are one file per
+  language (`js/i18n/en.js`, `pl.js`), the bite beam has its own module
+  (`ships/biteBeam.js`), and the camera moved out of the mouse-input code
+  (`scene/camera.js`).
+
 ## [2.28.3]
 
 ### Fixed

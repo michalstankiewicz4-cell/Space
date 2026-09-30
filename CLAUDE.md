@@ -26,7 +26,7 @@ the player's own progress stays in `localStorage`.
 
 - **Language**: reply to the user in Polish. Everything in the repo — UI
   text, docs, commit messages, code comments (JS and SQL) — is English;
-  the only exception is the `pl` dictionary in `js/i18n.js`.
+  the only exception is the `pl` dictionary in `js/i18n/pl.js`.
 - **Versioning**: every meaningful change to the game or
   `supabase/schema.sql` → bump `js/version.js`, a `CHANGELOG.md` entry,
   and the `?v=` params on `css/style.css` and `js/main.js` in `index.html`
@@ -62,8 +62,9 @@ the player's own progress stays in `localStorage`.
 - **Bodies**: 7 kinds, one data file each in `js/bodies/`
   (`content.js#CONTENT`); only comets are rolled, the other 6 are fixed
   solar bodies. `world/bodies.js` = lifecycle, `bodyParams.js` = kind
-  math, `bodyVisual.js` = the look (BodyKit). `scene/controls.js` =
-  camera + selection wiring; `picking.js`, `tooltip.js`,
+  math, `bodyVisual.js` = the look (BodyKit). `scene/camera.js` =
+  the camera (modes, focus, glide), `scene/controls.js` = mouse input,
+  selection and orders; `picking.js`, `tooltip.js`,
   `selectionBrackets.js` (HTML overlay).
 - **Ships move only on an explicit order** (`controls.js#commandTo` →
   `commandedTarget`) or their own program — never an automatic target.

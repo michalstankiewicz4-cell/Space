@@ -8,7 +8,7 @@ import { t } from "../../i18n.js";
 import { openTechModal } from "../windows/windows.js";
 import { openFleetModal } from "../windows/fleet.js";
 import { showInfo, hideInfo, getInfoOwner, setInfoRow, setInfoButtons } from "./infoPanel.js";
-import { setCameraMode } from "../../scene/controls.js";
+import { setCameraMode } from "../../scene/camera.js";
 
 // The player's station shown in the HUD's PLANET INFO slot (ui/hud/infoPanel.js).
 // Visibility tracks selection, RTS-style: selecting the station (see

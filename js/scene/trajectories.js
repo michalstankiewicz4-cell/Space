@@ -1,5 +1,5 @@
 import { ctx } from "../core/context.js";
-import { camState } from "./controls.js";
+import { camState } from "./camera.js";
 import { makeLineMaterial, makeLine, onLinesChange, disposeLineMaterial } from "./lines.js";
 import { predictCurrentPath, predictProgramPath } from "../program/simulate.js";
 import { activeProgramSource } from "../program/unitPrograms.js";

@@ -7,6 +7,7 @@ import { openDronePanel } from "./unitPanel.js";
 import { bodyVariantKey } from "../../world/bodyParams.js";
 import { svgIcon } from "../icons.js";
 import { t } from "../../i18n.js";
+import { isBiting } from "../../ships/biteBeam.js";
 
 // The HUD's always-visible FLEET LIST panel: one card per ship plus the
 // drone — the same list, and the same click behavior, as the Fleet window
@@ -17,7 +18,7 @@ let builtFor = -1;
 function statusText(sh){
   if(sh.error) return t("drone.error");
   if(sh.running) return t("hud.programRunning");
-  if(sh.boltCore && sh.boltCore.visible) return t("hud.feeding");
+  if(isBiting(sh)) return t("hud.feeding");
   if(sh.returning) return t("hud.returning");
   return sh.commandedTarget ? t("hud.enRoute") : t("hud.idle");
 }

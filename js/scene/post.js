@@ -1,5 +1,5 @@
 import { ctx } from "../core/context.js";
-import { camState } from "./controls.js";
+import { camState } from "./camera.js";
 import { SOLAR_BODY_BY_SLOT } from "../world/solarSystem.js";
 import { gfxFxaa, gfxMsaa, gfxBloom, gfxBloomStrength, gfxBloomThreshold, gfxLensing, gfxFlare, gfxFlareStrength,
   gfxFilter, gfxVignette, gfxGrain, gfxAberration, gfxDof, gfxDofStrength, gfxSharpen, gfxRays, gfxRaysStrength } from "./graphics.js";

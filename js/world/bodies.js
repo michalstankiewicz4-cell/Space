@@ -4,7 +4,7 @@ import { SOLAR_REGEN_RATE } from "../config.js";
 import { CONTENT } from "../content.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
-import { hideBolt } from "../ships/swarm.js";
+import { hideBolt } from "../ships/biteBeam.js";
 import { bodyParams, tempColor, randomPlanetSpawnData, contentKindFor } from "./bodyParams.js";
 import { SOLAR_BODIES, SOLAR_BODY_BY_SLOT, bodyPosAt, nowSimTime } from "./solarSystem.js";
 import { materializeBlackHole } from "./blackholes.js";

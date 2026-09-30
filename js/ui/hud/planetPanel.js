@@ -2,7 +2,7 @@ import { bodyVariantKey, bodyValueEstimate } from "../../world/bodyParams.js";
 import { t } from "../../i18n.js";
 import { showInfo, hideInfo, getInfoOwner, setInfoRow, setInfoButtons } from "./infoPanel.js";
 import { discover } from "../../core/discovery.js";
-import { focusCameraOn } from "../../scene/controls.js";
+import { focusCameraOn } from "../../scene/camera.js";
 
 // Which planet the PLANET INFO panel is currently showing — module-local,
 // not on ctx, since (unlike the drone/station) this is transient UI focus

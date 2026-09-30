@@ -34,7 +34,7 @@ js/
   moderation.js      profanity filter, shared by nickname confirmation and the drone's print() effect
   settings.js         local player prefs (mouse invert/swap), persisted in localStorage
   config.js          gameplay tuning constants (upgrade tree, radii, network intervals)
-  i18n.js            UI text (English by default, Polish toggle — see the start screen)
+  i18n.js            the i18n API (t, languages); the text itself is one file per language in i18n/
   env.js             Supabase URL/key (anon key — safe to commit, see below)
   supabaseClient.js  Supabase client singleton
   shipkit/           ShipKit — the procedural ship models (swarm ships, the drone), one classic
@@ -48,7 +48,7 @@ js/
                      script shared by the game (scene/post.js) and both labs
   core/              shared game state (scene/entity collections, player points), Wiki discovery
                      state (discovery.js) + small utilities
-  scene/             camera, renderer, the 3D view's rect inside the HUD + miniature render passes
+  scene/             camera (camera.js; mouse input and selection: controls.js), renderer, the 3D view's rect inside the HUD + miniature render passes
                      (viewRect.js, unitThumb.js, infoThumb.js), mouse controls/selection, hover tooltip,
                      ship cam (picture-in-picture cockpit view, ships and the drone),
                      trajectory lines of the object in view + the selected ones (trajectories.js),
@@ -71,7 +71,7 @@ js/
   content.js         aggregates js/bodies/ into one place the game reads from
   fx/                particles (incl. cooling bite sparks), debris, shockwaves, dust — planet-breakup
                      effects; engine trails (trails.js), the bite beam's hot spot (impact.js)
-  ships/             player's ship swarm (movement, eating, bite-beam, RETURN TO BASE; shipProgram.js:
+  ships/             player's ship swarm (movement, eating, RETURN TO BASE; biteBeam.js: the bite beam; shipProgram.js:
                      a ship flown by its program; fleetMemory.js: positions kept in localStorage)
   drone/             the programmable drone — its own DSL (dsl.js), a generator-based
                      interpreter (interpreter.js), the entity and its program builtins

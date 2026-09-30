@@ -8,7 +8,7 @@ import { NET_ENABLED } from "../env.js";
 import { swarmStats } from "../core/gameState.js";
 import { paintScorch, applyHealthVisual, isSpent } from "../world/bodies.js";
 import { spawnBiteParticles, spawnSparks } from "../fx/particles.js";
-import { showImpact, hideImpact, disposeImpact } from "../fx/impact.js";
+import { showBeam, hideBolt, disposeBeam } from "./biteBeam.js";
 import { showToast } from "../ui/hud/eventLog.js";
 import { t } from "../i18n.js";
 import { SHIP_API, updateProgrammedShip } from "./shipProgram.js";
@@ -188,79 +188,6 @@ export function eatEfficiency(stats, planet){
   return 1;
 }
 
-function buildZigzagPoints(start, end, segments, offsets){
-  const points = [start.clone()];
-  for(let i=1;i<segments;i++){
-    const base = new THREE.Vector3().lerpVectors(start, end, i/segments);
-    base.add(offsets[i-1]);
-    points.push(base);
-  }
-  points.push(end.clone());
-  return points;
-}
-
-function generateJitterOffsets(jitterScale, segments){
-  const offs = [];
-  for(let i=1;i<segments;i++){
-    const t = i/segments;
-    offs.push(new THREE.Vector3((Math.random()-0.5),(Math.random()-0.5),(Math.random()-0.5)).multiplyScalar(jitterScale*(1-t*0.4)));
-  }
-  return offs;
-}
-
-function makeBoltMesh(color, opacity){
-  const mat = new THREE.MeshBasicMaterial({
-    color: color, transparent:true, opacity:opacity,
-    blending: THREE.AdditiveBlending, depthWrite:false, depthTest:false
-  });
-  const mesh = new THREE.Mesh(new THREE.BufferGeometry(), mat);
-  mesh.renderOrder = 998;
-  ctx.scene.add(mesh);
-  return mesh;
-}
-
-// rebuilds the beam geometry EVERY FRAME, using the ship's current position
-// and the current contact point - this way the beam smoothly "stretches"
-// as the ship orbits, instead of "jumping" every few frames
-function regenBolt(sh, surfacePoint){
-  if(!sh.boltCore){
-    sh.boltCore = makeBoltMesh(0xeafbff, 0.95);
-    sh.boltGlow = makeBoltMesh(0x4fe3c6, 0.4);
-  }
-  if(!sh.boltJitterOffsets){
-    sh.boltJitterOffsets = generateJitterOffsets(sh.target.radius*0.35+0.15, 6);
-  }
-  const pts = buildZigzagPoints(sh.pos, surfacePoint, 6, sh.boltJitterOffsets);
-  const curve = new THREE.CatmullRomCurve3(pts);
-  const tubularSeg = pts.length*3;
-
-  const oldCore = sh.boltCore.geometry;
-  sh.boltCore.geometry = new THREE.TubeGeometry(curve, tubularSeg, 0.03, 5, false);
-  oldCore.dispose();
-
-  const oldGlow = sh.boltGlow.geometry;
-  sh.boltGlow.geometry = new THREE.TubeGeometry(curve, tubularSeg, 0.08, 6, false);
-  oldGlow.dispose();
-
-  sh.boltCore.visible = true;
-  sh.boltGlow.visible = true;
-}
-
-function pulseBolt(sh, dt){
-  if(!sh.boltCore) return;
-  sh.boltPulse += dt*22;
-  const op = 0.6 + 0.4*Math.abs(Math.sin(sh.boltPulse));
-  sh.boltCore.material.opacity = op;
-  sh.boltGlow.material.opacity = op*0.4;
-}
-
-export function hideBolt(sh){
-  if(sh.boltCore){ sh.boltCore.visible = false; sh.boltGlow.visible = false; }
-  hideImpact(sh);
-  sh.boltJitterOffsets = null;
-  sh.boltJitterTimer = 0;
-}
-
 // A commanded ship's cruise-flight velocity is deliberately immune to
 // ambient gravity (world/solarGravity.js), even though gravity itself is
 // real and correctly strong (v2.0.9). Tried making it genuinely felt via
@@ -368,8 +295,6 @@ export function updateShips(dt){
         sh.target.healthUpdatedAtMs = Date.now();
       }
 
-      pulseBolt(sh, dt);
-
       // the planet does NOT shrink - it cracks: the crack overlay reveals
       // itself with damage, and at low "health" gets a light tension shake
       // before breaking apart
@@ -391,17 +316,7 @@ export function updateShips(dt){
       const outward = outwardScratch.subVectors(sh.pos, sh.target.mesh.position).normalize();
       const surfacePoint = surfacePointScratch.copy(outward).multiplyScalar(sh.target.radius).add(sh.target.mesh.position);
 
-      // the zigzag shape refreshes at a lower rate (a "crackle" effect), but
-      // the beam geometry is rebuilt EVERY FRAME from the ship's current
-      // position - this way the beam smoothly trails the ship as it orbits
-      // the planet after making contact
-      sh.boltJitterTimer -= dt;
-      if(sh.boltJitterTimer <= 0 || !sh.boltJitterOffsets){
-        sh.boltJitterTimer = 0.09;
-        sh.boltJitterOffsets = generateJitterOffsets(sh.target.radius*0.35+0.15, 6);
-      }
-      regenBolt(sh, surfacePoint);
-      if(gfxBiteFx()) showImpact(sh, surfacePoint, dt); else hideImpact(sh);
+      showBeam(sh, surfacePoint, dt);   // the beam and its hot spot (ships/biteBeam.js)
 
       sh.particleTimer -= dt;
       if(sh.particleTimer <= 0){
@@ -475,10 +390,7 @@ export function disposeShip(sh){
   setShipSelected(sh, false);
   sh.visual.dispose();
   disposeMesh(ctx.scene, sh.mesh);
-  hideBolt(sh);
-  if(sh.boltCore){ ctx.scene.remove(sh.boltCore); sh.boltCore.geometry.dispose(); sh.boltCore.material.dispose(); }
-  disposeImpact(sh);
-  if(sh.boltGlow){ ctx.scene.remove(sh.boltGlow); sh.boltGlow.geometry.dispose(); sh.boltGlow.material.dispose(); }
+  disposeBeam(sh);
 }
 
 export function reconcileFleetSize(){
@@ -501,10 +413,7 @@ export function spawnInitialFleet(){
 // by ships/shipVisual.js. Far away (no model built) it just goes, as before.
 export function destroyShip(sh){
   setShipSelected(sh, false);
-  hideBolt(sh);
-  if(sh.boltCore){ ctx.scene.remove(sh.boltCore); sh.boltCore.geometry.dispose(); sh.boltCore.material.dispose(); }
-  disposeImpact(sh);
-  if(sh.boltGlow){ ctx.scene.remove(sh.boltGlow); sh.boltGlow.geometry.dispose(); sh.boltGlow.material.dispose(); }
+  disposeBeam(sh);
   sh.mesh.remove(sh.pickMesh); sh.mesh.remove(sh.selectionRing); sh.mesh.remove(sh.light);
   if(!sh.visual.explode(sh.mesh)){ sh.visual.dispose(); disposeMesh(ctx.scene, sh.mesh); }
 }

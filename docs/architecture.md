@@ -119,7 +119,7 @@ then read just that range.
   DRONE_DOCK_GAP` (4; was ×3.2). Scorch blots shrink by size/radius so
   they keep their world size. The minimap still draws gameplay sizes.
 
-- **"focus" mode (v2.14.0)**: `scene/controls.js#focusCameraOn(body)`
+- **"focus" mode (v2.14.0)**: `scene/camera.js#focusCameraOn(body)`
   orbits one body from `ctx.planets` (planet, Sun, meteoroid, comet) and
   follows it along its orbit — pivot = the body's live position,
   default framing from its sunlit side a little above the orbit plane,
@@ -162,7 +162,7 @@ then read just that range.
   fast, and anything far away is only a few pixels.
 
 - **Camera has two modes, toggled top-center in the HUD** (`scene/
-  controls.js#setCameraMode()`, v2.0.6): "system" orbits the Sun at the
+  camera.js#setCameraMode()`, v2.0.6): "system" orbits the Sun at the
   origin (the original, only view before this); "base" orbits the
   player's own station instead, and is the default on load. Both modes
   share the exact same spherical-orbit math (`camState.az/pol/radius`,
@@ -885,7 +885,7 @@ that ship view — "the drone too").
   START / STOP / SCRIPT — **icons only, the name is the tooltip** (the
   user's call; labels stay as visually-hidden spans). A ship's four
   "soon" quick orders now only show for a group. VIEW =
-  `controls.js#focusCameraOnUnit` — the "focus" camera with one stable
+  `camera.js#focusCameraOnUnit` — the "focus" camera with one stable
   target object per unit (`{ unit, mesh, radius, focusDistance,
   zoomRange, alive() }`).
 - **VIEW is the same everywhere** (the user's "jednolicie"): the info

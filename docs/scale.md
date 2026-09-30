@@ -109,7 +109,7 @@ As of v2.17.1. World units; the whole system spans about ±1200.
 |---|---|---|
 | "base" view (around the station) | radius 11, zoom 3–150 | `scene/controls.js` |
 | "system" view (around the Sun) | radius 950, zoom 20–2500 | `scene/controls.js` |
-| "focus" view (a body) | radius max(4, 6 × radius), zoom 1.6–80 × radius | `scene/controls.js#focusCameraOn` |
+| "focus" view (a body) | radius max(4, 6 × radius), zoom 1.6–80 × radius | `scene/camera.js#focusCameraOn` |
 | Camera far plane | 12000 | `scene/setup.js` |
 | Sky sphere | 9000, follows the camera | `scene/skybox.js` |
 | Fog | FogExp2 density 0.0007 (BodyKit shaders ignore fog) | `scene/setup.js` |
