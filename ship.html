@@ -11,7 +11,10 @@
        3. js/shipkit/shipkit.js                   – THE SHIP MODELS, the same
           file the game loads (a classic script, window.ShipKit); see its
           header for the API
-       4. <script id="viewer">                     – preview page (sky, lights,
+       4. vendor/three-r128-examples + js/postkit/postkit.js – the IMAGE
+          EFFECTS panel: the game's post-processing (bloom, FXAA, MSAA,
+          filter, depth of field), apart from the model's own controls
+       5. <script id="viewer">                     – preview page (sky, lights,
           camera, HUD, quality/detail sliders, performance counters)
      Opens straight from disk, no server needed. -->
 <style>
@@ -164,6 +167,7 @@ input[type=range]::-moz-range-thumb{ width:30px; height:20px; border-radius:4px 
     <label class="sl"><span>Geometry detail (triangles)</span><b id="dVal">100%</b></label>
     <input type="range" id="dSlider" min="0.2" max="2" step="0.05" value="1">
     <div class="ticks"><span>20%</span><span>100%</span><span>200%</span></div>
+    <div id="fxPanel"></div>
     <div class="secHd">PERFORMANCE</div>
     <div class="row"><span>Frames per second</span><b id="statFps">–</b></div>
     <div class="row"><span>Frame time</span><b id="statMs">–</b></div>
@@ -1235,6 +1239,13 @@ input[type=range]::-moz-range-thumb{ width:30px; height:20px; border-radius:4px 
 } )();
 
 </script>
+<!-- Three.js r128 add-ons (vendor/, MIT) + PostKit: the IMAGE EFFECTS panel's post-processing, the game's own -->
+<script src="vendor/three-r128-examples/Pass.js"></script>
+<script src="vendor/three-r128-examples/CopyShader.js"></script>
+<script src="vendor/three-r128-examples/LuminosityHighPassShader.js"></script>
+<script src="vendor/three-r128-examples/UnrealBloomPass.js"></script>
+<script src="vendor/three-r128-examples/FXAAShader.js"></script>
+<script src="js/postkit/postkit.js"></script>
 <script id="shipkit" src="js/shipkit/shipkit.js"></script>
 <script id="viewer">
 /* =======================================================================
@@ -1455,7 +1466,7 @@ const paintSlider = (s) => {
   const p = (s.value - s.min) / (s.max - s.min) * 100;
   s.style.setProperty("--fill", p + "%");
 };
-qSlider.addEventListener("input", () => { state.quality = +qSlider.value; paintSlider(qSlider); applyQuality(state.quality); });
+qSlider.addEventListener("input", () => { state.quality = +qSlider.value; paintSlider(qSlider); applyQuality(state.quality); fx.markCustom(); });
 let rebuildQueued = false;
 dSlider.addEventListener("input", () => {
   state.detail = +dSlider.value;
@@ -1473,6 +1484,33 @@ dmgSlider.addEventListener("input", () => {
   paintSlider(dmgSlider);
   current.setDamage(state.damage);
 });
+
+// =====================================================================
+// IMAGE EFFECTS (PostKit, shared with the game): post-processing of the
+// camera's picture — not part of the model. PostKit's panel owns the
+// switches and the presets; a preset also sets the render quality.
+// =====================================================================
+const pipe = PostKit.create(renderer);
+renderer.info.autoReset = false;       // several passes per frame: counted together, reset in frame()
+const fxSize = new THREE.Vector3();
+function renderView(focusPos, focusRadius, extra) {
+  fx.tick(performance.now());
+  const o = fx.options();
+  if (!(o.bloom || o.fxaa || o.filter || o.dof || o.flare || o.lens || o.msaa !== 4)) { renderer.render(scene, camera); return; }
+  const dofOn = o.dof && PostKit.sphereOnScreen(camera, focusPos, focusRadius, fxSize, 0.5);
+  pipe.render(scene, camera, Object.assign({
+    msaa: o.msaa,
+    bloom: o.bloom ? { strength: 0.7, threshold: 0.93 } : null,
+    fxaa: o.fxaa,
+    dof: dofOn ? { amount: 1, size: fxSize.z, strength: 1 } : null,
+    filter: o.filter ? { vignette: 0.4, grain: 0.25, aberration: 0.35 } : null,
+  }, extra ? extra(o) : null));
+}
+const fx = PostKit.labPanel(document.getElementById("fxPanel"), {
+  effects: ["bloom", "fxaa", "filter", "dof"],
+  setQuality: (level) => { state.quality = level; qSlider.value = level; paintSlider(qSlider); applyQuality(level); },
+});
+
 const step = (d) => { state.shipIndex = (state.shipIndex + d + ShipKit.SHIP_DEFS.length) % ShipKit.SHIP_DEFS.length; loadShip(state.shipIndex, false); };
 document.getElementById("prevShip").addEventListener("click", () => step(-1));
 document.getElementById("nextShip").addEventListener("click", () => step(1));
@@ -1542,7 +1580,8 @@ function frame() {
   current.update(t, dt, { power, particles: QUALITY[state.quality].particles });
 
   controls.update();
-  renderer.render(scene, camera);
+  renderer.info.reset();
+  renderView(controls.target, 3.2);
   updatePerf(performance.now(), performance.now() - t0);
   requestAnimationFrame(frame);
 }

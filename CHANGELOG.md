@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.25.1]
+
+### Changed
+- The post-processing steps moved into PostKit (`js/postkit/postkit.js`),
+  one file shared with the ship and body labs, which now have the same
+  image effects and presets. No visible change in the game.
+
 ## [2.25.0]
 
 ### Added

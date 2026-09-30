@@ -360,6 +360,11 @@ Sun, the meteoroid, comets, the black hole) and since v2.12.0 the sky
 
 ## Viewer (preview page)
 
+- **IMAGE EFFECTS** (right panel, v2.25.1): PostKit's lab panel, as in
+  the ship lab, plus SUN FLARE (the SUNS tab's sun, else the light
+  sprite) and LENSING (the BLACK HOLES tab's hole: hidden while the scene
+  renders, drawn over the warped picture). The camera's picture, not
+  part of the body.
 - **Backdrop**: the game's own sky (BodyKit's kind `sky`), so a body looks
   here exactly as in the game; hidden while the SKY tab shows a sky of its
   own.

@@ -63,7 +63,7 @@ export function renderMainView(){
   ctx.renderer.setClearColor(0x05060a, 1);
   const pr = ctx.renderer.getPixelRatio();
   setLineResolution(r.width * pr, r.height * pr);
-  if(postActive()){ renderPost(r, pr, setRenderRect); return; }
+  if(postActive()){ renderPost(r); return; }
   setRenderRect(r);
   ctx.renderer.render(ctx.scene, ctx.camera);
   ctx.renderer.setScissorTest(false);

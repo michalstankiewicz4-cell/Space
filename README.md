@@ -41,6 +41,9 @@ js/
                      script shared with the ship lab (ship.html); see docs/ship.md
   bodykit/           BodyKit — every procedural celestial body, one classic script shared with the
                      body lab (bodies.html); see docs/bodies.md
+  postkit/           PostKit — post-processing (bloom, MSAA, FXAA, lensing, depth of field, sun
+                     flare, the "robot eyes" filter) and the labs' IMAGE EFFECTS panel, one classic
+                     script shared by the game (scene/post.js) and both labs
   core/              shared game state (scene/entity collections, player points), Wiki discovery
                      state (discovery.js) + small utilities
   scene/             camera, renderer, the 3D view's rect inside the HUD + miniature render passes

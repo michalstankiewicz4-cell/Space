@@ -262,6 +262,14 @@ shots along).
 
 ## Viewer (preview page)
 
+- **IMAGE EFFECTS** (right panel, v2.25.1): PostKit's lab panel
+  (`js/postkit/postkit.js#labPanel`) — the game's post-processing
+  (bloom, FXAA, robot-eyes filter, depth of field, MSAA ×0–8) with
+  presets AUTO / MIN / NORMAL / MAX (a preset also sets the render
+  quality; AUTO steps by frame rate, not in the first 6 s). The camera's
+  picture, **not part of the ship** — kept apart from the model's toggles
+  on purpose (user's call). `renderer.info` is reset once per frame
+  (several passes).
 - **Left panel**: ship name and prev/next navigation over `SHIP_DEFS`,
   the MODEL statistics, a per-type FIGURES list, toggles for
   auto-rotate, engines (the throttle eases in and out), running lights

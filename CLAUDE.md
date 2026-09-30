@@ -121,7 +121,10 @@ the player's own progress stays in `localStorage`.
   the game (version bump). Build ships from ShipKit's building blocks,
   never copy between ships; a new body is data, never a copied shader
   (rules in `docs/ship.md` / `docs/bodies.md`). Mark animated parts
-  `userData.dynamic` or merging bakes them.
+  `userData.dynamic` or merging bakes them. **PostKit**
+  (`js/postkit/postkit.js`, post-processing) is shared the same way — its
+  IMAGE EFFECTS panel in the labs is the camera's, kept apart from the
+  model's own controls (user's call).
 - **Other players' ships, drones and stations are never tinted** (user's
   call): owner-coloured diamond markers; only a station shows the name.
 - **Wiki**: filled in by play (`core/discovery.js`, `"tab:key"` ids; the

@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.25.0">
+<link rel="stylesheet" href="css/style.css?v=2.25.1">
 </head>
 <body>
 
@@ -783,13 +783,15 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
 <!-- ShipKit: procedural ship models, the same file the ship lab (ship.html) uses -->
 <script defer src="js/shipkit/shipkit.js"></script>
 <script defer src="js/bodykit/bodykit.js"></script>
+<!-- PostKit: post-processing (bloom, lensing, flare, filter…), shared with the labs -->
+<script defer src="js/postkit/postkit.js"></script>
 <script defer src="vendor/supabase-js-2.117.2.js"></script>
 <!-- defer: the two libraries no longer block the HTML parser, so main.js's
      module graph starts downloading right away instead of after the CDN
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.25.0"></script>
+<script type="module" src="js/main.js?v=2.25.1"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

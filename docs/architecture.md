@@ -1161,8 +1161,10 @@ the values from before). The Setup tab is a scrolling list; controls with
   miniatures and the cockpit view don't go through it. Since v2.23.0 part
   of the post-processing chain below (it was `viewRect.js#renderWithFxaa`).
 - **Post-processing** (v2.23.0, `scene/post.js`; the user asked for all
-  of it, each switchable): `viewRect.js#renderMainView` hands over to
-  `renderPost` whenever `postActive()`. Order: scene → offscreen target
+  of it, each switchable; since v2.25.1 the steps live in PostKit,
+  `js/postkit/postkit.js`, shared with the labs — `post.js` only maps
+  settings and game objects to its options): `viewRect.js#renderMainView`
+  hands over to `renderPost` whenever `postActive()`. Order: scene → offscreen target
   (MSAA = its sample count: `gfxMsaa` 0/2/4/8; the canvas's own ≈×4 is
   fixed at context creation) → **lensing** (only with the black hole in
   view: the scene is drawn with the hole hidden, warped around it with a
