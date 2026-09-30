@@ -21,6 +21,7 @@ then read just that range.
 - [Public player counter](#public-player-counter)
 - [Privacy (GDPR)](#privacy-gdpr)
 - [Function EXECUTE grants](#function-execute-grants)
+- [Audit 2026-09-30 (v2.26.1): usage leaks and log growth](#audit-2026-09-30-v2261-usage-leaks-and-log-growth)
 
 ## No client-writable UPDATE policy
 
@@ -413,3 +414,52 @@ authenticated` line in that block. A client-callable one takes its actor
 from `auth.uid()`, never from a parameter. Check with
 `has_function_privilege('anon', oid, 'EXECUTE')` over `pg_proc` in the
 `public` schema.
+
+## Audit 2026-09-30 (v2.26.1): usage leaks and log growth
+
+The user asked for a hacking/bugs/usage review. Read-only checks through the
+Management API (policies, grants, `has_function_privilege`, the security
+advisor, usage counts) plus live browser tests. **No exploitable hole found**
+— RLS, the definer RPCs' `auth.uid()` actors and the rate limits held. What
+was found were usage leaks and a logging flaw:
+
+- **Reconnect loop (client, the worst one).** `net/connect.js#scheduleReconnect`
+  removed the old channel, whose own subscribe callback then got "CLOSED" and
+  scheduled another reconnect — which later tore down the healthy new
+  channel, and so on: one real disconnect became a reconnect every ~2 s for
+  the life of the tab, each re-running `set_my_nick`, the `bodies` and
+  `solar_bodies` fetches and a presence join. Seen in `activity_log` as a real
+  player's `set_nick_spam` every 2 s; reproduced by forcing
+  `supabase.realtime.disconnect()` (16 `set_my_nick` calls in 30 s, then 1
+  after the fix). Fix: callbacks from a replaced channel are ignored.
+- **Ship broadcasts to an empty room.** ~8 Realtime messages/s per player
+  (`NET_SHIP_BROADCAST_MS` 120) even alone — ~30 000/hour against a monthly
+  quota of about 2 M on the free tier. Now only while `presence.js#othersOnline()`
+  > 0 (verified: 0 messages with an empty room).
+- **Honest players tripping the bite limit.** Damage is flushed per body every
+  150 ms, so 15 ships on 5 bodies sent ~26 bite RPCs/s against the 20/s
+  limit: 30 % dropped, and **every** dropped call wrote an `activity_log` row
+  (110 rows in 25 s ≈ 16 000/hour from one player — an unbounded-growth path
+  toward the 500 MB database limit, and a script could do it on purpose).
+  Client: `net/biteBudget.js` (15/s shared, rotating, pending damage kept);
+  measured afterwards: ≤ 14.5/s, 0 dropped. Server: every rate-limit branch
+  now logs only the call that crosses the threshold (`v_count = limit + 1`).
+- **Burst triggers never logged.** `log_body_insert_if_bursty` /
+  `log_body_delete_if_bursty` inserted into `activity_log` and then
+  `RAISE EXCEPTION` — which rolls the log row back with the statement. They
+  now `return null` (the row is skipped, the log kept). The game's comet
+  insert treats a skipped row like any failed spawn.
+- **Advisor warnings**: three helpers without a pinned `search_path` (fixed);
+  the "security definer executable by anon" warnings are the game's
+  intentional RPCs (all take the actor from `auth.uid()`); `claim_world_init`
+  (dead) revoked; anonymous sign-ins and no captcha are known (see
+  "Anonymous-auth spam").
+- **Table privileges**: anon/authenticated had TRUNCATE/TRIGGER/REFERENCES
+  (Supabase default). Not reachable through PostgREST; revoked anyway.
+- **Test traffic is usage too**: every Playwright run with a fresh browser
+  context signs in a new anonymous user (52 of the day's 95 new accounts
+  that day; 39 "Tester" nicks) and appears to real players as "Tester".
+  Keep test runs few, or reuse one stored session (`storageState`).
+- Observed usage then: DB 13 MB, 95 anonymous users, ~12 000 REST requests
+  a day on test days (mostly bite RPCs; REST requests aren't a free-tier
+  limit), realtime connections a few hundred a day.

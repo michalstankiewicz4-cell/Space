@@ -13,6 +13,15 @@ export function setPresenceState(next){
   recomputeSteward();
 }
 
+// How many OTHER clients are in the room right now (presence).
+export function othersOnline(){
+  let n = 0;
+  Object.keys(presenceState).forEach(function(key){
+    (presenceState[key] || []).forEach(function(meta){ if(meta.client_id !== clientId) n++; });
+  });
+  return n;
+}
+
 function recomputeSteward(){
   let best = null;
   Object.keys(presenceState).forEach(function(key){

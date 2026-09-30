@@ -5,6 +5,7 @@ import { clientId, myIdentity, isAcceptableNick } from "./identity.js";
 import { state } from "../core/gameState.js";
 import { updatePlayersHud } from "../ui/hud/topBar.js";
 import { roomChannel } from "./connect.js";
+import { othersOnline } from "./presence.js";
 import { containsProfanity } from "../moderation.js";
 import { t } from "../i18n.js";
 import { spawnPrintEffect } from "../drone/dronePrintFx.js";
@@ -271,8 +272,15 @@ function droneSnapshot(dr){
 }
 
 let lastShipBroadcast = 0;
+// Only while someone else is in the room: every broadcast is a Realtime
+// message against the project's monthly quota (the free tier's ~2 M), and at
+// NET_SHIP_BROADCAST_MS one player alone used to send ~30 000 an hour to
+// nobody (found in the v2.26 audit). A player who joins shows up in
+// presence, and the next frame's broadcast reaches them — well within
+// their NET_REMOTE_PLAYER_TIMEOUT_MS.
 export function maybeBroadcastShips(nowMs){
   if(!roomChannel || nowMs - lastShipBroadcast < NET_SHIP_BROADCAST_MS) return;
+  if(othersOnline() === 0) return;
   lastShipBroadcast = nowMs;
   roomChannel.send({
     type: "broadcast", event: "ships",

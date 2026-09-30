@@ -4,6 +4,28 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.26.1]
+
+### Fixed
+- **A reconnect loop**: after one dropped connection (a laptop waking up,
+  a network blip) the game reconnected every ~2 seconds for as long as the
+  tab stayed open — re-sending the nickname and re-downloading the world
+  each time. Now it reconnects once.
+- **Biting several bodies at once** no longer loses damage: a fleet split
+  over 3–5 bodies went past the server's limit (up to 30 % of bites were
+  dropped and logged as abuse). Bites now share one budget under the
+  limit; damage that doesn't fit waits for the next turn.
+
+### Changed
+- Ship positions are only broadcast while another player is online —
+  alone, the game used to send ~30 000 messages an hour to nobody,
+  against the project's monthly quota.
+- Server (`supabase/schema.sql`): rate-limit violations are logged once
+  per window instead of on every call; comet insert/delete bursts are now
+  actually recorded (the old rejection rolled its own log entry back);
+  pinned `search_path` on three helpers; the unused `claim_world_init` and
+  the TRUNCATE/TRIGGER/REFERENCES table privileges revoked from clients.
+
 ## [2.26.0]
 
 ### Added

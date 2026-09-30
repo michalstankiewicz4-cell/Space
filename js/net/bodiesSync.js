@@ -11,6 +11,7 @@ import { state, save } from "../core/gameState.js";
 import { showToast } from "../ui/hud/eventLog.js";
 import { createStalenessGate } from "./stewardFallback.js";
 import { t } from "../i18n.js";
+import { takeBiteToken, rotated } from "./biteBudget.js";
 
 // Comet-only now — the fixed 9 solar bodies (+ sun) have their own sync
 // module, net/solarBodiesSync.js, since they're a permanent set (only ever
@@ -83,8 +84,9 @@ let damageBackoffUntil = 0;
 
 export function flushDamage(){
   if(Date.now() < damageBackoffUntil) return;
-  ctx.planets.forEach(function(p){
+  rotated(ctx.planets).forEach(function(p){
     if(p.pendingDamage > 0 && p.dbId){
+      if(!takeBiteToken()) return;   // over the shared budget: the damage waits for the next flush
       const amount = p.pendingDamage;
       p.pendingDamage = 0;
       supabase.rpc("bite_body", { p_body_id: p.dbId, p_amount: amount }).then(function(res){

@@ -138,3 +138,12 @@ Found while building the image effects (`js/postkit/postkit.js`,
   resolution, AUTO preset, the labs' AUTO) waits ~6 s first.
 - **Changing the number of lights recompiles every lit material** — why
   presets never touch the ship glow lights (a mid-game hitch).
+
+## Removing a Realtime channel calls its own subscribe callback
+
+`supabase.removeChannel(ch)` makes `ch` report "CLOSED" to the callback
+given to `ch.subscribe(...)`. A reconnect handler that reacts to "CLOSED"
+by scheduling another reconnect therefore re-triggers itself when it
+removes the old channel — an endless loop (found in the 2026-09-30 audit,
+see `docs/security.md`). Check that the callback's channel is still the
+current one before acting (`net/connect.js#connectRoom`).

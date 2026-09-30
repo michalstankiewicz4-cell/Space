@@ -36,13 +36,23 @@ function scheduleReconnect(){
   const delay = Math.min(30000, 1000 * Math.pow(2, reconnectAttempt));
   reconnectTimer = setTimeout(function(){
     reconnectTimer = null;
-    if(roomChannel) supabase.removeChannel(roomChannel); // avoid piling up duplicate listeners on retry
+    // Forget the old channel BEFORE removing it: removing it fires its own
+    // subscribe callback with "CLOSED", which must not schedule yet another
+    // reconnect (see connectRoom's stale-channel check). It used to — one
+    // real disconnect turned into an endless loop, every ~2 s tearing down
+    // the healthy new channel and re-running set_my_nick + both world
+    // fetches, for as long as the tab stayed open (found in the v2.26 audit:
+    // a player's actor logged set_nick_spam every 2 s).
+    const old = roomChannel;
+    roomChannel = null;
+    if(old) supabase.removeChannel(old); // avoid piling up duplicate listeners on retry
     connectRoom();
   }, delay);
 }
 
 function connectRoom(){
-  roomChannel = supabase.channel("room:main", { config: { presence: { key: clientId } } });
+  const channel = supabase.channel("room:main", { config: { presence: { key: clientId } } });
+  roomChannel = channel;
 
   roomChannel.on("presence", { event: "sync" }, function(){
     setPresenceState(roomChannel.presenceState());
@@ -59,6 +69,7 @@ function connectRoom(){
   roomChannel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "solar_bodies" }, function(payload){ onSolarBodyUpdated(payload.new); });
 
   roomChannel.subscribe(function(status){
+    if(channel !== roomChannel) return;   // a replaced channel's last word (its own removal) — not ours to act on
     if(status === "SUBSCRIBED"){
       connected = true;
       reconnectAttempt = 0;

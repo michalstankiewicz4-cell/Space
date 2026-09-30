@@ -209,6 +209,7 @@ alter table bodies add constraint bodies_vel_check check (
 create or replace function enforce_bodies_cap()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   if (select count(*) from bodies) >= 10 then
@@ -347,8 +348,10 @@ begin
 
   v_count := bump_activity_rate(v_actor, 'set_nick', interval '30 seconds');
   if v_count > 5 then
-    insert into activity_log (actor, event_type, detail)
-    values (v_actor, 'set_nick_spam', jsonb_build_object('count_in_window', v_count) || request_meta());
+    if v_count = 6 then   -- logged once per window, not per call (see "Audit-log growth")
+      insert into activity_log (actor, event_type, detail)
+      values (v_actor, 'set_nick_spam', jsonb_build_object('count_in_window', v_count) || request_meta());
+    end if;
     return;
   end if;
 
@@ -394,6 +397,7 @@ create or replace function shorten_ip(p_ip text)
 returns text
 language plpgsql
 immutable
+set search_path = public
 as $$
 declare
   v text := trim(split_part(coalesce(p_ip, ''), ',', 1));
@@ -417,6 +421,7 @@ $$;
 create or replace function request_meta()
 returns jsonb
 language plpgsql
+set search_path = public
 as $$
 declare
   v_headers jsonb;
@@ -484,11 +489,16 @@ begin
   end if;
   v_count := bump_activity_rate(v_actor, 'body_insert', interval '10 seconds');
   if v_count > 5 then
-    insert into activity_log (actor, event_type, detail)
-    values (v_actor, 'body_insert_burst', jsonb_build_object(
-      'count_in_window', v_count, 'kind', new.kind, 'radius', new.radius, 'value_bonus', new.value_bonus
-    ) || request_meta());
-    raise exception 'Too many body inserts too fast';
+    -- Skips the row (return null) instead of RAISE EXCEPTION: a raise rolls
+    -- the whole statement back, the activity_log insert included, so until
+    -- v2.26.1 these bursts were rejected but never actually recorded.
+    if v_count = 6 then   -- once per window
+      insert into activity_log (actor, event_type, detail)
+      values (v_actor, 'body_insert_burst', jsonb_build_object(
+        'count_in_window', v_count, 'kind', new.kind, 'radius', new.radius, 'value_bonus', new.value_bonus
+      ) || request_meta());
+    end if;
+    return null;
   end if;
   return new;
 end;
@@ -516,9 +526,11 @@ begin
   end if;
   v_count := bump_activity_rate(v_actor, 'body_delete', interval '10 seconds');
   if v_count > 5 then
-    insert into activity_log (actor, event_type, detail)
-    values (v_actor, 'body_delete_burst', jsonb_build_object('count_in_window', v_count, 'kind', old.kind, 'id', old.id) || request_meta());
-    raise exception 'Too many body deletes too fast';
+    if v_count = 6 then   -- once per window; skip, don't raise (see the insert trigger)
+      insert into activity_log (actor, event_type, detail)
+      values (v_actor, 'body_delete_burst', jsonb_build_object('count_in_window', v_count, 'kind', old.kind, 'id', old.id) || request_meta());
+    end if;
+    return null;
   end if;
   return old;
 end;
@@ -569,11 +581,14 @@ begin
     returning count into v_count;
 
   if v_count is not null and v_count > 20 then
-    -- A real client physically cannot get here (see NET_DAMAGE_FLUSH_MS),
-    -- so this is already an unambiguous signal on its own — logged for
-    -- later review, see activity_log below.
-    insert into activity_log (actor, event_type, detail)
-    values (v_actor, 'bite_rate_exceeded', jsonb_build_object('count_in_window', v_count, 'body_id', p_body_id) || request_meta());
+    -- The game keeps itself under this (js/net/biteBudget.js, 15/s since
+    -- v2.26.1 — before that a fleet split over several bodies could trip
+    -- it), so this is a strong signal — logged for later review, once per
+    -- window rather than per call (see "Audit-log growth" at the end).
+    if v_count = 21 then
+      insert into activity_log (actor, event_type, detail)
+      values (v_actor, 'bite_rate_exceeded', jsonb_build_object('count_in_window', v_count, 'body_id', p_body_id) || request_meta());
+    end if;
     return; -- rate limited: silently drop this bite, no error, no effect
   end if;
 
@@ -655,8 +670,10 @@ begin
     returning count into v_count;
 
   if v_count is not null and v_count > 20 then
-    insert into activity_log (actor, event_type, detail)
-    values (v_actor, 'bite_rate_exceeded', jsonb_build_object('count_in_window', v_count, 'orbit_slot', p_orbit_slot) || request_meta());
+    if v_count = 21 then   -- once per window, see bite_body
+      insert into activity_log (actor, event_type, detail)
+      values (v_actor, 'bite_rate_exceeded', jsonb_build_object('count_in_window', v_count, 'orbit_slot', p_orbit_slot) || request_meta());
+    end if;
     return; -- rate limited: silently drop this bite, no error, no effect
   end if;
 
@@ -736,8 +753,10 @@ begin
 
   v_attempts := bump_activity_rate(v_actor, 'admin_secret_attempt', interval '60 seconds');
   if v_attempts > 5 then
-    insert into activity_log (actor, event_type, detail)
-    values (v_actor, 'admin_secret_bruteforce', jsonb_build_object('attempts_in_window', v_attempts) || request_meta());
+    if v_attempts = 6 then   -- once per window
+      insert into activity_log (actor, event_type, detail)
+      values (v_actor, 'admin_secret_bruteforce', jsonb_build_object('attempts_in_window', v_attempts) || request_meta());
+    end if;
     return;
   end if;
 
@@ -835,3 +854,14 @@ revoke execute on function shorten_ip(text) from public, anon, authenticated;
 revoke execute on function log_body_insert_if_bursty() from public, anon, authenticated;
 revoke execute on function log_body_delete_if_bursty() from public, anon, authenticated;
 revoke execute on function enforce_bodies_cap() from public, anon, authenticated;
+-- claim_world_init is dead code since the 9-orbit rewrite (see docs/security.md)
+-- — nothing calls it, so it's no longer a client API either (v2.26.1 audit).
+revoke execute on function claim_world_init() from public, anon, authenticated;
+
+-- ============================================================================
+-- Table privileges (v2.26.1 audit): Supabase grants anon/authenticated every
+-- privilege on public tables; RLS guards SELECT/INSERT/UPDATE/DELETE, but not
+-- TRUNCATE, TRIGGER or REFERENCES. PostgREST doesn't expose those, so this
+-- is hardening, not a known hole — nothing in the game needs them.
+-- ============================================================================
+revoke truncate, trigger, references on all tables in schema public from anon, authenticated;

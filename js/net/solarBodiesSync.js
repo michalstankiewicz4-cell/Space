@@ -7,6 +7,7 @@ import { SOLAR_BODY_BY_SLOT, bodyPosAt, nowSimTime } from "../world/solarSystem.
 import { state, save } from "../core/gameState.js";
 import { showToast } from "../ui/hud/eventLog.js";
 import { t } from "../i18n.js";
+import { takeBiteToken, rotated } from "./biteBudget.js";
 
 // The fixed 9 solar bodies + sun — a permanent set, seeded once by the
 // Supabase migration (see supabase/schema.sql), never inserted/deleted
@@ -64,8 +65,9 @@ let damageBackoffUntil = 0;
 
 export function flushSolarDamage(){
   if(Date.now() < damageBackoffUntil) return;
-  ctx.planets.forEach(function(p){
+  rotated(ctx.planets).forEach(function(p){
     if(p.orbitSlot == null || !(p.pendingDamage > 0)) return;
+    if(!takeBiteToken()) return;   // over the shared budget: the damage waits for the next flush
     const amount = p.pendingDamage;
     p.pendingDamage = 0;
     supabase.rpc("bite_solar_body", { p_orbit_slot: p.orbitSlot, p_amount: amount }).then(function(res){
