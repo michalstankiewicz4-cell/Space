@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.25.4">
+<link rel="stylesheet" href="css/style.css?v=2.26.0">
 </head>
 <body>
 
@@ -230,14 +230,14 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
            setting; data-val shows a setting's value. -->
       <div id="setupTabGraphics" class="setupTabPanel hidden" data-tab="graphics">
         <div class="gfxSec">
-          <div class="gfxRow"><span id="gfxPresetLabel">Preset</span>
+          <div class="gfxRow" data-help="preset"><span id="gfxPresetLabel">Preset</span>
             <div class="gfxSeg" data-key="gfxPreset"><button type="button" data-v="auto">AUTO</button><button type="button" data-v="min">MIN</button><button type="button" data-v="normal">NORMAL</button><button type="button" data-v="max">MAX</button></div></div>
           <div class="gfxNote" id="gfxPresetNote"></div>
         </div>
         <div class="gfxNote gfxLegend" id="gfxCostLegend"></div>
         <div class="gfxHd" id="gfxHdPicture">PICTURE & SHARPNESS</div>
         <div class="gfxSec">
-          <div class="gfxRow"><span id="gfxResLabel">Resolution</span><i class="gfxCost" data-cost="high" data-tip="res">?</i>
+          <div class="gfxRow"><span><span id="gfxResLabel">Resolution</span><i class="gfxCost" data-cost="high" data-tip="res">?</i></span>
             <div class="gfxSeg" data-key="gfxResMode"><button type="button" data-v="auto">AUTO</button><button type="button" data-v="manual">MANUAL</button></div></div>
           <div id="gfxResAuto">
             <div class="gfxRow"><span id="gfxTargetFpsLabel">Target frame rate</span><b data-val="gfxTargetFps"></b></div>
@@ -253,11 +253,23 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
           </div>
         </div>
         <div class="gfxSec">
-          <div class="gfxRow"><span id="gfxMsaaLabel">MSAA</span><i class="gfxCost" data-cost="mid" data-tip="msaa">?</i>
+          <div class="gfxRow"><span><span id="gfxFpsCapLabel">Frame limiter</span><i class="gfxCost" data-cost="low" data-tip="fpsCap">?</i></span>
+            <div class="gfxSeg" data-key="gfxFpsCap"><button type="button" data-v="0">OFF</button><button type="button" data-v="30">30</button><button type="button" data-v="60">60</button><button type="button" data-v="120">120</button></div></div>
+        </div>
+        <div class="gfxSec">
+          <div class="gfxRow"><span><span id="gfxSharpenLabel">Sharpening</span><i class="gfxCost" data-cost="low" data-tip="sharpen">?</i></span><b data-val="gfxSharpen"></b></div>
+          <input type="range" class="gfxSlider" data-key="gfxSharpen" min="0" max="1" step="0.05">
+        </div>
+        <div class="gfxSec">
+          <div class="gfxRow"><span><span id="gfxMsaaLabel">MSAA</span><i class="gfxCost" data-cost="mid" data-tip="msaa">?</i></span>
             <div class="gfxSeg" data-key="gfxMsaa"><button type="button" data-v="0">OFF</button><button type="button" data-v="2">×2</button><button type="button" data-v="4">×4</button><button type="button" data-v="8">×8</button></div></div>
           <div class="gfxNote" id="gfxMsaaNote"></div>
           <label class="setupCheckRow"><input type="checkbox" data-key="gfxFxaa"><span class="chk"></span><span id="gfxFxaaLabel">FXAA</span><i class="gfxCost" data-cost="low" data-tip="fxaa">?</i></label>
           <div class="gfxNote" id="gfxFxaaNote"></div>
+        </div>
+        <div class="gfxSec">
+          <div class="gfxRow"><span><span id="gfxAnisoLabel">Anisotropic filtering</span><i class="gfxCost" data-cost="low" data-tip="aniso">?</i></span>
+            <div class="gfxSeg" data-key="gfxAniso"><button type="button" data-v="1">×1</button><button type="button" data-v="2">×2</button><button type="button" data-v="4">×4</button><button type="button" data-v="8">×8</button><button type="button" data-v="16">×16</button></div></div>
         </div>
         <div class="gfxSec">
           <label class="setupCheckRow"><input type="checkbox" data-key="gfxSmoothLines"><span class="chk"></span><span id="gfxSmoothLinesLabel">Smooth lines</span><i class="gfxCost" data-cost="low" data-tip="smoothLines">?</i></label>
@@ -268,13 +280,13 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
         </div>
         <div class="gfxHd" id="gfxHdModels">MODELS</div>
         <div class="gfxSec">
-          <div class="gfxRow"><span id="gfxDetailLabel">Geometry detail (triangles)</span><i class="gfxCost" data-cost="mid" data-tip="detail">?</i><b id="gfxDetailVal">100%</b></div>
+          <div class="gfxRow"><span><span id="gfxDetailLabel">Geometry detail (triangles)</span><i class="gfxCost" data-cost="mid" data-tip="detail">?</i></span><b id="gfxDetailVal">100%</b></div>
           <input type="range" class="gfxSlider" id="gfxDetailSlider" min="0.2" max="2" step="0.05" value="1">
           <div class="gfxTicks"><span>20%</span><span>100%</span><span>200%</span></div>
           <label class="setupCheckRow"><input type="checkbox" id="unitLightsCheck"><span class="chk"></span><span id="unitLightsLabel">Ship glow lights</span><i class="gfxCost" data-cost="high" data-tip="unitLights">?</i></label>
         </div>
         <div class="gfxSec">
-          <div class="gfxRow"><span id="gfxFarShipsLabel">Far ships</span><i class="gfxCost" data-cost="mid" data-tip="farShips">?</i>
+          <div class="gfxRow"><span><span id="gfxFarShipsLabel">Far ships</span><i class="gfxCost" data-cost="mid" data-tip="farShips">?</i></span>
             <div class="gfxSeg" data-key="gfxFarShips"><button type="button" data-v="dot">DOT</button><button type="button" data-v="cone">CONE</button><button type="button" data-v="model">MODEL</button></div></div>
           <div id="gfxLodBox">
             <div class="gfxRow"><span id="gfxLodLabel">…farther than</span><b data-val="gfxLodDistance"></b></div>
@@ -297,6 +309,13 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
           <div id="gfxFlareBox">
             <div class="gfxRow"><span id="gfxFlareStrengthLabel">Strength</span><b data-val="gfxFlareStrength"></b></div>
             <input type="range" class="gfxSlider" data-key="gfxFlareStrength" min="0.2" max="2" step="0.1">
+          </div>
+        </div>
+        <div class="gfxSec">
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxRays"><span class="chk"></span><span id="gfxRaysLabel">Light rays from the Sun</span><i class="gfxCost" data-cost="mid" data-tip="rays">?</i></label>
+          <div id="gfxRaysBox">
+            <div class="gfxRow"><span id="gfxRaysStrengthLabel">Strength</span><b data-val="gfxRaysStrength"></b></div>
+            <input type="range" class="gfxSlider" data-key="gfxRaysStrength" min="0.2" max="2" step="0.1">
           </div>
         </div>
         <div class="gfxSec">
@@ -339,6 +358,16 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
             <input type="range" class="gfxSlider" data-key="gfxAberration" min="0" max="1" step="0.05">
           </div>
         </div>
+      </div>
+
+      <!-- Setup -> Graphics: the description of the option under the pointer
+           (ui/setupModal.js#initGfxHelp; the modal widens for this tab). -->
+      <div id="gfxHelp" class="hidden">
+        <div id="gfxHelpTitle"></div>
+        <div id="gfxHelpCost"></div>
+        <div id="gfxHelpText"></div>
+        <div id="gfxHelpValues"></div>
+        <div id="gfxHelpDef"></div>
       </div>
 
       <!-- Setup -> Privacy (ui/privacy.js): the policy and "Delete my data". -->
@@ -797,7 +826,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.25.4"></script>
+<script type="module" src="js/main.js?v=2.26.0"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

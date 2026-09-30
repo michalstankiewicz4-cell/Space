@@ -1,5 +1,5 @@
 import { ctx } from "../core/context.js";
-import { gfxQuality, pixelRatioFor, gfxResMode, gfxTargetFps, gfxMaxRes, gfxPreset, gfxAutoTier, setAutoTier, TIER_ORDER } from "./graphics.js";
+import { gfxQuality, pixelRatioFor, gfxResMode, gfxTargetFps, gfxMaxRes, gfxPreset, gfxAutoTier, setAutoTier, TIER_ORDER, gfxFpsCap } from "./graphics.js";
 
 // The renderer's resolution (pixel ratio), every frame:
 //   manual — the Render quality slider (graphics.js#pixelRatioFor)
@@ -58,10 +58,13 @@ export function updateResolution(){
   frames++;
   const elapsed = (now - windowStart) / 1000;
   if(elapsed < CHECK_S) return;
-  const fps = frames / elapsed, target = gfxTargetFps();
+  // With the frame limiter below the target, the cap is the target — and
+  // hitting it counts as headroom (the frame rate can't go above it).
+  const cap = gfxFpsCap(), target = cap ? Math.min(gfxTargetFps(), cap) : gfxTargetFps();
+  const fps = frames / elapsed;
   windowStart = now; frames = 0;
   const warm = (now - autoSince) / 1000 > WARMUP_S;
-  if(fps > target * 1.2) pr += UP;
+  if(fps > target * 1.2 || (cap && cap <= target && fps >= cap * 0.97)) pr += UP;
   else if(fps < target * 0.92 && warm) pr -= DOWN;
   pr = Math.round(Math.max(MIN_PR, Math.min(maxPR(), pr)) * 100) / 100;
   apply(pr);

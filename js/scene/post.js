@@ -2,7 +2,7 @@ import { ctx } from "../core/context.js";
 import { camState } from "./controls.js";
 import { SOLAR_BODY_BY_SLOT } from "../world/solarSystem.js";
 import { gfxFxaa, gfxMsaa, gfxBloom, gfxBloomStrength, gfxBloomThreshold, gfxLensing, gfxFlare, gfxFlareStrength,
-  gfxFilter, gfxVignette, gfxGrain, gfxAberration, gfxDof, gfxDofStrength } from "./graphics.js";
+  gfxFilter, gfxVignette, gfxGrain, gfxAberration, gfxDof, gfxDofStrength, gfxSharpen, gfxRays, gfxRaysStrength } from "./graphics.js";
 
 // Post-processing of the main view (Setup -> Graphics): the settings and
 // the game's objects handed to PostKit (js/postkit/postkit.js — the steps
@@ -16,7 +16,7 @@ const ORIGIN = new THREE.Vector3();
 
 export function postActive(){
   return !!(gfxFxaa() && THREE.FXAAShader) || !!(gfxBloom() && THREE.UnrealBloomPass) || gfxMsaa() !== 4
-    || gfxLensing() || gfxFlare() || gfxFilter() || (gfxDof() && camState.mode === "focus") || dofAmount > 0.01;
+    || gfxLensing() || gfxFlare() || gfxFilter() || gfxSharpen() > 0 || gfxRays() || (gfxDof() && camState.mode === "focus") || dofAmount > 0.01;
 }
 
 // r: the view rect (CSS px, window coordinates).
@@ -40,7 +40,9 @@ export function renderPost(r){
     fxaa: gfxFxaa(),
     lens: gfxLensing() && hole ? { object: hole.group, position: hole.group.position, radius: hole.radius } : null,
     dof: dofAmount > 0.01 ? { amount: dofAmount, size: dofSize, strength: gfxDofStrength() } : null,
-    flare: gfxFlare() ? { position: ORIGIN, radius: SOLAR_BODY_BY_SLOT[0].radius, strength: gfxFlareStrength() } : null,
+    flare: gfxFlare() || gfxRays() ? { position: ORIGIN, radius: SOLAR_BODY_BY_SLOT[0].radius,
+      strength: gfxFlare() ? gfxFlareStrength() : 0, rays: gfxRays() ? gfxRaysStrength() : 0 } : null,
+    sharpen: gfxSharpen(),
     filter: gfxFilter() ? { vignette: gfxVignette(), grain: gfxGrain(), aberration: gfxAberration() } : null
   });
 }

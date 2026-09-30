@@ -29,8 +29,12 @@
              horizon's radius (world units)
      dof:    { amount 0..1, size, strength } — `size`: the sharp object's
              radius on screen (uv height units, see sphereOnScreen)
-     flare:  { position, radius, strength } — a sun (world position/radius)
+     flare:  { position, radius, strength, rays } — a sun (world
+             position/radius); strength: the lens flare (0 = none), rays:
+             light rays from it (0 = none)
      filter: { vignette, grain, aberration } (0..1 each)
+     sharpen: 0..1 — contrast-adaptive sharpening (as in FSR/CAS), for a
+             picture rendered below the screen's resolution
 
    How each step works:
    - The scene renders into an offscreen target the size of the view
@@ -50,6 +54,11 @@
    - Flare: starburst, ghosts along the line from the sun through the
      centre, a halo; how much of the sun is visible is read from a few
      samples of its disc in the image, so something in front dims it.
+   - Light rays ("volumetric" light): each pixel sums 24 samples of the
+     picture's bright parts along the line to the sun, fading with each
+     step — a planet in front of the sun cuts dark shafts into them.
+   - Sharpening: the pixel minus its four neighbours, scaled down where
+     the local contrast is already high (no halos on hard edges).
    ======================================================================= */
 (function(){
 "use strict";
@@ -62,6 +71,9 @@ uniform float uAspect, uTime;
 uniform vec3 uDof;         // x: amount 0..1, y: sharp radius, z: fully blurred radius (uv height units)
 uniform vec4 uSun;         // xy: the sun on screen (uv), z: its radius (uv height units), w: flare strength (0 = off)
 uniform vec3 uFilter;      // vignette, grain, aberration (0..1 each)
+uniform float uRays;       // light rays from the sun (0 = off)
+uniform float uSharpen;    // 0..1
+uniform vec2 uTexel;       // one pixel of tDiffuse
 varying vec2 vUv;
 
 float lum(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }
@@ -80,14 +92,25 @@ void main(){
     col = vec3(scene(uv + off).r, scene(uv).g, scene(uv - off).b);
   }else col = scene(uv);
 
+  // sharpening (contrast-adaptive, like FSR's / CAS): the pixel against its
+  // four neighbours, pushed less where the local contrast is already high
+  if(uSharpen > 0.0){
+    vec3 n = scene(uv + vec2(0.0, uTexel.y)), s = scene(uv - vec2(0.0, uTexel.y));
+    vec3 e = scene(uv + vec2(uTexel.x, 0.0)), w = scene(uv - vec2(uTexel.x, 0.0));
+    vec3 c = scene(uv);
+    vec3 mn = min(c, min(min(n, s), min(e, w))), mx = max(c, max(max(n, s), max(e, w)));
+    vec3 amp = sqrt(clamp(min(mn, 1.0 - mx) / max(mx, 1e-4), 0.0, 1.0));   // low where contrast is high
+    col += (c * 4.0 - n - s - e - w) * amp * uSharpen * 0.35;
+  }
+
   // depth of field
   if(uDof.x > 0.0){
     float m = smoothstep(uDof.y, uDof.z, length(fromC)) * uDof.x;
     col = mix(col, texture2D(tBlur, clamp(uv, 0.001, 0.999)).rgb, m);
   }
 
-  // the sun's lens flare
-  if(uSun.w > 0.0){
+  // the sun's lens flare and light rays
+  if(uSun.w > 0.0 || uRays > 0.0){
     float vis = 0.0;                       // how much of its disc is visible: 7 samples of the image
     for(int i = 0; i < 7; i++){
       float a = float(i) * 0.8976;
@@ -95,7 +118,22 @@ void main(){
       vis += smoothstep(0.55, 0.9, lum(scene(uSun.xy + o / k)));
     }
     vis /= 7.0;
-    if(vis > 0.001){
+    vis *= 1.0 - smoothstep(0.08, 0.3, uSun.z);   // a sun filling the view is a surface, not a point: no flare, no rays
+    // light rays: bright parts of the picture smeared toward the sun —
+    // a planet in front of it cuts dark shafts into them
+    if(uRays > 0.0 && vis > 0.001){
+      vec2 step = (uSun.xy - vUv) / 24.0;
+      vec2 pos = vUv;
+      float decay = 1.0, acc = 0.0;
+      for(int i = 0; i < 24; i++){
+        pos += step;
+        acc += smoothstep(0.6, 1.0, lum(scene(pos))) * decay;
+        decay *= 0.93;
+      }
+      float fall = exp(-length((vUv - uSun.xy) * k) * 2.2);
+      col += vec3(1.0, 0.88, 0.7) * acc / 10.0 * fall * vis * uRays * 0.38;
+    }
+    if(vis > 0.001 && uSun.w > 0.0){
       vec3 fl = vec3(0.0);
       vec2 toS = (vUv - uSun.xy) * k;
       float rs = length(toS);
@@ -157,9 +195,9 @@ const LENS_E = 1.6;   // Einstein radius in horizon radii
 // Effect sets for the presets (the game adds resolution and detail to
 // these; the labs their render-quality level).
 const PRESETS = {
-  min:    { msaa: 0, fxaa: true,  bloom: false, lens: false, flare: false, filter: false, dof: false },
-  normal: { msaa: 4, fxaa: false, bloom: true,  lens: true,  flare: true,  filter: false, dof: false },
-  max:    { msaa: 8, fxaa: true,  bloom: true,  lens: true,  flare: true,  filter: true,  dof: true },
+  min:    { msaa: 0, fxaa: true,  bloom: false, lens: false, flare: false, filter: false, dof: false, sharpen: true, rays: false },
+  normal: { msaa: 4, fxaa: false, bloom: true,  lens: true,  flare: true,  filter: false, dof: false, sharpen: true, rays: true },
+  max:    { msaa: 8, fxaa: true,  bloom: true,  lens: true,  flare: true,  filter: true,  dof: true,  sharpen: true, rays: true },
 };
 
 function plainTarget(depth){
@@ -212,7 +250,8 @@ function create(renderer){
   const lensMat = shader(LENS_FS, { tDiffuse: { value: null }, uAspect: { value: 1 }, uLens: { value: new THREE.Vector3() }, uLensE: { value: LENS_E } });
   const lensScene = quad(lensMat);
   const finalMat = shader(FINAL_FS, { tDiffuse: { value: null }, tBlur: { value: null }, uAspect: { value: 1 }, uTime: { value: 0 },
-    uDof: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector4() }, uFilter: { value: new THREE.Vector3() } });
+    uDof: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector4() }, uFilter: { value: new THREE.Vector3() },
+    uRays: { value: 0 }, uSharpen: { value: 0 }, uTexel: { value: new THREE.Vector2() } });
   const finalScene = quad(finalMat);
   let bloom = null;
   if(THREE.UnrealBloomPass){
@@ -310,8 +349,12 @@ function create(renderer){
     U.uAspect.value = aspect;
     U.uTime.value = (performance.now() - t0) / 1000;
     const fl = opts.flare;
-    if(fl && sphereOnScreen(camera, fl.position, fl.radius, U.uSun.value, 0.05)) U.uSun.value.w = fl.strength == null ? 1 : fl.strength;
-    else U.uSun.value.w = 0;
+    if(fl && sphereOnScreen(camera, fl.position, fl.radius, U.uSun.value, 0.05)){
+      U.uSun.value.w = fl.strength == null ? 1 : fl.strength;
+      U.uRays.value = fl.rays || 0;
+    }else{ U.uSun.value.w = 0; U.uRays.value = 0; }
+    U.uSharpen.value = opts.sharpen || 0;
+    U.uTexel.value.set(1 / w, 1 / h);
     const f = opts.filter;
     if(f) U.uFilter.value.set(f.vignette || 0, f.grain || 0, f.aberration || 0);
     else U.uFilter.value.set(0, 0, 0);
@@ -341,7 +384,8 @@ function create(renderer){
 //   fx.markCustom() — the lab's own quality slider moved
 // ---------------------------------------------------------------------
 const LAB_QUALITY = { min: 1, normal: 3, max: 4 };
-const LAB_LABELS = { bloom: "BLOOM", fxaa: "FXAA", filter: "ROBOT EYES", dof: "DEPTH OF FIELD", flare: "SUN FLARE", lens: "LENSING" };
+const LAB_LABELS = { bloom: "BLOOM", fxaa: "FXAA", filter: "ROBOT EYES", dof: "DEPTH OF FIELD", flare: "SUN FLARE", lens: "LENSING",
+  sharpen: "SHARPEN", rays: "LIGHT RAYS" };
 const LAB_TITLES = {
   bloom: "Glow around bright things (engines, lights, the sun)",
   fxaa: "Smooths edges and fine detail over the whole picture",
@@ -349,6 +393,8 @@ const LAB_TITLES = {
   dof: "The model sharp, the background soft",
   flare: "Rays, ghosts and a halo from a sun in view",
   lens: "A black hole bends the picture behind it",
+  sharpen: "Contrast-adaptive sharpening, as in FSR — crisper at lower render quality",
+  rays: "Shafts of light from a sun in view; a body in front cuts dark ones",
 };
 function labPanel(parent, cfg){
   const effects = cfg.effects || ["bloom", "fxaa", "filter", "dof"];

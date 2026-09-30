@@ -1219,6 +1219,28 @@ the values from before). The Setup tab is a scrolling list; controls with
   option has a `.gfxCost` [?] badge, `data-cost` low/mid/high (colour)
   and `data-tip` → tooltip `setup.gfx.cost.*` + `setup.gfx.tip.*`
   (`i18nApply.js`). A new option gets a badge too.
+- **Description pane** (v2.26.0, the user's reference: a big game's
+  settings screen): with the Graphics tab active `#setupModalBox` gets
+  `.wide` (1000×824 design px, the list 704 px tall) and `#gfxHelp` on
+  the right shows `setup.gfx.help.<key>` — `d` (what it does), `v`
+  (value → meaning pairs), `def` (the default, as text) — plus the cost
+  line. The key comes from the hovered section's last `.gfxCost`
+  (`data-tip`) or `[data-help]` above the pointer (`setupModal.js#initGfxHelp`).
+  A new option needs a `help` entry in both languages.
+- **Anisotropic filtering** (v2.26.0, `scene/anisotropy.js`): sets
+  `ShipKit.allTextures` to `gfxAniso` (capped by the GPU), re-checked
+  every 2 s for textures of newly built ships; no recompile.
+- **Sharpening and light rays** (v2.26.0): both in PostKit's final pass —
+  sharpening is CAS-like (pixel vs its 4 neighbours, scaled down where
+  local contrast is high); rays sum 24 samples of the picture's bright
+  parts along the line to the sun (so an occluding planet cuts shafts).
+  Flare and rays fade out when the sun's disc is large on screen.
+- **Frame limiter** (v2.26.0, `main.js#tick`): frames arriving early are
+  skipped whole; `lastFrameAt` advances by a steady interval (resetting
+  only when far behind) — a plain `lastFrameAt = now` with 144 Hz
+  requestAnimationFrame gave 27 for a cap of 30, carrying the remainder
+  over gave ~40. `resolution.js` takes the cap as its target and counts
+  hitting it as headroom. Presets never touch it.
 
 ## Research trees
 

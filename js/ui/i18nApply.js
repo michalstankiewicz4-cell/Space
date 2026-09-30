@@ -59,7 +59,8 @@ export function applyStaticText(){
    ["gfxEclipsesLabel", "eclipses"], ["gfxEclipsesNote", "eclipsesNote"],
    ["gfxBiteFxLabel", "biteFx"], ["gfxBiteFxNote", "biteFxNote"],
    ["gfxPresetLabel", "preset"], ["gfxHdPicture", "hd.picture"], ["gfxHdModels", "hd.models"], ["gfxHdLight", "hd.light"],
-   ["gfxHdEffects", "hd.effects"], ["gfxHdCamera", "hd.camera"]].forEach(function(p){ document.getElementById(p[0]).textContent = t("setup.gfx." + p[1]); });
+   ["gfxHdEffects", "hd.effects"], ["gfxHdCamera", "hd.camera"],
+   ["gfxFpsCapLabel", "fpsCap"], ["gfxSharpenLabel", "sharpen"], ["gfxAnisoLabel", "aniso"], ["gfxRaysLabel", "rays"], ["gfxRaysStrengthLabel", "strength"]].forEach(function(p){ document.getElementById(p[0]).textContent = t("setup.gfx." + p[1]); });
 
   // the [?] badges: cost level + why (Setup -> Graphics)
   document.querySelectorAll("#setupTabGraphics .gfxCost").forEach(function(b){

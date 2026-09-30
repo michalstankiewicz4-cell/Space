@@ -2,7 +2,7 @@ import { getLang, setLang, onLangChange, LANGS, t } from "../i18n.js";
 import { settings, saveSettings } from "../settings.js";
 import { gfxQuality, gfxDetail, setGraphics, gfxUnitLights, setUnitLights, setGfx, gfxResMode, gfxTargetFps, gfxMaxRes, gfxSmoothLines, gfxLineWidth, gfxFarShips, gfxLodDistance, gfxFxaa, gfxMsaa, gfxBloom, gfxBloomStrength, gfxBloomThreshold,
   gfxLensing, gfxFlare, gfxFlareStrength, gfxFilter, gfxVignette, gfxGrain, gfxAberration, gfxDof, gfxDofStrength, gfxTrails, gfxTrailLength, gfxEclipses, gfxBiteFx,
-  gfxPreset, gfxAutoTier, applyPreset, onGraphicsChange } from "../scene/graphics.js";
+  gfxPreset, gfxAutoTier, applyPreset, onGraphicsChange, gfxAniso, gfxSharpen, gfxRays, gfxRaysStrength, gfxFpsCap } from "../scene/graphics.js";
 import { currentPixelRatio } from "../scene/resolution.js";
 
 // Setup modal (language / mouse / graphics / help tabs), opened from the
@@ -25,6 +25,9 @@ function switchSetupTab(tab){
   document.querySelectorAll("#setupModal .setupTabPanel").forEach(function(panel){
     panel.classList.toggle("hidden", panel.dataset.tab !== tab);
   });
+  // the Graphics tab gets a wider, taller window with the description pane
+  document.getElementById("setupModalBox").classList.toggle("wide", tab === "graphics");
+  document.getElementById("gfxHelp").classList.toggle("hidden", tab !== "graphics");
 }
 
 export function isSetupModalOpen(){
@@ -110,7 +113,10 @@ const GFX_GET = { gfxResMode: gfxResMode, gfxTargetFps: gfxTargetFps, gfxMaxRes:
   gfxMsaa: function(){ return String(gfxMsaa()); }, gfxBloom: gfxBloom, gfxBloomStrength: gfxBloomStrength, gfxBloomThreshold: gfxBloomThreshold,
   gfxLensing: gfxLensing, gfxFlare: gfxFlare, gfxFlareStrength: gfxFlareStrength, gfxFilter: gfxFilter, gfxVignette: gfxVignette,
   gfxGrain: gfxGrain, gfxAberration: gfxAberration, gfxDof: gfxDof, gfxDofStrength: gfxDofStrength,
-  gfxTrails: gfxTrails, gfxTrailLength: gfxTrailLength, gfxEclipses: gfxEclipses, gfxBiteFx: gfxBiteFx, gfxPreset: gfxPreset };
+  gfxTrails: gfxTrails, gfxTrailLength: gfxTrailLength, gfxEclipses: gfxEclipses, gfxBiteFx: gfxBiteFx, gfxPreset: gfxPreset,
+  gfxAniso: function(){ return String(gfxAniso()); }, gfxFpsCap: function(){ return String(gfxFpsCap()); },
+  gfxSharpen: gfxSharpen, gfxRays: gfxRays, gfxRaysStrength: gfxRaysStrength };
+const NUMERIC_SEGS = ["gfxMsaa", "gfxAniso", "gfxFpsCap"];
 function pct(v){ return Math.round(v * 100) + "%"; }
 const GFX_FMT = {
   gfxTargetFps: function(v){ return v + " FPS"; },
@@ -120,7 +126,8 @@ const GFX_FMT = {
   gfxBloomStrength: function(v){ return v.toFixed(1); },
   gfxBloomThreshold: function(v){ return v.toFixed(2); },
   gfxFlareStrength: pct, gfxVignette: pct, gfxGrain: pct, gfxAberration: pct, gfxDofStrength: pct,
-  gfxTrailLength: function(v){ return v.toFixed(1) + " s"; }
+  gfxTrailLength: function(v){ return v.toFixed(1) + " s"; },
+  gfxSharpen: function(v){ return v > 0 ? pct(v) : t("setup.gfx.seg.0"); }, gfxRaysStrength: pct
 };
 function sliderList(el){ return el.dataset.list ? el.dataset.list.split(",").map(Number) : null; }
 
@@ -158,6 +165,7 @@ function paintImageQuality(){
   document.getElementById("gfxFilterBox").classList.toggle("hidden", !gfxFilter());
   document.getElementById("gfxDofBox").classList.toggle("hidden", !gfxDof());
   document.getElementById("gfxTrailsBox").classList.toggle("hidden", !gfxTrails());
+  document.getElementById("gfxRaysBox").classList.toggle("hidden", !gfxRays());
   paintResNow();
 }
 
@@ -175,7 +183,7 @@ function initImageQuality(){
     b.addEventListener("click", function(){
       const p = {}, k = b.parentNode.dataset.key;
       if(k === "gfxPreset") applyPreset(b.dataset.v);
-      else{ p[k] = k === "gfxMsaa" ? Number(b.dataset.v) : b.dataset.v; setGfx(p); }
+      else{ p[k] = NUMERIC_SEGS.indexOf(k) >= 0 ? Number(b.dataset.v) : b.dataset.v; setGfx(p); }
       paintImageQuality();
     });
   });
@@ -191,7 +199,56 @@ function initImageQuality(){
     c.addEventListener("change", function(){ const p = {}; p[c.dataset.key] = c.checked; setGfx(p); paintImageQuality(); });
   });
   setInterval(function(){ if(!box.classList.contains("hidden")) paintResNow(); }, 500);
+  initGfxHelp(box);
   paintImageQuality();
   onLangChange(paintImageQuality);
   onGraphicsChange(function(){ paintImageQuality(); });   // e.g. the AUTO preset changing tier
+}
+
+// The description pane (Setup -> Graphics, right): the option under the
+// pointer — what it does, what each value means, the default and the cost.
+// An option is found by its [?] badge (data-tip) or a data-help marker: of
+// the ones in the hovered section, the last one above the pointer.
+let helpKey = null;
+function showGfxHelp(key, badge){
+  helpKey = key;
+  const h = t("setup.gfx.help")[key];
+  if(!h) return;
+  const labelEl = badge ? badge.parentNode.querySelector("span[id]") : document.getElementById("gfxPresetLabel");
+  document.getElementById("gfxHelpTitle").textContent = labelEl ? labelEl.textContent : key;
+  const cost = document.getElementById("gfxHelpCost");
+  cost.className = badge ? badge.dataset.cost : "";
+  cost.textContent = badge ? t("setup.gfx.cost." + badge.dataset.cost) + " — " + t("setup.gfx.tip." + key) : "";
+  document.getElementById("gfxHelpText").textContent = h.d;
+  const vals = document.getElementById("gfxHelpValues");
+  vals.textContent = "";
+  (h.v || []).forEach(function(v){
+    const p = document.createElement("p"), b = document.createElement("b");
+    b.textContent = v[0];
+    p.append(b, " — " + v[1]);
+    vals.appendChild(p);
+  });
+  const def = document.getElementById("gfxHelpDef");
+  def.textContent = t("setup.gfx.helpDefault");
+  const db = document.createElement("b");
+  db.textContent = h.def;
+  def.appendChild(db);
+}
+function initGfxHelp(box){
+  box.addEventListener("mousemove", function(e){
+    const sec = e.target.closest(".gfxSec");
+    if(!sec) return;
+    const marks = sec.querySelectorAll(".gfxCost, [data-help]");
+    let pick = marks[0];
+    marks.forEach(function(m){ if(m.getBoundingClientRect().top <= e.clientY) pick = m; });
+    if(!pick) return;
+    const key = pick.dataset.tip || pick.dataset.help;
+    if(key !== helpKey) showGfxHelp(key, pick.classList.contains("gfxCost") ? pick : null);
+  });
+  showGfxHelp("preset", null);
+  onLangChange(function(){
+    const badge = box.querySelector('.gfxCost[data-tip="' + helpKey + '"]');
+    const k = helpKey; helpKey = null;
+    showGfxHelp(k, badge);
+  });
 }

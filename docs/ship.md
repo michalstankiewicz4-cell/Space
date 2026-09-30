@@ -264,7 +264,7 @@ shots along).
 
 - **IMAGE EFFECTS** (right panel, v2.25.1): PostKit's lab panel
   (`js/postkit/postkit.js#labPanel`) — the game's post-processing
-  (bloom, FXAA, robot-eyes filter, depth of field, MSAA ×0–8) with
+  (bloom, FXAA, sharpening, robot-eyes filter, depth of field, MSAA ×0–8) with
   presets AUTO / MIN / NORMAL / MAX (a preset also sets the render
   quality; AUTO steps by frame rate, not in the first 6 s). The camera's
   picture, **not part of the ship** — kept apart from the model's toggles

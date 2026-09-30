@@ -37,6 +37,11 @@ const DEFAULTS = {
   gfxEclipses: true,    // planets shade ships, the drone and stations (scene/eclipse.js)
   gfxPreset: "auto",    // "auto" | "min" | "normal" | "max" | "custom" (scene/graphics.js#applyPreset)
   gfxAutoTier: "normal", // AUTO: the tier it's on now
+  gfxAniso: 4,          // anisotropic filtering 1 | 2 | 4 | 8 | 16 (scene/anisotropy.js)
+  gfxSharpen: 0.3,      // contrast-adaptive sharpening 0..1 (PostKit)
+  gfxRays: true,        // light rays from the Sun (PostKit)
+  gfxRaysStrength: 1,
+  gfxFpsCap: 0,         // frame limiter: 0 (none) | 30 | 60 | 120 (main.js tick)
   gfxBiteFx: true       // sparks and a hot spot where a ship bites (fx/particles.js, fx/impact.js)
 };
 

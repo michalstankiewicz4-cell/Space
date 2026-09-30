@@ -60,6 +60,11 @@ export function gfxGrain(){ return num(settings.gfxGrain, 0, 1, 0.25); }
 export function gfxAberration(){ return num(settings.gfxAberration, 0, 1, 0.35); }
 export function gfxDof(){ return settings.gfxDof === true; }
 export function gfxDofStrength(){ return num(settings.gfxDofStrength, 0.2, 2, 1); }
+export function gfxAniso(){ return [1, 2, 4, 8, 16].indexOf(Number(settings.gfxAniso)) >= 0 ? Number(settings.gfxAniso) : 4; }
+export function gfxSharpen(){ return num(settings.gfxSharpen, 0, 1, 0.3); }
+export function gfxRays(){ return settings.gfxRays !== false; }
+export function gfxRaysStrength(){ return num(settings.gfxRaysStrength, 0, 3, 1); }
+export function gfxFpsCap(){ return [0, 30, 60, 120].indexOf(Number(settings.gfxFpsCap)) >= 0 ? Number(settings.gfxFpsCap) : 0; }
 export function gfxBiteFx(){ return settings.gfxBiteFx !== false; }
 export function gfxEclipses(){ return settings.gfxEclipses !== false; }
 export function gfxTrails(){ return settings.gfxTrails !== false; }
@@ -75,7 +80,7 @@ export function onGraphicsChange(fn){ listeners.push(fn); }
 function snapshot(){
   return { quality: gfxQuality(), detail: gfxDetail(), unitLights: gfxUnitLights(), resMode: gfxResMode(),
     smoothLines: gfxSmoothLines(), lineWidth: gfxLineWidth(), farShips: gfxFarShips(), lodDistance: gfxLodDistance(), fxaa: gfxFxaa(),
-    msaa: gfxMsaa(), bloom: gfxBloom() };
+    msaa: gfxMsaa(), bloom: gfxBloom(), aniso: gfxAniso() };
 }
 
 // Any of the settings above: setGfx({ gfxLineWidth: 2 }) — saved, then
@@ -103,19 +108,20 @@ export function setUnitLights(on){
 // scene/resolution.js moves it a tier down when even the lowest resolution
 // can't hold the frame rate, or up when the highest one runs with plenty
 // to spare (gfxAutoTier: the tier it's on). Changing any single setting by
-// hand makes it "custom" (none lit). Presets never touch the ship glow
+// hand makes it "custom" (none lit). Presets never touch the frame limiter
+// (the player's own choice, e.g. to save a laptop's battery) or the ship glow
 // lights (gfxUnitLights): switching them recompiles every lit material —
 // a hitch AUTO must not cause mid-game — so they stay a manual choice.
 const TIERS = {
   min: { gfxQuality: 1, gfxDetail: 0.5, gfxMsaa: 0, gfxFxaa: true, gfxSmoothLines: false,
     gfxFarShips: "dot", gfxLodDistance: 30, gfxBloom: false, gfxLensing: false, gfxFlare: false, gfxFilter: false,
-    gfxDof: false, gfxTrails: false, gfxEclipses: false, gfxBiteFx: false },
+    gfxDof: false, gfxTrails: false, gfxEclipses: false, gfxBiteFx: false, gfxAniso: 1, gfxSharpen: 0.5, gfxRays: false },
   normal: { gfxQuality: 3, gfxDetail: 1, gfxMsaa: 4, gfxFxaa: false, gfxSmoothLines: true,
     gfxFarShips: "dot", gfxLodDistance: 60, gfxBloom: true, gfxLensing: true, gfxFlare: true, gfxFilter: false,
-    gfxDof: false, gfxTrails: true, gfxEclipses: true, gfxBiteFx: true },
+    gfxDof: false, gfxTrails: true, gfxEclipses: true, gfxBiteFx: true, gfxAniso: 4, gfxSharpen: 0.3, gfxRays: true },
   max: { gfxQuality: 4, gfxDetail: 1.5, gfxMsaa: 8, gfxFxaa: true, gfxSmoothLines: true,
     gfxFarShips: "dot", gfxLodDistance: 150, gfxBloom: true, gfxLensing: true, gfxFlare: true, gfxFilter: true,
-    gfxDof: true, gfxTrails: true, gfxEclipses: true, gfxBiteFx: true }
+    gfxDof: true, gfxTrails: true, gfxEclipses: true, gfxBiteFx: true, gfxAniso: 16, gfxSharpen: 0.2, gfxRays: true }
 };
 const RES = {
   min: { gfxResMode: "manual" },

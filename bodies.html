@@ -14,7 +14,8 @@
           parameter schemas, shaders; see its header for the API
        4. vendor/three-r128-examples + js/postkit/postkit.js – the IMAGE
           EFFECTS panel: the game's post-processing (bloom, FXAA, MSAA,
-          filter, depth of field, sun flare, black-hole lensing), apart
+          filter, depth of field, sharpening, sun flare and light rays,
+          black-hole lensing), apart
           from the body's own controls
        5. <script id="viewer">                     – preview page (sky, camera,
           HUD, sliders built from the schemas, statistics, counters)
@@ -1603,7 +1604,7 @@ const fxSize = new THREE.Vector3();
 function renderView(focusPos, focusRadius, extra) {
   fx.tick(performance.now());
   const o = fx.options();
-  if (!(o.bloom || o.fxaa || o.filter || o.dof || o.flare || o.lens || o.msaa !== 4)) { renderer.render(scene, camera); return; }
+  if (!(o.bloom || o.fxaa || o.filter || o.dof || o.flare || o.lens || o.sharpen || o.rays || o.msaa !== 4)) { renderer.render(scene, camera); return; }
   const dofOn = o.dof && PostKit.sphereOnScreen(camera, focusPos, focusRadius, fxSize, 0.5);
   pipe.render(scene, camera, Object.assign({
     msaa: o.msaa,
@@ -1611,17 +1612,19 @@ function renderView(focusPos, focusRadius, extra) {
     fxaa: o.fxaa,
     dof: dofOn ? { amount: 1, size: fxSize.z, strength: 1 } : null,
     filter: o.filter ? { vignette: 0.4, grain: 0.25, aberration: 0.35 } : null,
+    sharpen: o.sharpen ? 0.3 : 0,
   }, extra ? extra(o) : null));
 }
 const fx = PostKit.labPanel($("fxPanel"), {
-  effects: ["bloom", "fxaa", "filter", "dof", "flare", "lens"],
+  effects: ["bloom", "fxaa", "sharpen", "filter", "dof", "flare", "rays", "lens"],
   setQuality: (level) => { state.quality = level; qSlider.value = level; paintSlider(qSlider); applyQuality(level); },
 });
 // the sun of the SUNS tab, else the lab's light sprite; the black hole of its tab
 function bodyFx(o) {
   const gid = currentGroup().id, here = current && current.group.position;
   return {
-    flare: o.flare ? (gid === "suns" && current ? { position: here, radius: current.radius, strength: 1 } : { position: sun.position, radius: 6, strength: 1 }) : null,
+    flare: o.flare || o.rays ? Object.assign(gid === "suns" && current ? { position: here, radius: current.radius } : { position: sun.position, radius: 6 },
+      { strength: o.flare ? 1 : 0, rays: o.rays ? 1 : 0 }) : null,
     lens: o.lens && gid === "blackholes" && current ? { object: current.group, position: here, radius: current.radius } : null,
   };
 }

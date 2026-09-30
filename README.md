@@ -52,7 +52,8 @@ js/
                      trajectory lines of the object in view + the selected ones (trajectories.js),
                      image quality (Setup → Graphics): graphics.js (settings, presets), resolution.js
                      (auto resolution, AUTO preset's tier), lines.js (smooth lines), post.js (settings →
-                     PostKit), eclipse.js (planets shading ships/drone/station),
+                     PostKit), eclipse.js (planets shading ships/drone/station), anisotropy.js
+                     (texture filtering),
                      the sky backdrop (skybox.js, BodyKit's SKY: nebulae, stars, pulsars),
                      the 9 fixed orbit lines + each comet's own trajectory line (orbitLines.js)
   world/             celestial body logic — the 9-orbit solar system's fixed bodies

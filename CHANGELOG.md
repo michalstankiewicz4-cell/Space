@@ -4,6 +4,27 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.26.0]
+
+### Added
+- **A description pane in Setup → Graphics**: the window grows for this
+  tab, and pointing at an option shows what it does, what each value
+  means, its default and how much it costs.
+- **Anisotropic filtering ×1–×16**: ship and station textures stay sharp
+  at steep angles.
+- **Sharpening** (contrast-adaptive, the idea behind FSR's): crisper
+  picture when the view is drawn below the screen's resolution.
+- **Light rays from the Sun**: shafts of light that a planet in front of
+  the Sun cuts into.
+- **Frame limiter OFF / 30 / 60 / 120**: less heat and a longer battery
+  on laptops; presets leave it alone.
+- The labs' IMAGE EFFECTS panel got SHARPEN (both) and LIGHT RAYS (body
+  lab).
+
+### Changed
+- A sun that fills the view no longer gets a lens flare (it read as a
+  white blot up close).
+
 ## [2.25.4]
 
 ### Changed

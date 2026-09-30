@@ -447,8 +447,11 @@ wants eventually, not scheduled.
   effects (v2.23–v2.25): eclipses between bodies (BodyKit shaders don't
   take part yet), depth of field from real depth instead of screen
   distance, selective (HDR) bloom so bright planets don't glow, trails
-  for other players' ships (neutral colour — never tinted), the Setup
-  tab's small scroll area at lower window sizes.
+  for other players' ships (neutral colour — never tinted). From the
+  big-game settings comparison (v2.26.0): camera motion blur, texture /
+  reflection quality (ShipKit texture and environment-map sizes), real
+  shadow maps in the game (the ship lab has them), the frame limiter in
+  the labs.
 - **A single-player copy of the database** (the admin panel's "Compare
   database with single player" button is a disabled placeholder for it).
 - **Planets to be transformed, farmed and built on**, not devoured — the

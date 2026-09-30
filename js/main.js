@@ -49,6 +49,8 @@ import { updateResolution } from "./scene/resolution.js";
 import { setLoad, loadDone, nextPaint } from "./ui/loader.js";
 import { updateTrails } from "./fx/trails.js";
 import { manageEclipses } from "./scene/eclipse.js";
+import { initAnisotropy, updateAnisotropy } from "./scene/anisotropy.js";
+import { gfxFpsCap } from "./scene/graphics.js";
 
 load();
 
@@ -114,6 +116,7 @@ await nextPaint();
 
 initWindows();
 initHudWorld();
+initAnisotropy();
 initUnitThumb();
 initInfoThumb();
 
@@ -131,8 +134,21 @@ if(NET_ENABLED){
    GAME LOOP
 --------------------------------------------------------- */
 const clock = new THREE.Clock();
+let lastFrameAt = 0;
 
-function tick(){
+function tick(now){
+  // Frame limiter (Setup -> Graphics): a frame that comes too soon is
+  // skipped whole (the browser's own vsync can't be turned off). 1 ms of
+  // slack so a 60 cap on a 60 Hz screen doesn't drop every other frame.
+  // The leftover time carries over, so the average lands on the cap even
+  // when the screen's frames don't divide evenly into it.
+  const cap = gfxFpsCap();
+  if(cap){
+    const interval = 1000 / cap, since = now - lastFrameAt;
+    if(since < interval - 1){ requestAnimationFrame(tick); return; }
+    lastFrameAt += interval;                            // a steady beat…
+    if(now - lastFrameAt > interval) lastFrameAt = now; // …unless far behind (a stall, a hidden tab)
+  }
   perfFrameStart();             // Dev Tools -> Performance stats (ui/hud/perfStats.js)
   const dt = Math.min(0.05, clock.getDelta());
   updateCamera(dt);
@@ -169,6 +185,7 @@ function tick(){
 
   updateShipVisuals(dt);        // ship models: level of detail, animation, wrecks
   updateTrails(dt);             // engine trails behind own ships and the drone
+  updateAnisotropy(dt);         // new ShipKit textures get the chosen filtering
   updateStationVisuals(dt);     // stations (ShipKit's ST-04 HAVEN): ring spin, lights, dish
   updateBodyLooks(dt);          // BodyKit bodies: animated layers, spin, sun direction
   updateSkybox(dt);             // BodyKit sky: follows the camera, twinkles, bakes after a change

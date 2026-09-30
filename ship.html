@@ -13,7 +13,7 @@
           header for the API
        4. vendor/three-r128-examples + js/postkit/postkit.js – the IMAGE
           EFFECTS panel: the game's post-processing (bloom, FXAA, MSAA,
-          filter, depth of field), apart from the model's own controls
+          filter, depth of field, sharpening), apart from the model's own controls
        5. <script id="viewer">                     – preview page (sky, lights,
           camera, HUD, quality/detail sliders, performance counters)
      Opens straight from disk, no server needed. -->
@@ -1496,7 +1496,7 @@ const fxSize = new THREE.Vector3();
 function renderView(focusPos, focusRadius, extra) {
   fx.tick(performance.now());
   const o = fx.options();
-  if (!(o.bloom || o.fxaa || o.filter || o.dof || o.flare || o.lens || o.msaa !== 4)) { renderer.render(scene, camera); return; }
+  if (!(o.bloom || o.fxaa || o.filter || o.dof || o.flare || o.lens || o.sharpen || o.rays || o.msaa !== 4)) { renderer.render(scene, camera); return; }
   const dofOn = o.dof && PostKit.sphereOnScreen(camera, focusPos, focusRadius, fxSize, 0.5);
   pipe.render(scene, camera, Object.assign({
     msaa: o.msaa,
@@ -1504,10 +1504,11 @@ function renderView(focusPos, focusRadius, extra) {
     fxaa: o.fxaa,
     dof: dofOn ? { amount: 1, size: fxSize.z, strength: 1 } : null,
     filter: o.filter ? { vignette: 0.4, grain: 0.25, aberration: 0.35 } : null,
+    sharpen: o.sharpen ? 0.3 : 0,
   }, extra ? extra(o) : null));
 }
 const fx = PostKit.labPanel(document.getElementById("fxPanel"), {
-  effects: ["bloom", "fxaa", "filter", "dof"],
+  effects: ["bloom", "fxaa", "sharpen", "filter", "dof"],
   setQuality: (level) => { state.quality = level; qSlider.value = level; paintSlider(qSlider); applyQuality(level); },
 });
 

@@ -62,6 +62,22 @@
 #setupModal #setupTabGraphics .setupCheckRow{ position:relative; top:auto; font-size:16px; margin:4px 0; }
 #setupModal #setupTabGraphics .setupCheckRow .chk::after{ position:absolute; }
 #setupTabGraphics .gfxNote{ font-size:12.5px; line-height:16px; color:#7f8fd6; margin-top:2px; }
+/* Graphics tab: the modal widens and grows, with the option's description
+   on the right (ui/setupModal.js#initGfxHelp). */
+#setupModalBox.wide{ left:268px; top:100px; width:1000px; height:824px; }
+#setupModalBox.wide #smSide{ height:758px; }
+#setupModalBox.wide #setupTabGraphics{ height:704px; }
+#gfxHelp{ left:504px; top:100px; width:464px; height:704px; padding:2px 0 0 18px; box-sizing:border-box;
+  border-left:1.5px solid #2c4bd8; overflow-y:auto; color:#c7d0ff; font-size:16px; line-height:22px; }
+#gfxHelp > div{ position:relative; }
+#gfxHelpTitle{ font-family:var(--uiFontLabel); font-size:22px; letter-spacing:.4px; color:#f8bb56; margin-bottom:4px; }
+#gfxHelpCost{ font-size:13.5px; margin-bottom:10px; }
+#gfxHelpCost.low{ color:#4fe3c6; } #gfxHelpCost.mid{ color:#f8bb56; } #gfxHelpCost.high{ color:#ff6b6e; }
+#gfxHelpText{ margin-bottom:12px; }
+#gfxHelpValues p{ margin:0 0 10px; }
+#gfxHelpValues b{ color:#ffe2a8; font-weight:500; }
+#gfxHelpDef{ margin-top:6px; color:#9fb1ff; }
+#gfxHelpDef b{ color:#f8bb56; font-weight:500; }
 /* group headers, and the [?] badge: how much an option costs (colour) + why (tooltip) */
 #setupTabGraphics .gfxHd{ font-family:var(--uiFontLabel); font-size:14px; letter-spacing:1.2px; color:#f8bb56;
   margin:12px 0 2px; padding-bottom:3px; border-bottom:1.5px solid #2c4bd8; }
