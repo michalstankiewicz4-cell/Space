@@ -10,6 +10,7 @@ players' browsers from reusing a cached old copy.
 |---|---|---|---|
 | `three-r128.min.js` | Three.js r128 (classic build, global `THREE`) | cdnjs `three.js/r128/three.min.js` | MIT |
 | `three-r128-examples/` | Three.js r128 add-ons from `examples/js`: fat lines (`LineSegmentsGeometry`, `LineGeometry`, `LineMaterial`, `LineSegments2`, `Line2`), `FXAAShader`, bloom (`Pass`, `CopyShader`, `LuminosityHighPassShader`, `UnrealBloomPass`) — Setup → Graphics (`scene/lines.js`, `scene/post.js`) | jsDelivr `three@0.128.0/examples/js/...` | MIT |
+| `three-r128-examples/OrbitControls.js` | Three.js r128 OrbitControls — the labs' mouse camera (ship.html, bodies.html) | jsDelivr `three@0.128.0/examples/js/controls/OrbitControls.js` | MIT |
 | `supabase-js-2.117.2.js` | supabase-js 2.117.2 (UMD, global `supabase`) | jsDelivr `@supabase/supabase-js@2.117.2/dist/umd/supabase.js` | MIT |
 
 `admin.html` → **Check library updates** compares these versions (read

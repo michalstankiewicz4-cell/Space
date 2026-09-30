@@ -13,17 +13,16 @@ step and no network are needed: the fonts come from the repo's own
 
 ## File layout
 
-`ship.html` loads four scripts, in this order:
+`ship.html` loads these scripts, in this order (all classic scripts, so
+the lab still opens straight from disk):
 
 | Script | What it is | In the game? |
 |---|---|---|
-| 1. `<script>` (Three.js r128, minified, MIT) | Vendor library, inlined so the page works offline. Same version as the game. | The game loads its own copy |
-| 2. `<script>` (OrbitControls, r128 `examples/js`, MIT) | Mouse camera control for the preview | No |
-| 3. `<script id="shipkit" src="js/shipkit/shipkit.js">` | **The ship models**: texture generators, materials, shaders, ship definitions, shared effects, public API (`window.ShipKit`). A classic script, not a module, so the lab still opens from disk. | **Yes — the same file** |
-| 4. `<script id="viewer">` | Preview page: sky, lights, renderer, camera, HUD, sliders, counters. Uses only ShipKit's public API. | No |
-
-The HUD's HTML and CSS sit above the scripts. Three.js takes ~600 KB of
-the page, all on one minified line.
+| 1. `vendor/three-r128.min.js`, `vendor/three-r128-examples/OrbitControls.js` | Three.js r128 (the game's own copy) and the preview's mouse camera. Until the 2026-10 review both were pasted into the page (~630 KB, twice with bodies.html). | Three.js yes, OrbitControls no |
+| 2. `vendor/three-r128-examples/*` + `js/postkit/postkit.js` | The IMAGE EFFECTS panel: the game's post-processing | **Yes — the same files** |
+| 3. `js/labkit/labkit.js` | What both labs share around the model (`window.LabKit`): the panels' grain, slider fills, toggles, the HUD's scale, performance counters, the IMAGE EFFECTS render. Styles: `css/lab.css` (shared) + a few rules inline. | No |
+| 4. `js/shipkit/shipkit.js` (`<script id="shipkit">`) | **The ship models**: texture generators, materials, shaders, ship definitions, shared effects, public API (`window.ShipKit`). | **Yes — the same file** |
+| 5. `<script id="viewer">` | Preview page: sky, lights, renderer, camera, HUD wiring, sliders. Uses only the kits' public APIs. | No |
 
 ## ShipKit (`window.ShipKit`)
 
@@ -467,8 +466,6 @@ story in `docs/architecture.md`'s "Rendering and ShipKit models"):
   SwiftShader (`--use-gl=angle --use-angle=swiftshader
   --enable-unsafe-swiftshader`). It works, but at 1–8 FPS. Those FPS
   numbers are meaningless; on a real GPU the page runs normally.
-- **Rebuilding the single file**: Three.js and OrbitControls are pasted
-  in as-is from the `three@0.128.0` npm package (`build/three.min.js`,
-  `examples/js/controls/OrbitControls.js`). Edit the `shipkit` and
-  `viewer` blocks directly; to update a library, replace its whole
-  `<script>` block.
+- **Libraries**: Three.js and OrbitControls come from `vendor/` (see
+  `vendor/README.md`); a library update there covers the game and both
+  labs at once.
