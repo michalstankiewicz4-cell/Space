@@ -79,7 +79,7 @@ js/
                      gravity-free protective field (world/solarGravity.js) — see
                      "Space station" below
   ui/                the start screen (banner.js, its live player counters in playerCounts.js,
-                     the About window in about.js), the Setup modal (setupModal.js), the global
+                     the About window in about.js, the loading bar in its button: loader.js), the Setup modal (setupModal.js), the global
                      Escape-key chain (escapeKey.js), all static UI text (i18nApply.js), HUD icons
                      (icons.js), and:
     hud/             the in-game HUD, one module per panel (topBar, nav, fleetList, unitPanel,

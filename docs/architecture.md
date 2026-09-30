@@ -1352,6 +1352,21 @@ button) shows one tree at a time, ◀ ▶ to switch.
   (3) The inline pre-paint `<head>` script sits *above* the stylesheets —
   an inline script after a stylesheet waits for that stylesheet (and
   stalls the parser meanwhile).
+- **Loading bar (v2.22.0)**, `ui/loader.js`: drawn inside the ENTER ORBIT
+  button (a dark `::after` covering everything right of `--load`). The
+  HTML ships it as `loading waiting` (a sweeping glint, no number — the
+  browser reports no progress for deferred scripts); once `main.js` runs
+  the libraries are in, so it starts at 30%. The rest of the start-up is
+  split into chunks with `await nextPaint()` between them — a chunk
+  blocks the main thread, so the bar can only move *between* chunks, and
+  a new heavy init step should get its own `setLoad()` + `nextPaint()`.
+  Last chunk: `renderer.compile(scene, camera)` + the first frame, so the
+  shader stall happens under the bar instead of right after ENTER ORBIT.
+  `loadDone()` then shows a random `load.jokes` line for 0.5 s and
+  unlocks the button (`banner.js#updateStartEnabled` checks
+  `isLoading()`; `i18nApply.js` leaves the label alone while loading).
+  Anything reacting to UI input during the awaits (Setup, language) must
+  not assume the scene exists yet.
 
 ## Rendering and ShipKit models
 

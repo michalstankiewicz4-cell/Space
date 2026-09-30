@@ -95,5 +95,16 @@ html[data-lang-pending] #box{ visibility:hidden; }
   font-family:var(--uiFontLabel); font-weight:600; font-size:22px; letter-spacing:.8px; color:#241404; transition:filter .15s; }
 #startBtn:not(:disabled):hover{ filter:brightness(1.08); }
 #startBtn:disabled{ filter:saturate(.25) brightness(.5); cursor:not-allowed; }
+/* Loading (ui/loader.js): the gold fills up to --load; the rest is dark.
+   isolation + z-index:-1 keeps the dark part above the gold, under the text. */
+#startBtn.loading{ isolation:isolate; font-size:17px; letter-spacing:.4px; color:#ffe6b0;
+  text-shadow:0 1px 2px rgb(0 0 0 / .8); white-space:nowrap; overflow:hidden; }
+#startBtn.loading:disabled{ filter:none; cursor:progress; }
+#startBtn.loading::after{ content:""; position:absolute; top:0; bottom:0; left:var(--load, 0%); right:0; z-index:-1;
+  background:linear-gradient(90deg, rgb(4 8 30 / .9), rgb(4 8 30 / .78)); transition:left .25s ease-out; }
+/* No number yet (the libraries are downloading): a sweeping glint. */
+#startBtn.loading.waiting::after{ background:linear-gradient(90deg, rgb(4 8 30 / .9) 30%, rgb(60 50 30 / .9) 50%, rgb(4 8 30 / .9) 70%);
+  background-size:300% 100%; animation:startBtnWait 1.4s linear infinite; }
+@keyframes startBtnWait{ from{ background-position:100% 0; } to{ background-position:-50% 0; } }
 #setupBtn{ position:absolute; left:370px; top:0; width:166px; height:52px; }
 #aboutBtn{ position:absolute; left:546px; top:0; width:44px; height:52px; font-size:22px; font-weight:600; color:#ffd98f; }

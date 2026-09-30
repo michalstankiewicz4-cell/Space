@@ -4,9 +4,11 @@ import { t, onLangChange } from "../i18n.js";
 import { openSetupModal } from "./setupModal.js";
 import { showToast } from "./hud/eventLog.js";
 import { hasAcceptedPrivacy, whenPrivacyAccepted } from "./privacy.js";
+import { isLoading, onLoadDone } from "./loader.js";
 
 // Start screen: the player must accept the privacy policy (ui/privacy.js)
-// and give a nickname before "ENTER ORBIT" unlocks. If a nick was already confirmed in this browser, the field is
+// and give a nickname before "ENTER ORBIT" unlocks (and the game must have
+// finished loading — ui/loader.js). If a nick was already confirmed in this browser, the field is
 // pre-filled and the button is active right away.
 
 function updateNickPlaceholder(){
@@ -15,7 +17,7 @@ function updateNickPlaceholder(){
 
 function updateStartEnabled(){
   const nickInput = document.getElementById("nickInput");
-  document.getElementById("startBtn").disabled = !hasAcceptedPrivacy() || nickInput.value.trim().length === 0;
+  document.getElementById("startBtn").disabled = isLoading() || !hasAcceptedPrivacy() || nickInput.value.trim().length === 0;
 }
 
 let welcomed = false;
@@ -42,6 +44,7 @@ export function initBanner(){
   nickInput.value = hasConfirmedNick() ? myIdentity.nick : "";
   updateStartEnabled();
   whenPrivacyAccepted(updateStartEnabled);
+  onLoadDone(updateStartEnabled);
 
   nickInput.addEventListener("input", function(){
     updateStartEnabled();

@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.21.0">
+<link rel="stylesheet" href="css/style.css?v=2.22.0">
 </head>
 <body>
 
@@ -187,7 +187,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
       <div id="nickError" class="hidden">Please choose a different nickname.</div>
 
       <div id="bannerButtons">
-        <button id="startBtn" class="mat gold" disabled>ENTER ORBIT</button>
+        <button id="startBtn" class="mat gold loading waiting" disabled>…</button>
         <button id="setupBtn" class="oBtn" type="button">⚙ Setup</button>
         <button id="aboutBtn" class="oBtn" type="button" title="About the game">?</button>
       </div>
@@ -722,7 +722,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.21.0"></script>
+<script type="module" src="js/main.js?v=2.22.0"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

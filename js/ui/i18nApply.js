@@ -1,4 +1,5 @@
 import { t } from "../i18n.js";
+import { isLoading } from "./loader.js";
 
 // Sets every static (non-dynamic-stat) piece of UI text from the current
 // language. Call once on startup and again whenever the language changes.
@@ -14,7 +15,7 @@ export function applyStaticText(){
   document.getElementById("modeSingle").title = t("banner.modeComingSoon");
   document.getElementById("modeFriends").title = t("banner.modeComingSoon");
   document.getElementById("nickLabel").textContent = t("banner.nickPlaceholder");
-  document.getElementById("startBtn").textContent = t("banner.start");
+  if(!isLoading()) document.getElementById("startBtn").textContent = t("banner.start");
   document.getElementById("nickError").textContent = t("banner.nickRejected");
 
   document.getElementById("outdatedTitle").textContent = t("outdated.title");

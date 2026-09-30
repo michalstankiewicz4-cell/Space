@@ -4,6 +4,19 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.22.0]
+
+### Added
+- **A loading bar.** The ENTER ORBIT button fills up while the game gets
+  ready and says what it's doing (graphics engine, solar system, the
+  swarm, interface, shaders); at the end, for half a second, a small
+  joke from the station. The button unlocks only once everything is
+  built.
+
+### Changed
+- **No freeze right after ENTER ORBIT**: the shaders now compile while
+  the bar is on screen, not on the first frames of play.
+
 ## [2.21.0]
 
 ### Added

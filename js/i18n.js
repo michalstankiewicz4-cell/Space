@@ -13,6 +13,16 @@ function plPlural(n, one, few, many){
 
 const STRINGS = {
   en: {
+    load: {
+      libs: "Loading",
+      scene: "Graphics engine",
+      world: "Solar system",
+      fleet: "Waking the swarm",
+      hud: "Interface",
+      shaders: "Shaders",
+      jokes: ["Asking the black hole to wait…", "Counting the swarm. Twice.", "Watering the greenhouse…",
+        "Drone says: five more minutes", "Polishing the solar panels…", "Aligning nine orbits…"],
+    },
     banner: {
       boot: "REBOOT… MEMORY: 11%. LAST ENTRY: ██ YEARS AGO.",
       desc: "You wake on a ruined station on the fourth orbit. The humans are no longer here — all that's left are empty modules, a greenhouse someone still keeps at 21 °C, and a black hole that doesn't belong in this system.\nNine orbits and a whole system lie ahead of you. Find out what happened here.",
@@ -421,6 +431,16 @@ const STRINGS = {
     }
   },
   pl: {
+    load: {
+      libs: "Ładowanie",
+      scene: "Silnik grafiki",
+      world: "Układ słoneczny",
+      fleet: "Budzenie roju",
+      hud: "Interfejs",
+      shaders: "Shadery",
+      jokes: ["Proszę czarną dziurę o chwilę…", "Liczę rój. Dwa razy.", "Podlewam szklarnię…",
+        "Dron: jeszcze pięć minut", "Poleruję panele słoneczne…", "Ustawiam dziewięć orbit…"],
+    },
     banner: {
       boot: "PONOWNY ROZRUCH… PAMIĘĆ: 11%. OSTATNI ZAPIS: ██ LAT TEMU.",
       desc: "Budzisz się na zniszczonej stacji, na czwartej orbicie. Ludzi już tu nie ma — zostały po nich puste moduły, szklarnia, w której ktoś wciąż utrzymuje 21 °C, i czarna dziura, która nie pasuje do tego układu.\nPrzed tobą dziewięć orbit i cały układ do zbadania. Odkryj, co się tu stało.",

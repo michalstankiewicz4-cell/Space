@@ -46,6 +46,7 @@ import { updateDistanceLines } from "./scene/planetDistanceLines.js";
 import { updateLightsToggle } from "./scene/lightsToggle.js";
 import { updateTrajectories } from "./scene/trajectories.js";
 import { updateResolution } from "./scene/resolution.js";
+import { setLoad, loadDone, nextPaint } from "./ui/loader.js";
 
 load();
 
@@ -67,17 +68,22 @@ initPrivacyNotice();
 initPlayerCounts();   // its server requests wait for the privacy policy itself
 initBanner();
 initEscapeKey();
-// rAF + setTimeout: resumes right after the next frame is actually painted.
+// The loading bar (ui/loader.js, in the ENTER ORBIT button): the rest of
+// the start-up blocks the main thread in chunks, so each chunk is followed
+// by nextPaint() — rAF + setTimeout, resumes right after the next frame is
+// actually painted — and the bar moves between them. The libraries are
+// already loaded once this module runs, hence the 30% head start.
 // (A background tab doesn't paint, so there this waits until it's shown —
 // fine, nothing below matters before the player can see it.)
-await new Promise(function(resolve){
-  requestAnimationFrame(function(){ setTimeout(resolve, 0); });
-});
+setLoad(0.3, "scene");
+await nextPaint();
 
 initScene();
 initViewRect();
 initControls();
 initParticles();
+setLoad(0.45, "world");
+await nextPaint();
 
 if(!NET_ENABLED){
   seedLocalWorld();
@@ -93,12 +99,17 @@ if(!NET_ENABLED){
 // setCameraMode's own comment).
 spawnStation();
 setCameraMode("base", { instant: true });
+setLoad(0.6, "fleet");
+await nextPaint();
 
 spawnInitialFleet();
 reconcileFleetSize();
 initShipCam();
 initVersionCheck();
 spawnDrone();
+setLoad(0.72, "hud");
+await nextPaint();
+
 initWindows();
 initHudWorld();
 initUnitThumb();
@@ -176,6 +187,12 @@ function tick(){
   requestAnimationFrame(tick);
 }
 
+// Shaders: compiled up front (the part of the first frames that stalls
+// the most), so the game doesn't freeze right after ENTER ORBIT.
+setLoad(0.85, "shaders");
+await nextPaint();
 updateCamera(0);
+ctx.renderer.compile(ctx.scene, ctx.camera);
 renderMainView();
 requestAnimationFrame(tick);
+loadDone();
