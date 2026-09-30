@@ -4,6 +4,12 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.28.1]
+
+### Added
+- The locked ENTER ORBIT button says why when you point at it after
+  loading: enter a nickname first, or accept the privacy policy first.
+
 ## [2.28.0]
 
 ### Added
