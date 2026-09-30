@@ -1154,12 +1154,31 @@ the values from before). The Setup tab is a scrolling list; controls with
   sprite, constant screen size; "cone" — the old stand-in; "model" — no
   stand-in, always the model. The distance is `gfxLodDistance` (was the
   constant `SHIP_LOD_DISTANCE`, removed).
-- **FXAA** (`viewRect.js#renderWithFxaa`): the main view renders into an
-  offscreen target the size of the view rect (multisampled on WebGL2),
-  whose texture is sRGB — so the scene writes its final tone-mapped
-  colours into it — then a quad with `THREE.FXAAShader` copies it to the
-  view rect. Verified: colours identical with it on and off. The
-  miniatures and the cockpit view don't go through it.
+- **FXAA**: the main view renders into an offscreen target the size of
+  the view rect (multisampled on WebGL2), whose texture is sRGB — so the
+  scene writes its final tone-mapped colours into it — then a quad with
+  `THREE.FXAAShader`. Verified: colours identical with it on and off. The
+  miniatures and the cockpit view don't go through it. Since v2.23.0 part
+  of the post-processing chain below (it was `viewRect.js#renderWithFxaa`).
+- **Post-processing** (v2.23.0, `scene/post.js`; the user asked for all
+  of it, each switchable): `viewRect.js#renderMainView` hands over to
+  `renderPost` whenever `postActive()`. Order: scene → offscreen target
+  (MSAA = its sample count: `gfxMsaa` 0/2/4/8; the canvas's own ≈×4 is
+  fixed at context creation) → **lensing** (only with the black hole in
+  view: the scene is drawn with the hole hidden, warped around it with a
+  point-lens mapping r → r·(1 − E²/r²), then the hole is drawn over the
+  warp — warping BodyKit's disk too made a bullseye) → **bloom**
+  (`UnrealBloomPass.render(renderer, null, src)` adds into `src`; its
+  high-pass gets `smoothWidth` 0.06; the threshold works on the
+  tone-mapped LDR image, so a sunlit ice planet near 0.95 glows too —
+  default threshold 0.93 is the compromise) → **FXAA** → **depth of
+  field** (focus camera only, eased in; a quarter-size blurred copy) →
+  the final shader: DOF mix by *screen* distance from the centre (no
+  depth readable from a multisampled target in WebGL here; the focused
+  object is always centred), the Sun's **flare** (visibility read from 7
+  samples of the Sun's disc in the image itself, so a planet in front
+  dims it with no extra pass), and the **filter** (aberration, vignette,
+  grain). Cost measured headless: bloom ≈ −25 % fps, the rest small.
 
 ## Research trees
 

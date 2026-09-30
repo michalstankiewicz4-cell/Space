@@ -50,7 +50,11 @@ export function applyStaticText(){
   document.querySelectorAll("#gfxQualityTicks span").forEach(function(s, i){ s.textContent = t("setup.qualityLevels")[i]; });
   [["gfxResLabel", "res"], ["gfxTargetFpsLabel", "targetFps"], ["gfxMaxResLabel", "maxRes"], ["gfxSmoothLinesLabel", "smoothLines"],
    ["gfxLineWidthLabel", "lineWidth"], ["gfxFarShipsLabel", "farShips"], ["gfxLodLabel", "lodDistance"], ["gfxFxaaLabel", "fxaa"],
-   ["gfxFxaaNote", "fxaaNote"]].forEach(function(p){ document.getElementById(p[0]).textContent = t("setup.gfx." + p[1]); });
+   ["gfxFxaaNote", "fxaaNote"], ["gfxBloomLabel", "bloom"], ["gfxBloomStrengthLabel", "bloomStrength"],
+   ["gfxBloomThresholdLabel", "bloomThreshold"], ["gfxBloomNote", "bloomNote"], ["gfxMsaaLabel", "msaa"], ["gfxMsaaNote", "msaaNote"],
+   ["gfxLensingLabel", "lensing"], ["gfxLensingNote", "lensingNote"], ["gfxFlareLabel", "flare"], ["gfxFlareStrengthLabel", "strength"],
+   ["gfxFilterLabel", "filter"], ["gfxVignetteLabel", "vignette"], ["gfxGrainLabel", "grain"], ["gfxAberrationLabel", "aberration"],
+   ["gfxDofLabel", "dof"], ["gfxDofStrengthLabel", "strength"], ["gfxDofNote", "dofNote"]].forEach(function(p){ document.getElementById(p[0]).textContent = t("setup.gfx." + p[1]); });
 
   document.getElementById("aboutBtn").title = t("about.button");
   document.getElementById("aboutTitle").textContent = t("about.title");

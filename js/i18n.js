@@ -66,7 +66,15 @@ const STRINGS = {
         smoothLines: "Smooth lines (orbits, trajectories)", lineWidth: "Line width",
         farShips: "Far ships", lodDistance: "…farther than (distance)",
         fxaa: "FXAA (smooths the whole view)", fxaaNote: "Also smooths thin lines and fine planet detail; slightly softer image.",
-        seg: { auto: "AUTO", manual: "MANUAL", dot: "DOT", cone: "CONE", model: "MODEL" }
+        bloom: "Bloom (glow around bright things)", bloomStrength: "Strength", bloomThreshold: "From brightness",
+        bloomNote: "The Sun, engines, beams and lit windows shine into their surroundings.",
+        lensing: "Black hole lensing", lensingNote: "Space behind the black hole bends into a ring; inside it, a mirrored image of the sky.",
+        flare: "Sun lens flare", strength: "Strength",
+        filter: "Robot eyes filter", vignette: "Vignette", grain: "Grain", aberration: "Chromatic aberration",
+        dof: "Depth of field (focus camera)", dofNote: "The object you're watching stays sharp, the rest softens.",
+        msaa: "Edge smoothing (MSAA)",
+        msaaNote: "Each edge pixel sampled 2, 4 or 8 times. ×8 is the smoothest and the most costly; OFF with FXAA is the cheapest.",
+        seg: { auto: "AUTO", manual: "MANUAL", dot: "DOT", cone: "CONE", model: "MODEL", "0": "OFF", "2": "×2", "4": "×4", "8": "×8" }
       },
       graphicsSoon: "Render quality sets the resolution and effects; geometry detail sets how finely the ships are built."
     },
@@ -484,7 +492,15 @@ const STRINGS = {
         smoothLines: "Gładkie linie (orbity, trajektorie)", lineWidth: "Grubość linii",
         farShips: "Dalekie statki", lodDistance: "…dalej niż (odległość)",
         fxaa: "FXAA (wygładza cały widok)", fxaaNote: "Wygładza też cienkie linie i drobne detale planet; obraz nieco miększy.",
-        seg: { auto: "AUTO", manual: "RĘCZNA", dot: "PUNKT", cone: "STOŻEK", model: "MODEL" }
+        bloom: "Bloom (poświata jasnych rzeczy)", bloomStrength: "Siła", bloomThreshold: "Od jasności",
+        bloomNote: "Słońce, silniki, promienie i oświetlone okna prześwietlają otoczenie.",
+        lensing: "Soczewkowanie czarnej dziury", lensingNote: "Przestrzeń za czarną dziurą wygina się w pierścień, a w nim widać lustrzane odbicie nieba.",
+        flare: "Flara od Słońca", strength: "Siła",
+        filter: "Filtr „oczu robota”", vignette: "Winieta", grain: "Ziarno", aberration: "Aberracja chromatyczna",
+        dof: "Głębia ostrości (kamera na obiekcie)", dofNote: "Obiekt, na który patrzysz, zostaje ostry, reszta się rozmywa.",
+        msaa: "Wygładzanie krawędzi (MSAA)",
+        msaaNote: "Każdy piksel na krawędzi próbkowany 2, 4 lub 8 razy. ×8 najgładsze i najdroższe; WYŁ. z FXAA najtańsze.",
+        seg: { auto: "AUTO", manual: "RĘCZNA", dot: "PUNKT", cone: "STOŻEK", model: "MODEL", "0": "WYŁ.", "2": "×2", "4": "×4", "8": "×8" }
       },
       graphicsSoon: "Jakość renderowania ustawia rozdzielczość i efekty; szczegółowość — jak dokładnie zbudowane są statki."
     },

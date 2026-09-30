@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.22.0">
+<link rel="stylesheet" href="css/style.css?v=2.23.0">
 </head>
 <body>
 
@@ -267,6 +267,49 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
           </div>
         </div>
         <div class="gfxSec">
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxBloom"><span class="chk"></span><span id="gfxBloomLabel">Bloom</span></label>
+          <div id="gfxBloomBox">
+            <div class="gfxRow"><span id="gfxBloomStrengthLabel">Strength</span><b data-val="gfxBloomStrength"></b></div>
+            <input type="range" class="gfxSlider" data-key="gfxBloomStrength" min="0.1" max="2" step="0.1">
+            <div class="gfxRow"><span id="gfxBloomThresholdLabel">Threshold</span><b data-val="gfxBloomThreshold"></b></div>
+            <input type="range" class="gfxSlider" data-key="gfxBloomThreshold" min="0.5" max="1" step="0.01">
+          </div>
+          <div class="gfxNote" id="gfxBloomNote"></div>
+        </div>
+        <div class="gfxSec">
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxLensing"><span class="chk"></span><span id="gfxLensingLabel">Black hole lensing</span></label>
+          <div class="gfxNote" id="gfxLensingNote"></div>
+        </div>
+        <div class="gfxSec">
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxFlare"><span class="chk"></span><span id="gfxFlareLabel">Sun lens flare</span></label>
+          <div id="gfxFlareBox">
+            <div class="gfxRow"><span id="gfxFlareStrengthLabel">Strength</span><b data-val="gfxFlareStrength"></b></div>
+            <input type="range" class="gfxSlider" data-key="gfxFlareStrength" min="0.2" max="2" step="0.1">
+          </div>
+        </div>
+        <div class="gfxSec">
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxFilter"><span class="chk"></span><span id="gfxFilterLabel">Robot eyes filter</span></label>
+          <div id="gfxFilterBox">
+            <div class="gfxRow"><span id="gfxVignetteLabel">Vignette</span><b data-val="gfxVignette"></b></div>
+            <input type="range" class="gfxSlider" data-key="gfxVignette" min="0" max="1" step="0.05">
+            <div class="gfxRow"><span id="gfxGrainLabel">Grain</span><b data-val="gfxGrain"></b></div>
+            <input type="range" class="gfxSlider" data-key="gfxGrain" min="0" max="1" step="0.05">
+            <div class="gfxRow"><span id="gfxAberrationLabel">Chromatic aberration</span><b data-val="gfxAberration"></b></div>
+            <input type="range" class="gfxSlider" data-key="gfxAberration" min="0" max="1" step="0.05">
+          </div>
+        </div>
+        <div class="gfxSec">
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxDof"><span class="chk"></span><span id="gfxDofLabel">Depth of field</span></label>
+          <div id="gfxDofBox">
+            <div class="gfxRow"><span id="gfxDofStrengthLabel">Strength</span><b data-val="gfxDofStrength"></b></div>
+            <input type="range" class="gfxSlider" data-key="gfxDofStrength" min="0.2" max="2" step="0.1">
+          </div>
+          <div class="gfxNote" id="gfxDofNote"></div>
+        </div>
+        <div class="gfxSec">
+          <div class="gfxRow"><span id="gfxMsaaLabel">MSAA</span>
+            <div class="gfxSeg" data-key="gfxMsaa"><button type="button" data-v="0">OFF</button><button type="button" data-v="2">×2</button><button type="button" data-v="4">×4</button><button type="button" data-v="8">×8</button></div></div>
+          <div class="gfxNote" id="gfxMsaaNote"></div>
           <label class="setupCheckRow"><input type="checkbox" data-key="gfxFxaa"><span class="chk"></span><span id="gfxFxaaLabel">FXAA</span></label>
           <div class="gfxNote" id="gfxFxaaNote"></div>
         </div>
@@ -705,14 +748,18 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
 
 <script defer src="vendor/three-r128.min.js"></script>
 <!-- Three.js r128 add-ons (examples/js, MIT): anti-aliased thick lines for
-     orbits and trajectories (scene/lines.js) and the FXAA shader
-     (scene/viewRect.js) — Setup -> Graphics. -->
+     orbits and trajectories (scene/lines.js), FXAA and bloom
+     (scene/post.js) — Setup -> Graphics. -->
 <script defer src="vendor/three-r128-examples/LineSegmentsGeometry.js"></script>
 <script defer src="vendor/three-r128-examples/LineGeometry.js"></script>
 <script defer src="vendor/three-r128-examples/LineMaterial.js"></script>
 <script defer src="vendor/three-r128-examples/LineSegments2.js"></script>
 <script defer src="vendor/three-r128-examples/Line2.js"></script>
 <script defer src="vendor/three-r128-examples/FXAAShader.js"></script>
+<script defer src="vendor/three-r128-examples/Pass.js"></script>
+<script defer src="vendor/three-r128-examples/CopyShader.js"></script>
+<script defer src="vendor/three-r128-examples/LuminosityHighPassShader.js"></script>
+<script defer src="vendor/three-r128-examples/UnrealBloomPass.js"></script>
 <!-- ShipKit: procedural ship models, the same file the ship lab (ship.html) uses -->
 <script defer src="js/shipkit/shipkit.js"></script>
 <script defer src="js/bodykit/bodykit.js"></script>
@@ -722,7 +769,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.22.0"></script>
+<script type="module" src="js/main.js?v=2.23.0"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

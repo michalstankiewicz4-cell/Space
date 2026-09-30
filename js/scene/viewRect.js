@@ -1,6 +1,6 @@
 import { ctx } from "../core/context.js";
 import { setLineResolution } from "./lines.js";
-import { gfxFxaa } from "./graphics.js";
+import { postActive, renderPost } from "./post.js";
 
 // The canvas covers the whole window, but the main 3D view only renders
 // into — and only takes mouse input from — one rect of it: the HUD's
@@ -63,51 +63,10 @@ export function renderMainView(){
   ctx.renderer.setClearColor(0x05060a, 1);
   const pr = ctx.renderer.getPixelRatio();
   setLineResolution(r.width * pr, r.height * pr);
-  if(gfxFxaa() && THREE.FXAAShader){ renderWithFxaa(r, pr); return; }
+  if(postActive()){ renderPost(r, pr, setRenderRect); return; }
   setRenderRect(r);
   ctx.renderer.render(ctx.scene, ctx.camera);
   ctx.renderer.setScissorTest(false);
-}
-
-// FXAA (Setup -> Graphics): the scene goes into an offscreen target the
-// size of the view rect (multisampled where WebGL2 allows, so the edge
-// anti-aliasing isn't lost), then onto the screen through Three.js's FXAA
-// shader (vendor/three-r128-examples), which also smooths what MSAA can't:
-// thin lines, shader detail, tiny far objects. The target's texture is
-// sRGB, so the scene writes its final, tone-mapped colours into it and the
-// FXAA pass copies them straight to the screen.
-let fx = null;
-function fxaaPass(){
-  if(fx) return fx;
-  const opts = { format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: false };
-  const target = ctx.renderer.capabilities.isWebGL2 ? new THREE.WebGLMultisampleRenderTarget(1, 1, opts) : new THREE.WebGLRenderTarget(1, 1, opts);
-  target.texture.encoding = THREE.sRGBEncoding;
-  const mat = new THREE.ShaderMaterial({
-    uniforms: THREE.UniformsUtils.clone(THREE.FXAAShader.uniforms),
-    vertexShader: THREE.FXAAShader.vertexShader, fragmentShader: THREE.FXAAShader.fragmentShader,
-    depthTest: false, depthWrite: false
-  });
-  mat.uniforms.tDiffuse.value = target.texture;
-  const scene = new THREE.Scene();
-  scene.add(new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2), mat));
-  fx = { target: target, mat: mat, scene: scene, camera: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1) };
-  return fx;
-}
-
-function renderWithFxaa(r, pr){
-  const f = fxaaPass();
-  const w = Math.max(1, Math.round(r.width * pr)), h = Math.max(1, Math.round(r.height * pr));
-  if(f.target.width !== w || f.target.height !== h) f.target.setSize(w, h);
-  f.mat.uniforms.resolution.value.set(1 / w, 1 / h);
-  const rend = ctx.renderer;
-  rend.setRenderTarget(f.target);
-  rend.setScissorTest(false);
-  rend.clear();
-  rend.render(ctx.scene, ctx.camera);
-  rend.setRenderTarget(null);
-  setRenderRect(r);
-  rend.render(f.scene, f.camera);
-  rend.setScissorTest(false);
 }
 
 // "Studio" light for the miniatures: the scene's own lights are fixed in

@@ -18,7 +18,20 @@ const DEFAULTS = {
   gfxLineWidth: 1.5,    // their width in pixels
   gfxFarShips: "dot",   // far ships: "dot" (a glow) | "cone" (the old stand-in) | "model" (always the full model)
   gfxLodDistance: 60,   // …beyond this distance from the camera
-  gfxFxaa: false        // FXAA over the main view (scene/viewRect.js)
+  gfxFxaa: false,       // FXAA over the main view (scene/post.js)
+  gfxMsaa: 4,           // MSAA samples of the main view: 0 (off) | 2 | 4 | 8 (scene/post.js)
+  gfxBloom: true,       // glow around bright things (scene/post.js)
+  gfxBloomStrength: 0.7,
+  gfxBloomThreshold: 0.93, // how bright (0..1, as shown on screen) a pixel must be to glow
+  gfxLensing: true,     // the black hole bends the picture behind it (scene/post.js)
+  gfxFlare: true,       // the Sun's lens flare
+  gfxFlareStrength: 1,
+  gfxFilter: true,      // "robot eyes": vignette, grain, chromatic aberration
+  gfxVignette: 0.4,
+  gfxGrain: 0.25,
+  gfxAberration: 0.35,
+  gfxDof: true,         // depth of field in the focus camera
+  gfxDofStrength: 1
 };
 
 function load(){

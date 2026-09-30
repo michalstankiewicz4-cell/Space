@@ -47,6 +47,19 @@ export function gfxLineWidth(){ return num(settings.gfxLineWidth, 1, 4, 1.5); }
 export function gfxFarShips(){ return ["dot", "cone", "model"].indexOf(settings.gfxFarShips) >= 0 ? settings.gfxFarShips : "dot"; }
 export function gfxLodDistance(){ return num(settings.gfxLodDistance, 10, 300, 60); }
 export function gfxFxaa(){ return settings.gfxFxaa === true; }
+export function gfxMsaa(){ return [0, 2, 4, 8].indexOf(Number(settings.gfxMsaa)) >= 0 ? Number(settings.gfxMsaa) : 4; }
+export function gfxBloom(){ return settings.gfxBloom !== false; }
+export function gfxBloomStrength(){ return num(settings.gfxBloomStrength, 0, 3, 0.7); }
+export function gfxBloomThreshold(){ return num(settings.gfxBloomThreshold, 0, 1, 0.93); }
+export function gfxLensing(){ return settings.gfxLensing !== false; }
+export function gfxFlare(){ return settings.gfxFlare !== false; }
+export function gfxFlareStrength(){ return num(settings.gfxFlareStrength, 0, 3, 1); }
+export function gfxFilter(){ return settings.gfxFilter !== false; }
+export function gfxVignette(){ return num(settings.gfxVignette, 0, 1, 0.4); }
+export function gfxGrain(){ return num(settings.gfxGrain, 0, 1, 0.25); }
+export function gfxAberration(){ return num(settings.gfxAberration, 0, 1, 0.35); }
+export function gfxDof(){ return settings.gfxDof !== false; }
+export function gfxDofStrength(){ return num(settings.gfxDofStrength, 0.2, 2, 1); }
 
 export function pixelRatioFor(level){
   const dpr = window.devicePixelRatio || 1;
@@ -57,7 +70,8 @@ export function onGraphicsChange(fn){ listeners.push(fn); }
 
 function snapshot(){
   return { quality: gfxQuality(), detail: gfxDetail(), unitLights: gfxUnitLights(), resMode: gfxResMode(),
-    smoothLines: gfxSmoothLines(), lineWidth: gfxLineWidth(), farShips: gfxFarShips(), lodDistance: gfxLodDistance(), fxaa: gfxFxaa() };
+    smoothLines: gfxSmoothLines(), lineWidth: gfxLineWidth(), farShips: gfxFarShips(), lodDistance: gfxLodDistance(), fxaa: gfxFxaa(),
+    msaa: gfxMsaa(), bloom: gfxBloom() };
 }
 
 // Any of the settings above: setGfx({ gfxLineWidth: 2 }) — saved, then

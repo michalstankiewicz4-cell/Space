@@ -1,6 +1,7 @@
 import { getLang, setLang, onLangChange, LANGS, t } from "../i18n.js";
 import { settings, saveSettings } from "../settings.js";
-import { gfxQuality, gfxDetail, setGraphics, gfxUnitLights, setUnitLights, setGfx, gfxResMode, gfxTargetFps, gfxMaxRes, gfxSmoothLines, gfxLineWidth, gfxFarShips, gfxLodDistance, gfxFxaa } from "../scene/graphics.js";
+import { gfxQuality, gfxDetail, setGraphics, gfxUnitLights, setUnitLights, setGfx, gfxResMode, gfxTargetFps, gfxMaxRes, gfxSmoothLines, gfxLineWidth, gfxFarShips, gfxLodDistance, gfxFxaa, gfxMsaa, gfxBloom, gfxBloomStrength, gfxBloomThreshold,
+  gfxLensing, gfxFlare, gfxFlareStrength, gfxFilter, gfxVignette, gfxGrain, gfxAberration, gfxDof, gfxDofStrength } from "../scene/graphics.js";
 import { currentPixelRatio } from "../scene/resolution.js";
 
 // Setup modal (language / mouse / graphics / help tabs), opened from the
@@ -104,12 +105,19 @@ function initGraphicsSliders(){
 // buttons, sliders (data-list = the values a slider's steps map to) and
 // checkboxes, all through graphics.js#setGfx.
 const GFX_GET = { gfxResMode: gfxResMode, gfxTargetFps: gfxTargetFps, gfxMaxRes: gfxMaxRes, gfxSmoothLines: gfxSmoothLines,
-  gfxLineWidth: gfxLineWidth, gfxFarShips: gfxFarShips, gfxLodDistance: gfxLodDistance, gfxFxaa: gfxFxaa };
+  gfxLineWidth: gfxLineWidth, gfxFarShips: gfxFarShips, gfxLodDistance: gfxLodDistance, gfxFxaa: gfxFxaa,
+  gfxMsaa: function(){ return String(gfxMsaa()); }, gfxBloom: gfxBloom, gfxBloomStrength: gfxBloomStrength, gfxBloomThreshold: gfxBloomThreshold,
+  gfxLensing: gfxLensing, gfxFlare: gfxFlare, gfxFlareStrength: gfxFlareStrength, gfxFilter: gfxFilter, gfxVignette: gfxVignette,
+  gfxGrain: gfxGrain, gfxAberration: gfxAberration, gfxDof: gfxDof, gfxDofStrength: gfxDofStrength };
+function pct(v){ return Math.round(v * 100) + "%"; }
 const GFX_FMT = {
   gfxTargetFps: function(v){ return v + " FPS"; },
   gfxMaxRes: function(v){ return "×" + v.toFixed(1); },
   gfxLineWidth: function(v){ return v.toFixed(2).replace(/0$/, "") + " px"; },
-  gfxLodDistance: function(v){ return String(v); }
+  gfxLodDistance: function(v){ return String(v); },
+  gfxBloomStrength: function(v){ return v.toFixed(1); },
+  gfxBloomThreshold: function(v){ return v.toFixed(2); },
+  gfxFlareStrength: pct, gfxVignette: pct, gfxGrain: pct, gfxAberration: pct, gfxDofStrength: pct
 };
 function sliderList(el){ return el.dataset.list ? el.dataset.list.split(",").map(Number) : null; }
 
@@ -134,6 +142,10 @@ function paintImageQuality(){
   document.getElementById("gfxResManual").classList.toggle("hidden", auto);
   document.getElementById("gfxLineWidthBox").classList.toggle("hidden", !gfxSmoothLines());
   document.getElementById("gfxLodBox").classList.toggle("hidden", gfxFarShips() === "model");
+  document.getElementById("gfxBloomBox").classList.toggle("hidden", !gfxBloom());
+  document.getElementById("gfxFlareBox").classList.toggle("hidden", !gfxFlare());
+  document.getElementById("gfxFilterBox").classList.toggle("hidden", !gfxFilter());
+  document.getElementById("gfxDofBox").classList.toggle("hidden", !gfxDof());
   paintResNow();
 }
 
@@ -146,7 +158,11 @@ function paintResNow(){
 function initImageQuality(){
   const box = document.getElementById("setupTabGraphics");
   box.querySelectorAll(".gfxSeg button").forEach(function(b){
-    b.addEventListener("click", function(){ const p = {}; p[b.parentNode.dataset.key] = b.dataset.v; setGfx(p); paintImageQuality(); });
+    b.addEventListener("click", function(){
+      const p = {}, k = b.parentNode.dataset.key;
+      p[k] = k === "gfxMsaa" ? Number(b.dataset.v) : b.dataset.v;
+      setGfx(p); paintImageQuality();
+    });
   });
   box.querySelectorAll("input[type=range][data-key]").forEach(function(s){
     s.addEventListener("input", function(){

@@ -4,6 +4,25 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.23.0]
+
+### Added
+- **Post-processing, each effect with its own switch** in Setup → Graphics:
+  - **Bloom**: the Sun, engines, beams and lit windows glow into their
+    surroundings (strength and the brightness it starts from adjustable).
+  - **Black hole lensing**: space behind the black hole bends into a
+    ring, with a mirrored image of the sky inside it.
+  - **Sun lens flare**: rays, ghosts and a halo; a planet passing in
+    front of the Sun dims it.
+  - **"Robot eyes" filter**: vignette, film grain and chromatic
+    aberration, each adjustable.
+  - **Depth of field** in the focus camera: the object you're watching
+    stays sharp, the rest softens.
+- **Edge smoothing (MSAA) OFF / ×2 / ×4 / ×8.**
+
+### Changed
+- FXAA moved into the new post-processing chain (`scene/post.js`).
+
 ## [2.22.0]
 
 ### Added
