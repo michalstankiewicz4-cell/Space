@@ -1,50 +1,36 @@
 import { CONTENT } from "../content.js";
 import { GM_SUN, SOLAR_BODY_BY_SLOT, SOLAR_BODIES } from "./solarSystem.js";
 
-// Comets are the one body in this game whose position is genuinely
-// SIMULATED, not a closed-form function of time the way every fixed solar
-// body's orbit (solarSystem.js#bodyPosAt) or a comet's own old
-// straight-line drift used to be. A comet flies in from outside the whole
-// system, swings around the Sun under real gravity (curving, exactly like
-// world/solarGravity.js already does for ships — just always pulled toward
-// the Sun specifically, since a comet's whole point is a sun-grazing pass
-// and it's moving fast enough that no single planet's much smaller SOI
-// meaningfully competes with the Sun's pull along the way), and flies back
-// out the other side. This means a client materializing a comet it didn't
-// see spawn can't evaluate a formula for "where is it right now" — it has
-// to replay the same step-by-step simulation from the spawn state stored
-// in the DB row up to now (see advanceComet() below). Comets are few and
-// short-lived, so this replay is cheap even for a several-minute-old one.
+// Comets are the one body whose position is simulated, not a formula of
+// time: one flies in from outside the system, swings round the Sun under its
+// gravity alone (fast enough that no planet competes) and out again. A
+// client that didn't see it spawn replays the flight from the spawn state
+// in its DB row (advanceComet) — cheap, comets are few and short-lived.
 
-// Just past the outermost real orbit (the black hole, slot 9) — a comet
-// genuinely "traverses the whole system" (spawns outside every orbit,
-// exits the far side outside every orbit too), not just some inner slice
-// of it.
+// Just past the outermost orbit (the black hole's): a comet crosses the
+// whole system.
 const COMET_ENTRY_RADIUS = SOLAR_BODIES[SOLAR_BODIES.length-1].a * 1.15;
 export const COMET_EXIT_RADIUS = COMET_ENTRY_RADIUS * 1.1;
 
-// The user's own explicit spec: closest approach ~2/3 of the first orbit's
-// distance from the Sun. Actually solved for as a real target periapsis by
-// randomCometEntry() below (via vis-viva + angular momentum), not just an
-// approximate aim point — see that function's own comment.
+// The user's spec: the closest approach is 2/3 of the first orbit's
+// distance from the Sun (solved exactly by randomCometEntry).
 const COMET_PERIHELION = SOLAR_BODY_BY_SLOT[1].a * (2/3);
 
 const STEP_DT = 0.05; // matches the game's own per-frame dt clamp (main.js)
 
-// One gravity step, pulling straight toward the Sun (at the origin) -
-// same accel = GM/r² shape world/solarGravity.js uses, simplified since a
-// comet's dominant body is always the Sun for its whole fast transit.
+// One gravity step toward the Sun at the origin (GM/r², as in
+// world/solarGravity.js, Sun only).
+const toSun = new THREE.Vector3();
 export function stepComet(pos, vel, dt){
-  const toSun = pos.clone().multiplyScalar(-1);
+  toSun.copy(pos).multiplyScalar(-1);
   const r = Math.max(toSun.length(), 3);
   toSun.normalize();
   vel.addScaledVector(toSun, (GM_SUN / (r*r)) * dt);
   pos.addScaledVector(vel, dt);
 }
 
-// Replays stepComet() in fixed sub-steps to catch a materializing comet up
-// to "now" — see this file's own header comment for why a closed-form
-// shortcut doesn't exist here the way it does for every other body.
+// Replays stepComet() in fixed sub-steps: a comet materialized late,
+// caught up to now.
 export function advanceComet(pos, vel, elapsedSec){
   let remaining = elapsedSec;
   while(remaining > 0){
@@ -54,26 +40,14 @@ export function advanceComet(pos, vel, elapsedSec){
   }
 }
 
-// Random entry point on a big sphere around the whole system, with a
-// velocity solved analytically (not just pointed at a target point) to
-// actually swing by ~COMET_PERIHELION from the Sun.
-//
-// A first version aimed the entry velocity straight at a random point
-// COMET_PERIHELION from the Sun — that ignores how much stepComet()'s
-// gravity bends the path over the long inbound leg (COMET_ENTRY_RADIUS is
-// ~17x COMET_PERIHELION), so in practice it overshot massively inward:
-// verified live, real perihelions landed around 1.5-5 units (nearly
-// grazing the Sun's own radius) instead of the intended 60. Since
-// stepComet() only ever pulls toward the Sun, this is an exact two-body
-// problem — the correct entry velocity has a closed-form solution via
-// conservation of energy (vis-viva) and angular momentum:
-//   v_p^2 = v0^2 + 2*GM*(1/r_p - 1/R)                (energy)
-//   sin(alpha) = (r_p * v_p) / (R * v0)               (angular momentum,
-//     alpha = angle between the entry velocity and the inward radial
-//     direction at entry)
-// Re-verified after this fix: real perihelions now land within ~0.02% of
-// the r_p target (Euler integration's own tiny per-step error, not a
-// targeting error).
+// A random entry point on a sphere around the system, and the entry
+// velocity that swings by exactly COMET_PERIHELION. Aiming at a point that
+// far from the Sun ignored how gravity bends the long inbound leg (comets
+// grazed the Sun at 1.5-5 units instead of 60). It's a two-body problem, so
+// it has a closed form — energy (vis-viva) and angular momentum:
+//   v_p² = v0² + 2·GM·(1/r_p − 1/R)
+//   sin α = r_p·v_p / (R·v0)   (α: entry velocity vs. the inward radial)
+// Measured: perihelions within ~0.02 % of the target.
 export function randomCometEntry(){
   const entryTheta = Math.random()*Math.PI*2;
   const entryPhi = Math.acos(2*Math.random()-1);
@@ -89,10 +63,8 @@ export function randomCometEntry(){
   const sinAlpha = Math.min(1, (rP*vP) / (R*speed));
   const cosAlpha = Math.sqrt(1 - sinAlpha*sinAlpha);
 
-  // Orbital plane: any direction perpendicular to `pos` works equally well
-  // (this is what gives comets their varied, non-coplanar swing-bys) —
-  // build one by discarding a random vector's component along the radial
-  // direction (the "reject onto a known axis" trick).
+  // Any orbital plane containing `pos` works (varied, tilted swing-bys): a
+  // random vector with its radial component removed.
   const radial = pos.clone().normalize();
   const planeNormal = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5);
   planeNormal.addScaledVector(radial, -planeNormal.dot(radial));
@@ -106,18 +78,10 @@ export function randomCometEntry(){
   return { pos: pos, vel: vel };
 }
 
-// One-time precompute of a comet's FULL flight path (entry all the way out
-// past COMET_EXIT_RADIUS), for a static "orbit" trajectory line (see
-// scene/orbitLines.js#buildCometTrajectoryLine, called once from
-// world/bodies.js#materializePlanet) — deliberately run from the comet's
-// ORIGINAL entry pos/vel, not the advanceComet()-fast-forwarded current
-// state, so a late-joining client's line still shows the whole path from
-// where it entered, not just what's left of it. Sampled coarser than the
-// physics step itself (a line doesn't need every single 0.05s sub-step to
-// look smooth) - a typical ~150-230s transit lands around 400-600 points,
-// cheap for a THREE.Line. The step cap is a safety net for a hypothetical
-// degenerate orbit that never reaches COMET_EXIT_RADIUS - real solved
-// trajectories always do, well under this many steps.
+// A comet's whole flight, entry to exit, for its trajectory line
+// (scene/orbitLines.js#buildCometTrajectoryLine) — from the spawn state, so a
+// late joiner sees the whole path too. Every 8th physics step (~400-600
+// points); the step cap only guards against a path that never leaves.
 const TRAJECTORY_SAMPLE_STRIDE = 8;
 const TRAJECTORY_MAX_STEPS = 20000;
 export function computeCometTrajectory(pos, vel){

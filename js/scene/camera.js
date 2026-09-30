@@ -2,30 +2,18 @@ import { ctx } from "../core/context.js";
 import { settings } from "../settings.js";
 import { SHIP_MODEL_LENGTH, DRONE_MODEL_LENGTH } from "../config.js";
 
-// Camera: RIGHT button = rotate, scroll = zoom (unless the player swapped
-// the buttons in Setup — see rotateButton()/selectButton() below). Two
-// modes, toggled top-center in the HUD (#cameraModeToggle): "system"
-// orbits the Sun at the origin (radius rescaled for the fixed 9-orbit
-// solar system, world/solarSystem.js — orbits now span a=90..890,
-// the original prototype's scale; the old 46/14-140 range was tuned for the
-// previous, much more compact system and would start the camera INSIDE
-// the innermost orbit, showing nothing but the sun), "base" orbits the
-// player's own station (ctx.station.pos) instead — same az/pol/radius
-// spherical-orbit math either way, just a different pivot, so both stay
-// fully player-controlled (drag to rotate, scroll to zoom) rather than a
-// fixed cinematic shot. "base" is the default on load (see
-// setCameraMode() below). A third mode, "focus", orbits one celestial body
-// and follows it along its orbit (focusCameraOn(), used by a minimap
-// click); either toggle button leaves it. Every mode change glides over
-// CAM_TRANSITION_S instead of jumping (see updateCamera()).
+// The camera orbits a pivot (az / pol / radius, driven by the mouse through
+// scene/controls.js): "base" — the player's station (the default), "system"
+// — the Sun, the whole system in view, "focus" — one body or unit, followed
+// (focusCameraOn / focusCameraOnUnit: a minimap click, VIEW). BASE / SYSTEM
+// switch over the 3D view; every change glides over CAM_TRANSITION_S.
 
 const SYSTEM_CAM_DEFAULT = { az: 0.6, pol: 1.05, radius: 950 };
 const SYSTEM_ZOOM_RANGE = [20, 2500];
 const BASE_CAM_RADIUS_DEFAULT = 11;     // around a STATION_MODEL_LENGTH 5 station
 const BASE_ZOOM_RANGE = [3, 150];
-// How much higher the camera climbs above the station's own orbital
-// elevation, relative to the dead-center "Sun exactly hidden behind the
-// station" angle - see setCameraMode()'s own comment for the geometry.
+// How far above the Sun-behind-the-station line the base camera starts
+// (baseCameraDefaults).
 const BASE_CAM_ELEVATION_LIFT = 0.35;
 
 export const camState = { mode: "base", az: SYSTEM_CAM_DEFAULT.az, pol: SYSTEM_CAM_DEFAULT.pol, radius: SYSTEM_CAM_DEFAULT.radius, autoSpin: true,
@@ -38,18 +26,9 @@ const lastPivot = new THREE.Vector3();
 const pivotScratch = new THREE.Vector3();
 function clampPol(p){ return Math.max(0.35, Math.min(Math.PI-0.35, p)); }
 
-// The station sits at some point `p` on its own ring around the Sun (the
-// origin) - `normalize(p)` IS the direction from the Sun to the station.
-// Reusing that exact direction as the camera's own default orbit
-// direction around the station (same az/pol the station's own position
-// would resolve to) puts the default camera further out along that same
-// ray, on the station's far side from the Sun - so looking back at the
-// station, the Sun sits directly behind it. Climbing the camera's `pol`
-// up a bit from that exact angle (BASE_CAM_ELEVATION_LIFT) breaks that
-// dead-center alignment just enough that the Sun reads as peeking out
-// above the station in frame, per the user's own explicit "słońce
-// widoczne trochę jakby nad bazą" spec, instead of being invisibly
-// hidden squarely behind its silhouette.
+// The base camera's starting place: out along the Sun -> station line, so
+// the Sun is behind the station, then lifted a little so it peeks out above
+// it (the user's spec: the Sun visible just above the base).
 function baseCameraDefaults(){
   if(!ctx.station) return { az: SYSTEM_CAM_DEFAULT.az, pol: SYSTEM_CAM_DEFAULT.pol, radius: BASE_CAM_RADIUS_DEFAULT };
   const p = ctx.station.pos;

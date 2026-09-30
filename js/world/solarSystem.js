@@ -1,45 +1,18 @@
-// The fixed 9-orbit solar system (plus the sun at the center) — pure data
-// + orbit math, no THREE.Scene/mesh code, same spirit as world/bodyParams.js.
-// Every number here (a/e/inc/node/phase/speed, the orbitPoint()/soiRadius
-// formulas) is a direct port of the user's own prototype page (since removed), just
-// extended from its 4 example orbits out to this game's fixed 9 + sun.
-//
-// Deliberately NOT randomized at runtime (unlike the old scattered-pool
-// model) — each slot is one specific, hand-picked body, the same way
-// the prototype's `bodies` array hardcodes each planet's exact params.
-// Orbital position is a closed-form function of wall-clock time (no spawn
-// epoch to store/sync at all, since these bodies always exist) — the same
-// "kinematic, nothing new to sync" property comets already use for their
-// straight-line drift, just a different formula (see world/bodies.js).
+// The fixed solar system: the Sun and 9 orbit slots — data and orbit math
+// only, no meshes. The orbits and formulas come from the user's original
+// prototype, extended from its 4 example orbits to 9. Hand-picked, never
+// randomized; a body's position is a closed-form function of wall-clock
+// time, so every client agrees on it with nothing to sync.
 
 const AXIS_X = new THREE.Vector3(1, 0, 0);
 const AXIS_Y = new THREE.Vector3(0, 1, 0);
 
-// Slot 4 is deliberately absent here — it's the player-station ring, not a
-// body (see STATION_RING below and station/station.js). a/e/inc/node/phase
-// follow the prototype's uneven, non-coplanar spread (its 4 example orbits:
-// a=220/340/480/660, e=0.05/0.28/0.12/0.34, inc=4/14/-9/21, node=20/95/
-// 200/150) extended out to 9 slots at the SAME scale the prototype itself
-// uses, not a compressed analog — the user asked explicitly to match
-// the prototype's actual odległości (distances), not just its shape.
-//
-// `speed` (rad/s) is NOT ported from the prototype verbatim, unlike a/e/inc/
-// node — found live, the hard way: the prototype's speed values were tuned
-// for ITS own ship (no eating-orbit follow logic at all, just free flight),
-// but this game's ships track/orbit a target via a lerp
-// (ships/swarm.js#updateShips, `sh.pos.lerp(orbitPos, 0.12)`) that assumes
-// the target moves slowly. Keeping the OLD (much smaller-orbit) speed
-// values at this new, much larger `a` scale multiplies LINEAR velocity
-// (~a*speed for a near-circular orbit) by the same ~12x the orbit grew —
-// a ship trying to dock onto slot 1 previously confirmed unable to
-// actually catch it (target too fast, ship's own cruise speed maxes out
-// around 1-3 units/s). Chosen instead so each orbit's linear speed stays
-// comfortably under a ship's own cruise speed (0.12-0.5 units/s here,
-// tapering down for farther/slower-moving-by-design outer orbits) —
-// correspondingly long orbital periods (tens of minutes to several hours
-// for the outermost orbits) are the deliberate result of that, not an
-// oversight - matches how real outer planets take a very long time to
-// complete an orbit too.
+// Slot 4 is missing on purpose: it's the station ring (STATION_RING below).
+// a/e/inc/node follow the prototype's uneven, tilted spread at its own scale
+// (the user asked for its real distances). `speed` (rad/s) doesn't: at this
+// scale the prototype's values made bodies faster than a ship (~1-3 units/s),
+// which could then never catch one. Each orbit's linear speed stays at
+// 0.12-0.5 units/s — hence orbital periods of minutes to hours, on purpose.
 export const SOLAR_BODIES = [
   { slot: 0, kind: "sun",       a: 0,   e: 0,    inc: 0,   node: 0,   phase: 0.0, speed: 0,        radius: 4.2, temp: 1.0 },
   { slot: 1, kind: "volcanic",  a: 90,  e: 0.04, inc: 3,   node: 15,  phase: 0.0, speed: 0.005556,  radius: 1.6, temp: 0.55 },
@@ -52,11 +25,8 @@ export const SOLAR_BODIES = [
   { slot: 9, kind: "blackhole", a: 890, e: 0.35, inc: -26, node: 180, phase: 2.0, speed: 0.000135,  radius: 1.5, temp: 0 }
 ];
 
-// the prototype's literal value (not a rescaled analog) — paired with the
-// distances above, this is what keeps gravity meaningful at this scale;
-// GM_SUN and `a` can't be changed independently of each other (gravity
-// falls off with r², so a bigger orbit needs a proportionally bigger GM to
-// still pull noticeably).
+// The prototype's value; tied to the distances above (gravity falls off
+// with r²) — rescale one, rescale the other.
 export const GM_SUN = 60000;
 
 // Scale step 2 (v2.17.0): bodies are drawn bigger than their gameplay size.
@@ -80,7 +50,7 @@ SOLAR_BODIES.forEach(function(b){
 export const SOLAR_BODY_BY_SLOT = {};
 SOLAR_BODIES.forEach(function(b){ SOLAR_BODY_BY_SLOT[b.slot] = b; });
 
-// Verbatim port of the prototype's orbitPoint() .
+// The prototype's orbitPoint(): the ellipse, tilted by inc, turned by node.
 export function orbitPoint(a, b, inc, node, angle, out){
   out = out || new THREE.Vector3();
   out.set(a * Math.cos(angle), 0, b * Math.sin(angle));

@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.28.5]
+
+### Changed
+- Code comments reviewed: ~500 lines of investigation history shortened to
+  what the code does and why (the stories stay in `docs/`), outdated ones
+  corrected; `config.js` regrouped by topic. A comet's flight replay no
+  longer allocates a vector per physics step.
+
 ## [2.28.4]
 
 ### Changed

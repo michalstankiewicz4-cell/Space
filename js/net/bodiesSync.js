@@ -75,15 +75,10 @@ export const flushDamage = createBiteFlusher("bite_body",
     applyHealthVisual(p);
   });
 
-// See net/stewardFallback.js for why this needs both an isConnected() guard
-// and a staleness fallback, not just steward-gating. bump() is called in
-// materializeBody() on every INSERT this client sees (from any source), so
-// shouldSpawn() knows how long it's actually been since a comet last
-// appeared. Widened well past the old scattered-pool gate's (8s/4s) — a
-// comet's own lifecycle (several-minute flyby + COMET_RESPAWN_DELAY_MS
-// cooldown) is now far longer than any legitimate gap used to be, so this
-// only needs to catch a steward that's truly gone quiet for multiple full
-// cycles, not just missed one top-up tick.
+// Who may spawn the next comet (net/stewardFallback.js): the steward, or
+// anyone once no comet has appeared for 8-10 minutes (a steward gone quiet
+// for several whole flyby cycles). materializeBody() bumps it on every
+// comet seen.
 const cometTopupGate = createStalenessGate(480000, 120000);
 
 // At most one comet exists at a time — not a population pool topped up
@@ -122,14 +117,9 @@ export function bootstrapWorld(){
     rows.forEach(function(row){ freshIds[row.id] = true; });
     rows.forEach(materializeBody);
 
-    // Reconcile: drop anything tracked locally that no longer exists
-    // server-side. On a first connect this is a no-op (nothing tracked
-    // yet); on a reconnect after a dropped Realtime channel, it catches up
-    // on deletes that happened while disconnected — Realtime never replays
-    // missed events, so this select-and-diff is the only way to find out.
-    // No explosion/points here: we don't know if it was eaten or flew away
-    // while we were gone, and guessing wrong to show a fake effect would be
-    // worse than just quietly removing it.
+    // Drop what the server no longer has (deletes missed while
+    // disconnected — Realtime never replays them). Quietly: eaten or flown
+    // off, we can't tell, so no effect and no points.
     Object.keys(ctx.netBodies).forEach(function(id){
       if(freshIds[id]) return;
       const obj = ctx.netBodies[id];

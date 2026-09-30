@@ -12,23 +12,14 @@ import { makeBodyLook, bodyLookRef, cometActivity } from "./bodyVisual.js";
 import { stepComet, advanceComet, COMET_EXIT_RADIUS, computeCometTrajectory } from "./cometPhysics.js";
 import { buildCometTrajectoryLine } from "../scene/orbitLines.js";
 
-// Body lifecycle: materializing a mesh from spawn data, spawning/despawning
-// (local-only and networked), and the per-frame update. Pure body-type
-// math/data lives in ./bodyParams.js, the look in ./bodyVisual.js (BodyKit)
-// and the selection frame in scene/selectionBrackets.js — this file is what's left: turning that data
-// into an actual scene object and keeping it alive.
-//
-// Two kinds of body pass through materializePlanet()/updateBodies() now:
-// - Fixed solar bodies (sun + 8 planet-ish orbit slots, `row.orbit_slot`
-//   set) — shape (kind/radius/temp) comes from the hardcoded
-//   world/solarSystem.js table, never from the DB row; only health/
-//   max_health/updated_at are server state. Position is re-derived from
-//   bodyPosAt() every frame, health regenerates (see the "health
-//   checkpoint" comment below) — never destroyed/removed.
-// - Comets (`row.orbit_slot` absent) — entirely unchanged from before:
-//   full row-driven shape, straight-line drift, spawn/despawn pool.
-// The black hole (orbit_slot 9) is NOT among these — it has its own
-// materializeBlackHole() in world/blackholes.js (not in ctx.planets).
+// Body lifecycle: a body row turned into a scene object, spawning and
+// despawning (local and networked), the per-frame update. The kind math is
+// ./bodyParams.js, the look ./bodyVisual.js (BodyKit). Two kinds pass through:
+// - fixed solar bodies (row.orbit_slot set): shape from world/solarSystem.js,
+//   only health from the server; position from wall-clock time; they grow
+//   back and are never removed;
+// - comets: everything from the row, simulated flight, spawned and despawned.
+// The black hole isn't one of them (world/blackholes.js, not in ctx.planets).
 
 // Damage shows as glowing cracks in the body's own BodyKit shader.
 export function applyHealthVisual(obj){
@@ -36,16 +27,10 @@ export function applyHealthVisual(obj){
   obj.look.setDamage(1 - Math.max(0, obj.health/obj.maxHealth));
 }
 
-// Builds a mesh + entry in `ctx.planets` from a body row (local or networked).
-// `elapsedSec` advances comets to where they should be "now" (important for
-// a player joining a game already in progress) — meaningless for fixed
-// solar bodies, which derive position from wall-clock time instead (see
-// below), not an elapsed-since-spawn value.
-//
-// Every body is drawn by BodyKit (world/bodyVisual.js — the body lab's
-// bodies: the fixed slot's own body, or the lab body for its kind, e.g.
-// every comet). `mesh` is only an invisible sphere for picking and
-// position, still carrying the body's color (bite particles, debris).
+// A body row (local or networked) -> its entry in ctx.planets. `elapsedSec`
+// brings a comet up to now (a late joiner). The look is BodyKit's
+// (world/bodyVisual.js); `mesh` is only an invisible sphere for picking and
+// position, carrying the body's colour (bite particles, debris).
 export function materializePlanet(row, pos, vel, elapsedSec){
   const orbitSlot = row.orbit_slot != null ? row.orbit_slot : null;
   // radius = drawn size; size = gameplay size (gravity, value, health —
@@ -103,14 +88,8 @@ export function materializePlanet(row, pos, vel, elapsedSec){
 
 
   const basePos = pos.clone();
-  // A comet's `vel` (the one stored in the DB row, or freshly rolled for a
-  // local-only spawn) is only ever its INITIAL velocity at spawn — its
-  // real, current velocity has to be reconstructed by replaying gravity
-  // from that starting state up through `elapsedSec` of real time (see
-  // world/cometPhysics.js's header comment for why a closed-form shortcut
-  // doesn't exist here). `cometVel` below is that reconstructed, CURRENT
-  // velocity - the one actually stored on `p.vel` going forward, not the
-  // original spawn value.
+  // `vel` is the comet's velocity at spawn; its current one comes from
+  // replaying the flight up to now (world/cometPhysics.js#advanceComet).
   let cometVel = null;
   if(kind === "comet" && vel){
     cometVel = vel.clone();
@@ -126,16 +105,11 @@ export function materializePlanet(row, pos, vel, elapsedSec){
     ctx.scene.add(trajectoryLine);
   }
 
-  // Health checkpoint for fixed solar bodies — (healthBase, healthUpdatedAtMs)
-  // is the last committed server value + when it was set; `health` itself is
-  // recomputed from that checkpoint every frame in updateBodies() (and once
-  // more here, in case a lot of time passed between the server row's
-  // updated_at and this exact materialize moment, e.g. reconnecting after
-  // being away) — a pure function of "last known state + elapsed time",
-  // never a locally-ticked/incremented number. See ships/swarm.js's kill
-  // handling for the matching rule: any optimistic local damage must reset
-  // this checkpoint too, or next frame's regen recompute would silently
-  // undo the hit.
+  // Fixed bodies' health checkpoint: (healthBase, healthUpdatedAtMs) is the
+  // last known value and when; `health` is recomputed from it every frame
+  // (updateBodies) as checkpoint + regen × elapsed — never ticked in place.
+  // Local damage must move the checkpoint too (ships/swarm.js), or the next
+  // frame's recompute undoes the hit.
   let healthBase = null, healthUpdatedAtMs = null, health, maxHealth;
   if(orbitSlot != null){
     healthBase = row.health;
@@ -308,14 +282,8 @@ export function updateBodies(dt){
         despawnBodySilently(p);
       }
     } else if(p.orbitSlot != null){
-      // Fixed solar body: position is a pure function of wall-clock time,
-      // not something integrated frame-to-frame (see world/solarSystem.js).
-      // Written into basePos first, then copied to mesh.position - same
-      // two-step shape comets use above - so ships/swarm.js's low-health
-      // "shake" effect (which reads basePos + an offset, applied to
-      // mesh.position AFTER this runs, since updateBodies() is called
-      // before updateShips() in main.js's tick()) always shakes around
-      // this frame's correct orbital position, not last frame's.
+      // Position from wall-clock time, into basePos first: the low-health
+      // shake (ships/swarm.js, later in the frame) adds its offset to it.
       bodyPosAt(p.orbitSlot, nowSimTime(), p.basePos);
       p.mesh.position.copy(p.basePos);
 
@@ -332,14 +300,10 @@ export function updateBodies(dt){
   }
 }
 
-// A fixed solar body that was eaten and hasn't grown back yet: its health
-// checkpoint is 0 (the kill) and it has regenerated no more than 10 % since.
-// Eating it again then earns nothing — without this, regen ticking a sliver
-// above 0 let a unit camping a body collect the kill over and over. The
-// server applies the same rule (supabase/schema.sql#bite_solar_body).
-// (Until v2.28.3 both sides asked instead "was health above 10 % just
-// before this bite?" — small bites never are, so kills almost never
-// counted, and ships kept circling a body at zero.)
+// A fixed body eaten and not grown back yet: checkpoint 0 (the kill) and no
+// more than 10 % regenerated since. Eating it again earns nothing (else a
+// unit camping it collects the kill over and over). The server applies the
+// same rule — docs/security.md, "Solar-body kill rule".
 export function isSpent(p){
   return p.healthBase != null && p.healthBase <= 0 && p.health <= p.maxHealth * 0.1;
 }
@@ -374,17 +338,9 @@ export function destroyPlanet(p){
   removeItem(ctx.planets, p);
 }
 
-// Initial seeding in offline mode (no multiplayer). In networked mode the
-// fixed solar bodies come from the database once (see
-// net/solarBodiesSync.js#bootstrapSolarSystem) rather than being generated
-// here — offline mode has no server, so it builds the exact same 9 fixed
-// slots (+ sun) directly from SOLAR_BODIES, health=maxHealth, no DB row
-// needed. The black hole (slot 9) goes through its own
-// materializeBlackHole(), not materializePlanet() — see world/blackholes.js.
-// No initial comet: same as the networked path, the empty system is simply
-// noticed by the normal cooldown-based spawn logic (net/bodiesSync.js#
-// maintainComet) a moment later — a fine steady state, not something that
-// needs seeding.
+// Offline only: the fixed bodies at full health straight from SOLAR_BODIES
+// (online they come from the server, net/solarBodiesSync.js). No comet —
+// maintainComet notices the empty system and spawns one after its delay.
 export function seedLocalWorld(){
   SOLAR_BODIES.forEach(function(solar){
     if(solar.kind === "blackhole"){

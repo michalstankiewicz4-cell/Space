@@ -3,19 +3,10 @@ import { CONTENT } from "../content.js";
 import { SOLAR_BODY_BY_SLOT } from "./solarSystem.js";
 import { randomCometEntry } from "./cometPhysics.js";
 
-// Pure data/math for the 7 body types (kind+temp -> variant, spawn rolls,
-// display value) — split out of world/bodies.js, which used to mix this
-// with actual mesh-building and scene lifecycle. Nothing here touches
-// THREE.Scene/Mesh or ctx; every function is a plain calculation, callable
-// from anywhere (the game, the planet editor, a future server-side script)
-// without pulling in rendering.
-//
-// As of the fixed 9-orbit solar system, comets are the only kind still
-// randomly rolled/spawned by the game itself — the other 6 kinds
-// (sun/ice/neutral/volcanic/meteoroid/blackhole) are each one fixed body
-// now (see world/solarSystem.js). randomPlanetSpawnData() below stays
-// generic over any kind anyway — it only needs a kind's js/bodies/*.js
-// params.
+// Plain calculations for the 7 body kinds (kind + temp -> variant, spawn
+// rolls, point value) — no scene, no ctx. Only comets are rolled today (the
+// other kinds are one fixed body each, world/solarSystem.js), but
+// randomPlanetSpawnData() works for any kind's js/bodies/*.js params.
 
 // A "planet" DB row only stores kind+temp, not which of the 3 planet
 // variants (ice/neutral/volcanic) generated it — so it's re-derived from

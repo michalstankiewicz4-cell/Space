@@ -99,16 +99,9 @@ export function updateBlackHoles(dt){
     removeItem(ctx.ships, sh);
     showToast(t("toast.shipConsumed"), "alert");
   });
-  // Deliberately NOT calling reconcileFleetSize() here. That function's
-  // only job is "top ctx.ships back up to the upgrade-derived target" (see
-  // ships/swarm.js) - correct right after spawnInitialFleet()/a fleet
-  // upgrade purchase, where the target itself just changed, but calling it
-  // after a black-hole loss instantly respawned the eaten ship in the same
-  // frame, silently undoing the toast/VFX above and leaving "a hazard to
-  // avoid" with zero actual gameplay cost. Losing a ship now lasts for the
-  // rest of the session (until the next reconcile - a reload or a new
-  // fleet-level purchase, both of which re-derive the count from the
-  // upgrade level, not from what was lost - see ui/windows/research.js/main.js).
+  // No reconcileFleetSize() here: it would respawn the lost ship at once and
+  // the black hole would cost nothing. A loss lasts until the fleet size is
+  // re-derived from the upgrade level (a reload, a Fleet purchase).
   if(toConsume.length>0){ refreshResearch(); save(); }
 
   // The drone isn't in ctx.ships (it never auto-moves, so it isn't part of

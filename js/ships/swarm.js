@@ -30,16 +30,10 @@ const shakeScratch = new THREE.Vector3();
 const outwardScratch = new THREE.Vector3();
 const surfacePointScratch = new THREE.Vector3();
 
-// New ships spawn arranged around the player's own station, not scattered
-// near the origin (the old spawn cube predates the fixed 9-orbit solar
-// system, when the origin was just empty space - it's the Sun's own
-// position now, so that old +-2 cube would spawn ships almost inside the
-// Sun's own radius, 4.2). A golden-angle spiral (the same even-spacing
-// trick sunflower seed heads/phyllotaxis use) rather than a fixed ring: it
-// doesn't need to know the eventual fleet size up front, so
-// reconcileFleetSize() can call spawnShip() one at a time (buying a Fleet
-// upgrade) and each new ship still lands in its own non-overlapping slot,
-// same as the initial fleet spawning all at once.
+// New ships take their slots around the station on a golden-angle spiral
+// (sunflower seeds): it doesn't need the final fleet size, so a ship bought
+// later still gets a slot of its own. RETURN TO BASE flies back to the same
+// slots.
 const SHIP_SPAWN_GOLDEN_ANGLE = 2.399963229728653; // radians, ~137.5°
 const SHIP_SPAWN_BASE_RADIUS = 3; // clears the station's own model (STATION_PICK_RADIUS 1.7 around its ring, the truss reaches 2.5)
 const SHIP_SPAWN_RADIUS_STEP = 0.55; // keeps even a full ~23-ship fleet (TREE.fleet's max) well inside STATION_FIELD_RADIUS (8, config.js), so the whole formation starts inside the gravity-free field (world/solarGravity.js)
@@ -188,31 +182,11 @@ export function eatEfficiency(stats, planet){
   return 1;
 }
 
-// A commanded ship's cruise-flight velocity is deliberately immune to
-// ambient gravity (world/solarGravity.js), even though gravity itself is
-// real and correctly strong (v2.0.9). Tried making it genuinely felt via
-// bounded "seek" steering instead of the instant every-frame re-home
-// below (letting gravity's own additive contribution persist rather than
-// being overridden each frame) - reverted after live testing found it
-// genuinely unstable, not just weak/strong-tuned wrong: a ship commanded
-// 345 units to a real planet target got hijacked passing near an
-// unrelated body's own small-SOI gravity and never arrived at all across
-// 1000 simulated seconds, even with the ship's own "engine" strengthened
-// 20x to try to compensate. Capping the raw acceleration itself
-// (world/solarGravity.js's own MAX_GRAVITY_ACCEL, added at the same time
-// - a real, separate numerical-stability bug this uncovered, kept
-// regardless of this decision since it also protects the drone/idle
-// ships) tamed the worst blow-up (peak speed dropped from ~424 to ~11
-// units/s) but the ship still never arrived in the same 1000-second
-// window - gravity alone, even bounded, is still strong enough over a
-// multi-hundred-unit commanded flight to prevent reliable net progress
-// with only an 8%/frame course-correction to fight it. Predictable
-// point-to-point travel ("select ships, click a target, they get there")
-// is a real, load-bearing property of this game, not an incidental side
-// effect of how this was written - gravity still visibly matters for
-// anything genuinely idle and for the drone (both go through
-// world/solarGravity.js directly), just not for a ship actively
-// following an order.
+// Every ship, every frame: a program flies it, or it follows its order
+// (a body to eat, RETURN TO BASE), or it idles. An ordered ship is immune to
+// gravity: steering against it, a ship sent 345 units never arrived (tried
+// and measured, docs/architecture.md, "Ship movement") — "click a target,
+// they get there" matters more. Idle ships and the drone feel gravity.
 export function updateShips(dt){
   const stats = swarmStats();
   const baseSpeed = 6.5 * stats.speed;
@@ -370,15 +344,8 @@ export function updateShips(dt){
           // points; the explosion and cleanup arrive via Realtime DELETE for everyone
           hideBolt(sh);
           sh.target = null;
-          // Also clear commandedTarget, not just target - the top-of-loop
-          // guard above only re-clears commandedTarget once the planet is
-          // flagged .dying or actually removed from ctx.planets, neither of
-          // which happens until the real server DELETE round-trips back.
-          // Without this, the very next frame re-assigns sh.target from the
-          // still-set commandedTarget (same planet, not yet gone locally),
-          // and since the ship never moved, it re-enters the eat branch and
-          // keeps damaging/spawning particles on an already-dead body for
-          // the whole DELETE round-trip window.
+          // The order too: until the server's DELETE arrives the comet is
+          // still in ctx.planets, and the ship would go on biting it.
           sh.commandedTarget = null;
         }
       }
