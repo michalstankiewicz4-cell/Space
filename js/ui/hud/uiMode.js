@@ -24,7 +24,7 @@ function setMode(m){
 }
 
 export function showUi(){ setMode(0); }
-export function cycleUi(){ setMode((mode + 1) % 4); }
+function cycleUi(){ setMode((mode + 1) % 4); }
 
 function showHint(){
   if(!hintEl){

@@ -594,7 +594,6 @@ function fractureMesh(mesh, pieces, rand) {
 function createDamageFx(ship, radius) {
   const T = fxTextures(), G = glowTextures(), rand = rng(101);
   ship.updateMatrixWorld(true);
-  const toShip = new THREE.Matrix4().copy(ship.matrixWorld).invert();
   const big = [], small = [];
   ship.traverse((o) => {
     if (!o.isMesh || o.isInstancedMesh || !o.geometry || !o.geometry.attributes.position) return;

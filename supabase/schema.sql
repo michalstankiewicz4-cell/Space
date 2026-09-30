@@ -269,7 +269,7 @@ alter table bite_rate_limit enable row level security;
 -- written from inside SECURITY DEFINER functions/triggers, so it can't be
 -- read, spoofed or cleared by a modified client either. There's no UI for
 -- it in the game — review it via the Supabase SQL Editor or the
--- Management API (see the gitignored `pass` file / CLAUDE.md), e.g.:
+-- Management API (token in the gitignored `pass` file; docs/security.md), e.g.:
 --   select actor, event_type, count(*), max(created_at)
 --   from activity_log group by actor, event_type order by 3 desc;
 create table if not exists activity_log (
@@ -519,17 +519,16 @@ begin
 end;
 $$;
 
--- Direct INSERT/DELETE on `bodies` stay permissive by design (see the
--- Security model notes in CLAUDE.md) — legitimate play never comes close
--- to this threshold, so these BEFORE triggers reject (not just log) once
--- one actor's rate clearly leaves legitimate play behind, same spirit as
--- bite_body's own rate limit just below. `bodies` is comet-only now (see
+-- Direct INSERT/DELETE on `bodies` stay permissive by design (see
+-- docs/security.md) — legitimate play never comes close to this threshold,
+-- so these BEFORE triggers skip the row (return null) once one actor's rate
+-- clearly leaves legitimate play behind, same spirit as bite_body's own
+-- rate limit just below. `bodies` is comet-only now (see
 -- its own header comment) — legitimate comet insert/delete traffic is a
 -- low single-digit trickle (MAX_COMETS, js/config.js), nothing like the
 -- old scattered-planet pool's occasional ~14-row bulk seed this threshold
 -- used to sit above — tightened from 15 to 5 accordingly. BEFORE (not
--- AFTER) specifically so it can actually cancel the row via RAISE
--- EXCEPTION, not just observe it after the fact.
+-- AFTER) so it can cancel the row, not just observe it.
 create or replace function log_body_insert_if_bursty()
 returns trigger
 language plpgsql

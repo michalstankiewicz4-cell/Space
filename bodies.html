@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Swarm Protocol // Body lab</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="css/fonts.css">
 <!-- Single-file procedural celestial-body preview (companion of ship.html).
      Script blocks, in order:
@@ -1639,7 +1640,7 @@ dSlider.addEventListener("input", () => {
   }
 });
 
-// CSS grain texture for the overlay (same generator idea as UI.html).
+// CSS grain texture for the overlay (the same idea as css/ui/grain.png, tools/grainTexture.html).
 {
   const rand = rng(7), streaks = valueNoise(rand, 4, 20), blotches = valueNoise(rand, 5, 5);
   const [c, ctx] = canvas(160, 160);

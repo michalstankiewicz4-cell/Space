@@ -142,9 +142,16 @@ export function applyPreset(name){
 }
 
 // AUTO only: another tier's effects (the resolution stays automatic).
+// Mid-game, so without what rebuilds things: geometry detail rebuilds every
+// ship model, smooth lines rebuild every orbit (a hitch, like the ship
+// lights) — those stay as AUTO first set them (NORMAL's).
+const AUTO_KEEP = ["gfxDetail", "gfxSmoothLines", "gfxQuality"];
+function pick(o, keys){ const r = {}; keys.forEach(function(k){ r[k] = o[k]; }); return r; }
 export function setAutoTier(tier){
   if(gfxPreset() !== "auto" || !TIERS[tier]) return;
-  setGfx(Object.assign({ gfxAutoTier: tier }, TIERS[tier]), true);
+  const patch = Object.assign({ gfxAutoTier: tier }, TIERS[tier]);
+  AUTO_KEEP.forEach(function(k){ delete patch[k]; });
+  setGfx(patch, true);
 }
 
 // On load, a preset's values are re-applied: when a preset's contents
@@ -154,6 +161,6 @@ export function setAutoTier(tier){
   const p = gfxPreset();
   if(p === "custom") return;
   const tier = p === "auto" ? gfxAutoTier() : p;
-  Object.assign(settings, TIERS[tier], p === "auto" ? {} : RES[p]);
+  Object.assign(settings, TIERS[tier], p === "auto" ? pick(TIERS.normal, AUTO_KEEP) : RES[p]);
   saveSettings();
 })();

@@ -85,23 +85,19 @@ export const DRONE_BASE_DEFENSE = 1; // survival odds multiplier vs. a black hol
 export const DRONE_DOCK_GAP = 4; // within the nearest body's radius + this = "close enough to refuel/attack"
 export const DRONE_REFUEL_RATE = 18; // fuel/second while docked at a planet/sun
 export const DRONE_PRINT_MAX_LEN = 32; // print()'s in-world gas+laser message, clamped (see drone/dronePrintFx.js)
-export const DRONE_ATTACK_COOLDOWN_S = 0.25; // min seconds between attack() hits (see drone.js#startBuiltin) — without it a loop could land ~2000 hits in one frame
-export const DRONE_PRINT_COOLDOWN_S = 1.5; // min seconds between print() calls (see drone.js#triggerPrintFx) — a while(true){print(...)} loop with no wait() would otherwise flood the broadcast channel as fast as the interpreter's step limit allows
+export const DRONE_ATTACK_COOLDOWN_S = 0.25; // min seconds between attack() hits (see drone.js#DRONE_API attack) — without it a loop could land ~2000 hits in one frame
+export const DRONE_PRINT_COOLDOWN_S = 1.5; // min seconds between print() calls (see program/unitPrint.js) — a while(true){print(...)} loop with no wait() would otherwise flood the broadcast channel as fast as the interpreter's step limit allows
 
-// Player space station (see js/station/*.js) — one static landmark per
-// player, ShipKit's ST-04 HAVEN (js/station/stationVisual.js, shared by the
-// local station and every remote player's ghost station so they can
-// never visually drift apart). Purely a docking-panel overview for now
-// (fleet count, points, upgrade levels) — no new resource economy, just a
-// window onto the existing one.
-// The station (ShipKit's ST-04 HAVEN, station/stationVisual.js): its length
-// along the solar truss in world units (the habitat ring is ~0.28 of it),
-// and the radius of its pick sphere / selection ring — around the ring, not
-// the truss tips, so it doesn't steal clicks meant for ships parked nearby.
 // The black hole's reach, in multiples of its radius (world/blackholes.js):
 // its pull starts at GRAVITY, a unit closer than KILL is lost.
 export const BLACKHOLE_GRAVITY_RADIUS_MULT = 7.5;
 export const BLACKHOLE_KILL_RADIUS_MULT = 1.35;
+
+// The player's space station (js/station/, ShipKit's ST-04 HAVEN — the same
+// model for the local and every remote station): its length along the
+// solar truss in world units (the habitat ring is ~0.28 of it), and the
+// radius of its pick sphere / selection ring — around the ring, not the
+// truss tips, so it doesn't steal clicks meant for ships parked nearby.
 export const STATION_MODEL_LENGTH = 5;
 export const STATION_PICK_RADIUS = 1.7;
 // The story's station is a ruin: it starts at this damage (0..1 — ShipKit's
@@ -115,8 +111,6 @@ export const STATION_START_DAMAGE = 0.35;
 // user's call — until then it also dragged idle ships back from beyond it,
 // like a gravity of its own). Outside it, real gravity.
 export const STATION_FIELD_RADIUS = 8;
-
-// Planet selection (see world/bodies.js#setPlanetSelected, ui/hud/planetPanel.js)
 
 // Multiplayer: intervals and time limits
 export const NET_SHIP_BROADCAST_MS = 120;

@@ -23,7 +23,7 @@ import { SHIP_MODEL_LENGTH, DRONE_MODEL_LENGTH } from "../config.js";
 // modes, toggled top-center in the HUD (#cameraModeToggle): "system"
 // orbits the Sun at the origin (radius rescaled for the fixed 9-orbit
 // solar system, world/solarSystem.js — orbits now span a=90..890,
-// test.html's own actual scale; the old 46/14-140 range was tuned for the
+// the original prototype's scale; the old 46/14-140 range was tuned for the
 // previous, much more compact system and would start the camera INSIDE
 // the innermost orbit, showing nothing but the sun), "base" orbits the
 // player's own station (ctx.station.pos) instead — same az/pol/radius
@@ -394,7 +394,7 @@ export function initControls(){
     if(!isInViewRect(e.clientX, e.clientY)) return;
     // Multiplicative, not additive - an additive step sized for the old
     // 14-140 range would take hundreds of scroll ticks to cross the new
-    // 20-2500 one. Same shape test.html's own free-camera zoom uses for
+    // 20-2500 one. Same shape the prototype's free-camera zoom uses for
     // exactly this reason (its sunViewRadius zoom spans 120-6000). Range
     // is mode-aware - "base" orbits something station-sized (radius ~4.5),
     // so it needs a much tighter zoom range than "system" orbiting the

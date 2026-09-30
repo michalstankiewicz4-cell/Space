@@ -13,8 +13,7 @@ import { isConnected } from "./connect.js";
 // re-election only fires on an actual socket disconnect, so:
 // - isConnected(): a steward whose Realtime channel silently died must
 //   never keep inserting via plain REST (which keeps working even with a
-//   dead socket) — see CLAUDE.md's "Realtime channel health has no free
-//   lunch". Without this guard a desynced steward would flood the shared
+//   dead socket) — see docs/architecture.md, "Realtime channel health". Without this guard a desynced steward would flood the shared
 //   world for everyone else while never noticing it's disconnected.
 // - the staleness fallback: a steward whose tab is merely backgrounded (not
 //   disconnected) never gets re-elected, so requestAnimationFrame-throttled

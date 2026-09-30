@@ -68,8 +68,8 @@ h2{
 }
 /* #dateFilterRow (id) otherwise beats .hidden (class) on specificity alone
    regardless of source order, leaving display:flex "hidden" only in name —
-   caught by testing getComputedStyle(), not classList, per this project's
-   own stated testing rule (see CLAUDE.md). */
+   caught by testing getComputedStyle(), not classList, per the project's testing
+   rule (CLAUDE.md, "Testing"). */
 #dateFilterRow.hidden{ display: none; }
 #dateFilterRow input[type="date"]{
   background: rgba(255,255,255,0.05); border: 1px solid var(--panel-edge);

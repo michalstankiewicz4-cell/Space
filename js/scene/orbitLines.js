@@ -1,14 +1,13 @@
 import { SOLAR_BODIES, STATION_RING, orbitPoint } from "../world/solarSystem.js";
 import { makeLineMaterial, makeLine, onLinesChange, disposeLineMaterial } from "./lines.js";
 
-// Static orbit path lines for the fixed 9-orbit solar system — a direct
-// port of test.html's own approach (its own scene-setup loop, lines
-// 578-582): each orbit is sampled at 128 points around the full ellipse
+// Static orbit path lines for the fixed 9-orbit solar system, as in the
+// original prototype page: each orbit is sampled at 128 points around the full ellipse
 // once, since the ellipse's shape never changes (only where a body sits
 // on it does) — no per-frame update needed at all, unlike the bodies
 // themselves.
 const ORBIT_SEGMENTS = 128;
-const ORBIT_LINE_COLOR = 0x2a3554; // same dim blue-gray as test.html's own orbit lines
+const ORBIT_LINE_COLOR = 0x2a3554; // same dim blue-gray as the prototype's orbit lines
 const ORBIT_LINE_OPACITY = 0.55;
 
 // Shared by both the 9 fixed orbits below and each comet's own trajectory

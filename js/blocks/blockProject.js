@@ -28,7 +28,7 @@ let activeKey = DEFAULT_KEY;
 let project = null;
 const loaded = {};   // key -> project, loaded once per key and kept in memory
 
-export function newId(prefix){ project.seq += 1; return prefix + project.seq; }
+function newId(prefix){ project.seq += 1; return prefix + project.seq; }
 
 function argDefault(a){
   if(a.t === "bool") return null;
@@ -140,7 +140,7 @@ export function mainFile(){ return project.files.find(function(f){ return f.main
 
 // Calls fn(block, list, index, owner) for every block anywhere in the
 // project, reporters inside slots included (list is null for those).
-export function walkBlocks(fn){
+function walkBlocks(fn){
   function visit(b, list, i, owner){
     fn(b, list, i, owner);
     Object.keys(b.args || {}).forEach(function(k){ const v = b.args[k]; if(v && typeof v === "object") visit(v, null, k, b); });

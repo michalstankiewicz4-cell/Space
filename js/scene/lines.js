@@ -13,8 +13,8 @@ import { gfxSmoothLines, gfxLineWidth, onGraphicsChange } from "./graphics.js";
 const smoothMats = new Set();
 const resolution = new THREE.Vector2(1, 1);
 
-export function smoothLinesAvailable(){ return !!(THREE.Line2 && THREE.LineMaterial && THREE.LineGeometry); }
-export function useSmoothLines(){ return gfxSmoothLines() && smoothLinesAvailable(); }
+function smoothLinesAvailable(){ return !!(THREE.Line2 && THREE.LineMaterial && THREE.LineGeometry); }
+function useSmoothLines(){ return gfxSmoothLines() && smoothLinesAvailable(); }
 
 // spec: { color, opacity, depthTest (default true), depthWrite (default false) }
 export function makeLineMaterial(spec){

@@ -2,8 +2,8 @@ import { ctx } from "../core/context.js";
 import { SOLAR_BODIES, GM_SUN, bodyPosAt, nowSimTime } from "./solarSystem.js";
 import { STATION_FIELD_RADIUS } from "../config.js";
 
-// Per-frame ambient gravity — generalizes test.html's own patched-conics
-// tick() (its lines 822-835): a ship/the drone is pulled toward exactly one
+// Per-frame ambient gravity — generalizes the original prototype's
+// patched-conics tick(): a ship/the drone is pulled toward exactly one
 // dominant body at a time (whichever body's soiRadius it's currently
 // inside), falling back to the sun everywhere else. Reuses the same
 // scratch-vector + addScaledVector(...) shape world/blackholes.js already
@@ -118,7 +118,7 @@ export function gravityAccelAt(pos, t, out){
 // - real solar gravity is strong enough even at the station's own ~290-unit
 // distance that this isn't a negligible effect over time); beyond it, real
 // gravity. It only shields — until v2.19.0 a separate pull-back
-// (station/stationField.js, removed at the user's call) also dragged idle
+// (removed at the user's call) also dragged idle
 // ships home from beyond it, a gravity of the station's own. Covers the
 // drone too (v2.0.8) - it's "kind of a ship" too, per the user's own
 // framing, and spawns right next to the station the same way.

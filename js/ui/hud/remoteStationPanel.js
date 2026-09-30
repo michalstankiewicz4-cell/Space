@@ -9,7 +9,7 @@ import { focusCameraOn } from "../../scene/controls.js";
 // `ref` is the station's selectable handle (rp.stationRef).
 let current = null;
 
-export function isRemoteStationPanelOpen(){
+function isRemoteStationPanelOpen(){
   return getInfoOwner() === "remoteStation";
 }
 

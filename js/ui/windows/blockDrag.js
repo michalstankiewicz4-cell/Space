@@ -216,4 +216,3 @@ export function initBlockDrag(a){
   });
 }
 
-export function isDragging(){ return !!drag; }

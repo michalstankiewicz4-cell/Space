@@ -1196,7 +1196,9 @@ the values from before). The Setup tab is a scrolling list; controls with
   frame from `ctx.planets`. It scales direct light and — because ShipKit
   models get most of their light from the environment map — the indirect
   light down to 30 %. Needs one recompile per material, so `main.js` runs
-  it before the start-up `renderer.compile`. BodyKit bodies don't take
+  it before the start-up `renderer.compile`. The patching rides on
+  `colorManagement.js`'s per-frame walk (`manageSceneColors(scene,
+  patchEclipseMaterial)`, v2.28.2) — one walk of the scene, not two. BodyKit bodies don't take
   part.
 - **Bite effects** (v2.24.0): `fx/particles.js#spawnSparks` (hot
   particles coloured by a cooling ramp), `fx/impact.js` (a flickering
@@ -1210,7 +1212,9 @@ the values from before). The Setup tab is a scrolling list; controls with
   (max ×1.5); `resolution.js#autoTier` steps `gfxAutoTier` down after 6 s
   at the lowest resolution below 0.9 × target fps, up after 20 s at the
   highest above 1.3 × — only the effects change, the resolution stays
-  automatic, and each step restarts the warm-up. Presets never set
+  automatic, and each step restarts the warm-up. A tier switch leaves
+  `gfxDetail` / `gfxSmoothLines` alone (v2.28.2): they rebuild models and
+  lines — a hitch mid-game. Presets never set
   `gfxUnitLights` (v2.25.3): a light-count change recompiles every lit
   material — a mid-game hitch if AUTO did it. NORMAL has depth of field
   and the filter off (v2.25.4, user's call; also PostKit's lab NORMAL).

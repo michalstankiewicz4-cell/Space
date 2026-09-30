@@ -22,7 +22,7 @@ function updateStartEnabled(){
 
 let welcomed = false;
 
-export function isBannerOpen(){
+function isBannerOpen(){
   return !document.getElementById("banner").classList.contains("hidden");
 }
 

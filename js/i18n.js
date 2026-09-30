@@ -158,7 +158,6 @@ const STRINGS = {
         seg: { auto: "AUTO", manual: "MANUAL", dot: "DOT", cone: "CONE", model: "MODEL", "0": "OFF", "2": "×2", "4": "×4", "8": "×8",
           min: "MIN", normal: "NORMAL", max: "MAX", "1": "×1", "16": "×16", "30": "30", "60": "60", "120": "120" }
       },
-      graphicsSoon: "Render quality sets the resolution and effects; geometry detail sets how finely the ships are built."
     },
     about: {
       button: "About the game",
@@ -183,7 +182,6 @@ const STRINGS = {
       serverFailed: "The data in this browser was deleted, but the server couldn't be reached. Write to michalstankiewicz@onet.eu and we'll delete the rest."
     },
     telemetry: {
-      title: "SWARM PROTOCOL // TELEMETRY",
       points: "Evolution points",
       ships: "Units",
       eaten: "Planets devoured",
@@ -248,7 +246,6 @@ const STRINGS = {
       returnAll: "Order: whole swarm back to base",
       returnSome: function(n){ return "Order: " + n + " units back to base"; },
       selected: function(n, total){ return "Selected: " + n + " / " + total; },
-      noSelection: "Select ships first",
       blackholeDetected: "Black hole detected in sector",
       shipConsumed: "Ship pulled into a black hole!",
       droneSurvived: "Drone survived the black hole — barely!"
@@ -673,7 +670,6 @@ const STRINGS = {
         seg: { auto: "AUTO", manual: "RĘCZNA", dot: "PUNKT", cone: "STOŻEK", model: "MODEL", "0": "WYŁ.", "2": "×2", "4": "×4", "8": "×8",
           min: "MIN", normal: "NORMAL", max: "MAKS", "1": "×1", "16": "×16", "30": "30", "60": "60", "120": "120" }
       },
-      graphicsSoon: "Jakość renderowania ustawia rozdzielczość i efekty; szczegółowość — jak dokładnie zbudowane są statki."
     },
     about: {
       button: "O grze",
@@ -698,7 +694,6 @@ const STRINGS = {
       serverFailed: "Dane w tej przeglądarce zostały usunięte, ale nie udało się połączyć z serwerem. Napisz na michalstankiewicz@onet.eu, a usuniemy resztę."
     },
     telemetry: {
-      title: "SWARM PROTOCOL // TELEMETRIA",
       points: "Punkty ewolucji",
       ships: "Jednostki",
       eaten: "Planety pochłonięte",
@@ -762,7 +757,6 @@ const STRINGS = {
       returnAll: "Rozkaz: cały rój wraca do bazy",
       returnSome: function(n){ return "Rozkaz: " + n + " jednostek wraca do bazy"; },
       selected: function(n, total){ return "Zaznaczono: " + n + " / " + total; },
-      noSelection: "Najpierw zaznacz statki",
       blackholeDetected: "Wykryto czarną dziurę w sektorze",
       droneSurvived: "Dron przetrwał czarną dziurę — o mały włos!",
       shipConsumed: "Statek wciągnięty w czarną dziurę!"

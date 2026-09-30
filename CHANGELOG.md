@@ -4,6 +4,20 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.28.2]
+
+### Fixed
+- The AUTO graphics preset could stutter when it changed tiers mid-game:
+  a tier switch rebuilt every ship model (geometry detail) and every orbit
+  line (smooth lines). It now only switches effects.
+- Hidden trajectories (ORBITS off) are no longer computed in the
+  background.
+- The labs, admin and privacy pages now have the favicon (no more 404).
+
+### Changed
+- Code cleanup from a full review: one walk of the scene per frame instead
+  of two, unused code and translations removed, outdated comments fixed.
+
 ## [2.28.1]
 
 ### Added

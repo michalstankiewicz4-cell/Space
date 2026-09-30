@@ -53,7 +53,7 @@ import { updateResolution } from "./scene/resolution.js";
 import { setLoad, loadDone, nextPaint } from "./ui/loader.js";
 import { updateTrails } from "./fx/trails.js";
 import { restoreFleet, updateFleetMemory } from "./ships/fleetMemory.js";
-import { manageEclipses } from "./scene/eclipse.js";
+import { patchEclipseMaterial, updateEclipses } from "./scene/eclipse.js";
 import { initAnisotropy, updateAnisotropy } from "./scene/anisotropy.js";
 import { gfxFpsCap } from "./scene/graphics.js";
 
@@ -200,8 +200,8 @@ function tick(now){
   updateStationVisuals(dt);     // stations (ShipKit's ST-04 HAVEN): ring spin, lights, dish
   updateBodyLooks(dt);          // BodyKit bodies: animated layers, spin, sun direction
   updateSkybox(dt);             // BodyKit sky: follows the camera, twinkles, bakes after a change
-  manageSceneColors(ctx.scene); // new materials/lights: sRGB -> linear, once each
-  manageEclipses(ctx.scene);    // new lit materials learn eclipses; planets' positions for them
+  manageSceneColors(ctx.scene, patchEclipseMaterial); // new materials/lights: sRGB -> linear and eclipses, once each (one walk)
+  updateEclipses();             // planets' positions for the eclipse test
 
   // Main view into the HUD's viewport rect, then the extra passes (ship cam,
   // unit/planet miniatures) into their own panels' rects — all on the same
@@ -224,8 +224,8 @@ function tick(now){
 setLoad(0.85, "shaders");
 await nextPaint();
 updateCamera(0);
-manageSceneColors(ctx.scene);
-manageEclipses(ctx.scene);
+manageSceneColors(ctx.scene, patchEclipseMaterial);
+updateEclipses();
 ctx.renderer.compile(ctx.scene, ctx.camera);
 renderMainView();
 requestAnimationFrame(tick);

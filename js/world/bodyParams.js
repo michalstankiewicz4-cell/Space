@@ -23,7 +23,7 @@ import { randomCometEntry } from "./cometPhysics.js";
 // generate itself). Falls back to sign-based classification so it always
 // resolves to exactly one variant even if the ranges are edited to overlap
 // or leave a gap.
-export function variantForTemp(temp){
+function variantForTemp(temp){
   const np = CONTENT.neutralPlanet;
   if(temp >= np.tempMin && temp <= np.tempMax) return np;
   return temp < 0 ? CONTENT.icePlanet : CONTENT.volcanicPlanet;

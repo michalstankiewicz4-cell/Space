@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Swarm Protocol // Ship lab</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="css/fonts.css">
 <!-- Procedural spaceship preview. Script blocks, in order:
        1. Three.js r128 (inlined, MIT)            – vendor
@@ -1254,7 +1255,7 @@ input[type=range]::-moz-range-thumb{ width:30px; height:20px; border-radius:4px 
    ======================================================================= */
 (() => {
 "use strict";
-const { rng, valueNoise, fbm, canvas, paintPixels, clamp } = ShipKit.util;
+const { rng, valueNoise, canvas, paintPixels, clamp } = ShipKit.util;
 
 // The nebula sky (also the reflection environment) comes from ShipKit, shared
 // with the game's environment map.
@@ -1516,7 +1517,7 @@ const step = (d) => { state.shipIndex = (state.shipIndex + d + ShipKit.SHIP_DEFS
 document.getElementById("prevShip").addEventListener("click", () => step(-1));
 document.getElementById("nextShip").addEventListener("click", () => step(1));
 
-// CSS grain texture for the overlay (same generator idea as UI.html).
+// CSS grain texture for the overlay (the same idea as css/ui/grain.png, tools/grainTexture.html).
 {
   const rand = rng(7), streaks = valueNoise(rand, 4, 20), blotches = valueNoise(rand, 5, 5);
   const [c, ctx] = canvas(160, 160);

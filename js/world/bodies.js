@@ -278,7 +278,7 @@ export function despawnLocalOnly(p){
 // the play field — removes it locally right away and reports the removal to
 // the network (DELETE is idempotent, so the Realtime echo on other clients
 // won't break anything).
-export function despawnBodySilently(p){
+function despawnBodySilently(p){
   despawnLocalOnly(p);
   if(NET_ENABLED && p.dbId){
     delete ctx.netBodies[p.dbId];

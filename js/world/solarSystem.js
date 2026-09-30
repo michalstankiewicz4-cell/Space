@@ -1,12 +1,12 @@
 // The fixed 9-orbit solar system (plus the sun at the center) — pure data
 // + orbit math, no THREE.Scene/mesh code, same spirit as world/bodyParams.js.
 // Every number here (a/e/inc/node/phase/speed, the orbitPoint()/soiRadius
-// formulas) is a direct port of the user's own test.html prototype, just
+// formulas) is a direct port of the user's own prototype page (since removed), just
 // extended from its 4 example orbits out to this game's fixed 9 + sun.
 //
 // Deliberately NOT randomized at runtime (unlike the old scattered-pool
 // model) — each slot is one specific, hand-picked body, the same way
-// test.html's own `bodies` array hardcodes each planet's exact params.
+// the prototype's `bodies` array hardcodes each planet's exact params.
 // Orbital position is a closed-form function of wall-clock time (no spawn
 // epoch to store/sync at all, since these bodies always exist) — the same
 // "kinematic, nothing new to sync" property comets already use for their
@@ -17,14 +17,14 @@ const AXIS_Y = new THREE.Vector3(0, 1, 0);
 
 // Slot 4 is deliberately absent here — it's the player-station ring, not a
 // body (see STATION_RING below and station/station.js). a/e/inc/node/phase
-// follow test.html's own uneven, non-coplanar spread (its 4 example orbits:
+// follow the prototype's uneven, non-coplanar spread (its 4 example orbits:
 // a=220/340/480/660, e=0.05/0.28/0.12/0.34, inc=4/14/-9/21, node=20/95/
-// 200/150) extended out to 9 slots at the SAME scale test.html itself
+// 200/150) extended out to 9 slots at the SAME scale the prototype itself
 // uses, not a compressed analog — the user asked explicitly to match
-// test.html's actual odległości (distances), not just its shape.
+// the prototype's actual odległości (distances), not just its shape.
 //
-// `speed` (rad/s) is NOT ported from test.html verbatim, unlike a/e/inc/
-// node — found live, the hard way: test.html's own speed values were tuned
+// `speed` (rad/s) is NOT ported from the prototype verbatim, unlike a/e/inc/
+// node — found live, the hard way: the prototype's speed values were tuned
 // for ITS own ship (no eating-orbit follow logic at all, just free flight),
 // but this game's ships track/orbit a target via a lerp
 // (ships/swarm.js#updateShips, `sh.pos.lerp(orbitPos, 0.12)`) that assumes
@@ -52,7 +52,7 @@ export const SOLAR_BODIES = [
   { slot: 9, kind: "blackhole", a: 890, e: 0.35, inc: -26, node: 180, phase: 2.0, speed: 0.000135,  radius: 1.5, temp: 0 }
 ];
 
-// test.html's own literal value (not a rescaled analog) — paired with the
+// the prototype's literal value (not a rescaled analog) — paired with the
 // distances above, this is what keeps gravity meaningful at this scale;
 // GM_SUN and `a` can't be changed independently of each other (gravity
 // falls off with r², so a bigger orbit needs a proportionally bigger GM to
@@ -80,7 +80,7 @@ SOLAR_BODIES.forEach(function(b){
 export const SOLAR_BODY_BY_SLOT = {};
 SOLAR_BODIES.forEach(function(b){ SOLAR_BODY_BY_SLOT[b.slot] = b; });
 
-// Verbatim port of test.html's orbitPoint() (lines 266-272 there).
+// Verbatim port of the prototype's orbitPoint() .
 export function orbitPoint(a, b, inc, node, angle, out){
   out = out || new THREE.Vector3();
   out.set(a * Math.cos(angle), 0, b * Math.sin(angle));

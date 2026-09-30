@@ -8,7 +8,7 @@ import { focusCameraOn } from "../../scene/controls.js";
 // close. Read-only — there's nothing to do with a black hole but keep away.
 let current = null;
 
-export function isBlackHolePanelOpen(){
+function isBlackHolePanelOpen(){
   return getInfoOwner() === "blackhole";
 }
 

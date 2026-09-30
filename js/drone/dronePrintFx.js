@@ -110,7 +110,6 @@ function aimBeam(mesh, from, to){
 }
 
 const activeEffects = [];
-const UP = new THREE.Vector3(0,1,0);
 
 // originPos/heading: the drone's own state at the moment print() ran (a
 // snapshot, not a live reference - the effect doesn't track the drone

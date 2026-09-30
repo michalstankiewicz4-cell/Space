@@ -122,6 +122,9 @@ function refresh(list){
 }
 
 export function updateTrajectories(dt){
+  // hidden (ORBITS off, scene/linesToggle.js): no simulating, no lines;
+  // shownKey reset so they're rebuilt the moment they're shown again
+  if(!(ctx.camera.layers.mask & (1 << TRAJECTORY_LAYER))){ shownKey = null; return; }
   const list = tracked();
   const key = list.map(function(o){ return o.uuid || (o.mesh && o.mesh.uuid) || (o.group && o.group.uuid); }).join(",");
   sinceRefresh += dt;

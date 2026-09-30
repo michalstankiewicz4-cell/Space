@@ -20,14 +20,14 @@ import { GM_SUN, SOLAR_BODY_BY_SLOT, SOLAR_BODIES } from "./solarSystem.js";
 // genuinely "traverses the whole system" (spawns outside every orbit,
 // exits the far side outside every orbit too), not just some inner slice
 // of it.
-export const COMET_ENTRY_RADIUS = SOLAR_BODIES[SOLAR_BODIES.length-1].a * 1.15;
+const COMET_ENTRY_RADIUS = SOLAR_BODIES[SOLAR_BODIES.length-1].a * 1.15;
 export const COMET_EXIT_RADIUS = COMET_ENTRY_RADIUS * 1.1;
 
 // The user's own explicit spec: closest approach ~2/3 of the first orbit's
 // distance from the Sun. Actually solved for as a real target periapsis by
 // randomCometEntry() below (via vis-viva + angular momentum), not just an
 // approximate aim point — see that function's own comment.
-export const COMET_PERIHELION = SOLAR_BODY_BY_SLOT[1].a * (2/3);
+const COMET_PERIHELION = SOLAR_BODY_BY_SLOT[1].a * (2/3);
 
 const STEP_DT = 0.05; // matches the game's own per-frame dt clamp (main.js)
 

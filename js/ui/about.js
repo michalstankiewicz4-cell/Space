@@ -7,7 +7,7 @@ export function isAboutOpen(){
   return !document.getElementById("aboutModal").classList.contains("hidden");
 }
 
-export function openAbout(){
+function openAbout(){
   document.getElementById("aboutModal").classList.remove("hidden");
 }
 

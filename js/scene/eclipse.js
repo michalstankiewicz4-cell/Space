@@ -17,7 +17,7 @@ import { gfxEclipses } from "./graphics.js";
 // physical, phong, lambert — ShipKit's included) gets an onBeforeCompile
 // the first time it's seen, which adds a world-position varying and the
 // test, all reading one shared set of uniforms updated here each frame.
-// It needs a recompile of each material once, so main.js runs this before
+// It needs a recompile of each material once, so main.js runs the patching before
 // the start-up shader compile. The bodies themselves are BodyKit shaders
 // and don't take part (eclipses between planets are rare in this system).
 const MAX_OCC = 12;
@@ -74,7 +74,9 @@ function inject(shader){
 }
 
 const done = new WeakSet();
-function patch(m){
+// Called with every mesh material each frame (scene/colorManagement.js's
+// walk, main.js); patches each one once.
+export function patchEclipseMaterial(m){
   if(done.has(m)) return;
   done.add(m);
   if(!(m.isMeshStandardMaterial || m.isMeshPhongMaterial || m.isMeshLambertMaterial) || m.isShaderMaterial) return;
@@ -89,17 +91,8 @@ function patch(m){
   m.needsUpdate = true;
 }
 
-function walk(o){
-  const m = o.material;
-  if(m && (o.isMesh || o.isInstancedMesh)){
-    if(Array.isArray(m)) m.forEach(patch); else patch(m);
-  }
-  for(let i = 0; i < o.children.length; i++) walk(o.children[i]);
-}
-
-// Every frame, before rendering: patch new materials, update the bodies.
-export function manageEclipses(scene){
-  walk(scene);
+// Every frame, before rendering: the bodies' positions for the test.
+export function updateEclipses(){
   U.uEclSunR.value = SOLAR_BODY_BY_SLOT[0].radius;
   let n = 0;
   if(gfxEclipses()){

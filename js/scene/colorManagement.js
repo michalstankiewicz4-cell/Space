@@ -21,22 +21,32 @@ function fixMaterial(m){
   fixColor(m.emissive);
 }
 
-function walk(o){
-  if(o.userData.shipkit) return;
-  if(o.isLight && !done.has(o)){
-    done.add(o);
-    fixColor(o.color);
-    fixColor(o.groundColor);
-  }
+// One walk per frame for every per-material job: the colour fix (not inside
+// ShipKit models) and, through onMeshMaterial, anything else that needs to
+// see each mesh material once (scene/eclipse.js patches them) — two jobs
+// used to mean two full walks of the scene every frame.
+function walk(o, inKit, onMeshMaterial){
+  if(o.userData.shipkit) inKit = true;
   const m = o.material;
-  if(m){
-    if(Array.isArray(m)) m.forEach(fixMaterial);
-    else fixMaterial(m);
+  if(m && onMeshMaterial && (o.isMesh || o.isInstancedMesh)){
+    if(Array.isArray(m)) m.forEach(onMeshMaterial); else onMeshMaterial(m);
   }
-  for(let i = 0; i < o.children.length; i++) walk(o.children[i]);
+  if(!inKit){
+    if(o.isLight && !done.has(o)){
+      done.add(o);
+      fixColor(o.color);
+      fixColor(o.groundColor);
+    }
+    if(m){
+      if(Array.isArray(m)) m.forEach(fixMaterial);
+      else fixMaterial(m);
+    }
+  }
+  for(let i = 0; i < o.children.length; i++) walk(o.children[i], inKit, onMeshMaterial);
 }
 
-export function manageSceneColors(scene){
+// onMeshMaterial: optional, called with every mesh material each frame.
+export function manageSceneColors(scene, onMeshMaterial){
   if(scene.fog && !done.has(scene.fog)){ done.add(scene.fog); fixColor(scene.fog.color); }
-  walk(scene);
+  walk(scene, false, onMeshMaterial);
 }

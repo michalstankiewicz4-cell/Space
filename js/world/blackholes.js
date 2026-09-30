@@ -9,7 +9,7 @@ import { refreshResearch } from "../ui/windows/research.js";
 import { save } from "../core/gameState.js";
 import { destroyDroneMesh } from "../drone/drone.js";
 import { stopUnitProgram } from "../program/runner.js";
-import { SOLAR_BODY_BY_SLOT, bodyPosAt, nowSimTime } from "./solarSystem.js";
+import { bodyPosAt, nowSimTime } from "./solarSystem.js";
 import { t } from "../i18n.js";
 import { BLACKHOLE_GRAVITY_RADIUS_MULT, BLACKHOLE_KILL_RADIUS_MULT } from "../config.js";
 

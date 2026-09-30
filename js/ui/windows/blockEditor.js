@@ -263,7 +263,7 @@ function onField(e){
   const info = wsCtx.map[slot.dataset.owner];
   if(!info) return;
   if(e.target.tagName === "INPUT"){
-    if(slot.dataset.type === "num") e.target.value = e.target.value.replace(/[^0-9.,\-]/g, "");
+    if(slot.dataset.type === "num") e.target.value = e.target.value.replace(/[^0-9.,-]/g, "");
     fitInput(e.target);
   }
   info.block.args[slot.dataset.arg] = e.target.value;

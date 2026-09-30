@@ -1,5 +1,4 @@
 import { ctx } from "../core/context.js";
-import { removeItem } from "../core/utils.js";
 import { COMET_RESPAWN_DELAY_MS, NET_PLANET_TOPUP_S } from "../config.js";
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";

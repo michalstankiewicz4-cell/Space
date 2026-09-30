@@ -23,7 +23,7 @@ function finite3(a){
 }
 const r2 = function(v){ return Math.round(v * 100) / 100; };
 
-export function saveFleet(){
+function saveFleet(){
   if(!ctx.station || pending.length) return;   // orders not restored yet: keep the old save
   const data = {
     v: 1,

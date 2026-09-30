@@ -10,7 +10,7 @@ import { TRAJECTORY_LAYER } from "./trajectories.js";
 // layers on the main camera — nothing is rebuilt. Kept in settings.
 let btn = null;
 
-export function linesShown(){ return settings.showLines !== false; }
+function linesShown(){ return settings.showLines !== false; }
 
 function apply(){
   const on = linesShown();

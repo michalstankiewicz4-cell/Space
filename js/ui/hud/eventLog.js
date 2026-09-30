@@ -13,7 +13,7 @@ function clockText(d){
 
 // kind: "info" (default), "arrive" (something gained/reached) or "alert".
 // The message is set via textContent — some messages embed player data.
-export function addEvent(msg, kind){
+function addEvent(msg, kind){
   const list = document.getElementById("evList");
   if(!list) return;
   const k = KIND_ICON[kind] ? kind : "info";
