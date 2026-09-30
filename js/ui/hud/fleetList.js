@@ -18,10 +18,12 @@ function statusText(sh){
   if(sh.error) return t("drone.error");
   if(sh.running) return t("hud.programRunning");
   if(sh.boltCore && sh.boltCore.visible) return t("hud.feeding");
+  if(sh.returning) return t("hud.returning");
   return sh.commandedTarget ? t("hud.enRoute") : t("hud.idle");
 }
 
 function targetText(sh){
+  if(sh.returning) return "→ " + t("hud.base");
   const b = sh.commandedTarget || sh.target;
   return b && !b.dying ? "→ " + t("body." + bodyVariantKey(b)) : "";
 }

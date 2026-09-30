@@ -4,6 +4,12 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.27.1]
+
+### Fixed
+- Ships returning to base showed "Idle" in the fleet list and the unit
+  panel; now "Returning to base → Base".
+
 ## [2.27.0]
 
 ### Added
