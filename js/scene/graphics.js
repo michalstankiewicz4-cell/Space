@@ -60,6 +60,10 @@ export function gfxGrain(){ return num(settings.gfxGrain, 0, 1, 0.25); }
 export function gfxAberration(){ return num(settings.gfxAberration, 0, 1, 0.35); }
 export function gfxDof(){ return settings.gfxDof !== false; }
 export function gfxDofStrength(){ return num(settings.gfxDofStrength, 0.2, 2, 1); }
+export function gfxBiteFx(){ return settings.gfxBiteFx !== false; }
+export function gfxEclipses(){ return settings.gfxEclipses !== false; }
+export function gfxTrails(){ return settings.gfxTrails !== false; }
+export function gfxTrailLength(){ return num(settings.gfxTrailLength, 0.2, 6, 2.5); }
 
 export function pixelRatioFor(level){
   const dpr = window.devicePixelRatio || 1;

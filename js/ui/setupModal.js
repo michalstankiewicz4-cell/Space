@@ -1,7 +1,7 @@
 import { getLang, setLang, onLangChange, LANGS, t } from "../i18n.js";
 import { settings, saveSettings } from "../settings.js";
 import { gfxQuality, gfxDetail, setGraphics, gfxUnitLights, setUnitLights, setGfx, gfxResMode, gfxTargetFps, gfxMaxRes, gfxSmoothLines, gfxLineWidth, gfxFarShips, gfxLodDistance, gfxFxaa, gfxMsaa, gfxBloom, gfxBloomStrength, gfxBloomThreshold,
-  gfxLensing, gfxFlare, gfxFlareStrength, gfxFilter, gfxVignette, gfxGrain, gfxAberration, gfxDof, gfxDofStrength } from "../scene/graphics.js";
+  gfxLensing, gfxFlare, gfxFlareStrength, gfxFilter, gfxVignette, gfxGrain, gfxAberration, gfxDof, gfxDofStrength, gfxTrails, gfxTrailLength, gfxEclipses, gfxBiteFx } from "../scene/graphics.js";
 import { currentPixelRatio } from "../scene/resolution.js";
 
 // Setup modal (language / mouse / graphics / help tabs), opened from the
@@ -108,7 +108,8 @@ const GFX_GET = { gfxResMode: gfxResMode, gfxTargetFps: gfxTargetFps, gfxMaxRes:
   gfxLineWidth: gfxLineWidth, gfxFarShips: gfxFarShips, gfxLodDistance: gfxLodDistance, gfxFxaa: gfxFxaa,
   gfxMsaa: function(){ return String(gfxMsaa()); }, gfxBloom: gfxBloom, gfxBloomStrength: gfxBloomStrength, gfxBloomThreshold: gfxBloomThreshold,
   gfxLensing: gfxLensing, gfxFlare: gfxFlare, gfxFlareStrength: gfxFlareStrength, gfxFilter: gfxFilter, gfxVignette: gfxVignette,
-  gfxGrain: gfxGrain, gfxAberration: gfxAberration, gfxDof: gfxDof, gfxDofStrength: gfxDofStrength };
+  gfxGrain: gfxGrain, gfxAberration: gfxAberration, gfxDof: gfxDof, gfxDofStrength: gfxDofStrength,
+  gfxTrails: gfxTrails, gfxTrailLength: gfxTrailLength, gfxEclipses: gfxEclipses, gfxBiteFx: gfxBiteFx };
 function pct(v){ return Math.round(v * 100) + "%"; }
 const GFX_FMT = {
   gfxTargetFps: function(v){ return v + " FPS"; },
@@ -117,7 +118,8 @@ const GFX_FMT = {
   gfxLodDistance: function(v){ return String(v); },
   gfxBloomStrength: function(v){ return v.toFixed(1); },
   gfxBloomThreshold: function(v){ return v.toFixed(2); },
-  gfxFlareStrength: pct, gfxVignette: pct, gfxGrain: pct, gfxAberration: pct, gfxDofStrength: pct
+  gfxFlareStrength: pct, gfxVignette: pct, gfxGrain: pct, gfxAberration: pct, gfxDofStrength: pct,
+  gfxTrailLength: function(v){ return v.toFixed(1) + " s"; }
 };
 function sliderList(el){ return el.dataset.list ? el.dataset.list.split(",").map(Number) : null; }
 
@@ -146,6 +148,7 @@ function paintImageQuality(){
   document.getElementById("gfxFlareBox").classList.toggle("hidden", !gfxFlare());
   document.getElementById("gfxFilterBox").classList.toggle("hidden", !gfxFilter());
   document.getElementById("gfxDofBox").classList.toggle("hidden", !gfxDof());
+  document.getElementById("gfxTrailsBox").classList.toggle("hidden", !gfxTrails());
   paintResNow();
 }
 

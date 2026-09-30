@@ -1,6 +1,6 @@
 import { ctx } from "../core/context.js";
 import { camState } from "./controls.js";
-import { SOLAR_BODY_BY_SLOT, BODY_VISUAL_SCALE } from "../world/solarSystem.js";
+import { SOLAR_BODY_BY_SLOT } from "../world/solarSystem.js";
 import { gfxFxaa, gfxMsaa, gfxBloom, gfxBloomStrength, gfxBloomThreshold, gfxLensing, gfxFlare, gfxFlareStrength,
   gfxFilter, gfxVignette, gfxGrain, gfxAberration, gfxDof, gfxDofStrength } from "./graphics.js";
 
@@ -333,7 +333,7 @@ export function renderPost(r, pr, setRect){
   U.tDiffuse.value = src.texture;
   U.uAspect.value = r.width / Math.max(1, r.height);
   U.uTime.value = (now - t0) / 1000;
-  if(gfxFlare() && sphereOnScreen(ORIGIN, SOLAR_BODY_BY_SLOT[0].radius * BODY_VISUAL_SCALE.sun, U.uSun.value, 0.05)) U.uSun.value.w = gfxFlareStrength();
+  if(gfxFlare() && sphereOnScreen(ORIGIN, SOLAR_BODY_BY_SLOT[0].radius, U.uSun.value, 0.05)) U.uSun.value.w = gfxFlareStrength();
   else U.uSun.value.w = 0;
   if(gfxFilter()) U.uFilter.value.set(gfxVignette(), gfxGrain(), gfxAberration());
   else U.uFilter.value.set(0, 0, 0);

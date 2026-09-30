@@ -4,6 +4,24 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.24.0]
+
+### Added
+- **Engine trails**: a soft, fading ribbon behind your ships and the
+  drone (length adjustable).
+- **Eclipses**: a planet between the Sun and your ships, drone or
+  station puts them in its shadow; only their own lights stay lit.
+- **Bite effects**: sparks cooling from white to red and a flickering
+  hot spot where the beam touches the surface.
+- All three can be switched off in Setup → Graphics.
+
+### Changed
+- Bite particles are soft round dots instead of squares.
+
+### Fixed
+- The Sun's lens flare measured the Sun three times too big (its radius
+  already includes the drawing scale).
+
 ## [2.23.0]
 
 ### Added

@@ -1,6 +1,6 @@
 import { ctx } from "../core/context.js";
 import { disposeMesh } from "../core/utils.js";
-import { gfxUnitLights } from "../scene/graphics.js";
+import { gfxUnitLights, gfxBiteFx } from "../scene/graphics.js";
 import { makeShipVisual } from "./shipVisual.js";
 import { getShipCamTarget } from "../scene/shipcam.js";
 import { EAT_ORBIT_GAP, SHIP_MODEL_LENGTH, SHIP_LIGHT_INTENSITY, SHIP_LIGHT_RANGE } from "../config.js";
@@ -8,7 +8,8 @@ import { NET_ENABLED } from "../env.js";
 import { state, swarmStats, save } from "../core/gameState.js";
 import { paintScorch, destroyPlanet, applyHealthVisual } from "../world/bodies.js";
 import { bodyValueEstimate } from "../world/bodyParams.js";
-import { spawnBiteParticles } from "../fx/particles.js";
+import { spawnBiteParticles, spawnSparks } from "../fx/particles.js";
+import { showImpact, hideImpact, disposeImpact } from "../fx/impact.js";
 import { triggerBreakup } from "../fx/breakup.js";
 import { showToast } from "../ui/hud/eventLog.js";
 import { refreshResearch } from "../ui/windows/research.js";
@@ -218,6 +219,7 @@ function pulseBolt(sh, dt){
 
 export function hideBolt(sh){
   if(sh.boltCore){ sh.boltCore.visible = false; sh.boltGlow.visible = false; }
+  hideImpact(sh);
   sh.boltJitterOffsets = null;
   sh.boltJitterTimer = 0;
 }
@@ -357,11 +359,13 @@ export function updateShips(dt){
         sh.boltJitterOffsets = generateJitterOffsets(sh.target.radius*0.35+0.15, 6);
       }
       regenBolt(sh, surfacePoint);
+      if(gfxBiteFx()) showImpact(sh, surfacePoint, dt); else hideImpact(sh);
 
       sh.particleTimer -= dt;
       if(sh.particleTimer <= 0){
         sh.particleTimer = 0.035;
         spawnBiteParticles(surfacePoint, outward, sh.target.mesh.material.color, 4);
+        if(gfxBiteFx()) spawnSparks(surfacePoint, outward, 3);
         paintScorch(sh.target, surfacePoint, 1+damage*2);
       }
 
@@ -447,6 +451,7 @@ export function disposeShip(sh){
   disposeMesh(ctx.scene, sh.mesh);
   hideBolt(sh);
   if(sh.boltCore){ ctx.scene.remove(sh.boltCore); sh.boltCore.geometry.dispose(); sh.boltCore.material.dispose(); }
+  disposeImpact(sh);
   if(sh.boltGlow){ ctx.scene.remove(sh.boltGlow); sh.boltGlow.geometry.dispose(); sh.boltGlow.material.dispose(); }
 }
 
@@ -472,6 +477,7 @@ export function destroyShip(sh){
   setShipSelected(sh, false);
   hideBolt(sh);
   if(sh.boltCore){ ctx.scene.remove(sh.boltCore); sh.boltCore.geometry.dispose(); sh.boltCore.material.dispose(); }
+  disposeImpact(sh);
   if(sh.boltGlow){ ctx.scene.remove(sh.boltGlow); sh.boltGlow.geometry.dispose(); sh.boltGlow.material.dispose(); }
   sh.mesh.remove(sh.pickMesh); sh.mesh.remove(sh.selectionRing); sh.mesh.remove(sh.light);
   if(!sh.visual.explode(sh.mesh)){ sh.visual.dispose(); disposeMesh(ctx.scene, sh.mesh); }

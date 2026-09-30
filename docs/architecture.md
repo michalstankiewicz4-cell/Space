@@ -1179,6 +1179,25 @@ the values from before). The Setup tab is a scrolling list; controls with
   samples of the Sun's disc in the image itself, so a planet in front
   dims it with no extra pass), and the **filter** (aberration, vignette,
   grain). Cost measured headless: bloom ≈ −25 % fps, the rest small.
+- **Engine trails** (v2.24.0, `fx/trails.js`): own ships + the drone; a
+  camera-facing strip of recent tail positions (3 vertices across: dark
+  edges, bright middle — a soft ribbon), additive, narrowing and dimming
+  with age; the newest point rides with the engine so the trail never
+  lags. Direction from the last frame's position (the drone has no `vel`).
+- **Eclipses** (v2.24.0, `scene/eclipse.js`): no shadow maps — every lit
+  built-in material (ShipKit's too) gets an `onBeforeCompile` (and a
+  `customProgramCacheKey` that keeps its own hook's key) adding a
+  world-position varying and an analytic sphere-occlusion test against
+  the Sun's disc (umbra + penumbra), reading shared uniforms set each
+  frame from `ctx.planets`. It scales direct light and — because ShipKit
+  models get most of their light from the environment map — the indirect
+  light down to 30 %. Needs one recompile per material, so `main.js` runs
+  it before the start-up `renderer.compile`. BodyKit bodies don't take
+  part.
+- **Bite effects** (v2.24.0): `fx/particles.js#spawnSparks` (hot
+  particles coloured by a cooling ramp), `fx/impact.js` (a flickering
+  glow sprite at the beam's contact point, hidden with the beam). The
+  particle pool now draws round dots (a canvas texture).
 
 ## Research trees
 

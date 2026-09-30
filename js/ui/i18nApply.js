@@ -54,7 +54,10 @@ export function applyStaticText(){
    ["gfxBloomThresholdLabel", "bloomThreshold"], ["gfxBloomNote", "bloomNote"], ["gfxMsaaLabel", "msaa"], ["gfxMsaaNote", "msaaNote"],
    ["gfxLensingLabel", "lensing"], ["gfxLensingNote", "lensingNote"], ["gfxFlareLabel", "flare"], ["gfxFlareStrengthLabel", "strength"],
    ["gfxFilterLabel", "filter"], ["gfxVignetteLabel", "vignette"], ["gfxGrainLabel", "grain"], ["gfxAberrationLabel", "aberration"],
-   ["gfxDofLabel", "dof"], ["gfxDofStrengthLabel", "strength"], ["gfxDofNote", "dofNote"]].forEach(function(p){ document.getElementById(p[0]).textContent = t("setup.gfx." + p[1]); });
+   ["gfxDofLabel", "dof"], ["gfxDofStrengthLabel", "strength"], ["gfxDofNote", "dofNote"],
+   ["gfxTrailsLabel", "trails"], ["gfxTrailLengthLabel", "trailLength"],
+   ["gfxEclipsesLabel", "eclipses"], ["gfxEclipsesNote", "eclipsesNote"],
+   ["gfxBiteFxLabel", "biteFx"], ["gfxBiteFxNote", "biteFxNote"]].forEach(function(p){ document.getElementById(p[0]).textContent = t("setup.gfx." + p[1]); });
 
   document.getElementById("aboutBtn").title = t("about.button");
   document.getElementById("aboutTitle").textContent = t("about.title");

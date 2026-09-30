@@ -47,6 +47,8 @@ import { updateLightsToggle } from "./scene/lightsToggle.js";
 import { updateTrajectories } from "./scene/trajectories.js";
 import { updateResolution } from "./scene/resolution.js";
 import { setLoad, loadDone, nextPaint } from "./ui/loader.js";
+import { updateTrails } from "./fx/trails.js";
+import { manageEclipses } from "./scene/eclipse.js";
 
 load();
 
@@ -166,10 +168,12 @@ function tick(){
   updateHud(dt);
 
   updateShipVisuals(dt);        // ship models: level of detail, animation, wrecks
+  updateTrails(dt);             // engine trails behind own ships and the drone
   updateStationVisuals(dt);     // stations (ShipKit's ST-04 HAVEN): ring spin, lights, dish
   updateBodyLooks(dt);          // BodyKit bodies: animated layers, spin, sun direction
   updateSkybox(dt);             // BodyKit sky: follows the camera, twinkles, bakes after a change
   manageSceneColors(ctx.scene); // new materials/lights: sRGB -> linear, once each
+  manageEclipses(ctx.scene);    // new lit materials learn eclipses; planets' positions for them
 
   // Main view into the HUD's viewport rect, then the extra passes (ship cam,
   // unit/planet miniatures) into their own panels' rects — all on the same
@@ -192,6 +196,8 @@ function tick(){
 setLoad(0.85, "shaders");
 await nextPaint();
 updateCamera(0);
+manageSceneColors(ctx.scene);
+manageEclipses(ctx.scene);
 ctx.renderer.compile(ctx.scene, ctx.camera);
 renderMainView();
 requestAnimationFrame(tick);

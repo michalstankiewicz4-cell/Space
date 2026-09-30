@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.23.0">
+<link rel="stylesheet" href="css/style.css?v=2.24.0">
 </head>
 <body>
 
@@ -264,6 +264,21 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
           <div id="gfxLodBox">
             <div class="gfxRow"><span id="gfxLodLabel">…farther than</span><b data-val="gfxLodDistance"></b></div>
             <input type="range" class="gfxSlider" data-key="gfxLodDistance" min="15" max="200" step="5">
+          </div>
+        </div>
+        <div class="gfxSec">
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxBiteFx"><span class="chk"></span><span id="gfxBiteFxLabel">Bite effects</span></label>
+          <div class="gfxNote" id="gfxBiteFxNote"></div>
+        </div>
+        <div class="gfxSec">
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxEclipses"><span class="chk"></span><span id="gfxEclipsesLabel">Eclipses</span></label>
+          <div class="gfxNote" id="gfxEclipsesNote"></div>
+        </div>
+        <div class="gfxSec">
+          <label class="setupCheckRow"><input type="checkbox" data-key="gfxTrails"><span class="chk"></span><span id="gfxTrailsLabel">Engine trails</span></label>
+          <div id="gfxTrailsBox">
+            <div class="gfxRow"><span id="gfxTrailLengthLabel">Length</span><b data-val="gfxTrailLength"></b></div>
+            <input type="range" class="gfxSlider" data-key="gfxTrailLength" min="0.3" max="4" step="0.1">
           </div>
         </div>
         <div class="gfxSec">
@@ -769,7 +784,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.23.0"></script>
+<script type="module" src="js/main.js?v=2.24.0"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">
