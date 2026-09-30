@@ -169,6 +169,8 @@ function paintResNow(){
 
 function initImageQuality(){
   const box = document.getElementById("setupTabGraphics");
+  // a [?] badge inside a checkbox's label explains, it doesn't toggle
+  box.querySelectorAll(".gfxCost").forEach(function(b){ b.addEventListener("click", function(e){ e.preventDefault(); e.stopPropagation(); }); });
   box.querySelectorAll(".gfxSeg button").forEach(function(b){
     b.addEventListener("click", function(){
       const p = {}, k = b.parentNode.dataset.key;

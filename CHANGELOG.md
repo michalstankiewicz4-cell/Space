@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.25.2]
+
+### Changed
+- **Setup → Graphics is grouped**: the preset first, then PICTURE &
+  SHARPNESS, MODELS, LIGHT, EFFECTS and CAMERA.
+- **A [?] next to every option** shows how much it costs (green light,
+  yellow medium, red heavy) and why, on hover.
+
 ## [2.25.1]
 
 ### Changed

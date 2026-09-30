@@ -58,7 +58,14 @@ export function applyStaticText(){
    ["gfxTrailsLabel", "trails"], ["gfxTrailLengthLabel", "trailLength"],
    ["gfxEclipsesLabel", "eclipses"], ["gfxEclipsesNote", "eclipsesNote"],
    ["gfxBiteFxLabel", "biteFx"], ["gfxBiteFxNote", "biteFxNote"],
-   ["gfxPresetLabel", "preset"]].forEach(function(p){ document.getElementById(p[0]).textContent = t("setup.gfx." + p[1]); });
+   ["gfxPresetLabel", "preset"], ["gfxHdPicture", "hd.picture"], ["gfxHdModels", "hd.models"], ["gfxHdLight", "hd.light"],
+   ["gfxHdEffects", "hd.effects"], ["gfxHdCamera", "hd.camera"]].forEach(function(p){ document.getElementById(p[0]).textContent = t("setup.gfx." + p[1]); });
+
+  // the [?] badges: cost level + why (Setup -> Graphics)
+  document.querySelectorAll("#setupTabGraphics .gfxCost").forEach(function(b){
+    b.title = t("setup.gfx.cost." + b.dataset.cost) + " — " + t("setup.gfx.tip." + b.dataset.tip);
+  });
+  document.getElementById("gfxCostLegend").innerHTML = t("setup.gfx.costLegend");
 
   document.getElementById("aboutBtn").title = t("about.button");
   document.getElementById("aboutTitle").textContent = t("about.title");

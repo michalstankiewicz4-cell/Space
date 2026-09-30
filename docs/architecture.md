@@ -1209,6 +1209,11 @@ the values from before). The Setup tab is a scrolling list; controls with
   at the lowest resolution below 0.9 × target fps, up after 20 s at the
   highest above 1.3 × — only the effects change, the resolution stays
   automatic, and each step restarts the warm-up.
+- **Layout** (v2.25.2): the tab is grouped (`.gfxHd` headers: picture &
+  sharpness, models, light, effects, camera — the preset on top); every
+  option has a `.gfxCost` [?] badge, `data-cost` low/mid/high (colour)
+  and `data-tip` → tooltip `setup.gfx.cost.*` + `setup.gfx.tip.*`
+  (`i18nApply.js`). A new option gets a badge too.
 
 ## Research trees
 
