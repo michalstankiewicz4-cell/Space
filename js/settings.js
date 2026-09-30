@@ -35,6 +35,8 @@ const DEFAULTS = {
   gfxTrails: true,      // engine trails behind own ships and the drone (fx/trails.js)
   gfxTrailLength: 2.5,  // …seconds of flight they show
   gfxEclipses: true,    // planets shade ships, the drone and stations (scene/eclipse.js)
+  gfxPreset: "auto",    // "auto" | "min" | "normal" | "max" | "custom" (scene/graphics.js#applyPreset)
+  gfxAutoTier: "normal", // AUTO: the tier it's on now
   gfxBiteFx: true       // sparks and a hot spot where a ship bites (fx/particles.js, fx/impact.js)
 };
 

@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.24.0">
+<link rel="stylesheet" href="css/style.css?v=2.25.0">
 </head>
 <body>
 
@@ -229,6 +229,11 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
            with data-key are bound generically by ui/setupModal.js to that
            setting; data-val shows a setting's value. -->
       <div id="setupTabGraphics" class="setupTabPanel hidden" data-tab="graphics">
+        <div class="gfxSec">
+          <div class="gfxRow"><span id="gfxPresetLabel">Preset</span>
+            <div class="gfxSeg" data-key="gfxPreset"><button type="button" data-v="auto">AUTO</button><button type="button" data-v="min">MIN</button><button type="button" data-v="normal">NORMAL</button><button type="button" data-v="max">MAX</button></div></div>
+          <div class="gfxNote" id="gfxPresetNote"></div>
+        </div>
         <div class="gfxSec">
           <div class="gfxRow"><span id="gfxResLabel">Resolution</span>
             <div class="gfxSeg" data-key="gfxResMode"><button type="button" data-v="auto">AUTO</button><button type="button" data-v="manual">MANUAL</button></div></div>
@@ -784,7 +789,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.24.0"></script>
+<script type="module" src="js/main.js?v=2.25.0"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

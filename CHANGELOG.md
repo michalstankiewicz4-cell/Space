@@ -4,6 +4,16 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.25.0]
+
+### Added
+- **Graphics presets: AUTO / MIN / NORMAL / MAX** at the top of Setup →
+  Graphics. MIN, NORMAL and MAX set everything at once. AUTO (the
+  default) starts at NORMAL with automatic resolution and moves the
+  effects a tier down when even the lowest resolution can't hold your
+  frame rate, or up when the highest one runs with plenty to spare.
+  Change any single option and the settings become your own.
+
 ## [2.24.0]
 
 ### Added

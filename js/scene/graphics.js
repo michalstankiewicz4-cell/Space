@@ -79,25 +79,61 @@ function snapshot(){
 }
 
 // Any of the settings above: setGfx({ gfxLineWidth: 2 }) — saved, then
-// every onGraphicsChange listener gets the values from before.
-export function setGfx(patch){
+// every onGraphicsChange listener gets the values from before. A change
+// by hand turns the preset into "custom"; presets pass fromPreset.
+export function setGfx(patch, fromPreset){
   const before = snapshot();
   Object.keys(patch).forEach(function(k){ settings[k] = patch[k]; });
+  if(!fromPreset) settings.gfxPreset = "custom";
   saveSettings();
   listeners.forEach(function(fn){ fn(before); });
 }
 
 export function setGraphics(quality, detail){
-  const before = snapshot();
-  settings.gfxQuality = quality;
-  settings.gfxDetail = detail;
-  saveSettings();
-  listeners.forEach(function(fn){ fn(before); });
+  setGfx({ gfxQuality: quality, gfxDetail: detail });
 }
 
 export function setUnitLights(on){
-  const before = snapshot();
-  settings.gfxUnitLights = !!on;
-  saveSettings();
-  listeners.forEach(function(fn){ fn(before); });
+  setGfx({ gfxUnitLights: !!on });
+}
+
+// Presets (the top of Setup -> Graphics): MIN / NORMAL / MAX set everything
+// at once; AUTO starts at NORMAL with automatic resolution, and
+// scene/resolution.js moves it a tier down when even the lowest resolution
+// can't hold the frame rate, or up when the highest one runs with plenty
+// to spare (gfxAutoTier: the tier it's on). Changing any single setting by
+// hand makes it "custom" (none lit).
+const TIERS = {
+  min: { gfxQuality: 1, gfxDetail: 0.5, gfxUnitLights: false, gfxMsaa: 0, gfxFxaa: true, gfxSmoothLines: false,
+    gfxFarShips: "dot", gfxLodDistance: 30, gfxBloom: false, gfxLensing: false, gfxFlare: false, gfxFilter: false,
+    gfxDof: false, gfxTrails: false, gfxEclipses: false, gfxBiteFx: false },
+  normal: { gfxQuality: 3, gfxDetail: 1, gfxUnitLights: false, gfxMsaa: 4, gfxFxaa: false, gfxSmoothLines: true,
+    gfxFarShips: "dot", gfxLodDistance: 60, gfxBloom: true, gfxLensing: true, gfxFlare: true, gfxFilter: true,
+    gfxDof: true, gfxTrails: true, gfxEclipses: true, gfxBiteFx: true },
+  max: { gfxQuality: 4, gfxDetail: 1.5, gfxUnitLights: true, gfxMsaa: 8, gfxFxaa: true, gfxSmoothLines: true,
+    gfxFarShips: "dot", gfxLodDistance: 150, gfxBloom: true, gfxLensing: true, gfxFlare: true, gfxFilter: true,
+    gfxDof: true, gfxTrails: true, gfxEclipses: true, gfxBiteFx: true }
+};
+const RES = {
+  min: { gfxResMode: "manual" },
+  normal: { gfxResMode: "auto", gfxMaxRes: 1 },
+  max: { gfxResMode: "auto", gfxMaxRes: 2 },
+  auto: { gfxResMode: "auto", gfxMaxRes: 1.5 }
+};
+export const PRESETS = ["auto", "min", "normal", "max"];
+export const TIER_ORDER = ["min", "normal", "max"];
+
+export function gfxPreset(){ return PRESETS.indexOf(settings.gfxPreset) >= 0 ? settings.gfxPreset : "custom"; }
+export function gfxAutoTier(){ return TIER_ORDER.indexOf(settings.gfxAutoTier) >= 0 ? settings.gfxAutoTier : "normal"; }
+
+export function applyPreset(name){
+  if(PRESETS.indexOf(name) < 0) return;
+  const tier = name === "auto" ? "normal" : name;
+  setGfx(Object.assign({ gfxPreset: name, gfxAutoTier: tier }, TIERS[tier], RES[name]), true);
+}
+
+// AUTO only: another tier's effects (the resolution stays automatic).
+export function setAutoTier(tier){
+  if(gfxPreset() !== "auto" || !TIERS[tier]) return;
+  setGfx(Object.assign({ gfxAutoTier: tier }, TIERS[tier]), true);
 }

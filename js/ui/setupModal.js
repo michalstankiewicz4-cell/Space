@@ -1,7 +1,8 @@
 import { getLang, setLang, onLangChange, LANGS, t } from "../i18n.js";
 import { settings, saveSettings } from "../settings.js";
 import { gfxQuality, gfxDetail, setGraphics, gfxUnitLights, setUnitLights, setGfx, gfxResMode, gfxTargetFps, gfxMaxRes, gfxSmoothLines, gfxLineWidth, gfxFarShips, gfxLodDistance, gfxFxaa, gfxMsaa, gfxBloom, gfxBloomStrength, gfxBloomThreshold,
-  gfxLensing, gfxFlare, gfxFlareStrength, gfxFilter, gfxVignette, gfxGrain, gfxAberration, gfxDof, gfxDofStrength, gfxTrails, gfxTrailLength, gfxEclipses, gfxBiteFx } from "../scene/graphics.js";
+  gfxLensing, gfxFlare, gfxFlareStrength, gfxFilter, gfxVignette, gfxGrain, gfxAberration, gfxDof, gfxDofStrength, gfxTrails, gfxTrailLength, gfxEclipses, gfxBiteFx,
+  gfxPreset, gfxAutoTier, applyPreset, onGraphicsChange } from "../scene/graphics.js";
 import { currentPixelRatio } from "../scene/resolution.js";
 
 // Setup modal (language / mouse / graphics / help tabs), opened from the
@@ -91,12 +92,12 @@ function initGraphicsSliders(){
   q.value = gfxQuality();
   d.value = gfxDetail();
   paintGfx();
-  q.addEventListener("input", function(){ paintGfx(); setGraphics(+q.value, gfxDetail()); });
+  q.addEventListener("input", function(){ paintGfx(); setGraphics(+q.value, gfxDetail()); paintImageQuality(); });
   d.addEventListener("input", paintGfx);
-  d.addEventListener("change", function(){ setGraphics(gfxQuality(), +d.value); });
+  d.addEventListener("change", function(){ setGraphics(gfxQuality(), +d.value); paintImageQuality(); });
   const lights = document.getElementById("unitLightsCheck");
   lights.checked = gfxUnitLights();
-  lights.addEventListener("change", function(){ setUnitLights(lights.checked); });
+  lights.addEventListener("change", function(){ setUnitLights(lights.checked); paintImageQuality(); });
   initImageQuality();
   onLangChange(paintGfx);
 }
@@ -109,7 +110,7 @@ const GFX_GET = { gfxResMode: gfxResMode, gfxTargetFps: gfxTargetFps, gfxMaxRes:
   gfxMsaa: function(){ return String(gfxMsaa()); }, gfxBloom: gfxBloom, gfxBloomStrength: gfxBloomStrength, gfxBloomThreshold: gfxBloomThreshold,
   gfxLensing: gfxLensing, gfxFlare: gfxFlare, gfxFlareStrength: gfxFlareStrength, gfxFilter: gfxFilter, gfxVignette: gfxVignette,
   gfxGrain: gfxGrain, gfxAberration: gfxAberration, gfxDof: gfxDof, gfxDofStrength: gfxDofStrength,
-  gfxTrails: gfxTrails, gfxTrailLength: gfxTrailLength, gfxEclipses: gfxEclipses, gfxBiteFx: gfxBiteFx };
+  gfxTrails: gfxTrails, gfxTrailLength: gfxTrailLength, gfxEclipses: gfxEclipses, gfxBiteFx: gfxBiteFx, gfxPreset: gfxPreset };
 function pct(v){ return Math.round(v * 100) + "%"; }
 const GFX_FMT = {
   gfxTargetFps: function(v){ return v + " FPS"; },
@@ -125,6 +126,14 @@ function sliderList(el){ return el.dataset.list ? el.dataset.list.split(",").map
 
 function paintImageQuality(){
   const box = document.getElementById("setupTabGraphics");
+  // a preset changes these too (they have their own handlers above)
+  document.getElementById("gfxQualitySlider").value = gfxQuality();
+  document.getElementById("gfxDetailSlider").value = gfxDetail();
+  document.getElementById("unitLightsCheck").checked = gfxUnitLights();
+  paintGfx();
+  const pr = gfxPreset();
+  document.getElementById("gfxPresetNote").textContent = pr === "custom" ? t("setup.gfx.presetCustom")
+    : pr === "auto" ? t("setup.gfx.presetAuto")(t("setup.gfx.seg." + gfxAutoTier())) : t("setup.gfx.presetNote");
   box.querySelectorAll(".gfxSeg").forEach(function(seg){
     const v = GFX_GET[seg.dataset.key]();
     seg.querySelectorAll("button").forEach(function(b){
@@ -163,8 +172,9 @@ function initImageQuality(){
   box.querySelectorAll(".gfxSeg button").forEach(function(b){
     b.addEventListener("click", function(){
       const p = {}, k = b.parentNode.dataset.key;
-      p[k] = k === "gfxMsaa" ? Number(b.dataset.v) : b.dataset.v;
-      setGfx(p); paintImageQuality();
+      if(k === "gfxPreset") applyPreset(b.dataset.v);
+      else{ p[k] = k === "gfxMsaa" ? Number(b.dataset.v) : b.dataset.v; setGfx(p); }
+      paintImageQuality();
     });
   });
   box.querySelectorAll("input[type=range][data-key]").forEach(function(s){
@@ -181,4 +191,5 @@ function initImageQuality(){
   setInterval(function(){ if(!box.classList.contains("hidden")) paintResNow(); }, 500);
   paintImageQuality();
   onLangChange(paintImageQuality);
+  onGraphicsChange(function(){ paintImageQuality(); });   // e.g. the AUTO preset changing tier
 }

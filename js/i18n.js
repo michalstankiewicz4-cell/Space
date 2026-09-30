@@ -76,7 +76,11 @@ const STRINGS = {
         dof: "Depth of field (focus camera)", dofNote: "The object you're watching stays sharp, the rest softens.",
         msaa: "Edge smoothing (MSAA)",
         msaaNote: "Each edge pixel sampled 2, 4 or 8 times. ×8 is the smoothest and the most costly; OFF with FXAA is the cheapest.",
-        seg: { auto: "AUTO", manual: "MANUAL", dot: "DOT", cone: "CONE", model: "MODEL", "0": "OFF", "2": "×2", "4": "×4", "8": "×8" }
+        preset: "Preset", presetNote: "Sets everything below at once; change anything and it becomes your own.",
+        presetAuto: function(tier){ return "Adjusts to your computer — effects now: " + tier + "."; },
+        presetCustom: "Your own settings.",
+        seg: { auto: "AUTO", manual: "MANUAL", dot: "DOT", cone: "CONE", model: "MODEL", "0": "OFF", "2": "×2", "4": "×4", "8": "×8",
+          min: "MIN", normal: "NORMAL", max: "MAX" }
       },
       graphicsSoon: "Render quality sets the resolution and effects; geometry detail sets how finely the ships are built."
     },
@@ -504,7 +508,11 @@ const STRINGS = {
         dof: "Głębia ostrości (kamera na obiekcie)", dofNote: "Obiekt, na który patrzysz, zostaje ostry, reszta się rozmywa.",
         msaa: "Wygładzanie krawędzi (MSAA)",
         msaaNote: "Każdy piksel na krawędzi próbkowany 2, 4 lub 8 razy. ×8 najgładsze i najdroższe; WYŁ. z FXAA najtańsze.",
-        seg: { auto: "AUTO", manual: "RĘCZNA", dot: "PUNKT", cone: "STOŻEK", model: "MODEL", "0": "WYŁ.", "2": "×2", "4": "×4", "8": "×8" }
+        preset: "Ustawienie", presetNote: "Ustawia wszystko poniżej naraz; zmień cokolwiek, a stanie się twoim własnym.",
+        presetAuto: function(tier){ return "Dopasowuje się do komputera — efekty teraz: " + tier + "."; },
+        presetCustom: "Twoje własne ustawienia.",
+        seg: { auto: "AUTO", manual: "RĘCZNA", dot: "PUNKT", cone: "STOŻEK", model: "MODEL", "0": "WYŁ.", "2": "×2", "4": "×4", "8": "×8",
+          min: "MIN", normal: "NORMAL", max: "MAKS" }
       },
       graphicsSoon: "Jakość renderowania ustawia rozdzielczość i efekty; szczegółowość — jak dokładnie zbudowane są statki."
     },

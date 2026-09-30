@@ -57,7 +57,8 @@ export function applyStaticText(){
    ["gfxDofLabel", "dof"], ["gfxDofStrengthLabel", "strength"], ["gfxDofNote", "dofNote"],
    ["gfxTrailsLabel", "trails"], ["gfxTrailLengthLabel", "trailLength"],
    ["gfxEclipsesLabel", "eclipses"], ["gfxEclipsesNote", "eclipsesNote"],
-   ["gfxBiteFxLabel", "biteFx"], ["gfxBiteFxNote", "biteFxNote"]].forEach(function(p){ document.getElementById(p[0]).textContent = t("setup.gfx." + p[1]); });
+   ["gfxBiteFxLabel", "biteFx"], ["gfxBiteFxNote", "biteFxNote"],
+   ["gfxPresetLabel", "preset"]].forEach(function(p){ document.getElementById(p[0]).textContent = t("setup.gfx." + p[1]); });
 
   document.getElementById("aboutBtn").title = t("about.button");
   document.getElementById("aboutTitle").textContent = t("about.title");
