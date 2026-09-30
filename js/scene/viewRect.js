@@ -1,6 +1,7 @@
 import { ctx } from "../core/context.js";
 import { setLineResolution } from "./lines.js";
 import { postActive, renderPost } from "./post.js";
+import { isUiHidden } from "../ui/hud/uiMode.js";
 
 // The canvas covers the whole window, but the main 3D view only renders
 // into — and only takes mouse input from — one rect of it: the HUD's
@@ -19,7 +20,8 @@ export function getViewRect(){
     bannerEl = document.getElementById("banner");
   }
   if(!viewportEl) return ctx.renderer.domElement.getBoundingClientRect();
-  if(bannerEl && !bannerEl.classList.contains("hidden")){
+  // the start screen over it, or the interface hidden (key C, ui/hud/uiMode.js)
+  if((bannerEl && !bannerEl.classList.contains("hidden")) || isUiHidden()){
     return { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight,
       width: window.innerWidth, height: window.innerHeight };
   }

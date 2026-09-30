@@ -7,6 +7,9 @@ const DEFAULTS = {
   invertX: false,
   invertY: false,
   swapMouseButtons: false,
+  mouseRotSens: 1,      // camera rotation speed (right-drag), × (Setup -> Mouse)
+  mouseZoomSens: 1,     // scroll zoom speed, ×
+  showLines: true,      // orbits and trajectories shown (scene/linesToggle.js; the viewport's top-right button, key O)
   gfxQuality: 3,  // render quality 0..4 (see scene/graphics.js)
   gfxDetail: 1,   // ship geometry detail 0.2..2
   gfxUnitLights: false, // a PointLight at every ship (costly; see scene/graphics.js)

@@ -50,6 +50,7 @@ js/
                      (viewRect.js, unitThumb.js, infoThumb.js), mouse controls/selection, hover tooltip,
                      ship cam (picture-in-picture cockpit view, ships and the drone),
                      trajectory lines of the object in view + the selected ones (trajectories.js),
+                     orbits/trajectories on-off (linesToggle.js),
                      image quality (Setup → Graphics): graphics.js (settings, presets), resolution.js
                      (auto resolution, AUTO preset's tier), lines.js (smooth lines), post.js (settings →
                      PostKit), eclipse.js (planets shading ships/drone/station), anisotropy.js

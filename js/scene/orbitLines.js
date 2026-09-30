@@ -33,6 +33,9 @@ function buildOrbitLine(orbit, material){
 // Takes the scene directly (like scene/skybox.js#addSkybox()) — runs
 // during initScene(), before ctx.scene is actually assigned.
 let orbitScene = null, orbitObjs = [];
+// Orbits and comet paths live on their own layer, so the main camera can
+// hide them in one go (scene/linesToggle.js); the miniature cameras keep it.
+export const ORBIT_LAYER = 3;
 export function addOrbitLines(scene){
   orbitScene = scene;
   const material = getLineMaterial();
@@ -44,7 +47,7 @@ export function addOrbitLines(scene){
   // it isn't a body — it's still a real, fixed orbit players should be
   // able to see.
   orbitObjs.push(buildOrbitLine(STATION_RING, material));
-  orbitObjs.forEach(function(o){ scene.add(o); });
+  orbitObjs.forEach(function(o){ o.layers.set(ORBIT_LAYER); scene.add(o); });
 }
 
 onLinesChange(function(){
@@ -64,5 +67,7 @@ onLinesChange(function(){
 // despawns (despawnLocalOnly/destroyPlanet), same as every other
 // comet-owned mesh piece.
 export function buildCometTrajectoryLine(points){
-  return makeLine(points, getLineMaterial());
+  const line = makeLine(points, getLineMaterial());
+  line.layers.set(ORBIT_LAYER);
+  return line;
 }

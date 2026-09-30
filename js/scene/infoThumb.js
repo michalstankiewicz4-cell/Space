@@ -1,5 +1,6 @@
 import { getInfoThumbTarget } from "../ui/hud/infoPanel.js";
 import { renderIntoElement } from "./viewRect.js";
+import { ORBIT_LAYER } from "./orbitLines.js";
 
 // Live miniature of the object in the PLANET INFO panel (a planet, or the
 // player's station), rendered into #infoThumb's box on the main canvas
@@ -14,6 +15,7 @@ const UP = new THREE.Vector3(0, 1, 0);
 
 export function initInfoThumb(){
   camera = new THREE.PerspectiveCamera(45, 1, 0.05, 400);
+  camera.layers.enable(ORBIT_LAYER);   // orbit lines, as before they got their own layer
   el = document.getElementById("infoThumb");
 }
 

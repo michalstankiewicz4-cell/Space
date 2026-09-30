@@ -1,0 +1,52 @@
+import { t } from "../i18n.js";
+
+// "Coming soon" tooltip for every control that doesn't work yet — shown at
+// once (a native title waits a second, and a disabled button shows none in
+// some browsers). One document-level listener: the element under the
+// pointer (elementsFromPoint, which disabled buttons are part of) or one of
+// its ancestors matches SOON. The tooltip names the control and says it's
+// coming; its own `data-soon-text` (an i18n key) replaces the second line.
+const SOON = ".soon, .modeDisabled, #nickGoogleBtn, #cmdTabs .cTab, #btnPause, #btnFast";
+let tip = null, current = null;
+
+function nameOf(el){
+  if(el.dataset.cmd) return t("cmd." + el.dataset.cmd);
+  if(el.dataset.soonName) return t(el.dataset.soonName);
+  const txt = (el.textContent || "").trim();
+  return txt || el.getAttribute("aria-label") || "";
+}
+
+function show(el, x, y){
+  if(!tip){
+    tip = document.createElement("div");
+    tip.id = "soonTip";
+    tip.innerHTML = "<b></b><span></span>";
+    document.body.appendChild(tip);
+  }
+  if(el !== current){
+    current = el;
+    const name = nameOf(el);
+    tip.querySelector("b").textContent = name ? name + " — " + t("soon") : t("soon");
+    tip.querySelector("span").textContent = t(el.dataset.soonText || "soonLong");
+  }
+  tip.style.display = "block";
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = Math.min(window.innerWidth - w - 8, x + 14) + "px";
+  tip.style.top = (y - h - 12 < 4 ? y + 18 : y - h - 12) + "px";
+}
+
+function hide(){
+  current = null;
+  if(tip) tip.style.display = "none";
+}
+
+export function initSoonTip(){
+  window.addEventListener("pointermove", function(e){
+    const top = document.elementsFromPoint(e.clientX, e.clientY)[0];
+    const el = top ? top.closest(SOON) : null;
+    // the research trees' locked nodes are SVG ".soon" with a tooltip of their own
+    if(!el || el instanceof SVGElement){ hide(); return; }
+    show(el, e.clientX, e.clientY);
+  }, { passive: true });
+  window.addEventListener("pointerdown", hide);
+}

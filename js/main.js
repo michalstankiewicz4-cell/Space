@@ -24,6 +24,9 @@ import { initAbout } from "./ui/about.js";
 import { initPrivacyNotice, initPrivacySettings, whenPrivacyAccepted } from "./ui/privacy.js";
 import { initPlayerCounts } from "./ui/playerCounts.js";
 import { initEscapeKey } from "./ui/escapeKey.js";
+import { initSoonTip } from "./ui/soonTip.js";
+import { initUiMode } from "./ui/hud/uiMode.js";
+import { initLinesToggle } from "./scene/linesToggle.js";
 import { applyStaticText } from "./ui/i18nApply.js";
 import { onLangChange } from "./i18n.js";
 import { initWindows } from "./ui/windows/windows.js";
@@ -74,6 +77,7 @@ initPrivacyNotice();
 initPlayerCounts();   // its server requests wait for the privacy policy itself
 initBanner();
 initEscapeKey();
+initSoonTip();       // "coming soon" tooltips on controls that don't work yet
 // The loading bar (ui/loader.js, in the ENTER ORBIT button): the rest of
 // the start-up blocks the main thread in chunks, so each chunk is followed
 // by nextPaint() — rAF + setTimeout, resumes right after the next frame is
@@ -119,6 +123,8 @@ await nextPaint();
 
 initWindows();
 initHudWorld();
+initLinesToggle();   // orbits/trajectories on/off (needs the camera)
+initUiMode();        // key C: hide the interface step by step; key O: lines
 initAnisotropy();
 initUnitThumb();
 initInfoThumb();

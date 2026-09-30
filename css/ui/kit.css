@@ -125,3 +125,9 @@
 .closePill{ width:44px; height:26px; border-radius:4px 13px 13px 4px;
   font-family:var(--uiFontLabel); font-size:15px; color:#2a0508; transition:filter .15s; }
 .closePill:hover{ filter:brightness(1.12); }
+
+/* "Coming soon" tooltip (ui/soonTip.js) */
+#soonTip{ position:fixed; display:none; z-index:60; pointer-events:none; max-width:320px;
+  padding:6px 11px; border-radius:6px; border:1.5px solid #f5bd5c; background:rgb(6 8 26 / .95);
+  box-shadow:0 0 8px rgb(245 189 92 / .35); font-family:var(--uiFontBody); font-size:14px; line-height:19px; color:#c7d0ff; }
+#soonTip b{ display:block; font-family:var(--uiFontLabel); font-weight:500; letter-spacing:.4px; color:#ffd98f; }

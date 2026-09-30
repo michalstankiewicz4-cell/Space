@@ -9,3 +9,19 @@
    miniatures (unit/planet thumbnails) are drawn on that canvas *under* the
    panels — a fill here would dim them. */
 #hud .uiPanel::before{ background:none; }
+
+/* Hiding the interface, key C (ui/hud/uiMode.js). display:none, not
+   visibility: the miniatures skip an element with no offsetParent
+   (scene/viewRect.js#renderIntoElement) — hidden but laid out, they'd draw
+   over the full-window scene. */
+body[data-ui] #viewport::after{ display:none; }
+body[data-ui="1"] #hud > *:not(#viewport){ display:none !important; }
+body[data-ui="2"] #hud > *:not(#viewport):not(#miniPanel){ display:none !important; }
+body[data-ui="2"] #viewport > *:not(#cameraModeToggle){ display:none !important; }
+body[data-ui="3"] #hud, body[data-ui="3"] #selectionBrackets{ display:none !important; }
+/* the minimap on its own over the scene: a backing of its own */
+body[data-ui="2"] #miniPanel{ background:rgb(3 6 20 / .82); border-radius:10px; }
+#uiModeHint{ position:fixed; left:50%; bottom:28px; transform:translateX(-50%); z-index:30; pointer-events:none;
+  padding:6px 16px; border-radius:6px; border:1.5px solid #3c55d8; background:rgb(2 5 20 / .85); color:#c7d0ff;
+  font-family:var(--uiFontLabel); font-size:14px; letter-spacing:.4px; opacity:0; transition:opacity .35s; white-space:nowrap; }
+#uiModeHint.on{ opacity:1; }

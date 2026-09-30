@@ -4,6 +4,22 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.28.0]
+
+### Added
+- **Key C hides the interface step by step**: the panels (the view's own
+  buttons stay) → only BASE/SYSTEM and the minimap → just space →
+  everything back. Escape brings it back too.
+- **ORBITS button** (top-right of the 3D view, or key O): every orbit and
+  trajectory line on or off at once.
+- **Mouse sensitivity** for camera rotation and zoom in Setup → Mouse.
+- **"Coming soon" tooltips** on every control that doesn't work yet,
+  shown at once (disabled buttons included) with what it is.
+- **Setup → Help lists every mouse and keyboard control.**
+
+### Changed
+- The ship cam picture moved a little lower to make room for ORBITS.
+
 ## [2.27.1]
 
 ### Fixed

@@ -1,6 +1,7 @@
 import { ctx } from "../core/context.js";
 import { renderIntoElement } from "./viewRect.js";
 import { SHIP_MODEL_LENGTH, DRONE_MODEL_LENGTH } from "../config.js";
+import { ORBIT_LAYER } from "./orbitLines.js";
 
 // Picture-in-picture "cockpit" camera for a single ship or the drone (the
 // unit panel's COCKPIT button, ui/hud/unitPanel.js), rendered as a
@@ -25,6 +26,7 @@ const FLIP_Y180 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1
 
 export function initShipCam(){
   shipCamera = new THREE.PerspectiveCamera(65, 1.5, 0.02, 300);
+  shipCamera.layers.enable(ORBIT_LAYER);   // orbit lines, as before they got their own layer
   pipEl = document.getElementById("shipCam");
   document.getElementById("shipCamCloseBtn").addEventListener("click", clearShipCamTarget);
 }

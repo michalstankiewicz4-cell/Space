@@ -21,12 +21,18 @@
   font-family:var(--uiFontLabel); font-weight:500; font-size:15.5px; letter-spacing:.3px; color:#241404; transition:filter .15s; }
 #returnBaseBtn:hover{ filter:brightness(1.12); }
 
+/* Orbits/trajectories on/off (scene/linesToggle.js): top-right, same height */
+#linesToggleBtn{ right:12px; top:10px; height:28px; padding:0 16px; border-radius:8px;
+  font-family:var(--uiFontLabel); font-weight:500; font-size:15.5px; letter-spacing:.3px; color:#0c1440; transition:filter .15s; }
+#linesToggleBtn:hover{ filter:brightness(1.12); }
+#linesToggleBtn.gold{ color:#241404; }
+
 #connectionStatus{ left:50%; top:46px; transform:translateX(-50%); white-space:nowrap;
   padding:5px 14px; border-radius:6px; border:1.5px solid #e04b50; background:rgb(20 2 6 / .88);
   color:#ff8a8d; font-family:var(--uiFontLabel); font-size:14.5px; letter-spacing:.3px; pointer-events:none; }
 
 /* Ship cam picture-in-picture (scene/shipcam.js renders into this rect). */
-#shipCam{ right:12px; top:12px; width:250px; height:168px; pointer-events:none;
+#shipCam{ right:12px; top:46px; width:250px; height:168px; pointer-events:none;
   border:1.5px solid #f5bd5c; border-radius:6px; box-shadow:0 0 8px rgb(245 189 92 / .45); }
 #shipCamLabel{ position:absolute; left:0; top:0; padding:2px 9px; border-radius:4px 0 7px 0;
   background:rgb(0 2 12 / .82); color:#ffd98f; font-family:var(--uiFontLabel); font-size:13px; letter-spacing:.4px; }

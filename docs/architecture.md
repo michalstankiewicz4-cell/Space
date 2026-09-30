@@ -32,6 +32,7 @@ then read just that range.
 - [Skin lab](#skin-lab)
 - [Image quality (Setup → Graphics)](#image-quality-setup--graphics)
 - [Fleet memory and RETURN TO BASE](#fleet-memory-and-return-to-base)
+- [Interface modes, lines toggle, controls help](#interface-modes-lines-toggle-controls-help)
 - [Research trees](#research-trees)
 - [In-game HUD](#in-game-hud)
 - [Load order and first paint](#load-order-and-first-paint)
@@ -1257,6 +1258,29 @@ top-left, shown while own ships are selected): `swarm.js#returnToBase` sets
 `sh.returning`; `flyHome` flies each ship to its own spawn slot
 (`shipSpawnPosition(index)`), easing in, and stops it there. Gravity skips a
 returning ship like an ordered one; a course order clears the flag.
+
+## Interface modes, lines toggle, controls help
+
+v2.28.0, the user's design. **Key C** (`ui/hud/uiMode.js`) steps
+`body[data-ui]` through 1 (every `#hud` child but `#viewport` hidden — the
+view's own buttons stay put), 2 (only `#cameraModeToggle` and `#miniPanel`,
+which gets a backing of its own), 3 (all of `#hud` and `#selectionBrackets`)
+and back; Escape restores it (last in the Escape chain before the start
+screen). Hidden means `display:none` — `renderIntoElement` skips elements
+without an `offsetParent`, so hidden miniatures don't draw over the scene —
+and `viewRect.js#getViewRect` returns the full window while hidden. Keys are
+ignored while typing, with a modifier (Ctrl+C), on the start screen, or with
+Setup or a window open. **Lines** (`scene/linesToggle.js`, button top-right,
+key O, `settings.showLines`): orbit and comet lines sit on `ORBIT_LAYER` 3
+(`orbitLines.js`), trajectories on layer 2; the toggle only switches those
+layers on the main camera — the miniature cameras and the ship cam enable
+layer 3 themselves, so they still show orbits. **Sensitivity**:
+`settings.mouseRotSens` / `mouseZoomSens` (0.25–3) multiply the rotation and
+zoom steps in `controls.js`. **"Coming soon" tooltips**: `ui/soonTip.js`, one
+pointermove listener using `elementsFromPoint` (disabled buttons get no
+mouse events of their own); selector `SOON`; the native titles those
+controls had are gone. **Help**: Setup → Help uses the wide window
+(`i18n setup.controls`, app-authored HTML) — update it when a control changes.
 
 ## Research trees
 

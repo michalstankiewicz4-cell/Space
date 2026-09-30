@@ -26,7 +26,7 @@ function switchSetupTab(tab){
     panel.classList.toggle("hidden", panel.dataset.tab !== tab);
   });
   // the Graphics tab gets a wider, taller window with the description pane
-  document.getElementById("setupModalBox").classList.toggle("wide", tab === "graphics");
+  document.getElementById("setupModalBox").classList.toggle("wide", tab === "graphics" || tab === "help");
   document.getElementById("gfxHelp").classList.toggle("hidden", tab !== "graphics");
 }
 
@@ -77,7 +77,22 @@ export function initSetupModal(){
   bindSettingCheckbox("invertXCheck", "invertX");
   bindSettingCheckbox("invertYCheck", "invertY");
   bindSettingCheckbox("swapButtonsCheck", "swapMouseButtons");
+  initMouseSens();
   initGraphicsSliders();
+}
+
+// Setup -> Mouse: rotation and zoom sensitivity (scene/controls.js reads them live).
+function initMouseSens(){
+  [["mouseRotSlider", "mouseRotVal", "mouseRotSens"], ["mouseZoomSlider", "mouseZoomVal", "mouseZoomSens"]].forEach(function(p){
+    const s = document.getElementById(p[0]), v = document.getElementById(p[1]);
+    const paint = function(){
+      v.textContent = "×" + Number(s.value).toFixed(2);
+      s.style.setProperty("--fill", ((s.value - s.min) / (s.max - s.min) * 100) + "%");
+    };
+    s.value = Number(settings[p[2]]) || 1;
+    paint();
+    s.addEventListener("input", function(){ settings[p[2]] = Number(s.value); saveSettings(); paint(); });
+  });
 }
 
 // Setup -> Graphics: render quality + geometry detail (scene/graphics.js).

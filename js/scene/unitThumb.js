@@ -1,6 +1,7 @@
 import { getUnitThumbTarget } from "../ui/hud/unitPanel.js";
 import { renderIntoElement } from "./viewRect.js";
 import { SHIP_MODEL_LENGTH, DRONE_MODEL_LENGTH } from "../config.js";
+import { ORBIT_LAYER } from "./orbitLines.js";
 
 // Live miniature of the selected unit (one ship, or the drone) in the
 // SELECTED UNIT panel, rendered into #unitThumb's box on the main canvas
@@ -15,6 +16,7 @@ const UP = new THREE.Vector3(0, 1, 0);
 
 export function initUnitThumb(){
   camera = new THREE.PerspectiveCamera(40, 3, 0.05, 200);
+  camera.layers.enable(ORBIT_LAYER);   // orbit lines, as before they got their own layer
   el = document.getElementById("unitThumb");
 }
 

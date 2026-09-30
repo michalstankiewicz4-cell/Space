@@ -69,7 +69,7 @@ export function setInfoButtons(btns){
     if(!spec) return;
     b.textContent = spec.text;
     b.classList.toggle("soon", !spec.onClick);
-    b.title = spec.onClick ? "" : t("soon");
+    b.title = "";   // not yet available: the "coming soon" tooltip (ui/soonTip.js)
     handlers[id] = spec.onClick || null;
   });
 }

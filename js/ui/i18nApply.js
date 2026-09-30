@@ -12,8 +12,7 @@ export function applyStaticText(){
   document.getElementById("modeSingle").textContent = t("banner.modeSingle");
   document.getElementById("modeMulti").textContent = t("banner.modeMulti");
   document.getElementById("modeFriends").textContent = t("banner.modeFriends");
-  document.getElementById("modeSingle").title = t("banner.modeComingSoon");
-  document.getElementById("modeFriends").title = t("banner.modeComingSoon");
+
   document.getElementById("nickLabel").textContent = t("banner.nickPlaceholder");
   if(!isLoading()) document.getElementById("startBtn").textContent = t("banner.start");
   document.getElementById("nickError").textContent = t("banner.nickRejected");
@@ -80,7 +79,9 @@ export function applyStaticText(){
   document.getElementById("invertXLabel").textContent = t("setup.invertX");
   document.getElementById("invertYLabel").textContent = t("setup.invertY");
   document.getElementById("swapButtonsLabel").textContent = t("setup.swapButtons");
-  document.getElementById("setupHelpText").innerHTML = t("hint");
+  document.getElementById("setupHelpText").innerHTML = t("setup.controls");   // app-authored HTML, no player text
+  document.getElementById("mouseRotLabel").textContent = t("setup.mouseRot");
+  document.getElementById("mouseZoomLabel").textContent = t("setup.mouseZoom");
 
   // In-game HUD (index.html #hud) — static labels only; the panels'
   // dynamic content re-derives its own text on every refresh.
@@ -95,7 +96,7 @@ export function applyStaticText(){
   ["fleet", "planets", "research", "build", "diplomacy", "wiki", "settings"].forEach(function(k){
     const row = document.querySelector('#nav .navRow[data-nav="' + k + '"]');
     row.querySelector(".navBtn").textContent = t("nav." + k);
-    row.querySelector(".navBtn").title = row.classList.contains("soon") ? t("soon") : "";
+    row.querySelector(".navBtn").title = "";   // BUILD: the "coming soon" tooltip (ui/soonTip.js)
   });
   $("fleetHd").textContent = t("hud.fleetList");
   $("unitHd").textContent = t("hud.selectedUnit");
@@ -104,7 +105,6 @@ export function applyStaticText(){
   $("mmIn").title = t("hud.zoomIn");
   $("mmOut").title = t("hud.zoomOut");
   ["unitCloseBtn", "infoCloseBtn", "shipCamCloseBtn"].forEach(function(id){ $(id).title = t("hud.close"); });
-  document.querySelectorAll("#unitBtns .uBtn").forEach(function(b){ b.title = t("cmd." + b.dataset.cmd) + " — " + t("soon"); });
   $("unitCamBtn").title = t("hud.cockpitBtn") + " — " + t("hud.shipCam");
   $("unitCamBtn").querySelector("span").textContent = t("hud.cockpitBtn");
   $("unitViewBtn").title = t("hud.viewBtn") + " — " + t("hud.viewTitle");
@@ -117,7 +117,6 @@ export function applyStaticText(){
   ["Tactical", "Movement", "Build", "Special"].forEach(function(k){ $("tab" + k).textContent = t("cmd." + k.toLowerCase()); });
   document.querySelectorAll("#cmdBtns .aBtn").forEach(function(b){
     b.querySelector("span").textContent = t("cmd." + b.dataset.cmd);
-    b.title = t("soon");
   });
   // Empty-state hints (shown until something is selected).
   $("unitEmpty").textContent = t("hud.unitEmpty");

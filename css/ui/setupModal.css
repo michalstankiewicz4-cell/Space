@@ -29,6 +29,14 @@
 #setupModal .setupCheckRow:nth-child(1){ top:4px; }
 #setupModal .setupCheckRow:nth-child(2){ top:50px; }
 #setupModal .setupCheckRow:nth-child(3){ top:96px; }
+/* Mouse tab: the three switches closer together, the sensitivity sliders under them */
+#setupTabMouse .setupCheckRow:nth-child(1){ top:0; }
+#setupTabMouse .setupCheckRow:nth-child(2){ top:34px; }
+#setupTabMouse .setupCheckRow:nth-child(3){ top:68px; }
+#mouseSensBox{ left:0; top:106px; width:428px; }
+#mouseSensBox .gfxRow{ display:flex; justify-content:space-between; font-size:16px; color:#c7d0ff; }
+#mouseSensBox .gfxRow b{ font-family:var(--uiFontLabel); font-weight:500; color:#f8bb56; letter-spacing:.6px; }
+#mouseSensBox .gfxSlider{ display:block; width:100%; margin:2px 0 8px; }
 #setupModal .setupCheckRow input{ position:absolute; opacity:0; pointer-events:none; }
 #setupModal .setupCheckRow .chk{ width:44px; height:24px; border-radius:4px 12px 12px 4px; border:1.5px solid #3c55d8;
   background:#030820; position:relative; transition:border-color .15s; }
@@ -98,3 +106,15 @@
 #deleteDataBtn.armed{ border-color:#e04b50; color:#ffb3b5; box-shadow:0 0 8px rgb(224 75 80 / .5); }
 #deleteDataStatus{ left:0; top:172px; width:428px; font-size:14px; line-height:18px; color:#f8bb56; }
 #setupHelpText{ left:0; top:4px; width:428px; font-size:17px; line-height:30px; color:#c7d0ff; }
+/* Help in the wide window: every mouse and keyboard control, two columns */
+#setupModalBox.wide #setupTabHelp{ width:928px; height:704px; overflow-y:auto; }
+#setupModalBox.wide #setupHelpText{ position:relative; width:900px; display:flex; gap:40px; font-size:15.5px; line-height:21px; }
+#setupHelpText .hCol{ flex:1; }
+#setupHelpText h4{ margin:14px 0 6px; font-family:var(--uiFontLabel); font-weight:500; font-size:16px; letter-spacing:1px; color:#f8bb56;
+  border-bottom:1.5px solid #2c4bd8; padding-bottom:3px; }
+#setupHelpText h4:first-child{ margin-top:0; }
+#setupHelpText dl{ margin:0; display:grid; grid-template-columns:auto 1fr; gap:6px 14px; }
+#setupHelpText dt{ font-family:var(--uiFontLabel); color:#ffe2a8; white-space:nowrap; }
+#setupHelpText dd{ margin:0; }
+#setupHelpText kbd{ display:inline-block; min-width:18px; padding:0 6px; border:1.5px solid #3c55d8; border-radius:4px;
+  background:#050d33; font-family:var(--uiFontLabel); font-size:13.5px; text-align:center; color:#ffe2a8; }

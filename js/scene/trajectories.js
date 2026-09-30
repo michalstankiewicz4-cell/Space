@@ -25,7 +25,7 @@ const MAX_TRACKED = 12;         // a safety cap (planets can be multi-selected)
 // A layer only the main camera sees: the miniatures (scene/unitThumb.js,
 // infoThumb.js) and the cockpit view (shipcam.js) render layer 0 only —
 // an arc drawn on top would otherwise cut across a planet's miniature.
-const TRAJECTORY_LAYER = 2;
+export const TRAJECTORY_LAYER = 2;   // the main camera shows it (scene/linesToggle.js)
 
 const live = [];                // the line objects shown now (rebuilt each refresh)
 let materials = {};             // one per kind, shared (scene/colorManagement.js converts each once)
@@ -115,7 +115,6 @@ function refresh(list){
       line.frustumCulled = false;
       line.renderOrder = path.overOrbit ? 999 : 5;
       line.layers.set(TRAJECTORY_LAYER);
-      ctx.camera.layers.enable(TRAJECTORY_LAYER);
       ctx.scene.add(line);
       live.push(line);
     });

@@ -206,6 +206,9 @@ function refreshCamModeButtons(){
 const MOUSE_LEFT = 0, MOUSE_RIGHT = 2;
 // Logical roles, resolved live from settings so toggling "swap" in Setup
 // takes effect immediately without needing to reload.
+// A sensitivity setting (Setup -> Mouse), 0.25..3, 1 if it's missing or broken.
+function sens(v){ v = Number(v); return v >= 0.25 && v <= 3 ? v : 1; }
+
 function rotateButton(){ return settings.swapMouseButtons ? MOUSE_LEFT : MOUSE_RIGHT; }
 function selectButton(){ return settings.swapMouseButtons ? MOUSE_RIGHT : MOUSE_LEFT; }
 const DRAG_THRESHOLD = 6;
@@ -397,7 +400,7 @@ export function initControls(){
     // so it needs a much tighter zoom range than "system" orbiting the
     // whole ~890-unit-wide solar system.
     const range = zoomRange();
-    camState.radius = Math.max(range[0], Math.min(range[1], camState.radius * (1 + e.deltaY*0.001)));
+    camState.radius = Math.max(range[0], Math.min(range[1], camState.radius * (1 + e.deltaY*0.001*sens(settings.mouseZoomSens))));
   }, { passive:false });
 
   dom.addEventListener("pointerdown", function(e){
@@ -416,8 +419,9 @@ export function initControls(){
       camLastX=e.clientX; camLastY=e.clientY;
       const xSign = settings.invertX ? -1 : 1;
       const ySign = settings.invertY ? -1 : 1;
-      camState.az += dx*0.0045*xSign;
-      camState.pol = clampPol(camState.pol - dy*0.0045*ySign);
+      const k = 0.0045 * sens(settings.mouseRotSens);   // Setup -> Mouse -> sensitivity
+      camState.az += dx*k*xSign;
+      camState.pol = clampPol(camState.pol - dy*k*ySign);
       return;
     }
     if(leftDown){

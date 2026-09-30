@@ -32,6 +32,7 @@ const STRINGS = {
       modeComingSoon: "Coming soon",
       nickPlaceholder: "Swarm commander's nickname",
       nickSuggestionPrefix: "e.g.",
+      google: "Sign in with Google",
       start: "ENTER ORBIT",
       setup: "⚙ Setup",
       language: "Language",
@@ -55,6 +56,8 @@ const STRINGS = {
       invertX: "Invert X (right-drag)",
       invertY: "Invert Y (right-drag)",
       swapButtons: "Swap left/right mouse button",
+      mouseRot: "Rotation sensitivity", mouseZoom: "Zoom sensitivity",
+      controls: "<div class=\"hCol\"><h4>MOUSE — 3D VIEW</h4><dl><dt>Left click</dt><dd>a ship: select it · the drone or your station: select it and open its panel · empty space: clear the selection</dd><dt>Left click a planet</dt><dd>with ships selected: send them there (a course order) · with none: show the planet's info</dd><dt>Shift + left click</dt><dd>add a ship or a planet to the selection, or take it out</dd><dt>Left drag</dt><dd>select every ship in the box (with Shift: add them)</dd><dt>Right drag</dt><dd>rotate the camera</dd><dt>Scroll</dt><dd>zoom in and out</dd><dt>Point at a body</dt><dd>its name and details</dd></dl><h4>MOUSE — PANELS</h4><dl><dt>Minimap: click</dt><dd>a body: the camera goes to it · your station: select it</dd><dt>Minimap: scroll, drag</dt><dd>zoom the map, move it around when zoomed</dd><dt>Fleet list</dt><dd>click a ship: select only it and open its cockpit camera · the drone: select it</dd><dt>VIEW</dt><dd>the camera follows the selected ship, drone or body</dd><dt>RETURN TO BASE</dt><dd>the selected ships fly back to their places around the station</dd><dt>BASE / SYSTEM</dt><dd>the camera on your station, or on the whole solar system</dd><dt>ORBITS</dt><dd>all orbits and trajectories on or off</dd></dl><p>Setup → Mouse: invert the axes, swap the buttons, rotation and zoom sensitivity.</p></div><div class=\"hCol\"><h4>KEYBOARD</h4><dl><dt><kbd>Esc</kbd></dt><dd>close the topmost window or panel; with the interface hidden, bring it back; with nothing open, the start screen (and back)</dd><dt><kbd>C</kbd></dt><dd>hide the interface step by step: panels → only BASE/SYSTEM and the minimap → just space → everything back</dd><dt><kbd>O</kbd></dt><dd>orbits and trajectories on or off</dd><dt><kbd>Enter</kbd></dt><dd>on the start screen, in the nickname field: enter orbit</dd></dl><p>The keys don't work while you're typing (a nickname, a program) or with a window open.</p><h4>PROGRAMS</h4><dl><dt>SCRIPT</dt><dd>write a program for the selected ship or the drone (text or blocks)</dd><dt>START / STOP</dt><dd>run the saved program, or stop it; a course order also stops it</dd></dl></div>",
       tabGraphics: "Graphics",
       renderQuality: "Render quality",
       geometryDetail: "Geometry detail (triangles)",
@@ -184,7 +187,6 @@ const STRINGS = {
       eaten: "Planets devoured",
       players: "Players online"
     },
-    hint: "Right button + drag = rotate camera · scroll = zoom<br>Left click / box select = select ships<br>Click a planet = course order for selected (or whole swarm)",
     players: { title: "PLAYERS", you: " (You)", defaultName: "Player" },
     tech: { title: "Tech Tree" },
     fleet: {
@@ -256,7 +258,8 @@ const STRINGS = {
       base: "BASE",
       system: "SYSTEM",
       returnBase: "RETURN TO BASE",
-      returnBaseTip: "Send the selected ships back to their places around the station"
+      returnBaseTip: "Send the selected ships back to their places around the station",
+      linesOn: "ORBITS", linesOff: "ORBITS OFF", linesTip: "All orbits and trajectories on/off (O)"
     },
     drone: {
       title: "DRONE",
@@ -326,6 +329,8 @@ const STRINGS = {
       diplomacy: "DIPLOMACY", wiki: "WIKI", settings: "SETTINGS"
     },
     soon: "Coming soon",
+    soonLong: "Not working yet — it will come in a future update.",
+    uiMode: { hint: function(m){ return ["INTERFACE BACK", "PANELS HIDDEN — C: more, Esc: back", "MINIMAP ONLY — C: more, Esc: back", "JUST SPACE — C or Esc: back"][m]; } },
     hud: {
       fleetList: "FLEET LIST", selectedUnit: "SELECTED UNIT", planetInfo: "PLANET INFO",
       station: "STATION", eventLog: "EVENT LOG", minimap: "MINIMAP", close: "Close",
@@ -334,6 +339,7 @@ const STRINGS = {
       shipClass: "Swarm ship", droneClass: "Programmable drone",
       group: function(n){ return n + " units"; }, groupClass: "Group selection", mixed: "Various",
       idle: "Idle", enRoute: "En route", feeding: "Feeding", returning: "Returning to base", base: "Base",
+      pause: "Pause", fast: "Faster", speedSoon: "Game time is shared by every player online — it can't be paused or sped up in multiplayer.",
       status: "Status", target: "Target", velocity: "Velocity", bite: "Bite/s", selected: "Selected",
       speedLvl: "Speed", biteLvl: "Bite", heatLvl: "Heat res.",
       value: function(n){ return "Value ~" + n + " pts"; },
@@ -539,6 +545,7 @@ const STRINGS = {
       modeComingSoon: "Wkrótce",
       nickPlaceholder: "Ksywka dowódcy roju",
       nickSuggestionPrefix: "np.",
+      google: "Logowanie przez Google",
       start: "WEJDŹ NA ORBITĘ",
       setup: "⚙ Ustawienia",
       language: "Język",
@@ -562,6 +569,8 @@ const STRINGS = {
       invertX: "Odwróć X (obrót PPM)",
       invertY: "Odwróć Y (obrót PPM)",
       swapButtons: "Zamień lewy/prawy przycisk myszy",
+      mouseRot: "Czułość obrotu", mouseZoom: "Czułość przybliżania",
+      controls: "<div class=\"hCol\"><h4>MYSZ — WIDOK 3D</h4><dl><dt>Lewy klik</dt><dd>statek: zaznacz go · dron albo twoja stacja: zaznacz i otwórz panel · pusta przestrzeń: odznacz wszystko</dd><dt>Lewy klik na planetę</dt><dd>z zaznaczonymi statkami: wyślij je tam (rozkaz kursu) · bez nich: pokaż informacje o planecie</dd><dt>Shift + lewy klik</dt><dd>dodaj statek albo planetę do zaznaczenia lub ją z niego usuń</dd><dt>Przeciągnij lewym</dt><dd>zaznacz statki w ramce (z Shiftem: dodaj je)</dd><dt>Przeciągnij prawym</dt><dd>obracaj kamerą</dd><dt>Kółko</dt><dd>przybliżaj i oddalaj</dd><dt>Wskaż ciało</dt><dd>nazwa i szczegóły</dd></dl><h4>MYSZ — PANELE</h4><dl><dt>Minimapa: klik</dt><dd>ciało: kamera na nie · twoja stacja: zaznacz ją</dd><dt>Minimapa: kółko, przeciąganie</dt><dd>przybliż mapę, przesuwaj ją po przybliżeniu</dd><dt>Lista floty</dt><dd>klik na statek: zaznacz tylko jego i otwórz kamerę z kokpitu · dron: zaznacz go</dd><dt>PODGLĄD</dt><dd>kamera podąża za zaznaczonym statkiem, dronem albo ciałem</dd><dt>POWRÓT DO BAZY</dt><dd>zaznaczone statki wracają na swoje miejsca wokół stacji</dd><dt>BAZA / UKŁAD</dt><dd>kamera na twojej stacji albo na całym układzie</dd><dt>ORBITY</dt><dd>wszystkie orbity i trajektorie włączone lub wyłączone</dd></dl><p>Ustawienia → Mysz: odwrócenie osi, zamiana przycisków, czułość obrotu i przybliżania.</p></div><div class=\"hCol\"><h4>KLAWIATURA</h4><dl><dt><kbd>Esc</kbd></dt><dd>zamknij okno lub panel na wierzchu; przy ukrytym interfejsie przywróć go; gdy nic nie jest otwarte, ekran startowy (i z powrotem)</dd><dt><kbd>C</kbd></dt><dd>chowaj interfejs krok po kroku: panele → tylko BAZA/UKŁAD i minimapa → sam kosmos → wszystko wraca</dd><dt><kbd>O</kbd></dt><dd>orbity i trajektorie włączone lub wyłączone</dd><dt><kbd>Enter</kbd></dt><dd>na ekranie startowym, w polu nicku: wejdź na orbitę</dd></dl><p>Klawisze nie działają, gdy piszesz (nick, program) albo gdy jest otwarte okno.</p><h4>PROGRAMY</h4><dl><dt>SKRYPT</dt><dd>napisz program dla zaznaczonego statku albo drona (tekst lub klocki)</dd><dt>START / STOP</dt><dd>uruchom zapisany program albo go zatrzymaj; rozkaz kursu też go zatrzymuje</dd></dl></div>",
       tabGraphics: "Grafika",
       renderQuality: "Jakość renderowania",
       geometryDetail: "Szczegółowość geometrii (trójkąty)",
@@ -691,7 +700,6 @@ const STRINGS = {
       eaten: "Planety pochłonięte",
       players: "Gracze online"
     },
-    hint: "Prawy przycisk + przeciąg = obrót kamery · scroll = zoom<br>Lewy klik / zaznaczenie ramką = wybór statków<br>Klik na planetę = rozkaz kursu dla wybranych (lub całego roju)",
     players: { title: "GRACZE", you: " (Ty)", defaultName: "Gracz" },
     tech: { title: "Drzewo rozwoju" },
     fleet: {
@@ -762,7 +770,8 @@ const STRINGS = {
       base: "BAZA",
       system: "UKŁAD",
       returnBase: "POWRÓT DO BAZY",
-      returnBaseTip: "Odeślij zaznaczone statki na ich miejsca wokół stacji"
+      returnBaseTip: "Odeślij zaznaczone statki na ich miejsca wokół stacji",
+      linesOn: "ORBITY", linesOff: "ORBITY WYŁ.", linesTip: "Wszystkie orbity i trajektorie wł./wył. (O)"
     },
     drone: {
       title: "DRON",
@@ -832,6 +841,8 @@ const STRINGS = {
       diplomacy: "DYPLOMACJA", wiki: "WIKI", settings: "USTAWIENIA"
     },
     soon: "Wkrótce",
+    soonLong: "Jeszcze nie działa — pojawi się w przyszłej aktualizacji.",
+    uiMode: { hint: function(m){ return ["INTERFEJS WRÓCIŁ", "PANELE UKRYTE — C: dalej, Esc: powrót", "TYLKO MINIMAPA — C: dalej, Esc: powrót", "SAM KOSMOS — C lub Esc: powrót"][m]; } },
     hud: {
       fleetList: "LISTA FLOTY", selectedUnit: "JEDNOSTKA", planetInfo: "INFO O PLANECIE",
       station: "STACJA", eventLog: "DZIENNIK ZDARZEŃ", minimap: "MINIMAPA", close: "Zamknij",
@@ -840,6 +851,7 @@ const STRINGS = {
       shipClass: "Statek roju", droneClass: "Dron programowalny",
       group: function(n){ return "Grupa: " + n; }, groupClass: "Zaznaczenie grupowe", mixed: "Różne",
       idle: "Bezczynny", enRoute: "W drodze", feeding: "Żeruje", returning: "Wraca do bazy", base: "Baza",
+      pause: "Pauza", fast: "Szybciej", speedSoon: "Czas gry jest wspólny dla wszystkich graczy online — w trybie wieloosobowym nie da się go zatrzymać ani przyspieszyć.",
       status: "Status", target: "Cel", velocity: "Prędkość", bite: "Gryz/s", selected: "Zaznaczone",
       speedLvl: "Prędkość", biteLvl: "Gryz", heatLvl: "Ciepło",
       value: function(n){ return "Wartość ~" + n + " pkt"; },

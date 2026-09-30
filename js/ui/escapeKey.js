@@ -10,6 +10,7 @@ import { isPlanetPanelOpen, closePlanetPanel } from "./hud/planetPanel.js";
 import { isSetupModalOpen, closeSetupModal } from "./setupModal.js";
 import { toggleBanner } from "./banner.js";
 import { isAboutOpen, closeAbout } from "./about.js";
+import { isUiHidden, showUi } from "./hud/uiMode.js";
 
 // Escape closes whichever overlay is topmost first (drone script/blocks, then the
 // HUD windows, then setup, then the drone/station/planet selection or
@@ -28,6 +29,7 @@ const ESCAPE_CHAIN = [
   [isStationPanelOpen, closeStationPanel],
   [isPlanetPanelOpen, closePlanetPanel],
   [isShipCamActive, clearShipCamTarget],
+  [isUiHidden, showUi],   // the interface hidden with C (ui/hud/uiMode.js)
 ];
 
 export function initEscapeKey(){
