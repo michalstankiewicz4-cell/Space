@@ -4,6 +4,16 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.28.6]
+
+### Changed
+- Server (`supabase/schema.sql`, deployed: `bump_bite_rate`,
+  `admin_secret_ok`, `bite_body`, `bite_solar_body`, `admin_activity_log`,
+  `admin_stats`): the shared bite rate limit and the admin secret check are
+  one internal helper each instead of copies. The old one-time migration
+  script (`supabase/migrate_to_solar_system.sql`) is removed — it's in the
+  git history.
+
 ## [2.28.5]
 
 ### Changed

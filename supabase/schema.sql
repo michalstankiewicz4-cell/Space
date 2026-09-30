@@ -46,16 +46,11 @@ create table if not exists solar_bodies (
 );
 alter table solar_bodies replica identity full;
 
--- Seeded exactly once, directly here (not via a runtime claim RPC the way
--- the old scattered pool used to be — there's no race to arbitrate, the
--- slots and their shape are fixed at deploy time). health/max_health =
--- radius*kind's healthMult from js/world/solarSystem.js/js/bodies/*.js —
--- see that file for where each number comes from. `on conflict do nothing`
--- keeps this idempotent/safe to re-run, same as every other seed in this
--- file, but on a LIVE project with the old scattered-pool `bodies` rows
--- still in it, running this alone does not remove them — see
--- supabase/migrate_to_solar_system.sql for that one-time, non-idempotent
--- cutover step.
+-- Seeded once (on conflict do nothing: safe to re-run). health/max_health =
+-- radius × the kind's healthMult (js/bodies/*.js). (The one-time cutover
+-- from the old scattered-planet pool, supabase/migrate_to_solar_system.sql,
+-- was run in 2026-09 and removed from the repo in the 2026-10 review; it's
+-- in the git history.)
 insert into solar_bodies (orbit_slot, kind, health, max_health) values
   (0, 'sun',       126,  126),  -- radius 4.2 * healthMult 30 (sun.js)
   (1, 'planet',    35.2, 35.2), -- radius 1.6 * healthMult 22 (volcanicPlanet.js)
@@ -595,6 +590,30 @@ drop trigger if exists trg_log_body_delete on bodies;
 create trigger trg_log_body_delete before delete on bodies
   for each row execute function log_body_delete_if_bursty();
 
+-- The shared per-actor bite counter (1-second window) of bite_body and
+-- bite_solar_body: one budget for both, so biting comets and planets at once
+-- can't double the rate. Internal (revoked at the end of this file).
+create or replace function bump_bite_rate(p_actor uuid)
+returns int
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_count int;
+begin
+  insert into bite_rate_limit (actor, window_start, count)
+  values (p_actor, now(), 1)
+  on conflict (actor) do update
+    set count = case when bite_rate_limit.window_start <= now() - interval '1 second'
+                      then 1 else bite_rate_limit.count + 1 end,
+        window_start = case when bite_rate_limit.window_start <= now() - interval '1 second'
+                             then now() else bite_rate_limit.window_start end
+    returning count into v_count;
+  return v_count;
+end;
+$$;
+
 -- Atomic "bite" of a body — comet-only now (see `bodies`' own header
 -- comment; the 9 fixed solar bodies + sun go through bite_solar_body
 -- below instead). Returns its health after the hit and whether this
@@ -626,14 +645,7 @@ begin
     return;
   end if;
 
-  insert into bite_rate_limit (actor, window_start, count)
-  values (v_actor, now(), 1)
-  on conflict (actor) do update
-    set count = case when bite_rate_limit.window_start <= now() - interval '1 second'
-                      then 1 else bite_rate_limit.count + 1 end,
-        window_start = case when bite_rate_limit.window_start <= now() - interval '1 second'
-                             then now() else bite_rate_limit.window_start end
-    returning count into v_count;
+  v_count := bump_bite_rate(v_actor);
 
   if v_count is not null and v_count > 20 then
     -- The game keeps itself under this (js/net/biteBudget.js, 15/s since
@@ -707,14 +719,7 @@ begin
   -- different targets (comets vs. solar bodies) it's biting at once, so
   -- one combined budget is more correct than two independent ones that
   -- would together allow double the rate.
-  insert into bite_rate_limit (actor, window_start, count)
-  values (v_actor, now(), 1)
-  on conflict (actor) do update
-    set count = case when bite_rate_limit.window_start <= now() - interval '1 second'
-                      then 1 else bite_rate_limit.count + 1 end,
-        window_start = case when bite_rate_limit.window_start <= now() - interval '1 second'
-                             then now() else bite_rate_limit.window_start end
-    returning count into v_count;
+  v_count := bump_bite_rate(v_actor);
 
   if v_count is not null and v_count > 20 then
     if v_count = 21 then   -- once per window, see bite_body
@@ -793,6 +798,31 @@ $$;
 -- each actor UUID — self-reported, see that table's own comment.
 -- CREATE OR REPLACE can't change a `returns table(...)` function's
 -- column list, hence the DROP before it (adding the `nick` column).
+-- The admin secret, checked for admin_activity_log and admin_stats: 5
+-- attempts a minute per caller (the 6th is logged once), then the SHA-256
+-- hash — the plaintext exists nowhere in the repo. pgcrypto's digest() lives
+-- in the `extensions` schema on Supabase, hence the full name. Rotating the
+-- secret = a new hash here. Internal (revoked at the end of this file).
+create or replace function admin_secret_ok(p_actor uuid, p_secret text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_attempts int := bump_activity_rate(p_actor, 'admin_secret_attempt', interval '60 seconds');
+begin
+  if v_attempts > 5 then
+    if v_attempts = 6 then
+      insert into activity_log (actor, event_type, detail)
+      values (p_actor, 'admin_secret_bruteforce', jsonb_build_object('attempts_in_window', v_attempts) || request_meta());
+    end if;
+    return false;
+  end if;
+  return encode(extensions.digest(coalesce(p_secret, ''), 'sha256'), 'hex') = '5463cb80c213e5cb45a233c4e429e503abd7d0d48c18a29afb56145c4c72e1ee';
+end;
+$$;
+
 drop function if exists admin_activity_log(text, int);
 create or replace function admin_activity_log(p_secret text, p_limit int default 200)
 returns table(id bigint, actor uuid, nick text, event_type text, detail jsonb, created_at timestamptz)
@@ -802,25 +832,12 @@ set search_path = public
 as $$
 declare
   v_actor uuid := auth.uid();
-  v_attempts int;
 begin
   if v_actor is null then
     return;
   end if;
 
-  v_attempts := bump_activity_rate(v_actor, 'admin_secret_attempt', interval '60 seconds');
-  if v_attempts > 5 then
-    if v_attempts = 6 then   -- once per window
-      insert into activity_log (actor, event_type, detail)
-      values (v_actor, 'admin_secret_bruteforce', jsonb_build_object('attempts_in_window', v_attempts) || request_meta());
-    end if;
-    return;
-  end if;
-
-  -- pgcrypto's digest() lives in the `extensions` schema on Supabase (not
-  -- `public`), unlike every other function here — fully-qualified since
-  -- this function's search_path is pinned to `public` only.
-  if encode(extensions.digest(p_secret, 'sha256'), 'hex') <> '5463cb80c213e5cb45a233c4e429e503abd7d0d48c18a29afb56145c4c72e1ee' then
+  if not admin_secret_ok(v_actor, p_secret) then
     return;
   end if;
 
@@ -846,20 +863,11 @@ set search_path = public
 as $$
 declare
   v_actor uuid := auth.uid();
-  v_attempts int;
 begin
   if v_actor is null then
     return null;
   end if;
-  v_attempts := bump_activity_rate(v_actor, 'admin_secret_attempt', interval '60 seconds');
-  if v_attempts > 5 then
-    if v_attempts = 6 then
-      insert into activity_log (actor, event_type, detail)
-      values (v_actor, 'admin_secret_bruteforce', jsonb_build_object('attempts_in_window', v_attempts) || request_meta());
-    end if;
-    return null;
-  end if;
-  if encode(extensions.digest(p_secret, 'sha256'), 'hex') <> '5463cb80c213e5cb45a233c4e429e503abd7d0d48c18a29afb56145c4c72e1ee' then
+  if not admin_secret_ok(v_actor, p_secret) then
     return null;
   end if;
   return jsonb_build_object(
@@ -960,6 +968,8 @@ revoke execute on function log_body_insert_if_bursty() from public, anon, authen
 revoke execute on function log_body_delete_if_bursty() from public, anon, authenticated;
 revoke execute on function enforce_bodies_cap() from public, anon, authenticated;
 revoke execute on function bump_stats(int, int, int) from public, anon, authenticated;
+revoke execute on function bump_bite_rate(uuid) from public, anon, authenticated;
+revoke execute on function admin_secret_ok(uuid, text) from public, anon, authenticated;
 -- claim_world_init is dead code since the 9-orbit rewrite (see docs/security.md)
 -- — nothing calls it, so it's no longer a client API either (v2.26.1 audit).
 revoke execute on function claim_world_init() from public, anon, authenticated;

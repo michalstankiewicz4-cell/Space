@@ -493,3 +493,13 @@ Now: `killed = new health <= 0 and not (stored health <= 0 and regenerated
 <= 10 %)` — a body is "spent" after a kill until it grows back past 10 %,
 which still stops a client camping a body for repeated rewards. The game's
 `world/bodies.js#isSpent` is the same rule. Deployed: `bite_solar_body` only.
+
+## Helpers (v2.28.6)
+
+`bump_bite_rate(actor)` — the 20/s bite window shared by `bite_body` and
+`bite_solar_body`; `admin_secret_ok(actor, secret)` — the admin secret's
+throttle (5/min, the 6th logged once) and hash check, for
+`admin_activity_log` and `admin_stats`. Both internal: revoked from
+anon/authenticated at the end of `schema.sql` (verified with
+`has_function_privilege`). Rotating the admin secret means changing the hash
+in `admin_secret_ok` only.
