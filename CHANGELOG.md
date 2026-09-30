@@ -4,6 +4,19 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.27.0]
+
+### Added
+- **RETURN TO BASE**: with one or more of your ships selected, a button in
+  the 3D view's top-left corner sends them back to their places around
+  the station, where they stop. A new course order replaces it.
+- **The fleet remembers where it was**: ship and drone positions (and a
+  course order to a planet, or a return to base) are kept in this browser,
+  so a reload no longer sends the swarm back to the station.
+- Server: aggregate statistics for the admin page — connections, bodies
+  eaten and players online per hour (counts only, nothing personal); the
+  steward's game reports players online every 5 minutes.
+
 ## [2.26.1]
 
 ### Fixed

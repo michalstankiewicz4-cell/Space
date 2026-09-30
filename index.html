@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.26.1">
+<link rel="stylesheet" href="css/style.css?v=2.27.0">
 </head>
 <body>
 
@@ -510,6 +510,8 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
       <button type="button" id="camModeBaseBtn" class="mat gold camModeActive">Base</button>
       <button type="button" id="camModeSystemBtn" class="mat blueT">System</button>
     </div>
+    <!-- RETURN TO BASE: shown while own ships are selected (ui/hud/returnBase.js) -->
+    <button type="button" id="returnBaseBtn" class="mat gold hidden">RETURN TO BASE</button>
     <div id="connectionStatus" class="hidden">⚠ Reconnecting to server…</div>
     <div id="shipCam" class="hidden">
       <div id="shipCamLabel">SHIP CAM</div>
@@ -826,7 +828,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.26.1"></script>
+<script type="module" src="js/main.js?v=2.27.0"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

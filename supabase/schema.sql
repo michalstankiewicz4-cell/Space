@@ -320,6 +320,61 @@ drop policy if exists "actor_nicks readable by anyone" on actor_nicks;
 drop policy if exists "actor_nicks writable for own row" on actor_nicks;
 drop policy if exists "actor_nicks updatable for own row" on actor_nicks;
 
+-- ============================================================================
+-- Aggregate statistics for admin.html (v2.27.0): per-hour COUNTS only — no
+-- actor ids, IPs or nicks, so nothing personal is stored here (privacy.html
+-- needs no change). RLS, zero policies, like the other internal tables; read
+-- only through admin_stats() (secret-gated). Kept 90 days (purge_old_data).
+--   connects     set_my_nick() calls that passed its rate limit — one per
+--                connection, reconnects included
+--   kills        bodies finished off (bite_body / bite_solar_body)
+--   peak_online  the most players in the room at once, as reported by the
+--                steward client every few minutes (report_online) — self-
+--                reported, clamped, a hint for the charts and nothing more
+-- ============================================================================
+create table if not exists stats_hourly (
+  hour timestamptz primary key,
+  connects int not null default 0,
+  kills int not null default 0,
+  peak_online int not null default 0
+);
+alter table stats_hourly enable row level security;
+
+create or replace function bump_stats(p_connects int, p_kills int, p_online int)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  insert into stats_hourly (hour, connects, kills, peak_online)
+  values (date_trunc('hour', now()), p_connects, p_kills, coalesce(p_online, 0))
+  on conflict (hour) do update set
+    connects = stats_hourly.connects + excluded.connects,
+    kills = stats_hourly.kills + excluded.kills,
+    peak_online = greatest(stats_hourly.peak_online, excluded.peak_online);
+$$;
+
+-- The steward (net/stewardStats.js) reports how many players are in the room.
+-- Rate-limited to once per 60 s per caller; the number is clamped to 0..200.
+create or replace function report_online(p_count int)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_actor uuid := auth.uid();
+begin
+  if v_actor is null then
+    return;
+  end if;
+  if bump_activity_rate(v_actor, 'report_online', interval '60 seconds') > 1 then
+    return;
+  end if;
+  perform bump_stats(0, 0, least(greatest(coalesce(p_count, 0), 0), 200));
+end;
+$$;
+
 -- Rate-limited the same way as everything else here (bump_activity_rate)
 -- — a real client calls this once per connection, so even a generous
 -- 5-per-30s cap has huge headroom while stopping a script that tries to
@@ -358,6 +413,7 @@ begin
   insert into actor_nicks (actor, nick, updated_at)
   values (v_actor, left(coalesce(p_nick, ''), 20), now())
   on conflict (actor) do update set nick = excluded.nick, updated_at = excluded.updated_at;
+  perform bump_stats(1, 0, 0);   -- one connection (stats_hourly)
 end;
 $$;
 
@@ -602,6 +658,7 @@ begin
 
   if v_health <= 0 then
     delete from bodies where bodies.id = p_body_id;
+    perform bump_stats(0, 1, 0);
     return query select p_body_id, 0::float, true;
   else
     return query select p_body_id, v_health, false;
@@ -699,6 +756,9 @@ begin
   update solar_bodies set health = v_new_health, updated_at = now()
     where solar_bodies.orbit_slot = p_orbit_slot;
 
+  if v_health_now > v_max_health * 0.1 and v_new_health <= 0 then
+    perform bump_stats(0, 1, 0);
+  end if;
   return query select p_orbit_slot, v_new_health, (v_health_now > v_max_health * 0.1 and v_new_health <= 0);
 end;
 $$;
@@ -776,6 +836,53 @@ begin
 end;
 $$;
 
+-- The charts' data for admin.html, one JSON object: hourly stats for the last
+-- 14 days, new anonymous accounts per day (30 days), players seen (their last
+-- connection, actor_nicks.updated_at) in the last 24 h / 7 days, and security-
+-- log entries per day by type. Same secret and brute-force throttle as
+-- admin_activity_log (the shared 'admin_secret_attempt' counter).
+create or replace function admin_stats(p_secret text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_attempts int;
+begin
+  if v_actor is null then
+    return null;
+  end if;
+  v_attempts := bump_activity_rate(v_actor, 'admin_secret_attempt', interval '60 seconds');
+  if v_attempts > 5 then
+    if v_attempts = 6 then
+      insert into activity_log (actor, event_type, detail)
+      values (v_actor, 'admin_secret_bruteforce', jsonb_build_object('attempts_in_window', v_attempts) || request_meta());
+    end if;
+    return null;
+  end if;
+  if encode(extensions.digest(p_secret, 'sha256'), 'hex') <> '5463cb80c213e5cb45a233c4e429e503abd7d0d48c18a29afb56145c4c72e1ee' then
+    return null;
+  end if;
+  return jsonb_build_object(
+    'hourly', coalesce((select jsonb_agg(jsonb_build_object('h', hour, 'c', connects, 'k', kills, 'o', peak_online) order by hour)
+                        from stats_hourly where hour > now() - interval '14 days'), '[]'::jsonb),
+    'accounts_per_day', coalesce((select jsonb_agg(jsonb_build_object('d', d, 'n', n) order by d) from (
+                        select date_trunc('day', created_at)::date d, count(*) n from auth.users
+                        where created_at > now() - interval '30 days' group by 1) x), '[]'::jsonb),
+    'log_per_day', coalesce((select jsonb_agg(jsonb_build_object('d', d, 't', event_type, 'n', n) order by d) from (
+                        select date_trunc('day', created_at)::date d, event_type, count(*) n from activity_log group by 1, 2) x), '[]'::jsonb),
+    'totals', jsonb_build_object(
+      'accounts', (select count(*) from auth.users),
+      'players', (select count(*) from actor_nicks),
+      'seen_24h', (select count(*) from actor_nicks where updated_at > now() - interval '1 day'),
+      'seen_7d', (select count(*) from actor_nicks where updated_at > now() - interval '7 days'),
+      'db_bytes', pg_database_size(current_database()))
+  );
+end;
+$$;
+
 -- ============================================================================
 -- Privacy (GDPR) — see privacy.html and docs/security.md, "Privacy".
 -- Data minimisation: request_meta() (above) stores a shortened IP. Storage
@@ -799,6 +906,7 @@ begin
   delete from actor_nicks where updated_at < now() - interval '180 days';
   delete from activity_rate where window_start < now() - interval '1 day';
   delete from bite_rate_limit where window_start < now() - interval '1 day';
+  delete from stats_hourly where hour < now() - interval '90 days';
 end;
 $$;
 
@@ -854,6 +962,7 @@ revoke execute on function shorten_ip(text) from public, anon, authenticated;
 revoke execute on function log_body_insert_if_bursty() from public, anon, authenticated;
 revoke execute on function log_body_delete_if_bursty() from public, anon, authenticated;
 revoke execute on function enforce_bodies_cap() from public, anon, authenticated;
+revoke execute on function bump_stats(int, int, int) from public, anon, authenticated;
 -- claim_world_init is dead code since the 9-orbit rewrite (see docs/security.md)
 -- — nothing calls it, so it's no longer a client API either (v2.26.1 audit).
 revoke execute on function claim_world_init() from public, anon, authenticated;

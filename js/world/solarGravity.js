@@ -137,7 +137,7 @@ export function updateSolarGravity(dt){
     // station's old pull-back) still slowed an ordered ship to about half its cruise
     // speed, by an amount that depended on the frame rate (measured,
     // v2.19.0), so its flight could be neither predicted nor trusted.
-    if(sh.commandedTarget) continue;
+    if(sh.commandedTarget || sh.returning) continue;   // returning to base: same as a course order
     // A ship flown by its program drifts like the drone (position, not
     // velocity): accumulated, the Sun's pull would have it falling sunward
     // at dozens of units/s within half a minute (measured) — unflyable.

@@ -13,6 +13,7 @@ import { initUnitPanel, updateUnitPanel } from "./unitPanel.js";
 import { refreshFleetList } from "./fleetList.js";
 import { initMinimap, drawMinimap } from "./minimap.js";
 import { initDevTools } from "./devTools.js";
+import { initReturnBase, updateReturnBase } from "./returnBase.js";
 
 // The in-game HUD's entry points (index.html #hud, css/ui/hud/): each panel
 // lives in its own module next to this one; main.js only ever talks to
@@ -33,6 +34,7 @@ export function initHudShell(){
 // Once the world (station, fleet, drone) exists.
 export function initHudWorld(){
   initUnitPanel();
+  initReturnBase();
   initMinimap();
   initDevTools();
   refreshFleetList();
@@ -50,6 +52,7 @@ let uiTimer = 0;
 let mapTimer = 0;
 export function updateHud(dt){
   updateUnitPanel(false);
+  updateReturnBase();
   mapTimer += dt;
   if(mapTimer > 0.1){
     mapTimer = 0;

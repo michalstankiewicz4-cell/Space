@@ -33,6 +33,7 @@ import { maintainComet, flushDamage } from "./net/bodiesSync.js";
 import { flushSolarDamage } from "./net/solarBodiesSync.js";
 import { updateRemoteShips, maybeBroadcastShips } from "./net/shipsBroadcast.js";
 import { initNet } from "./net/connect.js";
+import { initStewardStats } from "./net/stewardStats.js";
 import { initVersionCheck } from "./versionCheck.js";
 import { spawnDrone, updateDrone, updateDroneWreckage } from "./drone/drone.js";
 import { updateDronePrintFx } from "./drone/dronePrintFx.js";
@@ -48,6 +49,7 @@ import { updateTrajectories } from "./scene/trajectories.js";
 import { updateResolution } from "./scene/resolution.js";
 import { setLoad, loadDone, nextPaint } from "./ui/loader.js";
 import { updateTrails } from "./fx/trails.js";
+import { restoreFleet, updateFleetMemory } from "./ships/fleetMemory.js";
 import { manageEclipses } from "./scene/eclipse.js";
 import { initAnisotropy, updateAnisotropy } from "./scene/anisotropy.js";
 import { gfxFpsCap } from "./scene/graphics.js";
@@ -111,6 +113,7 @@ reconcileFleetSize();
 initShipCam();
 initVersionCheck();
 spawnDrone();
+restoreFleet();   // where the fleet and the drone were before the reload (localStorage)
 setLoad(0.72, "hud");
 await nextPaint();
 
@@ -125,6 +128,7 @@ initInfoThumb();
 if(NET_ENABLED){
   whenPrivacyAccepted(function(){
     initNet();
+    initStewardStats();   // players online, for admin.html's charts
     setInterval(flushDamage, NET_DAMAGE_FLUSH_MS);
     setInterval(flushSolarDamage, NET_DAMAGE_FLUSH_MS);
   });
@@ -185,6 +189,7 @@ function tick(now){
 
   updateShipVisuals(dt);        // ship models: level of detail, animation, wrecks
   updateTrails(dt);             // engine trails behind own ships and the drone
+  updateFleetMemory(dt);        // fleet positions into localStorage, every 2 s
   updateAnisotropy(dt);         // new ShipKit textures get the chosen filtering
   updateStationVisuals(dt);     // stations (ShipKit's ST-04 HAVEN): ring spin, lights, dish
   updateBodyLooks(dt);          // BodyKit bodies: animated layers, spin, sun direction

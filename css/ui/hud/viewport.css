@@ -16,6 +16,11 @@
 #cameraModeToggle button.camModeActive{ --c:#f8bb56; --hi:#ffda92; --lo:#d38b37; }
 #cameraModeToggle button:not(.camModeActive){ --c:#5c6ff1; --hi:#8b9bff; --lo:#4155d6; }
 
+/* RETURN TO BASE (ui/hud/returnBase.js): top-left, styled like the camera toggle */
+#returnBaseBtn{ left:12px; top:10px; height:28px; padding:0 16px; border-radius:8px;
+  font-family:var(--uiFontLabel); font-weight:500; font-size:15.5px; letter-spacing:.3px; color:#241404; transition:filter .15s; }
+#returnBaseBtn:hover{ filter:brightness(1.12); }
+
 #connectionStatus{ left:50%; top:46px; transform:translateX(-50%); white-space:nowrap;
   padding:5px 14px; border-radius:6px; border:1.5px solid #e04b50; background:rgb(20 2 6 / .88);
   color:#ff8a8d; font-family:var(--uiFontLabel); font-size:14.5px; letter-spacing:.3px; pointer-events:none; }

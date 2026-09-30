@@ -1,5 +1,6 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../env.js";
 import { readStorage, writeStorage } from "../core/utils.js";
+import { renderStats } from "./stats.js";
 
 // Not linked from the game (a standalone dev tool) and safe to
 // ship publicly on GitHub Pages despite calling a privileged-looking RPC:
@@ -15,7 +16,13 @@ const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // every other RPC in schema.sql uses) purely so brute-force attempts are
 // attributable to *some* actor — this page has no real "identity" of its
 // own, it just needs any anonymous session to call the RPC at all.
-const ready = client.auth.signInAnonymously();
+// Reuses a stored session (getSession) instead of signing in anew on every
+// visit, which made a fresh anonymous account per page load (found in the
+// 2026-09-30 audit; the game itself has done this since the anon-auth fix).
+const ready = client.auth.getSession().then(function(res){
+  if(res.data && res.data.session) return res;
+  return client.auth.signInAnonymously();
+});
 
 function readStoredSecret(){
   return readStorage(SECRET_STORAGE_KEY) || "";
@@ -349,6 +356,11 @@ async function load(){
   setStatus("Loading…");
   await ready;
   const { data, error } = await client.rpc("admin_activity_log", { p_secret: secret, p_limit: 300 });
+  // statistics: a separate call (it shares the secret's 5-per-minute throttle)
+  client.rpc("admin_stats", { p_secret: secret }).then(function(res){
+    if(res.error) console.warn("admin_stats failed", res.error);
+    renderStats(res.data || null);
+  });
   if(error){
     setStatus("Request failed: " + error.message, true);
     return;

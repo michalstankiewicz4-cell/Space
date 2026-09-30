@@ -15,6 +15,7 @@ import { showToast } from "../ui/hud/eventLog.js";
 import { refreshResearch } from "../ui/windows/research.js";
 import { t } from "../i18n.js";
 import { SHIP_API, updateProgrammedShip } from "./shipProgram.js";
+import { stopUnitProgram } from "../program/runner.js";
 
 // Reused every frame across every ship in updateShips() instead of several
 // fresh `new THREE.Vector3()`s per ship per frame (same pattern as
@@ -49,7 +50,7 @@ const SHIP_SPAWN_RADIUS_STEP = 0.55; // keeps even a full ~23-ship fleet (TREE.f
 // upgrade adds a ship), so this returns a fresh Vector3 rather than
 // reusing a module-level scratch one - the caller keeps this exact object
 // as the new ship's own sh.pos for the rest of its life.
-function shipSpawnPosition(index){
+function shipSpawnPosition(index, out){
   if(!ctx.station){
     // Defensive fallback only - main.js spawns the station before any
     // fleet now, so this shouldn't be reachable in practice, but a ship
@@ -59,7 +60,7 @@ function shipSpawnPosition(index){
   }
   const angle = index * SHIP_SPAWN_GOLDEN_ANGLE;
   const r = SHIP_SPAWN_BASE_RADIUS + SHIP_SPAWN_RADIUS_STEP*Math.sqrt(index);
-  return new THREE.Vector3(
+  return (out || new THREE.Vector3()).set(
     ctx.station.pos.x + r*Math.cos(angle),
     ctx.station.pos.y + Math.sin(index*0.9)*1.5,
     ctx.station.pos.z + r*Math.sin(angle)
@@ -94,6 +95,44 @@ function makeShipMesh(){
   group.add(pickMesh);
 
   return { group: group, ring: ring, pickMesh: pickMesh, visual: visual, light: glow };
+}
+
+// RETURN TO BASE (the viewport's top-left button, ui/hud/returnBase.js):
+// each ship flies back to its own slot of the spawn formation around the
+// station (shipSpawnPosition, the same slot it started in) and stops there.
+// Like a course order it takes a ship back from its program, and it's
+// gravity-immune on the way (world/solarGravity.js); a new course order
+// replaces it.
+export function returnToBase(list){
+  list.forEach(function(sh){
+    if(sh.running) stopUnitProgram(sh);
+    sh.commandedTarget = null;
+    sh.target = null;
+    sh.returning = true;
+  });
+  showToast(list.length === ctx.ships.length ? t("toast.returnAll") : t("toast.returnSome")(list.length));
+}
+const homeScratch = new THREE.Vector3();
+const RETURN_ARRIVE = 0.12;
+
+// One ship on its way home; false once it has arrived (and stopped).
+function flyHome(sh, index, speed, dt){
+  shipSpawnPosition(index, homeScratch);
+  const to = toTargetScratch.subVectors(homeScratch, sh.pos);
+  const dist = to.length();
+  if(dist < RETURN_ARRIVE){
+    sh.returning = false;
+    sh.vel.set(0, 0, 0);
+    return false;
+  }
+  // full cruise speed far out, easing in over the last few units
+  to.multiplyScalar(Math.min(speed, dist * 1.5) / dist);
+  sh.vel.lerp(to, 0.1);
+  sh.pos.addScaledVector(sh.vel, dt);
+  sh.mesh.position.copy(sh.pos);
+  if(sh.vel.lengthSq() > 1e-6) sh.mesh.lookAt(lookTargetScratch.addVectors(sh.pos, sh.vel));
+  sh.visual.power = Math.min(1, sh.vel.length() / Math.max(0.01, speed));
+  return true;
 }
 
 export function setShipSelected(sh, val){
@@ -269,6 +308,11 @@ export function updateShips(dt){
     // scene/controls.js) — no automatic nearest-planet targeting.
     if(sh.commandedTarget && (sh.commandedTarget.dying || ctx.planets.indexOf(sh.commandedTarget)===-1)){
       sh.commandedTarget = null;
+    }
+    if(sh.commandedTarget) sh.returning = false;   // a course order replaces RETURN TO BASE
+    if(sh.returning){
+      hideBolt(sh);
+      if(flyHome(sh, i, baseSpeed * 0.15, dt)) continue;
     }
     sh.target = sh.commandedTarget;
     if(!sh.target){

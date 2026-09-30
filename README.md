@@ -68,8 +68,8 @@ js/
   content.js         aggregates js/bodies/ into one place the game reads from
   fx/                particles (incl. cooling bite sparks), debris, shockwaves, dust — planet-breakup
                      effects; engine trails (trails.js), the bite beam's hot spot (impact.js)
-  ships/             player's ship swarm (movement, eating, bite-beam; shipProgram.js: a ship
-                     flown by its program)
+  ships/             player's ship swarm (movement, eating, bite-beam, RETURN TO BASE; shipProgram.js:
+                     a ship flown by its program; fleetMemory.js: positions kept in localStorage)
   drone/             the programmable drone — its own DSL (dsl.js), a generator-based
                      interpreter (interpreter.js), the entity and its program builtins
                      (drone.js), which commands a program uses, for the Wiki

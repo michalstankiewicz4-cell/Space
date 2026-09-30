@@ -26,6 +26,8 @@ export function applyStaticText(){
   document.getElementById("connectionStatus").textContent = t("connection.reconnecting");
   document.getElementById("camModeBaseBtn").textContent = t("camera.base");
   document.getElementById("camModeSystemBtn").textContent = t("camera.system");
+  document.getElementById("returnBaseBtn").textContent = t("camera.returnBase");
+  document.getElementById("returnBaseBtn").title = t("camera.returnBaseTip");
   document.getElementById("setupBtn").textContent = t("banner.setup");
   document.getElementById("setupLangLabel").textContent = t("banner.language");
 

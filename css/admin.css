@@ -115,3 +115,20 @@ td.copyCell{ padding: 4px 6px; text-align: center; width: 1%; white-space: nowra
   padding: 8px 12px; margin: 4px 0 18px; max-width: 480px;
 }
 #anomalyStat b{ color: var(--danger); }
+
+/* Statistics (js/admin/stats.js) */
+#statTiles{ display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 14px; }
+.statTile{ flex: 1 1 150px; background: var(--panel); border: 1px solid var(--panel-edge); padding: 10px 12px; }
+.statTile b{ display: block; font-family: var(--font-head); font-size: 24px; color: var(--ink); font-weight: 600; }
+.statTile span{ font-size: 11.5px; color: var(--ink-dim); }
+.statsBox{ margin: 6px 0 14px; }
+.statsBox h3{ font-family: var(--font-head); font-size: 13px; font-weight: 500; color: var(--ink); margin: 0 0 4px; }
+.statsChart{ width: 100%; height: auto; display: block; }
+.statsChart .bar{ fill: var(--teal); }
+.statsChart .hit{ fill: transparent; }
+.statsChart .hit:hover{ fill: rgba(255,255,255,0.05); }
+.statsChart .grid{ stroke: rgba(255,255,255,0.07); stroke-width: 1; }
+.statsChart .axis{ stroke: rgba(255,255,255,0.25); stroke-width: 1; }
+.statsChart .tick{ fill: var(--ink-dim); font-size: 10.5px; font-family: var(--font-mono); }
+#statsTip{ position: absolute; display: none; pointer-events: none; z-index: 10; background: #0c1220; border: 1px solid var(--panel-edge);
+  color: var(--ink); font-size: 12px; padding: 4px 8px; white-space: nowrap; }

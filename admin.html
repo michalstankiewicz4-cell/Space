@@ -53,6 +53,17 @@
     <span id="dateFilterCount"></span>
   </div>
 
+  <!-- Statistics (js/admin/stats.js, supabase/schema.sql#admin_stats):
+       aggregate counts only, loaded with the log. -->
+  <div id="statsSection" class="hidden">
+    <h2>Statistics</h2>
+    <div id="statTiles"></div>
+    <div id="chartOnline" class="statsBox"></div>
+    <div id="chartConnects" class="statsBox"></div>
+    <div id="chartAccounts" class="statsBox"></div>
+    <p class="hint">"Online" is reported by one player's game (the steward) every 5 minutes, so an hour nobody played shows 0. Counts only; no player is identifiable here. Collected since 2026-10-01.</p>
+  </div>
+
   <div id="summarySection" class="hidden">
     <h2>By actor</h2>
     <table id="summaryTable">

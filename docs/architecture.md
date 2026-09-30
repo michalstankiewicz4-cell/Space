@@ -31,6 +31,7 @@ then read just that range.
 - [UI kit (start screen and setup modal)](#ui-kit-start-screen-and-setup-modal)
 - [Skin lab](#skin-lab)
 - [Image quality (Setup → Graphics)](#image-quality-setup--graphics)
+- [Fleet memory and RETURN TO BASE](#fleet-memory-and-return-to-base)
 - [Research trees](#research-trees)
 - [In-game HUD](#in-game-hud)
 - [Load order and first paint](#load-order-and-first-paint)
@@ -1241,6 +1242,21 @@ the values from before). The Setup tab is a scrolling list; controls with
   requestAnimationFrame gave 27 for a cap of 30, carrying the remainder
   over gave ~40. `resolution.js` takes the cap as its target and counts
   hitting it as headroom. Presets never touch it.
+
+## Fleet memory and RETURN TO BASE
+
+v2.27.0, the user's request. `ships/fleetMemory.js` saves every ship's
+position (+ a course order to a fixed solar body, as its `orbitSlot`, or the
+`returning` flag) and the drone's to localStorage `roj-fleet-pos` every 2 s
+and on pagehide / tab hidden; `restoreFleet()` runs once in `main.js` right
+after `spawnDrone()`. Online the solar bodies arrive from the server a moment
+later, so restored orders wait in `pending` (up to 30 s; the save is held
+back meanwhile, or the first save would drop them). Comet orders and running
+programs aren't kept. RETURN TO BASE (`ui/hud/returnBase.js`, the viewport's
+top-left, shown while own ships are selected): `swarm.js#returnToBase` sets
+`sh.returning`; `flyHome` flies each ship to its own spawn slot
+(`shipSpawnPosition(index)`), easing in, and stops it there. Gravity skips a
+returning ship like an ordered one; a course order clears the flag.
 
 ## Research trees
 

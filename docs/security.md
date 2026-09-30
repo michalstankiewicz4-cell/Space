@@ -22,6 +22,7 @@ then read just that range.
 - [Privacy (GDPR)](#privacy-gdpr)
 - [Function EXECUTE grants](#function-execute-grants)
 - [Audit 2026-09-30 (v2.26.1): usage leaks and log growth](#audit-2026-09-30-v2261-usage-leaks-and-log-growth)
+- [Aggregate statistics (v2.27.0)](#aggregate-statistics-v2270)
 
 ## No client-writable UPDATE policy
 
@@ -463,3 +464,21 @@ was found were usage leaks and a logging flaw:
 - Observed usage then: DB 13 MB, 95 anonymous users, ~12 000 REST requests
   a day on test days (mostly bite RPCs; REST requests aren't a free-tier
   limit), realtime connections a few hundred a day.
+- **Follow-up, same day (v2.27.0)**: the 51 test accounts ("Tester") were
+  deleted with their nicks, rate counters and log rows, at the user's
+  request. `admin.html` signed in anonymously on every visit — now it
+  reuses the stored session like the game.
+
+## Aggregate statistics (v2.27.0)
+
+`stats_hourly` (hour → connects, kills, peak_online): counts only — no actor
+ids, IPs or nicks, so nothing personal and no privacy-policy change. RLS with
+zero policies; written by internal `bump_stats` (revoked) from `set_my_nick`
+(a connection), `bite_body` / `bite_solar_body` (a kill) and `report_online`
+(client-callable, rate-limited to 1/60 s per caller, clamped to 0..200;
+only the steward calls it, every 5 min — `net/stewardStats.js`). Read by
+`admin_stats(p_secret)`: the same secret hash and the shared
+`admin_secret_attempt` throttle as `admin_activity_log` — one admin page load
+spends two of its five attempts a minute. `peak_online` is self-reported: a
+modified client can inflate it (up to 200), so it's a hint for the charts,
+never a measurement. Purged after 90 days (`purge_old_data`).

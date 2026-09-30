@@ -241,6 +241,8 @@ const STRINGS = {
       eaten: function(n){ return "+" + n + " pts // planet devoured"; },
       orderAll: "Order: whole swarm on course",
       orderSome: function(n){ return "Order: " + n + " units on course"; },
+      returnAll: "Order: whole swarm back to base",
+      returnSome: function(n){ return "Order: " + n + " units back to base"; },
       selected: function(n, total){ return "Selected: " + n + " / " + total; },
       noSelection: "Select ships first",
       blackholeDetected: "Black hole detected in sector",
@@ -252,7 +254,9 @@ const STRINGS = {
     },
     camera: {
       base: "BASE",
-      system: "SYSTEM"
+      system: "SYSTEM",
+      returnBase: "RETURN TO BASE",
+      returnBaseTip: "Send the selected ships back to their places around the station"
     },
     drone: {
       title: "DRONE",
@@ -743,6 +747,8 @@ const STRINGS = {
       eaten: function(n){ return "+" + n + " pkt // planeta pochłonięta"; },
       orderAll: "Rozkaz: cały rój na kurs",
       orderSome: function(n){ return "Rozkaz: " + n + " jednostek na kurs"; },
+      returnAll: "Rozkaz: cały rój wraca do bazy",
+      returnSome: function(n){ return "Rozkaz: " + n + " jednostek wraca do bazy"; },
       selected: function(n, total){ return "Zaznaczono: " + n + " / " + total; },
       noSelection: "Najpierw zaznacz statki",
       blackholeDetected: "Wykryto czarną dziurę w sektorze",
@@ -754,7 +760,9 @@ const STRINGS = {
     },
     camera: {
       base: "BAZA",
-      system: "UKŁAD"
+      system: "UKŁAD",
+      returnBase: "POWRÓT DO BAZY",
+      returnBaseTip: "Odeślij zaznaczone statki na ich miejsca wokół stacji"
     },
     drone: {
       title: "DRON",
