@@ -9,6 +9,17 @@ import { SHIP_MODEL_LENGTH, DRONE_MODEL_LENGTH, STATION_MODEL_LENGTH, STATION_PI
 import { COMET } from "../bodies/comet.js";
 
 const COLORS = { drawn: 0xffffff, game: 0xf8bb56, eat: 0x4fe3c6, dock: 0xb48cf0, kill: 0xff5a5f, pull: 0xff9a45, field: 0x7ee081, ruler: 0x3c55d8 };
+// The bar's legend: [colour key, dashed?, text] — the same colours the rings use.
+const LEGEND = [["drawn", false, "drawn radius"], ["game", true, "gameplay size (gravity, points, health)"], ["eat", false, "eating orbit"],
+  ["dock", true, "drone dock / attack range"], ["kill", false, "black hole: no return"], ["pull", true, "black hole: pull"], ["field", true, "station field"]];
+const legendEl = document.getElementById("legend");
+LEGEND.forEach(function(l){
+  const span = document.createElement("span"), i = document.createElement("i");
+  if(l[1]) i.className = "dash";
+  i.style.borderColor = "#" + COLORS[l[0]].toString(16).padStart(6, "0");
+  span.append(i, l[2]);
+  legendEl.appendChild(span);
+});
 const SUN_DIR = new THREE.Vector3(-0.6, 0.35, 0.75).normalize();   // one light for the whole row, from the front left
 const PLANET_SLOTS = [1, 2, 3, 5, 6, 7];
 
@@ -89,7 +100,11 @@ scene.add(sunLight);
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -500, 500);
 camera.position.set(0, 0, 100);
 const view = { cx: 0, cy: 0, unitsPerPx: 0.1 };
+// The HTML labels only move when the view does (placing them reads layout):
+// applyView() and font loading mark them dirty, the frame places them once.
+let labelsDirty = true;
 function applyView(){
+  labelsDirty = true;
   const w = window.innerWidth, h = window.innerHeight;
   camera.left = view.cx - w / 2 * view.unitsPerPx; camera.right = view.cx + w / 2 * view.unitsPerPx;
   camera.top = view.cy + h / 2 * view.unitsPerPx; camera.bottom = view.cy - h / 2 * view.unitsPerPx;
@@ -320,6 +335,7 @@ function stepFlight(dt){
 }
 
 // ---------- loop ----------
+if(document.fonts) document.fonts.ready.then(function(){ labelsDirty = true; });
 buildModels();
 fit(0, rowEnd);
 const clock = new THREE.Clock();
@@ -331,7 +347,7 @@ function frame(){
   live.forEach(function(l){ l.update(t, dt); });
   stepFlight(dt);
   renderer.render(scene, camera);
-  placeLabels();
+  if(labelsDirty){ labelsDirty = false; placeLabels(); }
   frames++; fpsT += dt;
   if(fpsT >= 0.5){
     fpsEl.textContent = Math.round(frames / fpsT) + " FPS · " + renderer.info.render.triangles.toLocaleString() + " triangles";

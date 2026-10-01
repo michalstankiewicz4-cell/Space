@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Swarm Protocol // Skin lab</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="icon" href="data:,">
 <link rel="stylesheet" href="css/fonts.css">
 <!-- Skin lab: a standalone prototype of the in-game HUD in two new skins,
      to decide on the look before anything touches the game (the
@@ -234,16 +233,16 @@ body[data-skin="syn"]{ background:#0d0e17; }
   </div>
 
   <div id="stats" class="panel"><div class="statRow">
-    <div class="stat"><span>punkty</span><b class="val" id="sPoints">12 480</b></div>
-    <div class="stat"><span>jednostki</span><b class="val">7 + 1</b></div>
-    <div class="stat"><span>pochłonięte</span><b class="val">14</b></div>
+    <div class="stat"><span>points</span><b class="val" id="sPoints">12,480</b></div>
+    <div class="stat"><span>units</span><b class="val">7 + 1</b></div>
+    <div class="stat"><span>eaten</span><b class="val">14</b></div>
     <div class="stat"><span>online</span><b class="val">3</b></div>
   </div></div>
 
   <div id="clock" class="panel"><div class="body">
-    <span class="glow">CYKL <b class="val" id="cyc">6.5</b> <span class="com syn">//</span> <span id="clk">13:42</span></span>
+    <span class="glow">CYCLE <b class="val" id="cyc">6.5</b> <span class="com syn">//</span> <span id="clk">13:42</span></span>
     <span style="display:flex;gap:6px">
-      <button class="tBtn" title="Pauza">❚❚</button><button class="tBtn on" title="Gra">▶</button><button class="tBtn" title="Szybko">▶▶</button>
+      <button class="tBtn" title="Pause">❚❚</button><button class="tBtn on" title="Play">▶</button><button class="tBtn" title="Fast">▶▶</button>
     </span>
   </div></div>
 
@@ -255,26 +254,26 @@ body[data-skin="syn"]{ background:#0d0e17; }
 
   <!-- fleet list -->
   <div id="fleet" class="panel">
-    <div class="hd"><span class="term">FLOTA</span><span class="tab on syn" style="--accent:var(--type)">fleet.swarm</span><span class="tab syn">drone.ds</span></div>
+    <div class="hd"><span class="term">FLEET</span><span class="tab on syn" style="--accent:var(--type)">fleet.swarm</span><span class="tab syn">drone.ds</span></div>
     <div class="body" id="fleetList"></div>
   </div>
 
   <!-- selected unit -->
   <div id="unit" class="panel focus">
-    <div class="hd"><span class="term">JEDNOSTKA</span><span class="tab on syn" style="--accent:var(--kw)">ship_2.swarm</span></div>
+    <div class="hd"><span class="term">UNIT</span><span class="tab on syn" style="--accent:var(--kw)">ship_2.swarm</span></div>
     <div class="body">
       <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <div><div class="glow" style="font-size:16px">Statek 2</div><div class="com" style="font-size:12px;opacity:.8">SW-01 SWARMER · program</div></div>
+        <div><div class="glow" style="font-size:16px">Ship 2</div><div class="com" style="font-size:12px;opacity:.8">SW-01 SWARMER · program</div></div>
       </div>
       <canvas id="unitThumb" width="420" height="140" style="width:210px;height:70px;margin:8px 0 6px"></canvas>
       <div id="unitBars"></div>
       <div style="height:1px;margin:8px 0" class="sep"></div>
       <div id="unitRows"></div>
       <div class="uBtns" style="margin-top:10px">
-        <button title="Widok"><span class="term">[WIDOK]</span><span class="syn fn">view()</span></button>
-        <button title="Uruchom program"><span class="term">[RUN]</span><span class="syn str">run()</span></button>
-        <button title="Zatrzymaj"><span class="term">[STOP]</span><span class="syn kw">stop()</span></button>
-        <button title="Edytuj"><span class="term">[EDIT]</span><span class="syn num">edit()</span></button>
+        <button title="View"><span class="term">[VIEW]</span><span class="syn fn">view()</span></button>
+        <button title="Run the program"><span class="term">[RUN]</span><span class="syn str">run()</span></button>
+        <button title="Stop"><span class="term">[STOP]</span><span class="syn kw">stop()</span></button>
+        <button title="Edit"><span class="term">[EDIT]</span><span class="syn num">edit()</span></button>
       </div>
     </div>
   </div>
@@ -282,32 +281,32 @@ body[data-skin="syn"]{ background:#0d0e17; }
   <!-- the viewport: a live sketch of the solar system -->
   <div id="viewWrap">
     <canvas id="view" width="2080" height="1880"></canvas>
-    <div id="camToggle"><button class="on"><span class="term">BAZA</span><span class="syn">base</span></button><button><span class="term">UKŁAD</span><span class="syn">system</span></button></div>
+    <div id="camToggle"><button class="on"><span class="term">BASE</span><span class="syn">base</span></button><button><span class="term">SYSTEM</span><span class="syn">system</span></button></div>
     <div id="cmd">
-      <div id="cmdTabs"><button class="on"><span class="term">TAKTYKA</span><span class="syn">tactics.ts</span></button><button><span class="term">RUCH</span><span class="syn">move.ts</span></button><button><span class="term">BUDOWA</span><span class="syn">build.ts</span></button><button><span class="term">SPECJALNE</span><span class="syn">special.ts</span></button></div>
+      <div id="cmdTabs"><button class="on"><span class="term">TACTICAL</span><span class="syn">tactics.ts</span></button><button><span class="term">MOVE</span><span class="syn">move.ts</span></button><button><span class="term">BUILD</span><span class="syn">build.ts</span></button><button><span class="term">SPECIAL</span><span class="syn">special.ts</span></button></div>
       <div id="cmdBtns"></div>
     </div>
   </div>
 
   <!-- planet info -->
   <div id="info" class="panel">
-    <div class="hd"><span class="term">OBIEKT</span><span class="tab on syn" style="--accent:var(--str)">terra_1.body</span></div>
+    <div class="hd"><span class="term">OBJECT</span><span class="tab on syn" style="--accent:var(--str)">terra_1.body</span></div>
     <div class="body">
       <canvas id="infoThumb" width="160" height="160" style="width:80px;height:80px;float:left;margin:0 10px 6px 0"></canvas>
       <div class="glow" style="font-size:16px;margin-top:6px">TERRA-1</div>
-      <div class="com" style="font-size:12px;opacity:.85">planeta neutralna · ~27 pkt</div>
+      <div class="com" style="font-size:12px;opacity:.85">neutral planet · ~27 pts</div>
       <div style="clear:both"></div>
       <div id="infoRows" style="margin-top:4px"></div>
       <div class="uBtns" style="margin-top:12px">
-        <button title="Ustaw punkt"><span class="term">[PUNKT]</span><span class="syn fn">waypoint()</span></button>
-        <button title="Widok"><span class="term">[WIDOK]</span><span class="syn str">view()</span></button>
+        <button title="Set a waypoint"><span class="term">[WAYPOINT]</span><span class="syn fn">waypoint()</span></button>
+        <button title="View"><span class="term">[VIEW]</span><span class="syn str">view()</span></button>
       </div>
     </div>
   </div>
 
   <!-- event log -->
   <div id="log" class="panel">
-    <div class="hd"><span class="term">DZIENNIK</span><span class="tab on syn" style="--accent:var(--num)">console</span><span class="tab syn">problems <span class="kw">1</span></span></div>
+    <div class="hd"><span class="term">LOG</span><span class="tab on syn" style="--accent:var(--num)">console</span><span class="tab syn">problems <span class="kw">1</span></span></div>
     <div class="body" id="logList"></div>
   </div>
 
@@ -322,7 +321,7 @@ body[data-skin="syn"]{ background:#0d0e17; }
   <div id="skinSwitch">
     <button data-s="term">1 · TERMINAL</button>
     <button data-s="syn">2 · SYNTAX</button>
-    <button id="crtBtn" title="Efekty CRT (klawisz C)">CRT</button>
+    <button id="crtBtn" title="CRT effects (key C)">CRT</button>
   </div>
 </div>
 
@@ -372,13 +371,13 @@ body[data-skin="syn"]{ background:#0d0e17; }
   });
 
   // ---------- sample data ----------
-  const NAV = [["FLOTA", "fleet", "#5ee7ff"], ["PLANETY", "bodies", "#7ef29a"], ["BADANIA", "research", "#b58cff"], ["BUDOWA", "build", "#6c7399", true],
-    ["DYPLOMACJA", "players", "#ffb45c"], ["WIKI", "wiki", "#ff6ac1"], ["USTAWIENIA", "setup", "#6c7399"]];
-  const FLEET = [["Statek 1", "Bezczynny", "idle"], ["Statek 2", "Program", "program"], ["Statek 3", "W drodze → TERRA-1", "enRoute"],
-    ["Statek 4", "Żeruje · MAGMA", "feeding"], ["DRON", "Działa · paliwo 72%", "drone"]];
-  const LOG = [["13:42", "Rozkaz: 3 jednostki na kurs", ""], ["13:41", "Wykryto czarną dziurę w sektorze", "alert"],
-    ["13:40", "Odzyskano fragment pamięci: Rozruch", ""], ["13:39", "Nowe hasło w Wiki: Planeta neutralna", ""], ["13:38", "Dowódca Kronikarz wszedł na orbitę", ""]];
-  const CMDS = [["ATAK", "attack", "target"], ["RUCH", "move", "move"], ["SZYK", "formUp", "formup"], ["OBRONA", "defend", "shield"], ["SKAN", "scan", "scan"], ["MASKA", "cloak", "cloak"]];
+  const NAV = [["FLEET", "fleet", "#5ee7ff"], ["PLANETS", "bodies", "#7ef29a"], ["RESEARCH", "research", "#b58cff"], ["BUILD", "build", "#6c7399", true],
+    ["DIPLOMACY", "players", "#ffb45c"], ["WIKI", "wiki", "#ff6ac1"], ["SETTINGS", "setup", "#6c7399"]];
+  const FLEET = [["Ship 1", "Idle", "idle"], ["Ship 2", "Program", "program"], ["Ship 3", "En route → TERRA-1", "enRoute"],
+    ["Ship 4", "Feeding · MAGMA", "feeding"], ["DRONE", "Running · fuel 72%", "drone"]];
+  const LOG = [["13:42", "Order: 3 units on course", ""], ["13:41", "Black hole detected in the sector", "alert"],
+    ["13:40", "Memory fragment recovered: Reboot", ""], ["13:39", "New Wiki entry: Neutral planet", ""], ["13:38", "Commander Chronicler entered orbit", ""]];
+  const CMDS = [["ATTACK", "attack", "target"], ["MOVE", "move", "move"], ["FORM UP", "formUp", "formup"], ["DEFEND", "defend", "shield"], ["SCAN", "scan", "scan"], ["CLOAK", "cloak", "cloak"]];
   const ICONS = {
     target: '<circle cx="12" cy="12" r="8" stroke-width="1.6"/><path d="M12 1.5v6M12 16.5v6M1.5 12h6M16.5 12h6" stroke-width="1.6" stroke-linecap="round"/>',
     move: '<path d="M12 3v18M5 10l7-7 7 7" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -408,19 +407,19 @@ body[data-skin="syn"]{ background:#0d0e17; }
       const col = { idle: "var(--com)", program: "var(--type)", enRoute: "var(--fn)", feeding: "var(--num)", drone: "var(--kw)" }[f[2]];
       return '<div class="fleetCard' + on + '"><span class="gutter">' + (i + 1) + '</span><span style="width:10px;height:10px;border-radius:3px;background:' + col + ';box-shadow:0 0 8px ' + col + '"></span><div><span>' + esc(f[0]) + '</span><small><span style="color:' + col + '">' + f[2] + '</span> · ' + esc(f[1]) + '</small></div></div>';
     }).join("");
-    const bars = [["Prędkość", "speed", 0.6, false], ["Gryz", "bite", 0.35, true], ["Ciepło", "heat", 0.2, true]];
+    const bars = [["Speed", "speed", 0.6, false], ["Bite", "bite", 0.35, true], ["Heat", "heat", 0.2, true]];
     document.getElementById("unitBars").innerHTML = bars.map(function(b){
       return term
         ? '<div class="row"><span style="width:64px">' + b[0] + '</span><div class="seg"><i style="width:' + (b[2] * 100) + '%"></i></div><span>L' + Math.round(b[2] * 5) + '</span></div>'
         : '<div class="row" style="align-items:center"><span class="ty" style="width:48px">' + b[1] + '</span><div class="bar' + (b[3] ? " hot" : "") + '"><i style="width:' + (b[2] * 100) + '%"></i></div><span class="num" style="width:22px;text-align:right">' + Math.round(b[2] * 5) + '</span></div>';
     }).join("");
-    const rows = [["status", "Program", "str"], ["cel", "—", "com"], ["prędkość", "1.0", "num"], ["gryz/s", "5.5", "num"]];
+    const rows = [["status", "Program", "str"], ["target", "—", "com"], ["speed", "1.0", "num"], ["bite/s", "5.5", "num"]];
     document.getElementById("unitRows").innerHTML = rows.map(function(r){
       return term
         ? '<div class="row"><span>' + r[0].toUpperCase() + '</span><b class="val" style="font-weight:400">' + esc(r[1]) + '</b></div>'
         : '<div class="row"><span><span class="kw">let</span> ' + esc(r[0]) + ' <span class="com">=</span></span><span class="' + r[2] + '">' + (r[2] === "str" ? '"' + esc(r[1]) + '"' : esc(r[1])) + '</span></div>';
     }).join("");
-    const irows = [["zdrowie", 0.84, "42 / 50"], ["promień", null, "4.75"], ["obrót", null, "8.6°/s"]];
+    const irows = [["health", 0.84, "42 / 50"], ["radius", null, "4.75"], ["spin", null, "8.6°/s"]];
     document.getElementById("infoRows").innerHTML = irows.map(function(r){
       if(term) return '<div class="row"><span style="width:64px">' + r[0].toUpperCase() + '</span>' + (r[1] != null ? '<div class="seg"><i style="width:' + (r[1] * 100) + '%"></i></div>' : '<span style="flex:1"></span>') + '<b class="val" style="font-weight:400">' + r[2] + '</b></div>';
       return '<div class="row" style="align-items:center"><span class="ty" style="width:56px">' + r[0] + '</span>' + (r[1] != null ? '<div class="bar"><i style="width:' + (r[1] * 100) + '%"></i></div>' : '<span style="flex:1"></span>') + '<span class="num" style="margin-left:8px">' + r[2] + '</span></div>';
@@ -527,7 +526,7 @@ body[data-skin="syn"]{ background:#0d0e17; }
       if(sw){ sw.addColorStop(0, "rgba(57,255,122,0)"); sw.addColorStop(0.14, "rgba(57,255,122,.10)"); sw.addColorStop(0.145, "rgba(57,255,122,0)");
         vg.fillStyle = sw; vg.fillRect(0, 0, W, H); }
       vg.fillStyle = "rgba(57,255,122,.75)"; vg.font = "22px 'IBM Plex Mono', monospace";
-      vg.fillText("SEKTOR 4 · ORBITA STACJI · SKALA 1:" + Math.round(1 / sc), 30, 110);
+      vg.fillText("SECTOR 4 · STATION ORBIT · SCALE 1:" + Math.round(1 / sc), 30, 110);
     }
   }
   function glowStroke(path, color, w){
@@ -627,7 +626,7 @@ body[data-skin="syn"]{ background:#0d0e17; }
     const t = (performance.now() - t0) / 1000;
     drawView(t); drawMini(t); drawThumbs(t);
     // live numbers
-    document.getElementById("sPoints").textContent = (12480 + Math.floor(t * 7)).toLocaleString("pl-PL");
+    document.getElementById("sPoints").textContent = (12480 + Math.floor(t * 7)).toLocaleString("en-US");
     requestAnimationFrame(frame);
   }
 

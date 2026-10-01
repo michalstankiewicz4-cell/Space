@@ -272,3 +272,7 @@ Not decided yet — ideas for later steps:
 - **Station:** its size relative to ships as more station parts arrive
   (repairs, building).
 - **Distances:** only if really needed — see "If you change distances".
+
+(2026-10 review: the bar's legend is built from `scaleLab.js`'s `LEGEND`, the
+same colours the rings use; the HTML labels are only re-placed when the view
+changes.)

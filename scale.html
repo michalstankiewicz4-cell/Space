@@ -6,7 +6,6 @@
 <title>Swarm Protocol // Scale lab</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="css/fonts.css">
-<link rel="icon" href="data:,">
 <!-- Scale lab: every object of the game side by side in one row, at the
      size it has in the game, over a ruler in world units — to decide what
      should grow and what should shrink (docs/scale.md). The sizes are READ
@@ -49,15 +48,7 @@
   <button type="button" id="btnOutlines" class="on" title="Outlines of the sizes that matter for gameplay">Outlines</button>
   <button type="button" id="btnDetail" title="Model detail: low keeps it light, high is the game's high setting">Detail: low</button>
   <button type="button" id="btnFit" title="Whole row in view">Fit all</button>
-  <div id="legend">
-    <span><i style="border-color:#ffffff"></i>drawn radius</span>
-    <span><i class="dash" style="border-color:#f8bb56"></i>gameplay size (gravity, points, health)</span>
-    <span><i style="border-color:#4fe3c6"></i>eating orbit</span>
-    <span><i class="dash" style="border-color:#b48cf0"></i>drone dock / attack range</span>
-    <span><i style="border-color:#ff5a5f"></i>black hole: no return</span>
-    <span><i class="dash" style="border-color:#ff9a45"></i>black hole: pull</span>
-    <span><i class="dash" style="border-color:#7ee081"></i>station field</span>
-  </div>
+  <div id="legend"></div>   <!-- built from scaleLab.js's LEGEND, the same colours as the rings -->
   <span id="fps"></span>
 </div>
 <div id="labels"></div>
