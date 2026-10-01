@@ -28,9 +28,9 @@ Contents:
   toggles the CRT effects. The choice is remembered per browser
   (`localStorage["roj-skinlab"]`).
 - Everything is sample data (points tick up so it feels alive); nothing
+  is clickable beyond the switches and hover states.
 - The sample text is English (the repo's rule; until the 2026-10 review it
   was Polish, as in the devlog screenshots).
-  is clickable beyond the switches and hover states.
 
 ## How it's built
 
