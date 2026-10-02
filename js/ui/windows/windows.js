@@ -3,6 +3,7 @@ import { initFleet } from "./fleet.js";
 import { initDroneScript, refreshDroneScript } from "./droneScript.js";
 import { refreshResearch, initResearch } from "./research.js";
 import { initWiki } from "./wiki.js";
+import { initGalaxyMap } from "./galaxyMap.js";
 import { onLangChange } from "../../i18n.js";
 
 // The windows opened from the HUD (css/ui/windows/). This file owns the
@@ -44,6 +45,7 @@ export function initWindows(){
   initFleet();
   initDroneScript();
   initWiki();
+  initGalaxyMap();
   initResearch();
   refreshResearch();
   onLangChange(refreshResearch);

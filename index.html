@@ -71,10 +71,11 @@
 <link rel="stylesheet" href="css/ui/windows/fleet.css">
 <link rel="stylesheet" href="css/ui/windows/players.css">
 <link rel="stylesheet" href="css/ui/windows/wiki.css">
+<link rel="stylesheet" href="css/ui/windows/galaxy.css">
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.29.2">
+<link rel="stylesheet" href="css/style.css?v=2.30.0">
 </head>
 <body>
 
@@ -691,6 +692,29 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
   </section>
 </div>
 
+<!-- Galaxy map (key M, ui/windows/galaxyMap.js): the Milky Way from above,
+     a WebGL canvas (galaxy/galaxyRender.js) under an SVG overlay. -->
+<div id="galaxyModal" class="uiWindow hidden">
+  <section class="uiWindowBox" id="galaxyModalBox">
+    <div class="mat blueV uiWinSide"></div>
+    <header class="uiWinHead"><span class="mat gold hdSq"></span><h2 class="hd" data-i18n="galaxy.title">Milky Way — top view</h2><button type="button" class="mat red closePill" id="galaxyCloseBtn" aria-label="Close">✕</button></header>
+    <div class="hdLine"></div>
+    <div id="galaxyBody">
+      <canvas id="galaxyCanvas"></canvas>
+      <svg id="galaxyOverlay"></svg>
+      <div id="galaxyFail" class="hidden" data-i18n="galaxy.fail">The map needs WebGL.</div>
+      <div id="galaxyTools">
+        <button type="button" id="galaxyZoomIn" data-i18n-title="galaxy.zoomIn" title="Zoom in">+</button>
+        <button type="button" id="galaxyZoomOut" data-i18n-title="galaxy.zoomOut" title="Zoom out">−</button>
+        <button type="button" id="galaxyToStart" data-i18n-title="galaxy.toStart" title="The starting system"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="5"/><circle cx="10" cy="10" r="1.4" fill="currentColor"/><path d="M10 1v4M10 15v4M1 10h4M15 10h4"/></svg></button>
+        <button type="button" id="galaxyWhole" data-i18n-title="galaxy.whole" title="The whole galaxy"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 7V2h5M13 2h5v5M18 13v5h-5M7 18H2v-5"/></svg></button>
+      </div>
+      <div id="galaxyScale"><div id="galaxyScaleBar"></div><span id="galaxyScaleText"></span></div>
+      <div id="galaxyHint" data-i18n="galaxy.hint">Scroll: zoom · Drag: move · M or Esc: close</div>
+    </div>
+  </section>
+</div>
+
 <!-- Wiki: a read-only encyclopedia filled in by playing (ui/windows/wiki.js) -->
 <div id="wikiModal" class="uiWindow hidden">
   <section class="uiWindowBox" id="wikiModalBox">
@@ -842,7 +866,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.29.2"></script>
+<script type="module" src="js/main.js?v=2.30.0"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

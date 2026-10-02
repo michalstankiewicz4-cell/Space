@@ -270,6 +270,40 @@ button) shows one tree at a time, ◀ ▶ to switch.
   picture: update `BG` (size and the horizon's y). The devlog's "AI
   image" caption rule is for blog posts, not the game.
 
+## Galaxy map (key M)
+
+v2.30.0, the user's request ("the Milky Way from above, mark where we
+start, as real as possible"). `ui/windows/galaxyMap.js` is a `.uiWindow`
+(Escape chain, backdrop click, M toggles — `uiMode.js#keysAllowed` gates
+opening); the picture is `galaxy/galaxyRender.js`, one fragment shader in
+its **own** WebGL context on `#galaxyCanvas`, created on first open and
+rendered only when the view changes (one frame per change at most). The
+view is `{ cx, cy, kpcPerPx }` in kiloparsecs per *layout* px: the window
+box is CSS-scaled by `--uiScale`, so pointer positions are converted with
+`clientWidth / getBoundingClientRect().width`, and the renderer derives
+its device-px scale from `canvas.clientWidth`.
+
+- **The galaxy** (all in the shader, kpc, centre at 0, the start at
+  (0, −8.2)): a bar at 63° (27° to the Sun–centre line), log-spiral arms of
+  pitch 12.5° from radius 4.6 — Perseus and Scutum–Centaurus from the
+  bar's ends, Sagittarius–Carina and Norma–Outer between, the Orion Spur
+  through the start; domain-warped noise makes them clumpy; old warm
+  disk/bulge vs blue young arms; dust on the arms' inner edges and the
+  bar's leading edges, absorbing blue first; HII regions and clusters as
+  per-cell soft blobs (thresholded noise looked blocky up close); resolved
+  stars in four world-space cell layers faded in by on-screen cell size
+  (no shimmer while zooming); a sub-pixel "grain" for unresolved stars,
+  faded out as real stars resolve; globular clusters; tone mapping,
+  vignette, dithering.
+- **Overlay** (`#galaxyOverlay`, SVG rebuilt per render, `textContent`
+  only): rings every 10 000 ly, the arms' names along each arm's tangent
+  (the label radius per arm in `ARMS`, hidden when zoomed far in), the
+  Galactic Centre, the start (CSS-pulsing rings, crosshair, leader line
+  and label box sized from `getComputedTextLength`), a scale bar of a
+  round number of light years.
+- The arms' angles and radii are duplicated between the shader and
+  `galaxyMap.js#ARMS` — change both.
+
 ## Update notice and WHAT'S NEW
 
 `js/versionCheck.js` re-reads `js/version.js` every 3 min; a newer deploy

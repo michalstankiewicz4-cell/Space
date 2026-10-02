@@ -57,7 +57,7 @@ function inGameView(){
 
 // Keys: in the game view only, not while typing, and never with a modifier
 // (Ctrl+C is copy).
-function keysAllowed(e){
+export function keysAllowed(e){
   if(e.ctrlKey || e.metaKey || e.altKey || e.repeat) return false;
   const el = e.target;
   if(el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return false;

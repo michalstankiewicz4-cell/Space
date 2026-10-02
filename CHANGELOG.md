@@ -4,6 +4,21 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.30.0]
+
+### Added
+- **Galaxy map (key M)**: the Milky Way seen from above, with the starting
+  system marked in the Orion Spur, ~26 700 light years from the centre.
+  Drawn live by a WebGL shader (`js/galaxy/galaxyRender.js`, its own
+  canvas): the central bar, four spiral arms and the Orion Spur on real
+  logarithmic spirals, clumpy young-star arms over a warm old disk and
+  bulge, reddening dust lanes, pink star-forming regions and blue
+  clusters, resolved stars fading in with zoom, globular clusters, tone
+  mapping and a vignette. On top (SVG): distance rings, the arms' names,
+  the Galactic Centre, the pulsing start marker, a scale bar. Scroll to
+  zoom around the pointer, drag to move; buttons for zoom, the start and
+  the whole galaxy. M or Escape closes it.
+
 ## [2.29.2]
 
 ### Added

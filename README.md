@@ -43,6 +43,8 @@ js/
                      body lab (bodies.html); see docs/bodies.md
   labkit/            LabKit — what the ship and body labs share around their models (grain, sliders,
                      HUD scale, performance counters, image effects); styles in css/lab.css
+  galaxy/            the galaxy map's picture: the Milky Way from above as one WebGL shader
+                     (galaxyRender.js; the window is ui/windows/galaxyMap.js, key M)
   postkit/           PostKit — post-processing (bloom, MSAA, FXAA, lensing, depth of field, sun
                      flare, the "robot eyes" filter) and the labs' IMAGE EFFECTS panel, one classic
                      script shared by the game (scene/post.js) and both labs
@@ -105,7 +107,7 @@ js/
                      devTools + perfStats); hud.js is main.js's single entry point into it
     windows/         the windows opened from the HUD (windows.js entry point + research with
                      the upgrade trees techTree/techTreeData, fleet, players, droneScript,
-                     wiki + wikiEntries/wikiArt, and the block editor: blockEditor +
+                     wiki + wikiEntries/wikiArt, the galaxy map (galaxyMap), and the block editor: blockEditor +
                      blockPalette/blockRender/blockDrag)
   net/               multiplayer: identity, "steward" election (presence.js, stewardFallback.js,
                      stewardStats.js), world sync (bodiesSync.js, solarBodiesSync.js), ship
