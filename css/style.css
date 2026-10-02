@@ -119,9 +119,13 @@ canvas{ display:block; touch-action:none; cursor: grab; }
 }
 #outdatedNewsBtn:hover{ background: rgb(248 187 86 / .12); }
 #outdatedNews{
-  margin-top: 14px; max-height: 300px; overflow-y: auto; text-align: left;
-  border-top: 1px solid rgb(208 91 105 / .4); padding-top: 10px;
+  margin-top: 14px; max-height: min(300px, 40vh); overflow-y: auto; text-align: left;
+  border-top: 1px solid rgb(208 91 105 / .4); padding: 10px 6px 0 0;
+  scrollbar-width: thin; scrollbar-color: rgb(248 187 86 / .6) rgb(255 255 255 / .05);
 }
+#outdatedNews::-webkit-scrollbar{ width: 8px; }
+#outdatedNews::-webkit-scrollbar-track{ background: rgb(255 255 255 / .05); border-radius: 4px; }
+#outdatedNews::-webkit-scrollbar-thumb{ background: rgb(248 187 86 / .6); border-radius: 4px; }
 #outdatedNews h4{
   margin: 10px 0 4px; font-family: var(--uiFontLabel); font-weight: 600; font-size: 15px;
   color: #f8bb56; letter-spacing: .5px;

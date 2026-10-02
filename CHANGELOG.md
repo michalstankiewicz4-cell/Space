@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.30.1]
+
+### Fixed
+- The update notice's WHAT'S NEW list: a thin gold scrollbar instead of the
+  browser's default grey one, and the list is at most 40 % of the screen
+  high, so the notice still fits on short screens.
+
 ## [2.30.0]
 
 ### Added
