@@ -41,7 +41,7 @@ import { initStewardStats } from "./net/stewardStats.js";
 import { initVersionCheck } from "./versionCheck.js";
 import { spawnDrone, updateDrone, updateDroneWreckage } from "./drone/drone.js";
 import { updateDronePrintFx } from "./drone/dronePrintFx.js";
-import { spawnStation } from "./station/station.js";
+import { spawnStation, initStationSlot } from "./station/station.js";
 import { renderMainView, initViewRect } from "./scene/viewRect.js";
 import { updateSelectionBrackets } from "./scene/selectionBrackets.js";
 import { initUnitThumb, renderUnitThumb } from "./scene/unitThumb.js";
@@ -119,6 +119,7 @@ initShipCam();
 initVersionCheck();
 spawnDrone();
 restoreFleet();   // where the fleet and the drone were before the reload (localStorage)
+initStationSlot(); // a newcomer's station overlapping another one moves to a free spot (once)
 setLoad(0.72, "hud");
 await nextPaint();
 

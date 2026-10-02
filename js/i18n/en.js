@@ -234,6 +234,7 @@ export const en = {
     orderAll: "Order: whole swarm on course",
     orderSome: function(n){ return "Order: " + n + " units on course"; },
     returnAll: "Order: whole swarm back to base",
+    stationMoved: "Your station's spot on the ring was taken — it moved to the nearest free one",
     returnSome: function(n){ return "Order: " + n + " units back to base"; },
     selected: function(n, total){ return "Selected: " + n + " / " + total; },
     blackholeDetected: "Black hole detected in sector",

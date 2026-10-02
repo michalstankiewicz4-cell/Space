@@ -4,6 +4,17 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.29.1]
+
+### Fixed
+- Two stations could stand inside each other on the station ring (the
+  spot comes from the player's id, nobody checked it was free — about a
+  50 % chance once ~13 players are online). Now a newcomer yields: on the
+  first connection in a browser, a station overlapping one of the players
+  online moves to the nearest free spot (with the fleet and drone parked
+  there), says so in the event log, and keeps that spot for good. Stations
+  already standing never move.
+
 ## [2.29.0]
 
 ### Added

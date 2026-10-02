@@ -825,6 +825,17 @@ that ship view — "the drone too").
   modals. No new resource economy was introduced; "manage resources" here
   just means a window onto `state.points`/`state.levels`, not a second
   currency.
+  - **A free spot on the ring (v2.29.1)**: the hashed angle can land on
+    another station (birthday problem: ~50 % for overlapping fields at
+    ~13 players online). `station.js#initStationSlot` — once per browser,
+    4–12 s after connecting (presence plus the first broadcasts) — checks
+    the online players' stations; if ours is within `2 × field + 4` of
+    one, `moveStation` takes it (and the ships and drone parked in its
+    field) to the nearest free angle in 1° steps, glides the base camera
+    after it and toasts. The angle is kept in `roj-station-angle` and used
+    from then on, so only a newcomer ever yields. Players offline at that
+    moment can't be checked — a server-side reservation would need a table
+    of its own. Tested with two tabs forced onto the same angle.
   - **The look is ShipKit's ST-04 HAVEN (v2.13.0)** —
     `js/shipkit/shipkit.js`, built in the ship lab like the ships, placed
     by `station/stationVisual.js#makeStationVisual()`, which both the local

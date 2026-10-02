@@ -239,6 +239,7 @@ export const pl = {
     orderAll: "Rozkaz: cały rój na kurs",
     orderSome: function(n){ return "Rozkaz: " + n + " jednostek na kurs"; },
     returnAll: "Rozkaz: cały rój wraca do bazy",
+    stationMoved: "Miejsce Twojej stacji na pierścieniu było zajęte — przeniosła się na najbliższe wolne",
     returnSome: function(n){ return "Rozkaz: " + n + " jednostek wraca do bazy"; },
     selected: function(n, total){ return "Zaznaczono: " + n + " / " + total; },
     blackholeDetected: "Wykryto czarną dziurę w sektorze",
