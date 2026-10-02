@@ -66,7 +66,7 @@ beat an animated GIF on every count (GIF 800×450, 256 colours, stuttering,
   `page.video().path()` after the context closes). Drive the scene from
   the script — the scale lab has `window.scaleLab.flyTo(name, seconds)`
   for smooth camera flights; in the game, the camera functions in
-  `scene/controls.js`.
+  `scene/camera.js`.
 - **The recording skips time while the page stalls** (shader compiles at
   load): a session 28 s long on the clock gave a 16.7 s file. Trim from
   the END (`-ss <duration − clip length>`), not by wall-clock offsets.
@@ -84,8 +84,7 @@ beat an animated GIF on every count (GIF 800×450, 256 colours, stuttering,
 ## Post style (the user's preferences)
 
 Moved here from the assistant's memory (2026-09-28) so they live with the
-project. Blog: "Swarm Protocol", https://swarmprotocol.blogspot.com/, blog ID
-`4054180551202581680`, **in Polish** (the game's own UI is English-first).
+project. The blog is **in Polish** (the game's own UI is English-first).
 
 - **Format**: a hero image, then devlog text with section headings and a
   "what's next" teaser at the end; ~10k characters is fine for a big update.

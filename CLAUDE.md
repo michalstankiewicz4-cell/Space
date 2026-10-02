@@ -2,7 +2,10 @@
 
 A lean index, loaded into every session — rules and pointers only. The
 why and the history behind each item live in `docs/`:
-[`architecture.md`](docs/architecture.md), [`security.md`](docs/security.md),
+[`architecture.md`](docs/architecture.md) (world, network, programs),
+[`ui.md`](docs/ui.md) (screens, HUD, windows),
+[`rendering.md`](docs/rendering.md) (models, graphics, post-processing),
+[`security.md`](docs/security.md),
 [`gotchas.md`](docs/gotchas.md), [`blogger.md`](docs/blogger.md),
 [`ship.md`](docs/ship.md) / [`bodies.md`](docs/bodies.md) (the labs),
 [`scale.md`](docs/scale.md) (sizes; `scale.html`), [`skins.md`](docs/skins.md)
@@ -26,13 +29,14 @@ the player's own progress stays in `localStorage`.
 
 - **Language**: reply to the user in Polish. Everything in the repo — UI
   text, docs, commit messages, code comments (JS and SQL) — is English;
-  the only exception is the `pl` dictionary in `js/i18n/pl.js`.
+  the only exception is the Polish dictionary, `js/i18n/pl.js`.
 - **Versioning**: every meaningful change to the game or
   `supabase/schema.sql` → bump `js/version.js`, a `CHANGELOG.md` entry,
   and the `?v=` params on `css/style.css` and `js/main.js` in `index.html`
   (hardcoded, easy to forget). **Not** for: `admin.html` (+ `js/admin/`,
   `css/admin.css`, `css/devTheme.css`), the labs `ship.html` /
-  `bodies.html` / `scale.html` (+ `js/scalelab/`) / `skins.html`,
+  `bodies.html` / `scale.html` (+ `js/scalelab/`) / `skins.html` and
+  their LabKit (`js/labkit/`, `css/lab.css`),
   `tools/`, the devlog (`blog/`, Blogger), and `.md`-only edits — those are
   plain commits, no changelog entry.
 - **A new `js/`/`css/` game file → add it to
@@ -57,17 +61,19 @@ the player's own progress stays in `localStorage`.
   `FABULA.md` (in `.git/info/exclude`). The Supabase **anon key** in
   `js/env.js` is public by design.
 
-## Architecture (map — details in docs/architecture.md)
+## Architecture (map — details in docs/architecture.md, ui.md, rendering.md)
 
 - **Bodies**: 7 kinds, one data file each in `js/bodies/`
   (`content.js#CONTENT`); only comets are rolled, the other 6 are fixed
   solar bodies. `world/bodies.js` = lifecycle, `bodyParams.js` = kind
-  math, `bodyVisual.js` = the look (BodyKit). `scene/camera.js` =
+  math, `bodyVisual.js` = the look (BodyKit), `rewards.js` = points for a
+  kill (`bodies.js#isSpent`: an eaten body pays once). `scene/camera.js` =
   the camera (modes, focus, glide), `scene/controls.js` = mouse input,
   selection and orders; `picking.js`, `tooltip.js`,
   `selectionBrackets.js` (HTML overlay).
 - **Ships move only on an explicit order** (`controls.js#commandTo` →
-  `commandedTarget`) or their own program — never an automatic target.
+  `commandedTarget`, RETURN TO BASE) or their own program — never an
+  automatic target.
 - **Camera**: "base" (the station, default) and "system" (the Sun) on the
   toggle, plus "focus" (`focusCameraOn` / `focusCameraOnUnit`: a minimap
   click, VIEW buttons); every change glides ~1 s; a lost target → system.
@@ -95,9 +101,10 @@ the player's own progress stays in `localStorage`.
   (`stewardFallback.js`). A comet DELETE can mean eaten or flown out —
   check the local object's `health`, not the payload.
 - **Settings / identity / i18n** stay three separate modules; all
-  localStorage goes through `core/utils.js#readStorage/writeStorage`. Static UI text in `index.html` carries its key
-  (`data-i18n`, `-title`, `-html`, `-placeholder`); `ui/i18nApply.js` only
-  sets what depends on state.
+  localStorage goes through `core/utils.js#readStorage/writeStorage`.
+  Static UI text in `index.html` carries its key (`data-i18n`, `-title`,
+  `-html`, `-placeholder`); `ui/i18nApply.js` only sets what depends on
+  state.
 - **Nicknames**: checked client-side and again on arrival (a modified
   client can send anything); `/^[\p{L}\p{N} ]+$/u`, `NET_MAX_NICK_LENGTH`.
 - **Programs**: one DSL and one generator interpreter (`drone/dsl.js`,
@@ -154,8 +161,10 @@ the player's own progress stays in `localStorage`.
   `schema.sql`. **`player_count()` is not deployed yet** (user's call) —
   the start screen's "—" and its console 404 are expected; it must keep
   returning only a number.
-- Rate limits: `bite_body` 20/s, `set_my_nick` 5/30 s, `delete_my_data`
-  3/60 s — silently dropped. `activity_log` is a passive audit trail
+- Rate limits: bites 20/s per actor (`bite_body` and `bite_solar_body`
+  share `bump_bite_rate`; the client batches to 15/s,
+  `net/biteBudget.js`), `set_my_nick` 5/30 s, `delete_my_data` 3/60 s —
+  silently dropped. `activity_log` is a passive audit trail
   (read via `admin.html`, secret-gated; every cell rendered with
   `textContent`).
 - **Anonymous auth**: reuse the session (`getSession` before

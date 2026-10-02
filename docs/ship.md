@@ -406,7 +406,7 @@ code.
 Since v2.8.0 the game loads `js/shipkit/shipkit.js` itself (a `defer`
 script right after Three.js in `index.html`), and the drone is ShipKit's
 DR-01 SCRIBE. How it's wired (`js/drone/drone.js#buildDroneModel`, full
-story in `docs/architecture.md`'s "Rendering and ShipKit models"):
+story in `docs/rendering.md`'s "Rendering and ShipKit models"):
 
 1. **Renderer like the labs**: the game renders with sRGB output, ACES
    tone mapping and `scene.environment = ShipKit.makeEnvironment(renderer)`

@@ -23,6 +23,8 @@ then read just that range.
 - [Function EXECUTE grants](#function-execute-grants)
 - [Audit 2026-09-30 (v2.26.1): usage leaks and log growth](#audit-2026-09-30-v2261-usage-leaks-and-log-growth)
 - [Aggregate statistics (v2.27.0)](#aggregate-statistics-v2270)
+- [Solar-body kill rule (v2.28.3)](#solar-body-kill-rule-v2283)
+- [Helpers (v2.28.6)](#helpers-v2286)
 
 ## No client-writable UPDATE policy
 
@@ -31,11 +33,9 @@ then read just that range.
   is `bodies.health` (via `bite_body`, comets), `solar_bodies.health` (via
   `bite_solar_body`, the 9 fixed bodies + Sun — see
   [`docs/architecture.md`](architecture.md)'s "Solar system" bullet) and
-  `world_meta.initialized` (via `claim_world_init` — dead code now,
-  nothing calls it since the 9-orbit rewrite removed the "first client
-  seeds an empty world" scenario it existed for; left in place rather
-  than dropped, since an unused function/table costs nothing and dropping
-  it is a needless irreversible step) — all these RPCs are `security
+  `world_meta.initialized` (via `claim_world_init` — dead code since the
+  9-orbit rewrite, left in place but revoked from clients in v2.26.1) —
+  all these RPCs are `security
   definer` with a locked `search_path`, so they run with the function
   owner's privileges and don't need a permissive RLS policy to do their
   job. If a permissive `for update using (true)` policy ever gets
@@ -58,8 +58,8 @@ then read just that range.
   spawning, not a security boundary; DELETE is idempotent so it's safe
   for any client to call) as long as they're not doing it faster than
   any legitimate play ever would — see the `BEFORE INSERT`/
-  `BEFORE DELETE` triggers in the `activity_log` bullet below, which now
-  actually reject a burst past 15-in-10s, not just log it. Below that
+  `BEFORE DELETE` triggers in the `activity_log` bullet below, which skip
+  every row past 5 in 10 s, not just log it. Below that
   rate, what keeps it safe is entirely the CHECK constraints. A shared
   radius/value_bonus range across every kind used to NOT actually be
   "plausible-looking" per kind, it just looked that way: a script was
@@ -123,31 +123,25 @@ then read just that range.
   several of the write-path guards that feed it have since grown real
   enforcement alongside the logging (1.9.2) — don't assume "it's in
   activity_log" means "and otherwise nothing happened":
-  - `bite_body`'s existing rate limiter logs when it trips (that alone is
-    an unambiguous signal — a real client physically cannot exceed it)
-    *and* has always silently dropped the call, no error, no effect.
+  - The bite rate limit (`bite_body` + `bite_solar_body`, see below) logs
+    when it trips *and* silently drops the call, no error, no effect. The
+    client stays under it (`net/biteBudget.js`), so a trip means a script.
   - `BEFORE INSERT`/`BEFORE DELETE` triggers on `bodies`
-    (`log_body_insert_if_bursty()`/`log_body_delete_if_bursty()`) log
-    *and* `RAISE EXCEPTION` — actually rejecting the row, not just
-    observing it — once a single actor's rate, tracked via a small
-    reusable sliding-window counter (`bump_activity_rate()`/
-    `activity_rate`), crosses 15 in a 10-second window. Originally
-    `AFTER` triggers that only logged; moved to `BEFORE` specifically so
-    they could cancel the row instead of just noticing it after the fact
-    (verified live: the 16th body insert within the window fails with
-    "Too many body inserts too fast", the first 15 all still succeed).
+    (`log_body_insert_if_bursty()`/`log_body_delete_if_bursty()`) skip
+    the row (`return null`) once a single actor's rate, tracked via a
+    small reusable window counter (`bump_activity_rate()`/
+    `activity_rate`), crosses 5 in a 10-second window, and log the first
+    one past it. `BEFORE` triggers so they can cancel the row; skipping
+    rather than `RAISE EXCEPTION`, because a raise rolled the log row back
+    too (fixed in v2.26.1, see the audit below).
   - `set_my_nick()` (see the nick bullet below) silently drops over 5
     calls per 30s per actor, same "no error" shape as `bite_body`.
 
-  15-in-10s deliberately sits well above any legitimate comet-only
-  traffic pattern now (at most 1 insert per `COMET_RESPAWN_DELAY_MS`
-  cycle — see [`docs/architecture.md`](architecture.md)'s "Comets"
-  bullet); it originally sat just above the old scattered-pool world's
-  one legitimate burst, the steward's one-time ~14-body world-seed
-  insert, a scenario that no longer exists at all post-9-orbit-rewrite
-  (fixed bodies are seeded once by the migration, not by any client) —
-  the threshold itself was never revisited since it's still comfortably
-  conservative either way. A false positive there costs a retried top-up
+  5-in-10s still sits well above legitimate comet traffic (at most 1
+  insert per `COMET_RESPAWN_DELAY_MS` cycle — see
+  [`docs/architecture.md`](architecture.md)'s "Comets" section); it was 15
+  while the steward still seeded ~14 bodies at once, a scenario gone
+  since the 9-orbit rewrite. A false positive there costs a retried top-up
   at worst (another client's staleness fallback or its own next cycle
   covers it), which is cheap enough that the threshold didn't need
   tuning to avoid every possible false positive. Applying every
@@ -186,8 +180,9 @@ then read just that range.
     RPC at all, so guesses are always attributable), and logs to
     `activity_log` itself if that's exceeded. Rotating the secret means
     regenerating it, hashing it, and re-running
-    `create or replace function admin_activity_log(...)` with the new
-    hash — there's no other copy to update.
+    `create or replace function admin_secret_ok(...)` with the new hash
+    (since v2.28.6 the one place both admin RPCs check it) — there's no
+    other copy to update.
   - **IP/browser/country are captured automatically, no client change
     needed, and can't be suppressed by a client** — `request_meta()`
     reads `current_setting('request.headers', true)::jsonb`, a session
@@ -250,16 +245,17 @@ then read just that range.
 
 ## bite_body rate limit
 
-- **`bite_body` is rate-limited per actor (20 calls/second)**, via the
-  `bite_rate_limit` table (RLS enabled, zero policies — reachable only
-  from inside the `SECURITY DEFINER` function, never directly by a
-  client). A real client only sends one call per damaged body per ~150ms
-  (`NET_DAMAGE_FLUSH_MS`), so legitimate play never gets close; this
-  exists because a script hitting the RPC directly in a tight loop could
-  one-shot every body the instant it spawned — verified live, 40
-  concurrent calls against one body applied exactly 20 and dropped 20.
-  Tripping it now also writes to `activity_log` (see below) — still just
-  dropped silently as far as the caller can tell, nothing changed there.
+- **Bites are rate-limited per actor: 20 calls/second, one budget shared
+  by `bite_body` (comets) and `bite_solar_body`** (`bump_bite_rate`, the
+  `bite_rate_limit` table — RLS enabled, zero policies, reachable only
+  from inside the `SECURITY DEFINER` functions). It exists because a
+  script hitting the RPC in a tight loop could one-shot every body —
+  verified live, 40 concurrent calls against one body applied exactly 20
+  and dropped 20. The client flushes damage per body every ~150 ms
+  (`NET_DAMAGE_FLUSH_MS`) through a 15/s budget (`net/biteBudget.js`):
+  without it, 15 ships on 5 bodies overran the limit (the v2.26.1 audit
+  below). Over the limit: dropped silently, the first call past it logged
+  to `activity_log`.
 
 ## Anonymous-auth spam
 
@@ -400,9 +396,11 @@ of use.
 
 **Fix**: the end of `supabase/schema.sql` revokes EXECUTE from `public`,
 `anon` and `authenticated` on every internal function:
-`bump_activity_rate`, `purge_old_data`, `request_meta`, `shorten_ip` and
+`bump_activity_rate`, `purge_old_data`, `request_meta`, `shorten_ip`,
 the trigger functions `log_body_insert_if_bursty`,
-`log_body_delete_if_bursty` and `enforce_bodies_cap`. Security-definer
+`log_body_delete_if_bursty` and `enforce_bodies_cap`, and since then
+`bump_stats`, `bump_bite_rate`, `admin_secret_ok` and the dead
+`claim_world_init`. Security-definer
 callers (`set_my_nick`, `bite_body`, …) still reach them, because inside a
 definer function the check runs as the owner. Verified live: a direct
 `rpc("bump_activity_rate")` / `rpc("purge_old_data")` now returns 42501,

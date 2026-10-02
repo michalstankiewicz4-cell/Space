@@ -301,7 +301,7 @@ Rules, for every new body and every change:
 Since v2.10.0 the game's planets, since v2.11.0 **every** body (the
 Sun, the meteoroid, comets, the black hole) and since v2.12.0 the sky
 (`scene/skybox.js`) are BodyKit's
-(`world/bodyVisual.js`; full story in `docs/architecture.md`'s
+(`world/bodyVisual.js`; full story in `docs/rendering.md`'s
 "Rendering and ShipKit models"):
 
 1. **Loading**: `index.html` loads `js/bodykit/bodykit.js` as a `defer`

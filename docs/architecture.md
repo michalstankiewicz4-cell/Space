@@ -1,10 +1,15 @@
-# Architecture notes (full detail)
+# Architecture notes: world, network, programs
 
 Referenced from [`CLAUDE.md`](../CLAUDE.md)'s condensed architecture map —
 this file holds the full history/verification behind each design decision
 (why it was chosen, live bugs found and fixed, exact function names). Read
 the relevant section here before touching that subsystem; CLAUDE.md's own
 map is enough for orientation but not enough to safely modify this code.
+
+The game's notes are in three files: [`architecture.md`](architecture.md)
+(world, network, programs, units), [`ui.md`](ui.md) (screens, HUD,
+windows, load order) and [`rendering.md`](rendering.md) (models,
+image quality, post-processing, sky).
 
 ## Contents
 
@@ -18,26 +23,17 @@ then read just that range.
 - [Camera modes](#camera-modes)
 - [Multiplayer and the steward](#multiplayer-and-the-steward)
 - [Solar system and gravity](#solar-system-and-gravity)
+- [Scale](#scale)
 - [Comets](#comets)
 - [Realtime channel health](#realtime-channel-health)
 - [Comet DELETE handling](#comet-delete-handling)
 - [Settings, identity and i18n](#settings-identity-and-i18n)
 - [Nickname moderation](#nickname-moderation)
-- [Ship cam](#ship-cam)
-- [Sky backdrop (nebulae, stars, pulsars)](#sky-backdrop-nebulae-stars-pulsars)
 - [Programmable drone](#programmable-drone)
 - [Programmable ships, unit view and trajectories](#programmable-ships-unit-view-and-trajectories)
 - [Space station](#space-station)
-- [UI kit (start screen and setup modal)](#ui-kit-start-screen-and-setup-modal)
-- [Skin lab](#skin-lab)
-- [Image quality (Setup → Graphics)](#image-quality-setup--graphics)
 - [Fleet memory and RETURN TO BASE](#fleet-memory-and-return-to-base)
-- [Interface modes, lines toggle, controls help](#interface-modes-lines-toggle-controls-help)
 - [Kills, damage flushing, UI text (v2.28.3 review)](#kills-damage-flushing-ui-text-v2283-review)
-- [Research trees](#research-trees)
-- [In-game HUD](#in-game-hud)
-- [Load order and first paint](#load-order-and-first-paint)
-- [Rendering and ShipKit models](#rendering-and-shipkit-models)
 
 ## Body types
 
@@ -49,35 +45,18 @@ then read just that range.
 
 ## Module split: bodies.js and controls.js
 
-- **`world/bodies.js` and `scene/controls.js` are split by concern, not by
-  feature** — both grew large enough (500+/350+ lines) across several
-  sessions' worth of additions that a codebase-structure review flagged
-  them. `world/bodies.js` kept only body *lifecycle* (materialize/spawn/
-  despawn/update/destroy); the pure kind+temp math (originally including
-  `pickBodyType`, since removed — see the "Solar system"/"Comets" bullets
-  below for why only comets are still randomly rolled at all —
-  `variantForTemp`, `bodyParams`, `bodyVariantKey`, `bodyValueEstimate`,
-  `tempColor`, `randomPlanetSpawnData`) moved to `world/bodyParams.js`, and
-  the optional-decoration mesh builders (`buildSunRays`, `buildCometTail`,
-  the selection-bracket sprite, `setPlanetSelected`) moved to
-  `world/bodyMeshParts.js` (since removed: the bodies became BodyKit's in
-  v2.10–2.11 and the selection frame an HTML overlay in v2.15,
-  `scene/selectionBrackets.js`) — the same "model-building lives in its own
-  file" split `station/stationModel.js` already used, just applied
-  retroactively to the file that had accumulated the most. `scene/controls.js`
-  similarly kept only camera state + the actual selection/event-wiring
-  logic; the five `pickXAt()` raycast functions (+ the shared
-  `THREE.Raycaster` instance) moved to `scene/picking.js`, and the hover
-  tooltip (`showTooltip`/`showBlackHoleTooltip`/`hideTooltip`, previously
-  reaching into module-local DOM refs) moved to `scene/tooltip.js` behind
-  its own `initTooltip()`. **This was a pure reorganization — every
-  function kept its exact same behavior, just a new import path** — verified
-  live afterward by watching real `bite_body` RPC traffic (30 calls, all
-  200s, health decreasing correctly) during a full eat-a-planet cycle, not
-  just a lint/load check, specifically because the Supabase-facing code
-  (`net/bodiesSync.js`, `requestSpawnPlanet` — since renamed
-  `requestSpawnComet`, see below) was among the files whose imports had to
-  be repointed at the new module boundaries.
+- **Split by concern, not by feature.** `world/bodies.js` = body
+  lifecycle (materialize / spawn / despawn / update / destroy);
+  `world/bodyParams.js` = the pure kind + temp math (`variantForTemp`,
+  `bodyParams`, `bodyVariantKey`, `bodyValueEstimate`, `tempColor`,
+  `randomPlanetSpawnData`); `world/bodyVisual.js` = the look (BodyKit);
+  `world/rewards.js` = a kill's payout. On the scene side
+  `scene/camera.js` = the camera (split out in v2.28.4),
+  `scene/controls.js` = mouse input, selection and orders,
+  `scene/picking.js` = the raycasts (`pickXAt()`, one shared
+  `THREE.Raycaster`), `scene/tooltip.js` = the hover tooltip,
+  `scene/selectionBrackets.js` = the selection frames. Each split was a
+  pure move, verified by a full eat-a-body cycle against the live server.
 
 ## Ship movement: explicit orders only
 
@@ -90,34 +69,15 @@ then read just that range.
   and clicking a planet with nothing selected silently sent the *entire*
   swarm. Clicking a planet with no selection now just shows a "select
   ships first" toast (`toast.noSelection`) instead of doing anything.
+  RETURN TO BASE is the other order ("Fleet memory and RETURN TO BASE").
+- **An ordered ship ignores gravity** (`solarGravity.js` skips it while
+  `sh.commandedTarget` or `sh.returning`). Steering against real gravity
+  was tried twice and measured: a ship sent 345 units never arrived in
+  1000 simulated seconds — the full story in "Solar system and gravity"
+  and "Programmable ships". Idle ships outside the station field and the
+  drone do feel gravity.
 
 ## Camera modes
-
-- **Scale** — the full picture (numbers, what depends on what, problems
-  found, a checklist for the next change) is in `docs/scale.md`; the two
-  steps in brief:
-- **Scale, step 1 (v2.16.0)**: toward a more realistic (not literal)
-  scale, units shrank to half — ship `SHIP_MODEL_LENGTH` 0.9 → 0.45,
-  drone 1.4 → 0.7, station 10 → 5 (its ring now smaller than a planet)
-  — with everything sized around them: ship ring/pick sphere, LOD cone,
-  owner markers, bite beams, the drone's ring/pick/spawn offset, station
-  pick radius / label / focus distance, ship spawn spiral (3 + 0.55·√i)
-  and `STATION_FIELD_RADIUS` (8), the ship cam's canopy offset, the unit
-  miniature distance, and the base camera (radius 11, zoom 3–150).
-  Planets, orbits, gravity and the database are untouched.
-- **Scale, step 2 (v2.17.0)**: bodies are drawn bigger than their
-  gameplay size — `world/solarSystem.js#BODY_VISUAL_SCALE` (Sun ×3,
-  planets ×2.5, meteoroid ×1.5, black hole ×1). Each solar body keeps its
-  original radius as `size`, from which gravity (`gm`, SOI), its point
-  value (`bodyValueEstimate`), its offline max health and the Sun's
-  PointLight range are computed, so the balance and the database don't
-  change; `radius` (drawn, picked, camera focus, gravity's near-clamp) is
-  the scaled one. `p.size` rides along on every body (a comet's = its
-  radius). What used to be fixed distances became "above the surface":
-  the eating orbit is `radius + EAT_ORBIT_GAP` (1.6; was a fixed 3.6
-  that a bigger planet would swallow), the drone's dock range `radius +
-  DRONE_DOCK_GAP` (4; was ×3.2). Scorch blots shrink by size/radius so
-  they keep their world size. The minimap still draws gameplay sizes.
 
 - **"focus" mode (v2.14.0)**: `scene/camera.js#focusCameraOn(body)`
   orbits one body from `ctx.planets` (planet, Sun, meteoroid, comet) and
@@ -161,7 +121,7 @@ then read just that range.
   14 px of the cursor on screen (`pickSmallBodyAt`) — comets are small and
   fast, and anything far away is only a few pixels.
 
-- **Camera has two modes, toggled top-center in the HUD** (`scene/
+- **Two player-driven modes, toggled top-center over the 3D view** (`scene/
   camera.js#setCameraMode()`, v2.0.6): "system" orbits the Sun at the
   origin (the original, only view before this); "base" orbits the
   player's own station instead, and is the default on load. Both modes
@@ -194,9 +154,6 @@ then read just that range.
   `spawnStation()` in `main.js` (not inside `initControls()`, which runs
   before any station exists yet) so the "base" default has a real
   `ctx.station.pos` to derive from immediately, not a fallback.
-  (`planetEditor.html` used to reuse this module for its own preview
-  camera, relying on `updateCamera()`'s `ctx.station` guard to fall back
-  to the origin pivot; the editor was removed in v2.2.1, the guard stays.)
 
 ## Multiplayer and the steward
 
@@ -245,8 +202,10 @@ then read just that range.
   rapid-fire bite could show `killed:true` again within milliseconds —
   fixed to a `health_now > max_health*0.1` threshold, verified live (5
   rapid bites → only the 1st shows `killed:true`). The exact same bare
-  `>0` bug existed client-side too, in both `js/ships/swarm.js`'s and
-  `js/drone/drone.js`'s offline-mode kill resolution, and got the same fix.
+  `>0` bug existed client-side too and got the same fix. **Superseded in
+  v2.28.3**: that threshold almost never let a real kill count; the rule
+  now is "spent" (`world/bodies.js#isSpent`, `docs/security.md`,
+  "Solar-body kill rule").
   - **Ambient patched-conics gravity** (`world/solarGravity.js#
     updateSolarGravity()`, called from `main.js#tick()` before
     `updateShips()`/`updateDrone()` so this frame's pull is integrated the
@@ -315,8 +274,8 @@ then read just that range.
     bullet — didn't make gravity-during-commanded-flight actually viable
     on its own.
   - **Commanded ships stay deliberately immune to this gravity while
-    cruising, even after both fixes above** (`ships/swarm.js#
-    updateShips()`'s own header comment has the full story) — tried
+    cruising, even after both fixes above** (since v2.19.0 skipped
+    outright, see "Programmable ships") — tried
     letting gravity's own contribution persist instead of being
     overridden every frame by the existing course-correction lerp
     (`sh.vel.lerp(toTarget*cruiseSpeed, 0.08)`), first via a bounded
@@ -365,6 +324,34 @@ then read just that range.
     just the orbit radii themselves.** (A third instance of this exact
     lesson, missed the first time around, is documented in
     [`docs/security.md`](security.md): `bodies_pos_check`/`bodies_vel_check`.)
+
+## Scale
+
+The full picture (numbers, what depends on what, problems found, a
+checklist for the next change) is in [`docs/scale.md`](scale.md); the two
+steps in brief:
+
+- **Step 1 (v2.16.0)**: toward a more realistic (not literal) scale,
+  units shrank to half — ship `SHIP_MODEL_LENGTH` 0.9 → 0.45, drone 1.4 →
+  0.7, station 10 → 5 (its ring now smaller than a planet) — with
+  everything sized around them: ship ring/pick sphere, LOD cone, owner
+  markers, bite beams, the drone's ring/pick/spawn offset, station pick
+  radius / label / focus distance, ship spawn spiral (3 + 0.55·√i) and
+  `STATION_FIELD_RADIUS` (8), the ship cam's canopy offset, the unit
+  miniature distance, and the base camera (radius 11, zoom 3–150).
+  Planets, orbits, gravity and the database are untouched.
+- **Step 2 (v2.17.0)**: bodies are drawn bigger than their gameplay size —
+  `world/solarSystem.js#BODY_VISUAL_SCALE` (Sun ×3, planets ×2.5,
+  meteoroid ×1.5, black hole ×1). Each solar body keeps its original
+  radius as `size`, from which gravity (`gm`, SOI), its point value
+  (`bodyValueEstimate`), its offline max health and the Sun's PointLight
+  range are computed, so the balance and the database don't change;
+  `radius` (drawn, picked, camera focus, gravity's near-clamp) is the
+  scaled one. `p.size` rides along on every body (a comet's = its
+  radius). What used to be fixed distances became "above the surface": the
+  eating orbit is `radius + EAT_ORBIT_GAP` (1.6), the drone's dock range
+  `radius + DRONE_DOCK_GAP` (4). Scorch blots shrink by size/radius so
+  they keep their world size. The minimap still draws gameplay sizes.
 
 ## Comets
 
@@ -455,40 +442,26 @@ then read just that range.
   fine even while the socket is dead, so a desynced client looks
   completely normal to the player and, worse, can flood the world via the
   steward top-up fallback if code doesn't check `isConnected()` first
-  (this happened once — see `js/net/bodiesSync.js#maintainPlanetCount`).
+  (this happened once, in the old planet top-up loop).
   The reconnect-status badge in the HUD is deliberately driven by the
   channel's own reported status, not a "haven't heard anything in a while"
   timer — a healthy-but-quiet room (nobody else currently playing) would
   otherwise be indistinguishable from a dead connection and trigger
-  constant false alarms. **`js/world/blackholes.js#updateBlackHoles()` had
-  this exact gap unfixed for a long time** — no `isConnected()` guard on
-  its own steward-gated spawn, *and* no staleness fallback at all (unlike
-  `maintainPlanetCount`'s), so a steward whose tab was merely backgrounded
-  (not disconnected — Presence re-election needs an actual socket drop,
-  not just a throttled `requestAnimationFrame`) meant black holes could
-  stop appearing for the whole session with nothing to self-correct it.
-  Reported live as "black holes stopped appearing" and fixed the same way
-  `maintainPlanetCount` was: `isConnected()` before spawning, plus a
-  `lastBlackHoleActivityAt`/`BLACKHOLE_STALE_MS` (90-120s, jittered)
-  fallback letting any other connected client step in once it's been far
-  longer than the normal 34-58s cadence since one last appeared. Verified
-  live with two clients: the non-steward correctly didn't spawn while not
-  stale, then correctly did once `Date.now()` was patched far enough
-  ahead to cross the threshold — and the result synced to both clients via
-  Realtime, same as a steward-spawned one would. **This
-  `isConnected() && (isSteward || stale)` shape is now a shared helper**,
-  `net/stewardFallback.js#createStalenessGate(baseMs, jitterMs)` — both
-  `maintainPlanetCount` and `updateBlackHoles` had independently grown the
-  identical pattern by 1.10.15, so it was consolidated into one factory
-  returning `{bump(), shouldSpawn()}` rather than staying duplicated a
-  third time the next this shape is needed for some other steward-gated
-  top-up loop. **Both call sites have since changed** (v2.0.0+): the black
-  hole is now one permanent `solar_bodies` row with no spawn/staleness
-  logic left in `updateBlackHoles()` at all, and `maintainPlanetCount` was
-  renamed `maintainComet` and rebuilt around a single-comet cooldown
-  instead of a population cap (see the "Comets" architecture bullet
-  above) — but `createStalenessGate` itself is still exactly this shape,
-  now with just the one caller.
+  constant false alarms.
+- **Steward-gated spawns need `isConnected() && (isSteward || stale)`** —
+  `net/stewardFallback.js#createStalenessGate(baseMs, jitterMs)` returns
+  `{bump(), shouldSpawn()}`. Presence re-elects a steward only on a real
+  socket drop, so a steward whose tab is merely backgrounded can stay
+  steward forever while doing nothing; the staleness fallback lets anyone
+  step in once nothing has appeared for far longer than the normal
+  cadence. Found live twice (the old black-hole spawner and planet
+  top-up, both gone with the 9-orbit rewrite); its one caller today is
+  `net/bodiesSync.js#maintainComet`.
+- **A replaced channel's callbacks are ignored** (v2.26.1): removing the
+  old channel fires its own subscribe callback with "CLOSED", which used
+  to schedule another reconnect that tore down the healthy new channel —
+  a reconnect every ~2 s for the life of the tab (`docs/security.md`,
+  "Audit 2026-09-30").
 
 ## Comet DELETE handling
 
@@ -512,9 +485,10 @@ then read just that range.
 ## Settings, identity and i18n
 
 - **Settings vs. identity vs. i18n**: three separate small persisted
-  modules, deliberately not merged — `js/settings.js` (local input/UX
-  prefs: mouse invert/swap), `js/net/identity.js` (nickname/color, shared
-  with other players), `js/i18n.js` (language toggle). Staying separate
+  modules, deliberately not merged — `js/settings.js` (local prefs:
+  mouse, image quality, lines on/off), `js/net/identity.js` (nickname/color, shared
+  with other players), `js/i18n.js` (language; the dictionaries in
+  `js/i18n/en.js` and `pl.js`). Staying separate
   modules doesn't mean duplicating the storage boilerplate, though: as of
   1.10.15 the try/catch-guarded `localStorage.getItem`/`setItem` pair
   (needed since a private/storage-disabled tab throws) had been
@@ -547,54 +521,6 @@ then read just that range.
     `NET_MAX_NICK_LENGTH` (20) in `confirmNick()` — one shared constant
     for both the own-nick length cap and the remote-payload safety clamp
     in `shipsBroadcast.js`, not two numbers that can drift apart.
-
-## Ship cam
-
-- **Ship cam** (`js/scene/shipcam.js`): a picture-in-picture "cockpit" view
-  rendered as a *second* render pass into a small corner rectangle of the
-  same canvas/renderer (`setViewport`/`setScissor`, right after the main
-  full-screen render in `main.js`'s `tick()`) — not a second
-  `WebGLRenderer`. The viewport/scissor must be reset to full-canvas
-  before next frame's main render or it stays clipped to the small rect.
-  A ship's mesh group faces its travel direction along local **+Z**, not
-  the `-Z` that `Object3D.lookAt()`'s usual convention would suggest
-  (verified empirically, not yet root-caused) — the ship cam camera
-  corrects for this with a 180°-about-Y flip before copying the mesh's
-  quaternion, since a camera always looks down its own -Z.
-
-## Sky backdrop (nebulae, stars, pulsars)
-
-- **Since v2.12.0 the sky is BodyKit's** (`js/bodykit/bodykit.js`, the SKY
-  group, kind `"sky"`; `js/scene/skybox.js` builds and updates it; the
-  body lab's SKY tab edits it and the lab shows it behind every body). It
-  replaces the old canvas nebula sphere, the `THREE.Points` starfield in
-  `scene/setup.js` and the sprite pulsars (`scene/pulsars.js`, deleted).
-- **Baked, not drawn live**: black space, a Milky Way band (clumps, dust
-  lanes) and the nebulae (regions of domain-warped noise: glowing gas,
-  wisps, hot cores, two colors, dark dust dimming only the gas) are a
-  heavy full-screen shader, so BodyKit renders it once into a cube map
-  (`CubeCamera`, 1024² per face at detail 1) and draws a sphere that just
-  samples it (`textureCube` by direction — verified pixel-identical to the
-  live shader, no face flips). It re-bakes only after a change (a slider,
-  `setOctaves`), ~40–100 ms; the first bake + compile ~1.2 s is lost in
-  the start-of-game shader compile (measured: the game's first-frame stall
-  is the same ~1.15 s with or without the sky).
-- **Stars and pulsars are points** (one `THREE.Points`, 14 000 max stars,
-  `stars` picks how many via the draw range): colors from their
-  temperature (`blackbody`), mostly faint, 40% crowding toward the Milky
-  Way's plane, ~12% twinkling (`twinkle`); the first 6 vertices are
-  pulsars (`pulsars` shows 0–6) with a period each, a bright core and
-  cross-shaped beams drawn in the point sprite. Positions come from a
-  seeded RNG (`seededRandom`), so a sky is the same for everyone.
-- **Infinitely far**: `updateSkybox(dt)` (main loop) passes the camera
-  position (`opts.center`) — the sky group follows the camera — and the
-  renderer (`opts.renderer`, for the bake and the pixel ratio). Radius
-  9000, inside the camera's far plane (12000). The display sphere draws
-  first (`renderOrder -1000`, no depth write), the points are additive.
-  BodyKit shaders don't use fog, so the old `fog:false` trap doesn't
-  apply. The reflections (`scene.environment`) still come from ShipKit's
-  lab sky (brighter than this black sky, which keeps the metal ships
-  readable).
 
 ## Programmable drone
 
@@ -660,7 +586,7 @@ then read just that range.
     until fixed). A remote drone rendered as a ghost octahedron
     (`makeGhostDroneMesh`) tinted by owner color — **superseded**: since
     v2.8.0 it's ShipKit's DR-01 model, never tinted, with the owner's
-    diamond marker (v2.13.1; see "Rendering and ShipKit models") — tracked as
+    diamond marker (v2.13.1; see `rendering.md`, "Rendering and ShipKit models") — tracked as
     `remotePlayers[id].droneMesh` — a single mesh, not an array like
     `.meshes` — since there's only ever one drone per player; disposed on
     both `payload.drone === null` and the same
@@ -673,27 +599,11 @@ then read just that range.
     `handleRemoteShips()` and `updateRemoteShips()` is now
     `setGhostTarget(mesh, x, y, z)`/`lerpGhost(mesh, dt)`, called once per
     ghost kind.
-  - **`spawnDrone()` deliberately spawns it ~6 units out from the origin,
-    away from the swarm's own spawn area** (its pick sphere is also
-    smaller than a ship's: 0.5 vs 0.55). This was a real, reported bug,
-    not a style choice: the drone is picked *before* ships/planets on
-    every click (`scene/controls.js`), so when it overlapped the swarm's
-    old spawn cube (both spawned near the origin, pre-v2.0.6), an
-    ordinary click meant to command ships onto a planet could silently
-    reselect the drone instead — which, since selecting it reopens its
-    side panel, was reported and investigated for several rounds as "the
-    close button doesn't work" (it did; a subsequent normal gameplay
-    click was just reselecting the drone and reopening the panel a moment
-    later). **The swarm's own spawn point moved away from the origin
-    entirely in v2.0.6** (`ships/swarm.js#shipSpawnPosition()`, now a
-    golden-angle spiral around `ctx.station.pos` — see the new "Ships
-    spawn at the station" bullet below), so this exact overlap can't
-    recur the way it originally did; the drone's own spawn point wasn't
-    touched by that change and still sits near the origin (i.e. now near
-    the Sun specifically, not just "empty space" the way it was
-    pre-9-orbit-rewrite) — if the drone ever needs revisiting, that's a
-    separate, not-yet-reported concern, not the click-priority bug this
-    bullet documents.
+  - **The drone spawns above the station** (`station.pos + (0, 3.5, 0)`),
+    clear of the ships' spiral: clicks pick the drone *before* ships and
+    planets (`scene/controls.js`), so when it overlapped the swarm an
+    ordinary click meant to order ships reselected the drone instead —
+    investigated for several rounds as "the close button doesn't work".
   - **`print(x)`'s in-world effect** (`js/drone/dronePrintFx.js`) is a gas
     puff + a laser that projects the text onto it, both spawned as plain
     scene objects (`THREE.Sprite`s for the gas/text via `CanvasTexture`,
@@ -741,52 +651,18 @@ then read just that range.
     broadcast traffic already has everywhere else in this project (see
     "Realtime channel health has no free lunch" above) — accepted, not a
     gap introduced by this feature specifically.
-  - **The side panel's `#droneCloseBtn`/`#droneScriptBtn`/`#droneRunBtn`/
-    `#droneStopBtn` all need an explicit `pointer-events:auto` override**
-    in `style.css` — `#dronePanel` itself is `pointer-events:none` (same
-    trick as `#shipCam`: the panel body shouldn't catch stray clicks, only
-    its actual controls should), so a new interactive element added
-    inside it and left off that override list is invisible to clicks even
-    though it renders and looks completely normal (confirmed via
-    `document.elementFromPoint()` — clicks were landing on the canvas
-    behind it). This bit twice: once for the close button itself, then
-    again for the Run/Stop shortcuts added right after.
-  - **The close button listens for `pointerdown`, not `click`** — measured
-    directly, not assumed: a plain `click` requires mousedown and mouseup
-    to land on "compatible" targets, and an ordinary hand's few-px drift
-    between press and release is enough to silently drop it, even with
-    `#shipCam`'s exact pointer-events recipe copied verbatim (reproduced
-    the same failure on a faithful copy of it — `#shipCamCloseBtn` almost
-    certainly has this same latent bug, just not yet hit/reported there).
-    `pointerdown` reacts at press time, immune to where the release lands.
-  - **The single actual bug behind every "won't close" report, after all
-    of the above were real-but-insufficient fixes: `#dronePanel.hidden`
-    had no matching `display:none` rule in `style.css`.** Every other
-    panel/overlay (`#shipCam.hidden`, `.modal.hidden`, `#legend.hidden` —
-    the old body legend, removed in v2.3.0 —
-    ...) has one; this one didn't, so the JS-toggled `hidden` class did
-    nothing visually — the panel rendered at `display:block` 100% of the
-    time regardless of selection state. This slipped through several
-    rounds of testing because those tests checked
-    `classList.contains("hidden")` as a proxy for "is it closed" instead
-    of the actual rendered state — the class *was* being toggled
-    correctly the whole time. **Lesson: when testing whether something is
-    visually hidden, assert on `getComputedStyle(el).display` (or a
-    screenshot), never just the presence of a CSS class name** — a class
-    can be applied perfectly correctly and still do nothing if the rule
-    for it doesn't exist. **Fixed structurally in 1.10.15**, not just
-    patched for this one panel: `css/style.css` now has a single generic
-    `.hidden{ display:none !important; }` rule (near `.panel`'s own
-    definition) instead of the ~15 separate `#id.hidden{...}` rules this
-    file used to need one of per panel/overlay — a future hideable element
-    needs zero new CSS to support `.hidden`, closing this exact class of
-    gap for good rather than just for `#dronePanel`. The `!important` is
-    deliberate: several base rules (`#legend`, `#banner`, `#outdatedOverlay`,
-    `.modal`) set their own `display` directly, at higher specificity than
-    a plain `.hidden` class alone could beat, so `!important` sidesteps
-    that comparison instead of requiring every new element to write its
-    own `#itsId.hidden{...}` override just to out-specificity its own base
-    rule.
+  - **The old drone side panel (gone since the v2.2.0 HUD) taught two
+    lessons that still apply**: a control inside a `pointer-events:none`
+    container needs its own `pointer-events:auto`, and a close button
+    reacts on `pointerdown` (a `click` is lost when the hand drifts a few
+    px between press and release). And the one real bug behind every
+    "won't close" report: `#dronePanel.hidden` had no `display:none` rule,
+    while the tests checked `classList.contains("hidden")`. **Test
+    "hidden" with `getComputedStyle(el).display` or a screenshot, never a
+    class name.** Fixed structurally in 1.10.15: one generic
+    `.hidden{ display:none !important; }` in `css/style.css`
+    (`!important` because several base rules set `display` at higher
+    specificity).
 
 - **Block editor** (v2.4.0; `js/blocks/*` = model + compiler, no DOM;
   `ui/windows/blockEditor.js` + `blockPalette.js`/`blockRender.js`/
@@ -1001,253 +877,16 @@ that ship view — "the drone too").
     spawning all at once. `main.js` now spawns the station *before* the
     initial fleet specifically so `ctx.station.pos` already exists for
     this (previously the fleet spawned first).
-  - **`world/solarGravity.js#updateSolarGravity()` skips ambient gravity
-    entirely for any ship within `STATION_FIELD_RADIUS` of the
-    station** (the pull-back described here was removed in v2.19.0 —
-    see "Programmable ships, unit view and trajectories"; same radius `station/stationField.js`'s own containment
-    pull-back already used — one coherent field, not two independently-
-    tuned radii: inside it, gravity simply doesn't apply; at/beyond the
-    boundary, `stationField.js`'s existing pull-back takes over for
-    anything that traveled away and went idle far from home). Before
-    this, the existing pull-back alone wasn't enough to keep a freshly-
-    spawned fleet parked: it only reacts once a ship has *already*
-    drifted past the boundary, so gravity would still tug on ships sitting
-    at the station the whole time, in a permanent tug-of-war rather than
-    genuinely being exempt. The station itself has no `soiRadius` of its
-    own in the patched-conics model (`world/solarSystem.js`'s own header
-    comment: orbit slot 4 is "the player-station ring, not a body"), so
-    without this exemption, real solar gravity at the station's own
-    ~290-unit distance (strong enough to matter, not negligible) was the
-    dominant, unopposed pull on anything parked there. Verified live
-    (offline mode): three freshly-spawned ships' positions were bit-for-
-    bit identical after 8 idle seconds, vs. drifting under the old
-    scattered near-origin spawn. Ships only as of v2.0.6 — the drone
-    joined this same gravity exemption in v2.0.8, see the dedicated
-    bullet right below.
-  - **The drone joined the same spawn-near-station + gravity-exemption
-    treatment in v2.0.8** (`drone/drone.js#spawnDrone()`,
-    `world/solarGravity.js#updateSolarGravity()`) — the user's own
-    framing, "it's kind of a ship too." Spawns at a fixed `station.pos +
-    (0, 3.5, 0)` offset (6 before the v2.16.0 scale step) rather than joining the ships' own golden-angle
-    spiral there: the old reasoning for spawning it away from the swarm
-    in the first place (picking the drone is checked *before* ships/
-    planets on every click, see `scene/controls.js` — overlapping the
-    busy fleet-commanding area meant an ordinary click near the swarm
-    could silently reselect the drone instead, previously investigated
-    for several rounds as a "close button doesn't work" bug that was
-    really a click-priority conflict) still applies just as much now that
-    both spawn near the station instead of near the origin — a fixed
-    vertical offset keeps it clearly clear of the ships' own small
-    `+-1.5` vertical spread at any fleet size, without needing its own
-    slot in that spiral. (Moot since v2.19.0 — there's no pull-back at
-    all any more, the field only shields; kept for the history.)
-    **Deliberately did NOT get
-    `stationField.js`'s pull-back-if-wandered treatment, unlike ships** —
-    a ship that's wandered off is always either idle (safe to nudge home)
-    or actively eating something, in which case `updateShips()` overwrites
-    its position outright every frame (the lerp-to-orbit-around-target
-    branch), so that pull never actually fights a ship mid-task. The
-    drone has no equivalent override: docking/refueling
-    (`isDocked()`) is a pure proximity check with nothing pinning its
-    actual position, so pulling it back toward the station at
-    `STATION_FIELD_STRENGTH` the same way would visibly drag it off
-    whatever distant body it's deliberately docked at mid-script —
-    breaking the drone's actual point (autonomously roaming/docking
-    anywhere in the system), not just nudging an idle unit home the way
-    it does for ships. Verified live: `applyStationField()` called
-    directly against a drone placed far from the station left its
-    position completely untouched (confirmed structurally too — the
-    function's loop only ever iterates `ctx.ships`).
-
-## Skin lab
-
-`skins.html` (2026-09-28): a standalone prototype of the in-game HUD in
-two new looks — TERMINAL (green phosphor CRT) and SYNTAX (a colourful
-code-editor theme) — not part of the game yet. Everything about it (how
-it's built, each skin's techniques, the plan for adopting a skin in the
-game, skins by race vs. by the player) is in
-[`docs/skins.md`](skins.md).
-
-## UI kit (start screen and setup modal)
-
-- **New UI kit (start screen + setup modal, v2.1.0)**: ported from the
-  standalone single-file mockup (`UI-start.html`, deleted once fully
-  ported — the game itself is now the reference). File layout: `css/ui/kit.css` holds
-  the shared primitives (`.uiStage`, `.mat` + color variants, `.uiPanel`,
-  `.hdLine`, `.oBtn`), one CSS file per screen next to it
-  (`startScreen.css`, `setupModal.css`), all linked from index.html's
-  `<head>` without a `?v=` of their own, so `css/style.css`'s stays the
-  only CSS cache-busting literal (they're in `versionCheck.js#
-  MODULE_FILES` instead). They used to be `@import`s inside style.css,
-  switched to parallel `<link>`s in v2.2.1 (see "Load order"). The `.mat` grain is a static
-  `css/ui/grain.png` (regenerate with `tools/grainTexture.html`), not
-  generated at runtime anymore (v2.1.3). JS side: `ui/banner.js` (start
-  screen only),
-  `ui/setupModal.js`, and `ui/escapeKey.js` (the global Escape priority
-  chain, a table of `[isOpen, close]` pairs — add new overlays there).
-  Language-dependent text refreshes via `i18n.js#onLangChange()`
-  subscribers, not a hardcoded callback list in whoever calls `setLang()`.
-  `.uiStage` is a fixed 1536x1024 design (everything absolutely positioned
-  in design pixels), scaled by the `--uiScale` CSS var, which is set by an
-  inline `<head>` script in `index.html` — deliberately not a module: as
-  one it only ran once main.js and all its imports had loaded, and the
-  start screen flashed at full size until then (v2.1.1). Anchored to the
-  top edge so the top bar stays on top on portrait screens. The top bar
-  itself is *not* in `.uiStage` but in a `.uiBar` (v2.1.4): a
-  full-window-width strip in the same scaled design-pixel space, whose
-  width in design px is `100% / --uiScale` — left-group elements use
-  `left`, right-group ones `right`, and the two rails use both, so they
-  stretch with the window. Gotchas: the
-  kit's button reset is wrapped in `:where(.uiStage)` on purpose — at
-  normal `.uiStage button` specificity its `background:none` beats `.mat`
-  and every material button renders transparent. The old HUD's `.panel`
-  class (removed in v2.2.0) was unrelated — the kit uses `.uiPanel` to avoid colliding
-  with it. The start screen is translucent over the live scene, so the
-  HUD is hidden while it's open via `body:has(#banner:not(.hidden))` in
-  CSS, no JS. `.setupCheckRow` is shared with the dev tools menu, so the
-  kit's toggle-switch styling is scoped to `#setupModal`. The in-game HUD
-  was ported onto the same kit in v2.2.0 — see the next section.
-
-- **Start screen extras (v2.2.0)**: live player counters centered on
-  the top bar's rails (`ui/playerCounts.js` — online = this client +
-  `ctx.remotePlayers`, same as the HUD's slot; registered = the public
-  `player_count()` RPC, see docs/security.md; both only refreshed while
-  the start screen is open, "—" until known, hidden in offline mode), a
-  [?] button opening the About window (`ui/about.js`, a `.uiWindow`),
-  and a Graphics tab in Setup holding the ship lab's two sliders, inert
-  for now (setup tabs and panels are matched by `data-tab`, so a new tab
-  is markup + one i18n key, no JS change).
-- **Story intro (v2.6.1)**: the description is the story opening
-  (`banner.boot` — a terminal-style line in `#bannerBoot` — plus
-  `banner.desc`, two paragraphs split by a `
-` that `#bannerDesc`'s
-  `white-space:pre-line` keeps). The panel grew 40px for it; `#box` and
-  everything below the description are positioned in fixed design px,
-  so a longer text means shifting those tops too. In i18n.js the break
-  must be the two characters `
-` inside the string — a real line break
-  there is a syntax error that silently leaves a non-English start panel
-  blank (it happened once).
-
-## Image quality (Setup → Graphics)
-
-v2.21.0, the user's request ("everything, each with on/off / adjust /
-manual / auto"). All settings in `settings.js` (`gfxResMode`,
-`gfxTargetFps`, `gfxMaxRes`, `gfxSmoothLines`, `gfxLineWidth`,
-`gfxFarShips`, `gfxLodDistance`, `gfxFxaa`), read through
-`scene/graphics.js` getters, changed with `setGfx(patch)` (listeners get
-the values from before). The Setup tab is a scrolling list; controls with
-`data-key` are bound generically in `ui/setupModal.js#initImageQuality`.
-
-- **Resolution** (`scene/resolution.js`, called every frame before the main
-  render): manual = `pixelRatioFor(gfxQuality)`; auto = starts at the
-  screen density, every 1.5 s +0.1 while fps > 1.2 × target, −0.15 when
-  below 0.92 × target (not in the first 6 s: shader compiles), between 0.6
-  and density × `gfxMaxRes` (above 1 = supersampling). The pixel ratio
-  only changes in steps (it reallocates the drawing buffer).
-  `scene/setup.js` no longer sets it after startup.
-- **Smooth lines** (`scene/lines.js`): `makeLineMaterial(spec)` /
-  `makeLine(points, mat)` give Line2 + LineMaterial (vendor add-ons) or a
-  plain `THREE.Line`; `setLineResolution()` runs before every render pass
-  (`viewRect.js`); `onLinesChange(fn)` rebuilds a caller's lines when the
-  mode changes (width changes apply live). Used by `orbitLines.js`
-  (orbits, comet paths — a live comet keeps its old line until the next)
-  and `trajectories.js` (lines recreated each refresh).
-- **Far ships** (`ships/shipVisual.js#makeFar`): "dot" — an additive glow
-  sprite, constant screen size; "cone" — the old stand-in; "model" — no
-  stand-in, always the model. The distance is `gfxLodDistance` (was the
-  constant `SHIP_LOD_DISTANCE`, removed).
-- **FXAA**: the main view renders into an offscreen target the size of
-  the view rect (multisampled on WebGL2), whose texture is sRGB — so the
-  scene writes its final tone-mapped colours into it — then a quad with
-  `THREE.FXAAShader`. Verified: colours identical with it on and off. The
-  miniatures and the cockpit view don't go through it. Since v2.23.0 part
-  of the post-processing chain below (it was `viewRect.js#renderWithFxaa`).
-- **Post-processing** (v2.23.0, `scene/post.js`; the user asked for all
-  of it, each switchable; since v2.25.1 the steps live in PostKit,
-  `js/postkit/postkit.js`, shared with the labs — `post.js` only maps
-  settings and game objects to its options): `viewRect.js#renderMainView`
-  hands over to `renderPost` whenever `postActive()`. Order: scene → offscreen target
-  (MSAA = its sample count: `gfxMsaa` 0/2/4/8; the canvas's own ≈×4 is
-  fixed at context creation) → **lensing** (only with the black hole in
-  view: the scene is drawn with the hole hidden, warped around it with a
-  point-lens mapping r → r·(1 − E²/r²), then the hole is drawn over the
-  warp — warping BodyKit's disk too made a bullseye) → **bloom**
-  (`UnrealBloomPass.render(renderer, null, src)` adds into `src`; its
-  high-pass gets `smoothWidth` 0.06; the threshold works on the
-  tone-mapped LDR image, so a sunlit ice planet near 0.95 glows too —
-  default threshold 0.93 is the compromise) → **FXAA** → **depth of
-  field** (focus camera only, eased in; a quarter-size blurred copy) →
-  the final shader: DOF mix by *screen* distance from the centre (no
-  depth readable from a multisampled target in WebGL here; the focused
-  object is always centred), the Sun's **flare** (visibility read from 7
-  samples of the Sun's disc in the image itself, so a planet in front
-  dims it with no extra pass), and the **filter** (aberration, vignette,
-  grain). Cost measured headless: bloom ≈ −25 % fps, the rest small.
-- **Engine trails** (v2.24.0, `fx/trails.js`): own ships + the drone; a
-  camera-facing strip of recent tail positions (3 vertices across: dark
-  edges, bright middle — a soft ribbon), additive, narrowing and dimming
-  with age; the newest point rides with the engine so the trail never
-  lags. Direction from the last frame's position (the drone has no `vel`).
-- **Eclipses** (v2.24.0, `scene/eclipse.js`): no shadow maps — every lit
-  built-in material (ShipKit's too) gets an `onBeforeCompile` (and a
-  `customProgramCacheKey` that keeps its own hook's key) adding a
-  world-position varying and an analytic sphere-occlusion test against
-  the Sun's disc (umbra + penumbra), reading shared uniforms set each
-  frame from `ctx.planets`. It scales direct light and — because ShipKit
-  models get most of their light from the environment map — the indirect
-  light down to 30 %. Needs one recompile per material, so `main.js` runs
-  it before the start-up `renderer.compile`. The patching rides on
-  `colorManagement.js`'s per-frame walk (`manageSceneColors(scene,
-  patchEclipseMaterial)`, v2.28.2) — one walk of the scene, not two. BodyKit bodies don't take
-  part.
-- **Bite effects** (v2.24.0): `fx/particles.js#spawnSparks` (hot
-  particles coloured by a cooling ramp), `fx/impact.js` (a flickering
-  glow sprite at the beam's contact point, hidden with the beam). The
-  particle pool now draws round dots (a canvas texture).
-- **Presets** (v2.25.0, `graphics.js#applyPreset`, `TIERS` + `RES`):
-  `gfxPreset` "auto" | "min" | "normal" | "max" | "custom". Every
-  `setGfx` without its `fromPreset` flag (so every change by hand,
-  including the old quality/detail sliders and ship lights, now routed
-  through it) sets "custom". AUTO = NORMAL's effects + auto resolution
-  (max ×1.5); `resolution.js#autoTier` steps `gfxAutoTier` down after 6 s
-  at the lowest resolution below 0.9 × target fps, up after 20 s at the
-  highest above 1.3 × — only the effects change, the resolution stays
-  automatic, and each step restarts the warm-up. A tier switch leaves
-  `gfxDetail` / `gfxSmoothLines` alone (v2.28.2): they rebuild models and
-  lines — a hitch mid-game. Presets never set
-  `gfxUnitLights` (v2.25.3): a light-count change recompiles every lit
-  material — a mid-game hitch if AUTO did it. NORMAL has depth of field
-  and the filter off (v2.25.4, user's call; also PostKit's lab NORMAL).
-  On load `syncPreset()` re-applies the current preset's values, so a
-  preset changed in an update reaches its players; "custom" is untouched.
-- **Layout** (v2.25.2): the tab is grouped (`.gfxHd` headers: picture &
-  sharpness, models, light, effects, camera — the preset on top); every
-  option has a `.gfxCost` [?] badge, `data-cost` low/mid/high (colour)
-  and `data-tip` → tooltip `setup.gfx.cost.*` + `setup.gfx.tip.*`
-  (`i18nApply.js`). A new option gets a badge too.
-- **Description pane** (v2.26.0, the user's reference: a big game's
-  settings screen): with the Graphics tab active `#setupModalBox` gets
-  `.wide` (1000×824 design px, the list 704 px tall) and `#gfxHelp` on
-  the right shows `setup.gfx.help.<key>` — `d` (what it does), `v`
-  (value → meaning pairs), `def` (the default, as text) — plus the cost
-  line. The key comes from the hovered section's last `.gfxCost`
-  (`data-tip`) or `[data-help]` above the pointer (`setupModal.js#initGfxHelp`).
-  A new option needs a `help` entry in both languages.
-- **Anisotropic filtering** (v2.26.0, `scene/anisotropy.js`): sets
-  `ShipKit.allTextures` to `gfxAniso` (capped by the GPU), re-checked
-  every 2 s for textures of newly built ships; no recompile.
-- **Sharpening and light rays** (v2.26.0): both in PostKit's final pass —
-  sharpening is CAS-like (pixel vs its 4 neighbours, scaled down where
-  local contrast is high); rays sum 24 samples of the picture's bright
-  parts along the line to the sun (so an occluding planet cuts shafts).
-  Flare and rays fade out when the sun's disc is large on screen.
-- **Frame limiter** (v2.26.0, `main.js#tick`): frames arriving early are
-  skipped whole; `lastFrameAt` advances by a steady interval (resetting
-  only when far behind) — a plain `lastFrameAt = now` with 144 Hz
-  requestAnimationFrame gave 27 for a cap of 30, carrying the remainder
-  over gave ~40. `resolution.js` takes the cap as its target and counts
-  hitting it as headroom. Presets never touch it.
+  - **Inside `STATION_FIELD_RADIUS` there is no gravity**
+    (`world/solarGravity.js#updateSolarGravity()` skips ships and the drone
+    there): the station has no SOI of its own (orbit 4 is "the station
+    ring, not a body"), so the Sun's real pull at ~290 units was the
+    dominant force on a parked fleet. Verified live: three freshly spawned
+    ships bit-for-bit still after 8 idle seconds. Ships since v2.0.6, the
+    drone since v2.0.8 (the user: "it's kind of a ship too"). Until
+    v2.19.0 a `station/stationField.js` also pulled idle ships back from
+    beyond the field; it's gone — **the field shields, it doesn't pull**
+    (the user's call, see "Programmable ships").
 
 ## Fleet memory and RETURN TO BASE
 
@@ -1263,31 +902,6 @@ top-left, shown while own ships are selected): `swarm.js#returnToBase` sets
 `sh.returning`; `flyHome` flies each ship to its own spawn slot
 (`shipSpawnPosition(index)`), easing in, and stops it there. Gravity skips a
 returning ship like an ordered one; a course order clears the flag.
-
-## Interface modes, lines toggle, controls help
-
-v2.28.0, the user's design. **Key C** (`ui/hud/uiMode.js`) steps
-`body[data-ui]` through 1 (every `#hud` child but `#viewport` hidden — the
-view's own buttons stay put), 2 (only `#cameraModeToggle` and `#miniPanel`,
-which gets a backing of its own), 3 (all of `#hud` and `#selectionBrackets`)
-and back; Escape restores it (last in the Escape chain before the start
-screen). Hidden means `display:none` — `renderIntoElement` skips elements
-without an `offsetParent`, so hidden miniatures don't draw over the scene —
-and `viewRect.js#getViewRect` returns the full window while hidden. Keys are
-ignored while typing, with a modifier (Ctrl+C), on the start screen, or with
-Setup or a window open. **Lines** (`scene/linesToggle.js`, button top-right,
-key O, `settings.showLines`): orbit and comet lines sit on `ORBIT_LAYER` 3
-(`orbitLines.js`), trajectories on layer 2; the toggle only switches those
-layers on the main camera — the miniature cameras and the ship cam enable
-layer 3 themselves, so they still show orbits. **Sensitivity**:
-`settings.mouseRotSens` / `mouseZoomSens` (0.25–3) multiply the rotation and
-zoom steps in `controls.js`. **"Coming soon" tooltips**: `ui/soonTip.js`, one
-pointermove listener using `elementsFromPoint` (disabled buttons get no
-mouse events of their own); selector `SOON`; the native titles those
-controls had are gone. The same module explains a locked ENTER ORBIT once
-loading is done (`startBlocked`: no nickname, or the privacy policy not
-accepted — the two things `banner.js#updateStartEnabled` waits for). **Help**: Setup → Help uses the wide window
-(`i18n setup.controls`, app-authored HTML) — update it when a control changes.
 
 ## Kills, damage flushing, UI text (v2.28.3 review)
 
@@ -1305,348 +919,3 @@ accepted — the two things `banner.js#updateStartEnabled` waits for). **Help**:
   (`data-i18n`, `data-i18n-title`, `data-i18n-html` — app HTML only —,
   `data-i18n-placeholder`); `ui/i18nApply.js` fills them in one loop and
   handles only text that depends on something.
-
-## Research trees
-
-v2.20.0, from the user's concept art (`UpgradeTree.png`, an AI image of a
-circuit-board tree with round badge nodes and a "programming" branch —
-never committed, deleted by the user once the tree was built).
-The Research window (`#techModal`, BADANIA / the station's Research
-button) shows one tree at a time, ◀ ▶ to switch.
-
-- **Shape = data** (`ui/windows/techTreeData.js#TECH_TREES`): nested
-  nodes `{ id, kind: root|hub|upgrade|soon, upgrade?, icon, children }`,
-  no coordinates — to grow a tree, add a node (a branch point is just a
-  node with children, of any kind). Names/descriptions in i18n
-  `upgrades.tree.<id>` / `<id>Desc` (an upgrade node uses
-  `upgrades.<key>` for its name). Working upgrades point at
-  `config.js#TREE` (cost, levels, effect unchanged).
-- **Layout** (`ui/windows/techTree.js#layout`): leaves spread evenly over
-  a fan (`FAN`, 170°→10°) in depth-first order, every other node at the
-  mean angle of its children, one radius per depth (`RING`), the root at
-  `ROOT`. Branches are PCB-routed (`trace()`: straight along the longer
-  axis, then 45°).
-- **Drawing**: one SVG rebuilt by `refreshResearch()` (after every
-  purchase/reset/language change): seeded stars, hex-grid corners, a
-  planet horizon with an atmosphere glow, a trunk of five traces with
-  roots, copper traces with a teal core and `stroke-dashoffset` pulses on
-  live ones (since v2.20.1 each trace is an edge, flat copper and a
-  highlight under the `#ttRough` filter — low-frequency displacement for
-  uneven edges, noise patches and glints; **flat colour, not a gradient**:
-  an objectBoundingBox gradient paints nothing on a perfectly vertical or
-  horizontal path), nodes with a gold (steel when planned) metal rim, rivets,
-  a level ring, a cost pill; states `affordable` (pulsing gold halo),
-  `poor`, `owned`, `maxed`, `soon` (locked). Tooltip is HTML over the
-  SVG. Styles: `css/ui/windows/research.css`.
-- **Buying/reset** stay in `ui/windows/research.js` (`buy()`,
-  `resetUpgrades()`), the tree calls back into it.
-- **Background**: `css/ui/windows/researchBg.jpg` (1248×832), an
-  AI-generated picture the user made from a prompt we wrote (a planet's
-  horizon with circuit lines, a nebula, hexagon corners). `techTree.js#BG`
-  places it so its horizon (measured at y = 579 px in the picture) meets
-  the trunk's base (`HORIZON_Y`); ~70 seeded stars twinkle on top. A new
-  picture: update `BG` (size and the horizon's y). The devlog's "AI
-  image" caption rule is for blog posts, not the game.
-
-## In-game HUD
-
-- **Ported from the `UI-standalone.html` mockup (v2.2.0; the mockup was
-  deleted afterwards, the game is now the reference)** — its layout 1:1
-  (top bar, left nav, fleet list, selected unit, 3D viewport frame,
-  command bar, planet info, event log, minimap), wired to every feature
-  the old HUD had. `#hud` is a **`.uiScreen`** (css/ui/kit.css): like
-  `.uiBar` but in both axes — the whole window in design pixels (never
-  less than 1536x1024), so each element anchors to the edge it sits
-  against (css/ui/hud/): left column left, right column right, bottom
-  row bottom, and the viewport, fleet list and event log stretch.
-  Shared top-bar pieces (logo, title, end cap) are classes in
-  css/ui/topBar.css used by both the start screen and the HUD; SVG
-  gradients live in one always-rendered `#uiDefs` block in index.html
-  (a `url(#id)` paint server inside a `display:none` subtree stops
-  rendering). Windows opened from the HUD (Research, Fleet,
-  Diplomacy, Wiki, drone script, drone blocks) share `.uiWindow`
-  (css/ui/windows/).
-- **File layout mirrors the UI**: `js/ui/hud/` has one module per HUD
-  panel (topBar, nav, fleetList, unitPanel, infoPanel + planetPanel/
-  stationPanel, eventLog, connectionStatus, minimap, commandBar,
-  devTools) plus `hud.js`, the HUD's only entry points for main.js —
-  `initHudShell()` (before the scene), `initHudWorld()` (after it) and
-  `updateHud(dt)` (every frame; runs the ~0.1s/0.4s refresh timers).
-  `js/ui/windows/` is the same for the windows (`windows.js#
-  initWindows/refreshWindows` + research (+ techTree/techTreeData, the
-  upgrade trees), fleet, players, droneScript, wiki + wikiEntries/wikiArt,
-  blockEditor + blockPalette/blockRender/blockDrag).
-  CSS mirrors it one file per component in `css/ui/hud/` and
-  `css/ui/windows/`, each its own `<link>` in index.html's `<head>`, in
-  cascade order (style.css last). `showToast()` lives in `ui/hud/eventLog.js` (it only feeds the
-  event log now); a new panel goes in as its own module + CSS file,
-  wired through hud.js.
-- **The 3D view renders into the viewport rect only**
-  (`scene/viewRect.js`): the canvas still covers the whole window, but
-  `renderMainView()` clears it black and draws the scene with
-  viewport/scissor set to `#viewport`'s box (the whole window while the
-  start screen is open, so the scene still shows behind it), keeping
-  `camera.aspect` in sync. Picking (`scene/picking.js`) and
-  `controls.js#screenPos` use the same rect; presses/scrolls/hover
-  outside it are ignored (the gaps between panels are still canvas).
-  Miniatures (`scene/unitThumb.js`, `scene/infoThumb.js`) and the ship
-  cam render into their own elements' boxes via `renderIntoElement()`.
-  **HUD panels have no fill** (`#hud .uiPanel::before{background:none}`)
-  because those miniatures are drawn on the canvas *underneath* the
-  panels — a 90% fill made them look nearly black (found by testing,
-  not an obvious one). Miniatures also get a "studio" PointLight at the
-  camera, permanently in the scene with only its intensity toggled per
-  pass (adding/removing a light would recompile every shader), and a
-  raised near plane so station struts between camera and ship get
-  clipped.
-- **Where every old HUD feature went** (so nothing got lost): telemetry
-  -> the top bar's four slots; players list -> DIPLOMACY window; body
-  legend -> the Wiki's Planets tab (PLANETS nav); Tech -> RESEARCH window (also the station's Tech
-  button); Fleet window -> FLEET nav + station's Fleet button (plus the
-  always-visible FLEET LIST panel, same click behavior); Setup ->
-  SETTINGS; camera Base/System toggle -> top-center of the viewport; Dev
-  Tools -> wrench in the viewport's bottom-right; ship cam -> the
-  viewport's top-right, toggled by the fleet-list card or the COCKPIT
-  button in SELECTED UNIT (the CAM button until v2.19.0); drone panel -> SELECTED UNIT in drone mode
-  (Start/Stop/Script buttons, `ui/windows/droneScript.js` keeps its old open/close
-  API on top of `ui/hud/unitPanel.js`); station and planet panels -> the
-  shared PLANET INFO slot (`ui/hud/infoPanel.js`, owner-tracked so a late
-  "close planet" can't blank the station); toasts -> EVENT LOG
-  (`showToast(msg, kind)` still the one entry point). BUILD nav, the command bar's orders, the planet's Waypoint/Scan/Colonize and
-  the ship quick buttons are deliberately inert ("Coming soon"), as are
-  the top bar's time controls (multiplayer can't pause).
-- **Wiki** (`ui/windows/wiki.js`, v2.3.0; WIKI nav, and PLANETS opens it
-  on the Planets tab) is read-only: tabs -> entry list -> picture +
-  description. Entries live in `wikiEntries.js` (`{id, unlock, meta?,
-  art}`, id = `"tab-kind:key"`), pictures are inline SVG drawn by
-  `wikiArt.js` (each gradient gets a unique id, since the same art shows
-  as both thumbnail and big picture), texts in i18n
-  `wiki.entries.<key>` — **the key after the colon must be unique across
-  all tabs** (`body:ice` and a `mineral:ice` once silently shared one
-  text; the mineral is now `waterice`). `unlock` is `start` (always
-  known), `inspect` (bodies: `planetPanel.js` / `tooltip.js` call
-  `discover()`), `research` (`research.js` on purchase), `script`
-  (`droneScript.js` on run), `use` (programming entries:
-  `drone/scriptFeatures.js` reads which commands a program contains off
-  its parsed AST, and `droneScript.js#runActive` discovers them once the
-  program actually starts), `blocks` (a block-mode run), `files` (a
-  second block-editor file), `progress` (Story tab: `core/storyLog.js`
-  — `storyEvent()` from banner.js on entering orbit / stationPanel.js on
-  opening the station, plus a 1s check of `state.eaten`, bought upgrades
-  and other discoveries — paced: only the reboot log is instant, the
-  rest come one at a time, in LOG order, at most one per 3 minutes of
-  play (the timer starts at page load, so a veteran player's backlog
-  trickles in instead of arriving as six toasts at once),
-  `story` (Story fragments tied to features not built yet; the story
-  itself is drafted in a local, untracked `FABULA.md`), `life`/`relic` (like `future`, with their
-  own story hint — life forms and artifacts) or `future` (placeholder for features not
-  built yet — elements/minerals/ores/refined resources/materials/most
-  buildings and ships). Programming entries' pictures are the real
-  blocks, drawn in SVG from the block editor's own category colors and
-  i18n labels (`wikiArt.js#code`).
-  Discovery state is `core/discovery.js` (a Set persisted under
-  localStorage `roj-discovered`, `onDiscover` listeners -> event-log
-  toast). Elements/minerals/ores carry real data in `meta` (Z, symbol,
-  standard atomic weight; chemical formulas) — keep them factual.
-- **Minimap** (`ui/hud/minimap.js`) is schematic, not to scale: 9 evenly
-  spaced rings, each body on its own ring at its real angle; the comet
-  and ships are mapped piecewise-linearly between rings, with only a
-  small margin past the outer ring — an arriving/leaving comet (out to
-  ~1.3x the outer orbit) was once drawn past the map's left edge. The
-  +/- zoom lives in the panel header since v2.6.0: sitting on the map it
-  covered the outer orbits' lower right, hiding bodies there. A click goes
-  through `scene/controls.js#clickPlanet`/`clickStation` — the exact
-  code path of a click in the 3D view (course order if ships are
-  selected, otherwise select; shift toggles multi-select).
-- **SELECTED UNIT** (`ui/hud/unitPanel.js`) watches selection instead of
-  being told about it: `updateUnitPanel()` runs every frame but only
-  touches the DOM when *which* unit is shown changes (drone > single
-  ship > group > empty), plus a forced stats refresh every ~0.4s.
-
-## Load order and first paint
-
-- **Load order / first paint (v2.1.3)**: `initScene()` (WebGL context +
-  first shader compiles) blocks the main thread long enough to notice,
-  and the browser can't paint or restyle during it. Three consequences,
-  each handled explicitly: (1) `main.js` runs all start-screen UI init
-  (texts, banner, setup modal, Escape) *first*, then awaits one painted
-  frame (top-level `await` on rAF + setTimeout) before building the scene
-  — don't move UI init back below `initScene()`. (2) Fonts are
-  self-hosted (`fonts/`, `css/fonts.css`, latin + latin-ext subsets) and
-  the start-screen ones plus `grain.png` are `<link rel=preload>`ed in
-  `index.html` — a font is otherwise only requested once the browser
-  restyles text using it, i.e. after the scene init, so the page painted
-  with fallback fonts and swapped ~1.5s later. (3) A non-English saved
-  language sets `data-lang-pending` on `<html>` from the `<head>` script
-  (also preloading the latin-ext subsets), hiding `#box` until
-  `i18nApply.js#applyStaticText()` clears it — the HTML ships English, so
-  a Polish player otherwise saw it flash. Measured locally (Chrome with
-  GPU, returning Polish player): translated text 1457ms -> 318ms, fonts
-  1535ms -> ~80ms, first frame already final.
-- **Parallel downloads (v2.2.1)**, measured on the live site: (1) the 22
-  UI kit stylesheets are plain `<link>`s in `<head>` rather than
-  `@import`s inside style.css — an `@import` is only discovered after its
-  parent file has arrived, which cost a whole extra round trip before
-  first paint; order is the cascade order, style.css's own rules last.
-  (2) three.js and supabase-js are `defer`: as plain classic scripts they
-  blocked the HTML parser, and since a module script's dependency graph
-  only starts downloading once the parser reaches it, `main.js`'s ~100
-  imports waited for the slower CDN script to arrive. Deferred classic
-  scripts and module scripts still execute in document order, so `THREE`
-  and `supabase` exist before `main.js`/`supabaseClient.js` evaluate.
-  (3) The inline pre-paint `<head>` script sits *above* the stylesheets —
-  an inline script after a stylesheet waits for that stylesheet (and
-  stalls the parser meanwhile).
-- **Loading bar (v2.22.0)**, `ui/loader.js`: drawn inside the ENTER ORBIT
-  button (a dark `::after` covering everything right of `--load`). The
-  HTML ships it as `loading waiting` (a sweeping glint, no number — the
-  browser reports no progress for deferred scripts); once `main.js` runs
-  the libraries are in, so it starts at 30%. The rest of the start-up is
-  split into chunks with `await nextPaint()` between them — a chunk
-  blocks the main thread, so the bar can only move *between* chunks, and
-  a new heavy init step should get its own `setLoad()` + `nextPaint()`.
-  Last chunk: `renderer.compile(scene, camera)` + the first frame, so the
-  shader stall happens under the bar instead of right after ENTER ORBIT.
-  `loadDone()` then shows a random `load.jokes` line for 0.5 s and
-  unlocks the button (`banner.js#updateStartEnabled` checks
-  `isLoading()`; `i18nApply.js` leaves the label alone while loading).
-  Anything reacting to UI input during the awaits (Setup, language) must
-  not assume the scene exists yet.
-
-## Rendering and ShipKit models
-
-- **The game renders like the ship/body labs (v2.8.0)**: sRGB output,
-  ACES filmic tone mapping (exposure 1.1) and
-  `scene.environment = ShipKit.makeEnvironment(renderer)` — a PMREM of
-  the labs' own generated space sky (`ShipKit.makeSpaceSky()`), so metal
-  reflects and ShipKit models look as they do in `ship.html`. Planets and
-  the station pick up the reflections too. The skybox and the scene
-  lights weren't retuned for it yet (the user's plan: later).
-- **Color management (`scene/colorManagement.js`)**: with sRGB output a
-  material color is linear light, while every game color was picked for
-  the old plain output — left alone, everything washed out (the teal
-  ships came out nearly white). `manageSceneColors(scene)` runs every
-  frame and converts each *new* material's `color`/`emissive`, each
-  light's color and the fog color sRGB -> linear once (a WeakSet
-  remembers what's done), so later spawns are covered too. It skips
-  anything under `userData.shipkit` (ShipKit models and their effects are
-  authored for this pipeline, like in the labs). Vertex colors are
-  converted where written (particles
-  copy already-converted material colors). Every game-made canvas texture
-  goes through `core/utils.js#sRGBTexture()` (all are color textures).
-  Custom `ShaderMaterial`s write their color untouched and need nothing.
-  **A new material color set at runtime** (not at creation) would bypass
-  the one-time conversion — convert it yourself.
-- **ShipKit is shared, not copied**: `js/shipkit/shipkit.js` is a classic
-  script (`window.ShipKit`, like the `THREE` global), loaded by
-  `index.html` (`defer`, after Three.js) and by `ship.html` — one source
-  of truth. See `docs/ship.md` for its API.
-- **The drone** (`drone/drone.js#buildDroneModel`) is ShipKit's DR-01
-  SCRIBE: built with `merge: true` (static meshes merged per material,
-  see `docs/ship.md`), effects in the scene (`fxRoot`), wrapped by
-  `makeGameHolder` to +Z forward and `DRONE_MODEL_LENGTH` (0.7 since v2.16.0) units,
-  inside the old holder group with the game's pick sphere (0.6) and
-  selection ring. No PointLight of its own any more (glow sprites
-  instead). `updateDrone()` feeds it: engine power eased toward 1 during
-  `move()` (0.15 idle), `offline` when out of fuel, `act("fire",
-  { target })` from `applyAttack()` at the bitten surface point. Swallowed
-  by a black hole it plays `act("destroy")` and the wreck is disposed
-  after 7 s (`updateDroneWreckage`). The game keeps its own print()
-  effect (`dronePrintFx.js`) rather than the model's.
-- **Graphics settings** (`scene/graphics.js`, Setup -> Graphics): render
-  quality 0..4 = pixel ratio 0.5 / 0.75 / 1 / device (1..2, default) /
-  1.5x device (max 3), particles off at LOW; geometry detail 0.2..2
-  rebuilds the drone model when the slider is released
-  (`onGraphicsChange`); "Ship glow lights" (off by default) shows/hides
-  every ship's own PointLight (`userData.unitLight`, applied by
-  `scene/lightsToggle.js`, which also keeps the Dev Tools "all lights"
-  toggle from switching them back on). The lights stay in the ships —
-  hidden lights cost nothing, since three.js only counts visible ones.
-  All persisted in `settings.js` (`gfxQuality`, `gfxDetail`,
-  `gfxUnitLights`).
-- **Other players' drones** (`net/shipsBroadcast.js`): the same model at
-  detail 0.4, no particles, **not tinted** (the user's call: owners are
-  told apart by markers, not by recoloring ships) — the same diamond
-  marker in the owner's color as their ships
-  (`ships/shipVisual.js#makeOwnerMarker`); since v2.13.1 only the station
-  carries the owner's name (it had a name label before). The `ships`
-  broadcast's `drone` array grew from `[x, y, z, heading]` to `[..., power,
-  offline, shots, tx, ty, tz]` — still one message per 120 ms, a few more
-  numbers. All untrusted: power clamped to 0..1, shots only acted on when
-  they increase, at most 2 per update, coordinates through `safeCoord`.
-- **Swarm ships** (v2.9.0, `ships/shipVisual.js`): ShipKit's SW-01
-  SWARMER up close, the old light cone beyond `SHIP_LOD_DISTANCE` (30)
-  from the camera; the model is built lazily (merged, effects in the
-  scene, detail = graphics detail x 0.5, remote x 0.3) and always shown
-  for a selected ship or the ship cam's (`forceDetail`). Engine power:
-  cruising 1, eating 0.35, idle 0.1. `swarm.js#destroyShip` (black
-  holes) plays the model's destroy and `updateShipVisuals` disposes the
-  wreck after 7 s. Remote ships use the same visual, untinted, with an
-  owner-colored diamond marker (`sizeAttenuation:false`) and face their
-  direction of travel (derived from the interpolated movement — no new
-  network data). Known: at base-view distance the models read paler
-  than the old emissive cones (the ship glow lights are off by default);
-  to address in the lighting pass. (Remote stations stopped being tinted
-  in v2.13.0, see "Space station".)
-- **BodyKit planets** (v2.10.0, `world/bodyVisual.js`): the six planet
-  slots are the body lab's bodies — `js/bodykit/bodykit.js`, a classic
-  script (`window.BodyKit`) shared with `bodies.html` like ShipKit is with
-  `ship.html`. `BodyKit.GAME_BODIES` maps orbit slot -> lab body (from the
-  bodies' `slot` field). `materializePlanet()` keeps `p.mesh` as an
-  invisible sphere (`MeshBasicMaterial({ visible:false })` — raycasts
-  still hit it, it carries the color for particles/debris) with the
-  BodyKit group as a child; no crack overlay (the shader's `setDamage`,
-  fed by `applyHealthVisual()`), scorch overlay attached to the body's
-  `surfaceRoot` so it turns with the ground, no random ring, `p.spin` 0
-  (the body spins at its lab rate). `updateBodyLooks(dt)` in the main loop
-  drives time/spin/sun direction; a detail change rebuilds, a quality
-  change sets the octaves (`BodyKit.QUALITY_OCTAVES`). The old CPU-made
-  neutral-planet surface texture (`makePlanetSurfaceTexture`) was removed
-  with it. Details and rules: `docs/bodies.md`.
-- **Every body is BodyKit's (v2.11.0)**: the Sun (SOL: granulation,
-  sunspots, corona billboard; keeps the game's PointLight for standard
-  materials), the meteoroid (FERRUM, a GPU-displaced rock), every comet
-  (COMET via `BodyKit.GAME_KINDS`: rock nucleus, coma, ion + dust tails
-  pointing away from the Sun by themselves; `look.opts.velocity` bends
-  the dust tail, `look.opts.activity = cometActivity(distance)` grows them
-  near the Sun) and the black hole (ABYSS: horizon, Doppler-beamed disk,
-  photon ring; `materializeBlackHole` adds an invisible 2.5 × radius pick
-  sphere, `bh.pickMesh`, used by `scene/picking.js`). `bodyLookRef(slot,
-  kind)` picks the lab body. Removed with it: the crack overlay, sun halo
-  sprite and 3D rays, crossed-plane comet tail, sprite/ring black hole and
-  their canvas textures (`world/textures.js` keeps only
-  `makeRockGeometry` for debris and `generateDustTexture`),
-  `bodyMeshParts.js` kept only the selection bracket (and was removed in
-  v2.15, see "Selection frames" below).
-- **Selection frames (v2.15.0, `scene/selectionBrackets.js`)**: the corner
-  marks around a selected body (planets, Sun, meteoroid, comets, the
-  black hole) are an HTML overlay on the 3D view, not a sprite in the
-  scene: 1 px lines, arms ≤ 12 px, 8 px outside the body's edge on
-  screen, the same at any zoom (the frame follows the body's projected
-  size). `updateSelectionBrackets()` runs after the renders in main.js;
-  the layer (`#selectionBrackets`, fixed, clipped to the view rect) is
-  pointer-events:none. They no longer show in the ship cam or the
-  PLANET INFO miniature. `setPlanetSelected()` lives there now (only the
-  flag).
-- **Ship glow lights reach the bodies (v2.11.1)**: BodyKit shaders ignore
-  THREE lights, so the setting looked like it did nothing (the light also
-  sat inside the hull). Now it's behind the engines (`SHIP_LIGHT_*` in
-  config.js, intensity × eased engine power), and `world/bodyVisual.js`
-  passes the nearest visible ship lights to each body (`opts.lights`,
-  max 4, BodyKit's `pointLightAt()`). Toggling it still recompiles the
-  game's standard-material shaders once (a light count change). **Since
-  v2.17.1 the two parts differ**: the scene PointLight is short and weak
-  (`SHIP_LIGHT_INTENSITY` 0.8, `SHIP_LIGHT_RANGE` 2.2 — after the units
-  shrank, the old 1.5 / 7 bathed the whole smaller station in teal), the
-  body light keeps `SHIP_BODY_LIGHT_INTENSITY` 1.5 / `SHIP_BODY_LIGHT_RANGE`
-  7 (scaled by the same eased engine power).
-- **Dev Tools -> Performance stats** (`ui/hud/perfStats.js`): FPS, frame
-  time, worst frame, CPU time (update + render), draw calls and
-  triangles summed over all of a frame's render passes (main view, ship
-  cam, miniatures — `renderer.info.autoReset` is off and it's reset once
-  per frame in `perfFrameStart()`), GPU memory (geometries / textures /
-  shader programs), render resolution, scene object count, bodies /
-  ships / players, JS heap (Chrome), plus a frame-time graph. `main.js`
-  brackets each frame with `perfFrameStart()` / `perfRenderStart()` /
-  `perfFrameEnd()`; the toggle is remembered (`roj-devPerf`).
-

@@ -32,7 +32,7 @@ js/
   version.js         current version number (shown next to the title) — bump on every meaningful release
   versionCheck.js    periodically checks for a newer deploy; blocks play with a "please refresh" overlay if this tab is stale
   moderation.js      profanity filter, shared by nickname confirmation and the drone's print() effect
-  settings.js         local player prefs (mouse invert/swap), persisted in localStorage
+  settings.js        local player prefs (mouse, image quality, lines on/off), persisted in localStorage
   config.js          gameplay tuning constants (upgrade tree, radii, network intervals)
   i18n.js            the i18n API (t, languages); the text itself is one file per language in i18n/
   env.js             Supabase URL/key (anon key — safe to commit, see below)
@@ -47,9 +47,10 @@ js/
                      flare, the "robot eyes" filter) and the labs' IMAGE EFFECTS panel, one classic
                      script shared by the game (scene/post.js) and both labs
   core/              shared game state (scene/entity collections, player points), Wiki discovery
-                     state (discovery.js) + small utilities
-  scene/             camera (camera.js; mouse input and selection: controls.js), renderer, the 3D view's rect inside the HUD + miniature render passes
-                     (viewRect.js, unitThumb.js, infoThumb.js), mouse controls/selection, hover tooltip,
+                     state (discovery.js), the Story's memory fragments (storyLog.js) + small utilities
+  scene/             renderer and lights (setup.js), camera (camera.js), mouse input and selection
+                     (controls.js, picking.js, selectionBrackets.js), the 3D view's rect inside the
+                     HUD + miniature render passes (viewRect.js, unitThumb.js, infoThumb.js), hover tooltip,
                      ship cam (picture-in-picture cockpit view, ships and the drone),
                      trajectory lines of the object in view + the selected ones (trajectories.js),
                      orbits/trajectories on-off (linesToggle.js),
@@ -58,12 +59,14 @@ js/
                      PostKit), eclipse.js (planets shading ships/drone/station), anisotropy.js
                      (texture filtering),
                      the sky backdrop (skybox.js, BodyKit's SKY: nebulae, stars, pulsars),
-                     the 9 fixed orbit lines + each comet's own trajectory line (orbitLines.js)
+                     the 9 fixed orbit lines + each comet's own trajectory line (orbitLines.js),
+                     Dev Tools' debug views (lightMarkers.js, lightsToggle.js, planetDistanceLines.js)
   world/             celestial body logic — the 9-orbit solar system's fixed bodies
                      (solarSystem.js: orbit table/positions, solarGravity.js: patched-conics
                      gravity on ships/drone), comet-specific real physics (cometPhysics.js:
                      gravity-curved flight simulation), body lifecycle and look (bodies.js,
-                     bodyParams.js, bodyVisual.js) — per-type data lives in js/bodies/
+                     bodyParams.js, bodyVisual.js), the black hole (blackholes.js), points for a
+                     kill (rewards.js) — per-type data lives in js/bodies/
   bodies/            7 body types, one file each (sun.js, icePlanet.js, neutralPlanet.js,
                      volcanicPlanet.js, comet.js, meteoroid.js, blackhole.js).
                      Only comets are still randomly rolled; the other 6 are each one fixed,
@@ -71,17 +74,18 @@ js/
   content.js         aggregates js/bodies/ into one place the game reads from
   fx/                particles (incl. cooling bite sparks), debris, shockwaves, dust — planet-breakup
                      effects; engine trails (trails.js), the bite beam's hot spot (impact.js)
-  ships/             player's ship swarm (movement, eating, RETURN TO BASE; biteBeam.js: the bite beam; shipProgram.js:
-                     a ship flown by its program; fleetMemory.js: positions kept in localStorage)
+  ships/             player's ship swarm (swarm.js: movement, eating, RETURN TO BASE; shipVisual.js: the
+                     model and its far stand-in; biteBeam.js: the bite beam; shipProgram.js: a ship
+                     flown by its program; fleetMemory.js: positions kept in localStorage)
   drone/             the programmable drone — its own DSL (dsl.js), a generator-based
-                     interpreter (interpreter.js), the entity and its program builtins
-                     (drone.js), which commands a program uses, for the Wiki
+                     interpreter (interpreter.js), the entity and its builtins (drone.js; ships
+                     have their own in ships/shipProgram.js), which commands a program uses, for the Wiki
                      (scriptFeatures.js), and the print() gas+laser effect (dronePrintFx.js)
                      — see "Programmable units" below
   program/           running programs on any unit (runner.js), per-unit programs and mode
                      (unitPrograms.js), shared builtins (unitMotion/unitBite/unitPrint.js),
                      and the trajectory preview (simulate.js: the real interpreter on a copy)
-  blocks/            the drone's block programs: block catalog (blockSpecs.js), the
+  blocks/            block programs (any unit): block catalog (blockSpecs.js), the
                      project with its virtual files (blockProject.js), the compiler to
                      the drone DSL (blockCompile.js) and the example programs
   station/           each player's static space station — its look (stationVisual.js:
@@ -90,19 +94,22 @@ js/
                      gravity-free protective field (world/solarGravity.js) — see
                      "Space station" below
   ui/                the start screen (banner.js, its live player counters in playerCounts.js,
-                     the About window in about.js, the loading bar in its button: loader.js), the Setup modal (setupModal.js), the global
+                     the About window in about.js, the loading bar in its button: loader.js),
+                     privacy acceptance (privacy.js), the Setup modal (setupModal.js), the global
                      Escape-key chain (escapeKey.js), "coming soon" and locked-start tooltips
                      (soonTip.js), key C interface modes (hud/uiMode.js), all static UI text (i18nApply.js), HUD icons
                      (icons.js), and:
     hud/             the in-game HUD, one module per panel (topBar, nav, fleetList, unitPanel,
-                     infoPanel + planetPanel/stationPanel, eventLog, connectionStatus, minimap,
-                     commandBar, devTools); hud.js is main.js's single entry point into it
+                     infoPanel + planetPanel/blackHolePanel/stationPanel/remoteStationPanel,
+                     eventLog, connectionStatus, minimap, commandBar, returnBase, uiMode,
+                     devTools + perfStats); hud.js is main.js's single entry point into it
     windows/         the windows opened from the HUD (windows.js entry point + research with
                      the upgrade trees techTree/techTreeData, fleet, players, droneScript,
                      wiki + wikiEntries/wikiArt, and the block editor: blockEditor +
                      blockPalette/blockRender/blockDrag)
-  net/               multiplayer: identity, "steward" election, world sync, ship broadcast,
-                     Realtime reconnect handling
+  net/               multiplayer: identity, "steward" election (presence.js, stewardFallback.js,
+                     stewardStats.js), world sync (bodiesSync.js, solarBodiesSync.js), ship
+                     broadcast, bite batching (biteBudget.js), Realtime reconnect handling (connect.js)
   main.js            entry point — wires the modules together and runs the game loop
 supabase/schema.sql  database schema (tables, RLS, RPC functions) to paste into the Supabase SQL Editor
 ```
@@ -132,14 +139,16 @@ touching the rest.
 ## Admin panel
 
 [`admin.html`](admin.html) is another developer tool, not linked from the
-game — a read-only view of `activity_log` (see "Network-behavior
+game. It shows aggregate statistics (`admin_stats()`: players online per
+hour, connections per hour, new accounts per day — counts only, as bar
+charts) and a read-only view of `activity_log` (see "Network-behavior
 observation" below): a total anomaly-count summary, recent entries (with
 nick, IP, browser and the rest of each entry's detail) and a
 per-actor/event-type summary, color-coded by category. It's gated by
 a secret, entered into the page itself (remembered in that browser's
 `localStorage` after the first time, never written to this repo) and
-checked **server-side** against a SHA-256 hash in `admin_activity_log()`
-(`supabase/schema.sql`) — without it the RPC just returns nothing, so the
+checked **server-side** against a SHA-256 hash (`admin_secret_ok()` in
+`supabase/schema.sql`) — without it the RPCs just return nothing, so the
 page is safe to leave deployed alongside the game even though it isn't
 linked anywhere. Every cell is rendered with `textContent`, never
 `innerHTML` — nick/IP/browser all ultimately come from something a
@@ -150,12 +159,12 @@ the game itself treats broadcast data.
 
 `activity_log` (`supabase/schema.sql`) is a passive audit trail — nothing
 reads it and auto-bans anyone. Three sources feed it, all server-side and
-unspoofable by a client, and all of them now also actually throttle the
-behavior they log, not just record it: the existing `bite_body` rate
-limiter (a real client can never hit that limit, so it's already an
-unambiguous signal), triggers on `bodies` that reject a burst once a
-single actor's insert/delete rate clearly exceeds what legitimate play
-(including the steward's one-time world-seed insert) ever produces, and
+unspoofable by a client, and all of them also throttle the behavior they
+log, not just record it: the bite rate limit shared by `bite_body` and
+`bite_solar_body` (the client batches its bites well under it, so hitting
+it is an unambiguous signal), triggers on `bodies` (comets) that skip the
+row once a single actor's insert/delete rate clearly exceeds what
+legitimate play ever produces, and
 `set_my_nick()` (5 calls/30s per actor — a real client only calls it once
 per connection). Every entry also carries IP/browser/country
 automatically (pulled from the HTTP request itself — nothing the client
@@ -246,7 +255,7 @@ left; the 3D view with the camera switch, ship cam and Dev Tools in its corners 
 the command bar under it; object info (a planet, the black hole, your or another
 player's station — each with a VIEW button), the event log (every in-game message) and a
 clickable minimap on the right. Some controls are placeholders for now (BUILD, the
-command bar's orders, a planet's Waypoint/Scan). Details in docs/architecture.md's
+command bar's orders, a planet's Waypoint/Scan). Details in docs/ui.md's
 "In-game HUD" section.
 
 The **Wiki** is a read-only encyclopedia filled in by playing: the Story
@@ -265,7 +274,10 @@ Sun sits behind and a little above it; **System** orbits the Sun,
 showing the whole solar system at once. A third mode, **focus**, orbits
 and follows one object: a minimap click on a body, or VIEW on a ship,
 the drone, a planet or the black hole. Trajectory lines show for the
-object in view and the selected ones (a single ship, not a group).
+object in view and the selected ones (a single ship, not a group). The
+ORBITS button at the view's top right (or key O) hides every orbit and
+trajectory; key C hides the interface step by step. Setup → Help lists
+every key and mouse action.
 
 ## Multiplayer / Supabase setup
 

@@ -1,7 +1,7 @@
 # Known gotchas — full stories
 
 Referenced from [`CLAUDE.md`](../CLAUDE.md), which keeps only the short
-gotchas inline. These three are long enough to warrant the full
+gotchas inline. The ones below are long enough to warrant the full
 investigation narrative, kept here instead.
 
 ## GitHub Pages deploys that look "errored" after a push burst
@@ -47,12 +47,10 @@ with an explicit `config.broadcast` option, which this project's
 `supabase.channel("room:main", {...})` never sets (only
 `config.presence`). The message still gets delivered, just over plain
 REST instead of a raw WebSocket frame — functionally fine for this
-game's needs, just not literally silent. Since the CDN script tag pins
-`@supabase/supabase-js@2` unversioned (always fetches the newest 2.x),
-this kind of library-behavior drift can appear with no corresponding
-code change on a future session's watch — check the actual bundled
-source (`curl` the CDN URL) before assuming a new console message means
-something broke in this repo.
+game's needs, just not literally silent. The library is a pinned local
+copy now (`vendor/supabase-js-2.117.2.js`), so its behaviour only changes
+when that file is replaced — read the bundled source there before
+assuming a new console message means something broke in this repo.
 
 ## Cache-busting isn't fully airtight
 

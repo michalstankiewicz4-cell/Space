@@ -8,7 +8,7 @@ display, the logo only changes colour), a second colourful one with a
 programming theme".
 
 Referenced from [`CLAUDE.md`](../CLAUDE.md) and
-[`docs/architecture.md`](architecture.md) ("Skin lab").
+[`docs/ui.md`](ui.md) ("Skin lab").
 
 Contents:
 - [Using it](#using-it)
