@@ -284,6 +284,54 @@ joiners replay a simulation).
   Google-login discussion already floated for the community ship-voting
   idea (`nickGoogleBtn` in `index.html`, currently a disabled placeholder).
 
+## Interface: community feedback (2026-10)
+
+Players commented on the HUD; key C (hide the interface step by step,
+`ui/hud/uiMode.js`, v2.28.0) was the first answer. Ideas for what's next,
+the recommended start marked ★ (least work, biggest effect). Ask what the
+exact complaints were before picking — too cramped, text too small, too
+many panels, features hard to find. A big layout change gets a prototype
+first (the skin lab, `skins.html`), per the project's rule.
+
+**Screen space**
+- ★ **UI scale slider** in Setup (e.g. 70–130 %). The HUD is a fixed
+  1536×1024 design scaled to the window (`--uiScale`, set by the inline
+  `<head>` script in `index.html`): on a 1366×768 laptop the text gets
+  small, on a big monitor the panels get needlessly large. A multiplier
+  on `--uiScale`, kept in `settings.js`; the 3D view rect
+  (`scene/viewRect.js`) follows the HUD anyway.
+- ★ **Collapsible panels**: a click on a panel's header folds it to the
+  header bar (fleet list, event log, minimap, object info), remembered
+  per panel — a lasting, per-player version of key C. The 3D view and the
+  stretching panels would need to take over the freed space.
+- **Overlay layout** as an alternative: the 3D view fills the window and
+  the panels float over it, translucent, instead of framing it; a panel
+  opacity slider. Note the miniatures are drawn on the canvas *under* the
+  panels (`docs/ui.md`, "In-game HUD") — they still need their boxes.
+- **Fade while dragging the camera**: panels dim during a right-drag so
+  they don't cover the scene.
+
+**Controls** (what strategy players expect)
+- ★ **Control groups**: Ctrl+1…9 stores the selected ships, 1…9 recalls
+  them (double press: the camera on the group). Kept with the fleet
+  memory (`ships/fleetMemory.js`), by ship index.
+- **Hotkeys** for the windows (F fleet, R research, W wiki), H = RETURN TO
+  BASE, Tab = next ship, Space = VIEW the selected unit. Same rules as C
+  and O: ignored while typing or with a window open; listed in Setup →
+  Help (`setup.controls`).
+- **Key hints on buttons**: a small letter in a button's corner, so
+  players find out the shortcuts exist.
+
+**Readability**
+- **Text size and contrast** as a setting of its own, separate from the
+  UI scale.
+- **Event log filter** (combat, discoveries, network): in a long session
+  the log floods. `ui/hud/eventLog.js#showToast` takes a `kind` (info /
+  arrive / alert) — a filter needs a category per message on top.
+- **First-run hints**: 3–4 dismissable bubbles ("select ships → click a
+  planet", "C hides the interface", "SCRIPT programs a unit"), shown once
+  (a localStorage flag through `readStorage`/`writeStorage`).
+
 ## Privacy policy version history
 
 The user's idea (2026-09-27), for later — there's only one version of the
