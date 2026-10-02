@@ -215,7 +215,12 @@ key O, `settings.showLines`): orbit and comet lines sit on `ORBIT_LAYER` 3
 layers on the main camera — the miniature cameras and the ship cam enable
 layer 3 themselves, so they still show orbits. **Sensitivity**:
 `settings.mouseRotSens` / `mouseZoomSens` (0.25–3) multiply the rotation and
-zoom steps in `camera.js`. **"Coming soon" tooltips**: `ui/soonTip.js`, one
+zoom steps in `camera.js`. **Idle hiding** (v2.29.0, Setup → Mouse,
+`settings.uiAutoHideS` 0–10 s, 0 = off): `uiMode.js#checkIdle` (every 250 ms)
+lays mode 3 over the player's own mode after that long without pointer,
+wheel, touch or key input, in the game view only; the next input restores it,
+and a key that wakes it is swallowed (else Escape would also open the start
+screen). The Setup box grew 50 design px for the third slider. **"Coming soon" tooltips**: `ui/soonTip.js`, one
 pointermove listener using `elementsFromPoint` (disabled buttons get no
 mouse events of their own); selector `SOON`; the native titles those
 controls had are gone. The same module explains a locked ENTER ORBIT once

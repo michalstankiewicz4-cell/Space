@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.28.6">
+<link rel="stylesheet" href="css/style.css?v=2.29.0">
 </head>
 <body>
 
@@ -229,6 +229,8 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
           <input type="range" class="gfxSlider" id="mouseRotSlider" min="0.25" max="3" step="0.05">
           <div class="gfxRow"><span id="mouseZoomLabel" data-i18n="setup.mouseZoom">Zoom sensitivity</span><b id="mouseZoomVal"></b></div>
           <input type="range" class="gfxSlider" id="mouseZoomSlider" min="0.25" max="3" step="0.05">
+          <div class="gfxRow"><span id="autoHideLabel" data-i18n="setup.autoHide">Hide interface when idle</span><b id="autoHideVal"></b></div>
+          <input type="range" class="gfxSlider" id="autoHideSlider" min="0" max="10" step="1">
         </div>
       </div>
 
@@ -837,7 +839,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.28.6"></script>
+<script type="module" src="js/main.js?v=2.29.0"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

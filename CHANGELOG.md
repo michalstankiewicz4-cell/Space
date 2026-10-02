@@ -4,6 +4,15 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.29.0]
+
+### Added
+- Setup → Mouse: **Hide interface when idle**, 0–10 seconds (0 = off, the
+  default). After that long without a mouse move, click, scroll or key,
+  the interface hides like key C's last step — nothing but space — and
+  comes back at the first movement. Never on the start screen or with a
+  window or Setup open.
+
 ## [2.28.6]
 
 ### Changed

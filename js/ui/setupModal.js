@@ -78,6 +78,7 @@ export function initSetupModal(){
   bindSettingCheckbox("invertYCheck", "invertY");
   bindSettingCheckbox("swapButtonsCheck", "swapMouseButtons");
   initMouseSens();
+  initAutoHide();
   initGraphicsSliders();
 }
 
@@ -96,6 +97,20 @@ function initMouseSens(){
     paint();
     s.addEventListener("input", function(){ settings[p[2]] = Number(s.value); saveSettings(); paint(); });
   });
+}
+
+// Setup -> Mouse: hide the interface after N idle seconds, 0 = never
+// (ui/hud/uiMode.js reads it live).
+function initAutoHide(){
+  const s = document.getElementById("autoHideSlider"), v = document.getElementById("autoHideVal");
+  const paint = function(){
+    v.textContent = +s.value ? s.value + " s" : t("setup.autoHideOff");
+    paintFill(s);
+  };
+  s.value = Number(settings.uiAutoHideS) || 0;
+  paint();
+  s.addEventListener("input", function(){ settings.uiAutoHideS = Number(s.value); saveSettings(); paint(); });
+  onLangChange(paint);
 }
 
 // Setup -> Graphics: render quality + geometry detail (scene/graphics.js).

@@ -9,6 +9,7 @@ const DEFAULTS = {
   swapMouseButtons: false,
   mouseRotSens: 1,      // camera rotation speed (right-drag), × (Setup -> Mouse)
   mouseZoomSens: 1,     // scroll zoom speed, ×
+  uiAutoHideS: 0,       // hide the interface after this many idle seconds, 0 = never (ui/hud/uiMode.js)
   showLines: true,      // orbits and trajectories shown (scene/linesToggle.js; the viewport's top-right button, key O)
   gfxQuality: 3,  // render quality 0..4 (see scene/graphics.js)
   gfxDetail: 1,   // ship geometry detail 0.2..2
