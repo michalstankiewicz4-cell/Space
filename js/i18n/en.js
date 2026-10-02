@@ -36,7 +36,8 @@ export const en = {
     title: "⚠ Update available",
     text: "A new version of the game is available. Please refresh the page to continue.",
     reload: "Refresh now",
-    hint: "or Ctrl+Shift+R"
+    hint: "or Ctrl+Shift+R",
+    whatsNew: "What's new", whatsNewHide: "Hide"
   },
   setup: {
     title: "Setup",
@@ -513,5 +514,20 @@ export const en = {
     welcome: function(nick){ return "Commander " + nick + " entered orbit"; },
     connectionLost: "Connection to the server lost — reconnecting…",
     connectionBack: "Reconnected to the server"
-  }
+  },
+  // What's new, for players (the update notice's WHAT'S NEW button,
+  // js/versionCheck.js): newest first, short, what a player notices. Add an
+  // entry with every version bump that changes something visible; leave out
+  // under-the-hood ones. pl.js has the same versions.
+  whatsNew: [
+    { v: "2.29.2", items: ["This list: the update notice now shows what's new since your version."] },
+    { v: "2.29.1", items: ["Stations no longer stand inside each other: if your spot on the ring is taken when you first join, your station moves to the nearest free one."] },
+    { v: "2.29.0", items: ["Setup → Mouse: hide the interface after 1–10 idle seconds (off by default)."] },
+    { v: "2.28.3", items: ["Eating a planet counts again: points for every one eaten, and ships no longer circle a planet at zero."] },
+    { v: "2.28.2", items: ["The AUTO graphics preset no longer stutters when it changes level."] },
+    { v: "2.28.1", items: ["The locked ENTER ORBIT button says what's missing."] },
+    { v: "2.28.0", items: ["Key C hides the interface step by step.", "ORBITS button (or key O): every orbit and trajectory on or off.", "Mouse sensitivity in Setup → Mouse.", "\"Coming soon\" tooltips, and every control listed in Setup → Help."] },
+    { v: "2.27.1", items: ["Ships flying home show \"Returning to base\" in the fleet list."] },
+    { v: "2.27.0", items: ["RETURN TO BASE: selected ships fly back to their places around the station.", "The fleet remembers where it was after a reload."] }
+  ]
 };

@@ -6,6 +6,7 @@
 // is running something older, so a stale client can't act on
 // game/network logic that may have moved on (e.g. schema/RPC changes).
 import { VERSION } from "./version.js";
+import { getLang, t } from "./i18n.js";
 
 const CHECK_INTERVAL_MS = 3 * 60 * 1000; // deploys are infrequent; no need to poll harder
 
@@ -127,11 +128,47 @@ async function fetchDeployedVersion(){
   }
 }
 
+// WHAT'S NEW: the notes come from the *deployed* dictionary (js/i18n/<lang>.js,
+// `whatsNew`), imported under a fresh URL — this tab's own copy is the old
+// one. Only versions newer than this tab's; no button if there are none or
+// the import fails. Built with textContent.
+let newsLoaded = false;
+async function loadWhatsNew(){
+  if(newsLoaded) return;
+  newsLoaded = true;
+  const btn = document.getElementById("outdatedNewsBtn"), box = document.getElementById("outdatedNews");
+  if(!btn || !box) return;
+  let list = [];
+  try{
+    const lang = getLang();
+    const mod = await import("./i18n/" + lang + ".js?_=" + Date.now());
+    list = ((mod[lang] && mod[lang].whatsNew) || []).filter(function(e){ return isOlder(VERSION, e.v); }).slice(0, 12);
+  }catch(e){ return; }
+  if(!list.length) return;
+  list.forEach(function(e){
+    const h = document.createElement("h4");
+    h.textContent = "v" + e.v;
+    const ul = document.createElement("ul");
+    (e.items || []).forEach(function(text){
+      const li = document.createElement("li");
+      li.textContent = text;
+      ul.appendChild(li);
+    });
+    box.append(h, ul);
+  });
+  btn.classList.remove("hidden");
+  btn.addEventListener("click", function(){
+    const open = !box.classList.toggle("hidden");
+    btn.textContent = t(open ? "outdated.whatsNewHide" : "outdated.whatsNew");
+  });
+}
+
 async function checkOnce(){
   const deployed = await fetchDeployedVersion();
   if(deployed && isOlder(VERSION, deployed)){
     const el = document.getElementById("outdatedOverlay");
     if(el) el.classList.remove("hidden");
+    loadWhatsNew();
   }
 }
 

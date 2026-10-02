@@ -4,6 +4,15 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.29.2]
+
+### Added
+- **WHAT'S NEW on the update notice**: the "please refresh" overlay gets a
+  button listing, in the player's language, what changed in every version
+  newer than the open tab's. The notes are short player-facing entries
+  (`whatsNew` in `js/i18n/en.js` / `pl.js`), read from the newly deployed
+  files. Tabs opened before this version don't have the button yet.
+
 ## [2.29.1]
 
 ### Fixed

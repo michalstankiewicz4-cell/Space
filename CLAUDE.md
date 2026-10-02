@@ -33,7 +33,9 @@ the player's own progress stays in `localStorage`.
 - **Versioning**: every meaningful change to the game or
   `supabase/schema.sql` → bump `js/version.js`, a `CHANGELOG.md` entry,
   and the `?v=` params on `css/style.css` and `js/main.js` in `index.html`
-  (hardcoded, easy to forget). **Not** for: `admin.html` (+ `js/admin/`,
+  (hardcoded, easy to forget), and when players will notice the change, a
+  short `whatsNew` entry in both `js/i18n/en.js` and `pl.js` (the update
+  notice's WHAT'S NEW). **Not** for: `admin.html` (+ `js/admin/`,
   `css/admin.css`, `css/devTheme.css`), the labs `ship.html` /
   `bodies.html` / `scale.html` (+ `js/scalelab/`) / `skins.html` and
   their LabKit (`js/labkit/`, `css/lab.css`),

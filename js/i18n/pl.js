@@ -42,7 +42,8 @@ export const pl = {
     title: "⚠ Dostępna aktualizacja",
     text: "Dostępna jest nowa wersja gry. Odśwież stronę, aby kontynuować.",
     reload: "Odśwież teraz",
-    hint: "lub Ctrl+Shift+R"
+    hint: "lub Ctrl+Shift+R",
+    whatsNew: "Co nowego", whatsNewHide: "Zwiń"
   },
   setup: {
     title: "Ustawienia",
@@ -518,5 +519,16 @@ export const pl = {
     welcome: function(nick){ return "Dowódca " + nick + " wszedł na orbitę"; },
     connectionLost: "Utracono połączenie z serwerem — ponowne łączenie…",
     connectionBack: "Połączono ponownie z serwerem"
-  }
+  },
+  whatsNew: [
+    { v: "2.29.2", items: ["Ta lista: komunikat o aktualizacji pokazuje, co nowego od Twojej wersji."] },
+    { v: "2.29.1", items: ["Stacje nie wchodzą już w siebie: jeśli przy pierwszym wejściu Twoje miejsce na pierścieniu jest zajęte, stacja przenosi się na najbliższe wolne."] },
+    { v: "2.29.0", items: ["Ustawienia → Mysz: ukrywanie interfejsu po 1–10 s bezczynności (domyślnie wyłączone)."] },
+    { v: "2.28.3", items: ["Zjedzenie planety znów się liczy: punkty za każdą, a statki nie krążą już wokół planety z zerowym życiem."] },
+    { v: "2.28.2", items: ["Preset grafiki AUTO nie przycina już przy zmianie poziomu."] },
+    { v: "2.28.1", items: ["Zablokowany przycisk WEJDŹ NA ORBITĘ mówi, czego brakuje."] },
+    { v: "2.28.0", items: ["Klawisz C chowa interfejs krok po kroku.", "Przycisk ORBITY (albo klawisz O): wszystkie orbity i trajektorie wł./wył.", "Czułość myszy w Ustawienia → Mysz.", "Podpowiedzi „Wkrótce” i pełna lista sterowania w Ustawienia → Pomoc."] },
+    { v: "2.27.1", items: ["Statki lecące do bazy mają na liście floty status „Powrót do bazy”."] },
+    { v: "2.27.0", items: ["POWRÓT DO BAZY: zaznaczone statki wracają na swoje miejsca wokół stacji.", "Flota pamięta, gdzie była, po odświeżeniu strony."] }
+  ]
 };

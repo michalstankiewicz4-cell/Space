@@ -89,7 +89,7 @@ canvas{ display:block; touch-action:none; cursor: grab; }
   background: rgb(0 0 8 / .9);
 }
 #outdatedBox{
-  max-width: 380px; text-align:center;
+  max-width: 420px; text-align:center;
   background: rgb(0 2 12 / .95); border: 1.5px solid #d05b69; border-radius: 12px;
   box-shadow: 0 0 10px rgb(208 91 105 / .45);
   padding: 26px 24px;
@@ -112,6 +112,22 @@ canvas{ display:block; touch-action:none; cursor: grab; }
   font-size: 13px; color: var(--uiText2);
   margin-top: 10px;
 }
+#outdatedNewsBtn{
+  margin-top: 18px; background: none; cursor: pointer;
+  font-family: var(--uiFontLabel); font-weight: 500; font-size: 15px; letter-spacing: .5px;
+  color: #f8bb56; border: 1.5px solid #f8bb56; border-radius: 6px 16px 16px 6px; padding: 7px 20px;
+}
+#outdatedNewsBtn:hover{ background: rgb(248 187 86 / .12); }
+#outdatedNews{
+  margin-top: 14px; max-height: 300px; overflow-y: auto; text-align: left;
+  border-top: 1px solid rgb(208 91 105 / .4); padding-top: 10px;
+}
+#outdatedNews h4{
+  margin: 10px 0 4px; font-family: var(--uiFontLabel); font-weight: 600; font-size: 15px;
+  color: #f8bb56; letter-spacing: .5px;
+}
+#outdatedNews ul{ margin: 0; padding-left: 18px; }
+#outdatedNews li{ font-size: 14.5px; line-height: 1.45; color: #c7d0ff; margin: 2px 0; }
 
 /* First-visit privacy notice (ui/privacy.js): a bar along the bottom of
    the window, above everything, until OK is clicked once. */

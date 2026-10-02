@@ -74,7 +74,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.29.1">
+<link rel="stylesheet" href="css/style.css?v=2.29.2">
 </head>
 <body>
 
@@ -115,6 +115,9 @@
     <p id="outdatedText" data-i18n="outdated.text">A new version of the game is available. Please refresh the page to continue.</p>
     <button id="outdatedReloadBtn" data-i18n="outdated.reload" type="button">Refresh now</button>
     <div id="outdatedHint" data-i18n="outdated.hint">or Ctrl+Shift+R</div>
+    <!-- shown when the new version's notes load (js/versionCheck.js#loadWhatsNew) -->
+    <button id="outdatedNewsBtn" class="hidden" type="button" data-i18n="outdated.whatsNew">What's new</button>
+    <div id="outdatedNews" class="hidden"></div>
   </div>
 </div>
 
@@ -839,7 +842,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.29.1"></script>
+<script type="module" src="js/main.js?v=2.29.2"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

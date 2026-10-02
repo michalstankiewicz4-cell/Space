@@ -270,6 +270,20 @@ button) shows one tree at a time, ◀ ▶ to switch.
   picture: update `BG` (size and the horizon's y). The devlog's "AI
   image" caption rule is for blog posts, not the game.
 
+## Update notice and WHAT'S NEW
+
+`js/versionCheck.js` re-reads `js/version.js` every 3 min; a newer deploy
+shows `#outdatedOverlay` (not dismissible: Refresh now re-warms every
+module's cache entry, then navigates to a cache-busted URL). Since v2.29.2
+it also imports the deployed `js/i18n/<lang>.js` under a `?_=` URL (a
+separate module instance, so the fresh file) and lists its `whatsNew`
+entries newer than the tab's own `VERSION` behind a WHAT'S NEW button
+(`textContent` only). The list is player-facing and short — one entry per
+version players would notice, both languages, newest first; versions that
+only changed the code are left out (the button stays hidden when nothing
+newer is listed). The button only exists from v2.29.2 on, so the first tab
+to benefit is one opened on 2.29.2.
+
 ## Load order and first paint
 
 - **Load order / first paint (v2.1.3)**: `initScene()` (WebGL context +
