@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.32.11]
+
+### Changed
+- `admin_stats` also returns `mau`: accounts signed in or seen in the game
+  (nick refreshed) in the last 30 days. Deployed on its own. The admin
+  page shows the plan's usage as % with bars: the database (of 500 MB)
+  and monthly active accounts (of 50,000). Nothing changes in the game.
+
 ## [2.32.10]
 
 ### Added

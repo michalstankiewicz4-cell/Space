@@ -121,6 +121,12 @@ td.copyCell{ padding: 4px 6px; text-align: center; width: 1%; white-space: nowra
 .statTile{ flex: 1 1 150px; background: var(--panel); border: 1px solid var(--panel-edge); padding: 10px 12px; }
 .statTile b{ display: block; font-family: var(--font-head); font-size: 24px; color: var(--ink); font-weight: 600; }
 .statTile span{ font-size: 11.5px; color: var(--ink-dim); }
+.statUsage{ flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 10px; }
+.statBar{ height: 6px; margin-top: 7px; background: rgb(255 255 255 / .08); border-radius: 3px; overflow: hidden; }
+.statBar i{ display: block; height: 100%; border-radius: 3px; }
+.statBar.low i{ background: #4fe3c6; }
+.statBar.mid i{ background: #f8bb56; }
+.statBar.high i{ background: #d05b69; }
 .statsBox{ margin: 6px 0 14px; }
 .statsBox h3{ font-family: var(--font-head); font-size: 13px; font-weight: 500; color: var(--ink); margin: 0 0 4px; }
 .statsChart{ width: 100%; height: auto; display: block; }

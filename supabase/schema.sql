@@ -883,6 +883,10 @@ begin
       'players', (select count(*) from actor_nicks),
       'seen_24h', (select count(*) from actor_nicks where updated_at > now() - interval '1 day'),
       'seen_7d', (select count(*) from actor_nicks where updated_at > now() - interval '7 days'),
+      -- monthly active accounts, close to how the plan counts MAU: signed in,
+      -- or seen in the game (the nick refreshed), in the last 30 days
+      'mau', (select count(*) from auth.users u where u.last_sign_in_at > now() - interval '30 days'
+              or exists (select 1 from actor_nicks n where n.actor = u.id and n.updated_at > now() - interval '30 days')),
       'db_bytes', pg_database_size(current_database()))
   );
 end;

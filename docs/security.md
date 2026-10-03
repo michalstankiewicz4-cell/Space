@@ -482,6 +482,19 @@ spends two of its five attempts a minute. `peak_online` is self-reported: a
 modified client can inflate it (up to 200), so it's a hint for the charts,
 never a measurement. Purged after 90 days (`purge_old_data`).
 
+**The plan's usage** (v2.32.11). `admin_stats` also returns:
+- `db_bytes`: `pg_database_size`;
+- `mau`: accounts signed in, or seen in the game (nick refreshed), in the
+  last 30 days. This is close to how the plan counts monthly active users.
+
+The admin page shows both as % of the Free plan's limits (500 MB, 50,000
+MAU, in `js/admin/stats.js#LIMITS`), with bars: green, amber from 60 %,
+red from 85 %.
+
+Egress and Realtime usage aren't readable from SQL. Only the Management
+API knows them, and it can't be called from the browser (see above). They
+would need an Edge Function holding the token, or a local tool.
+
 ## Solar-body kill rule (v2.28.3)
 
 `bite_solar_body` counted a kill only when `v_health_now > 10 % max` just

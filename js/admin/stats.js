@@ -69,7 +69,12 @@ function barChart(box, title, points, tickEvery, emptyText){
   });
 }
 
-function tile(parent, value, label){
+// The Supabase Free plan's limits the usage tiles measure against (check
+// them in the project's settings if the plan changes).
+const LIMITS = { dbBytes: 500 * 1048576, mau: 50000 };
+
+// share (0..1, optional): a usage bar under the label, green → amber → red
+function tile(parent, value, label, share){
   const d = document.createElement("div");
   d.className = "statTile";
   const v = document.createElement("b");
@@ -77,6 +82,14 @@ function tile(parent, value, label){
   const l = document.createElement("span");
   l.textContent = label;
   d.append(v, l);
+  if(share != null){
+    const bar = document.createElement("div");
+    bar.className = "statBar " + (share >= 0.85 ? "high" : share >= 0.6 ? "mid" : "low");
+    const fill = document.createElement("i");
+    fill.style.width = Math.min(100, Math.max(0.5, share * 100)).toFixed(1) + "%";
+    bar.appendChild(fill);
+    d.appendChild(bar);
+  }
   parent.appendChild(d);
 }
 
@@ -93,7 +106,17 @@ export function renderStats(data){
   tile(tiles, T.seen_7d, "players seen, 7 days");
   tile(tiles, T.players, "players with a nick");
   tile(tiles, T.accounts, "anonymous accounts");
-  tile(tiles, (T.db_bytes / 1048576).toFixed(1) + " MB", "database (of 500 MB)");
+  // the plan's usage, on a row of its own
+  const usage = document.createElement("div");
+  usage.className = "statUsage";
+  tiles.appendChild(usage);
+  const pct = function(x){ return x < 0.1 ? (x * 100).toFixed(2) : (x * 100).toFixed(1); };
+  const db = T.db_bytes / LIMITS.dbBytes;
+  tile(usage, pct(db) + " %", "database: " + (T.db_bytes / 1048576).toFixed(1) + " of 500 MB", db);
+  if(T.mau != null){
+    const mau = T.mau / LIMITS.mau;
+    tile(usage, pct(mau) + " %", "monthly active accounts: " + T.mau.toLocaleString("en-US") + " of 50,000", mau);
+  }
 
   // hourly, the last 72 h, gaps filled with zeros
   const byHour = {};
