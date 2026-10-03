@@ -9,7 +9,7 @@ why and the history behind each item live in `docs/`:
 [`gotchas.md`](docs/gotchas.md), [`blogger.md`](docs/blogger.md),
 [`ship.md`](docs/ship.md) / [`bodies.md`](docs/bodies.md) (the labs),
 [`scale.md`](docs/scale.md) (sizes; `scale.html`), [`skins.md`](docs/skins.md)
-(`skins.html`). **Read the relevant doc before changing a subsystem** —
+(`skins.html`), [`systems.md`](docs/systems.md) (`systems.html`, SystemKit). **Read the relevant doc before changing a subsystem** —
 the long ones have a Contents block: grep `^## ` and read only that section.
 [`README.md`](README.md) has the file map, [`CHANGELOG.md`](CHANGELOG.md)
 the versions, [`IDEAS.md`](IDEAS.md) the plans and open threads.
@@ -37,8 +37,9 @@ the player's own progress stays in `localStorage`.
   short `whatsNew` entry in both `js/i18n/en.js` and `pl.js` (the update
   notice's WHAT'S NEW). **Not** for: `admin.html` (+ `js/admin/`,
   `css/admin.css`, `css/devTheme.css`), the labs `ship.html` /
-  `bodies.html` / `scale.html` (+ `js/scalelab/`) / `skins.html` and
-  their LabKit (`js/labkit/`, `css/lab.css`),
+  `bodies.html` / `scale.html` (+ `js/scalelab/`) / `skins.html` /
+  `systems.html` (+ `js/systemkit/`, not in the game yet) and their LabKit
+  (`js/labkit/`, `css/lab.css`),
   `tools/`, the devlog (`blog/`, Blogger), and `.md`-only edits — those are
   plain commits, no changelog entry.
 - **A new `js/`/`css/` game file → add it to

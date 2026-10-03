@@ -45,6 +45,8 @@ js/
                      HUD scale, performance counters, image effects); styles in css/lab.css
   galaxy/            the galaxy map's picture: the Milky Way from above as one WebGL shader
                      (galaxyRender.js; the window is ui/windows/galaxyMap.js, key M)
+  systemkit/         SystemKit — star systems from BodyKit's bodies (data, presets, a seeded
+                     generator, building); the system lab's (systems.html), not in the game yet
   postkit/           PostKit — post-processing (bloom, MSAA, FXAA, lensing, depth of field, sun
                      flare, the "robot eyes" filter) and the labs' IMAGE EFFECTS panel, one classic
                      script shared by the game (scene/post.js) and both labs
@@ -129,7 +131,10 @@ imported from the game's own modules (needs the local server) — see
 [`docs/scale.md`](docs/scale.md). `skins.html` is the skin lab: a standalone
 prototype of the in-game HUD in two new looks (a green CRT terminal and a
 colourful code-editor theme), switchable, not yet part of the game — see
-[`docs/skins.md`](docs/skins.md).
+[`docs/skins.md`](docs/skins.md). `systems.html` is the system lab: star
+systems built from the body lab's bodies — presets, random systems from a
+seed, editing (centres, orbits, rings, moons, background) — see
+[`docs/systems.md`](docs/systems.md).
 `tools/` holds small standalone dev
 utilities (e.g. `grainTexture.html`, which regenerates `css/ui/grain.png`). `blog/` isn't part of the game at all — see "Devlog"
 below.
