@@ -422,7 +422,7 @@ function textTexture(text, color = "#ffb45a") {
 // sizes and speeds follow the ship's world scale. Objects placed outside
 // the ship are remembered in env.owned so disposeShipModel frees them.
 function fxHost(ship, env) {
-  const root = (env && env.fxRoot) || ship;
+  const root = (env && env.fxRoot) || effectsPart(ship);
   const toRoot = new THREE.Matrix4(), a = new THREE.Vector3(), b = new THREE.Vector3();
   return {
     root,
@@ -669,7 +669,8 @@ function createDamageFx(ship, radius) {
       }`,
     transparent: true, depthWrite: false,
   }));
-  smoke.frustumCulled = false; ship.add(smoke);
+  const fxp = effectsPart(ship);
+  smoke.frustumCulled = false; fxp.add(smoke);
 
   // --- sparks: short-lived additive points in bursts, with drag
   const SPARKS = 220, kGeo = new THREE.BufferGeometry();
@@ -693,7 +694,7 @@ function createDamageFx(ship, radius) {
       }`,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   }));
-  sparks.frustumCulled = false; ship.add(sparks);
+  sparks.frustumCulled = false; fxp.add(sparks);
   let kNext = 0;
   const burst = (s, n) => {
     for (let j = 0; j < n; j++) {
@@ -718,10 +719,10 @@ function createDamageFx(ship, radius) {
   // the chunk they landed on, so the wreckage trails smoke.
   const builtParts = new Set(ship.children);  // snapshot before any effect objects are added below
   const flash = additiveSprite(G.engine, 0xffe2b0), fireballs = [];
-  flash.visible = false; ship.add(flash);
+  flash.visible = false; fxp.add(flash);
   for (let i = 0; i < 7; i++) {
     const f = additiveSprite(G.engine, i % 2 ? 0xff6a1a : 0xffb45a);
-    f.visible = false; ship.add(f);
+    f.visible = false; fxp.add(f);
     fireballs.push({ s: f, off: new THREE.Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).multiplyScalar(radius * 0.8), delay: rand() * 0.35 });
   }
   const shock = makeScanWave(ship, null, 0xff8a3c);
@@ -920,6 +921,29 @@ function strut(a, b, radius, material, segments = 8) {
 
 // A cache key for a ship's lettering: "" for the defaults (the shared set).
 const labelKey = (l) => (l && (l.name || l.sub) ? JSON.stringify([l.name || "", l.sub || ""]) : "");
+
+// Named parts: part("engines") is a Group named "engines" under root, made the
+// first time it's asked for. A ship puts each of its sections (hull, wings,
+// engines, lights…) in one, so a part can be found by name — in the lab, by
+// a tool, later by damage or upgrades. A part is a plain static group: the
+// game's merged build merges through it as before.
+// The shared effects' part (shots, the scan wave, damage smoke and sparks):
+// "effects" under the ship, unless the host gives them a root of their own.
+function effectsPart(ship) {
+  let g = ship.children.find((c) => c.userData.part && c.name === "effects");
+  if (!g) { g = new THREE.Group(); g.name = "effects"; g.userData.part = true; ship.add(g); }
+  return g;
+}
+function partsOf(root) {
+  const made = new Map();
+  return (name) => {
+    if (!made.has(name)) {
+      const g = new THREE.Group(); g.name = name; g.userData.part = true;
+      root.add(g); made.set(name, g);
+    }
+    return made.get(name);
+  };
+}
 
 // Segment-count and bevel helpers bound to a build's `detail`.
 function detailHelpers(detail) {
@@ -1580,6 +1604,7 @@ SHIP_DEFS.push({
     const U = { uTime: { value: 0 }, uPower: { value: 1 }, uOn: { value: 1 } }; // per-model shader uniforms
     const { seg, bevel } = detailHelpers(detail);
     const ship = new THREE.Group();
+    const part = partsOf(ship);   // named parts (see partsOf)
 
     // ---- 1. Fuselage: lathe of a smooth spline profile, axis along +X.
     const profile = new THREE.SplineCurve([
@@ -1592,7 +1617,7 @@ SHIP_DEFS.push({
     const fuselage = shadowed(new THREE.Mesh(new THREE.LatheGeometry(profile, seg(96, 8)), hullMat));
     fuselage.rotation.z = -Math.PI / 2;
     fuselage.scale.set(1, 1, 0.92); // slightly flattened sideways (local z = world z)
-    ship.add(fuselage);
+    part("hull").add(fuselage);
     const radiusAt = (y) => { // hull radius at lathe height y (for placing parts)
       for (let i = 1; i < profile.length; i++) {
         if (profile[i].y >= y) {
@@ -1629,13 +1654,13 @@ SHIP_DEFS.push({
       const canopy = new THREE.Mesh(new THREE.SphereGeometry(0.62, seg(48, 8), seg(24, 4), 0, Math.PI * 2, 0, Math.PI / 2), M.glass);
       canopy.scale.set(1.9, 0.75, 0.9);
       canopy.position.set(2.55, 0.86, 0);
-      ship.add(canopy);
+      part("cockpit").add(canopy);
       const frame = shadowed(new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.045, seg(12), seg(64, 8)), M.gold));
       frame.rotation.x = Math.PI / 2; frame.scale.set(1.9, 0.9, 1); frame.position.copy(canopy.position);
-      ship.add(frame);
+      part("cockpit").add(frame);
       const spine = shadowed(new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.03, seg(8), seg(48, 6), Math.PI), M.gold));
       spine.scale.set(1.9, 0.75, 1); spine.position.copy(canopy.position);
-      ship.add(spine);
+      part("cockpit").add(spine);
     }
 
     // ---- 4. Wings: extruded swept shapes with bevels, mirrored.
@@ -1649,9 +1674,9 @@ SHIP_DEFS.push({
       const wing = shadowed(new THREE.Mesh(new THREE.ExtrudeGeometry(wingShape(side), { depth: 0.14, steps: 1, ...bevel(0.05, 0.05) }), M.wing));
       wing.rotation.x = Math.PI / 2; // shape y -> world z, extrusion -> world -y
       wing.position.y = -0.08;
-      ship.add(wing);
+      part("wings").add(wing);
       const edge = new THREE.LineCurve3(new THREE.Vector3(-1.3, -0.15, 0.82 * side), new THREE.Vector3(-3.2, -0.15, 4.62 * side));
-      ship.add(shadowed(new THREE.Mesh(new THREE.TubeGeometry(edge, seg(20, 2), 0.05, seg(10), false), M.gold)));
+      part("wings").add(shadowed(new THREE.Mesh(new THREE.TubeGeometry(edge, seg(20, 2), 0.05, seg(10), false), M.gold)));
       // wingtip pod: cylinder + two hemispheres + cannon
       const pod = new THREE.Group();
       pod.add(shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.6, seg(24, 6)), M.engine)));
@@ -1666,31 +1691,31 @@ SHIP_DEFS.push({
       muzzle.position.y = 1.85; muzzle.rotation.x = Math.PI / 2; pod.add(muzzle);
       pod.rotation.z = -Math.PI / 2;
       pod.position.set(-3.35, -0.12, 4.72 * side);
-      ship.add(pod);
+      part("wings").add(pod);
       const fin = new THREE.Shape();
       fin.moveTo(0, 0); fin.lineTo(-0.9, 0); fin.lineTo(-1.1, 0.75); fin.lineTo(-0.75, 0.75); fin.lineTo(0, 0);
       const winglet = shadowed(new THREE.Mesh(new THREE.ExtrudeGeometry(fin, { depth: 0.05, ...bevel(0.02, 0.02) }), M.wing));
       winglet.position.set(-2.75, -0.02, 4.4 * side - 0.025);
-      ship.add(winglet);
+      part("wings").add(winglet);
     }
 
     // ---- 5. Engines: two nacelles + the main drive (makeEngineSet).
     const engines = makeEngineSet(M, U, seg);
     const nacelle = { radius: 0.52, length: 2.8, color: 0x7f9bff, heatMat: M.blueGlow };
-    engines.add(ship, new THREE.Vector3(-3.1, -0.15, 1.75), nacelle);
-    engines.add(ship, new THREE.Vector3(-3.1, -0.15, -1.75), nacelle);
-    engines.add(ship, new THREE.Vector3(-4.55, 0, 0), { radius: 0.72, length: 1.2, color: 0xffb45a, heatMat: M.blueGlow });
+    engines.add(part("engines"), new THREE.Vector3(-3.1, -0.15, 1.75), nacelle);
+    engines.add(part("engines"), new THREE.Vector3(-3.1, -0.15, -1.75), nacelle);
+    engines.add(part("engines"), new THREE.Vector3(-4.55, 0, 0), { radius: 0.72, length: 1.2, color: 0xffb45a, heatMat: M.blueGlow });
     for (const side of [1, -1]) {
       const pylon = shadowed(new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.14, 0.9), M.dark));
       pylon.position.set(-2.9, -0.15, 1.15 * side);
-      ship.add(pylon);
+      part("engines").add(pylon);
     }
 
     // ---- 6. Gyro ring with chase lights (instanced spheres, colors animated).
     const gyro = new THREE.Group();
     gyro.position.set(-0.9, 0, 0);
     gyro.rotation.y = Math.PI / 2; // torus lies in the YZ plane, around the X axis
-    ship.add(gyro);
+    part("gyro").add(gyro);
     const spinner = new THREE.Group(); // everything that rotates with the ring
     spinner.userData.dynamic = true;
     gyro.add(spinner);
@@ -1718,13 +1743,13 @@ SHIP_DEFS.push({
       const dir = new THREE.Vector3(0, Math.cos(a), Math.sin(a));
       strut.position.copy(dir.clone().multiplyScalar((ringR + 1.1) / 2)).add(new THREE.Vector3(-0.9, 0, 0));
       strut.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
-      ship.add(strut);
+      part("gyro").add(strut);
     }
 
     // ---- 7. Logic core: icosahedron crystal + octahedron edge cage + cradle.
     const coreGroup = new THREE.Group();
     coreGroup.position.set(0.35, 1.72, 0);
-    ship.add(coreGroup);
+    part("core").add(coreGroup);
     const crystal = new THREE.Mesh(new THREE.IcosahedronGeometry(0.34, detail >= 1.5 ? 1 : 0), makeCoreMaterial(U));
     crystal.userData.dynamic = true;
     coreGroup.add(crystal);
@@ -1741,44 +1766,44 @@ SHIP_DEFS.push({
       s.moveTo(-1.6, 0); s.lineTo(-3.9, 0); s.lineTo(-4.4, 1.5); s.lineTo(-3.7, 1.55); s.lineTo(-1.6, 0);
       const fin = shadowed(new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 0.12, ...bevel(0.04, 0.04) }), M.wing));
       fin.position.set(0, 0.95, -0.06);
-      ship.add(fin);
+      part("fin").add(fin);
       const curve = new THREE.CatmullRomCurve3([
         new THREE.Vector3(-3.9, 2.45, 0), new THREE.Vector3(-4.3, 3.1, 0), new THREE.Vector3(-5.1, 3.35, 0),
       ]);
-      ship.add(shadowed(new THREE.Mesh(new THREE.TubeGeometry(curve, seg(30, 4), 0.035, seg(8), false), M.dark)));
+      part("fin").add(shadowed(new THREE.Mesh(new THREE.TubeGeometry(curve, seg(30, 4), 0.035, seg(8), false), M.dark)));
     }
     const antennaTip = new THREE.Mesh(new THREE.SphereGeometry(0.07, seg(16, 6), seg(12, 4)), new THREE.MeshBasicMaterial({ color: 0xffffff }));
     antennaTip.position.set(-5.1, 3.35, 0);
-    ship.add(antennaTip);
+    part("fin").add(antennaTip);
 
     // ---- 9. Sensor dish + torus-knot reactor in a glass bulb.
     {
       const mount = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, 0.5, seg(16, 6)), M.dark));
-      mount.position.set(1.2, -1.2, 0); ship.add(mount);
+      mount.position.set(1.2, -1.2, 0); part("sensors").add(mount);
       const dish = shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.75, seg(40, 8), seg(16, 3), 0, Math.PI * 2, 0, 0.62), M.dish));
-      dish.rotation.x = Math.PI; dish.position.set(1.2, -0.72, 0); ship.add(dish);
+      dish.rotation.x = Math.PI; dish.position.set(1.2, -0.72, 0); part("sensors").add(dish);
       const horn = shadowed(new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.55, seg(12)), M.gold));
-      horn.position.set(1.2, -1.38, 0); horn.rotation.x = Math.PI; ship.add(horn);
+      horn.position.set(1.2, -1.38, 0); horn.rotation.x = Math.PI; part("sensors").add(horn);
       const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.42, seg(40, 8), seg(24, 4)), M.glass);
-      bulb.position.set(-1.9, -1.2, 0); ship.add(bulb);
+      bulb.position.set(-1.9, -1.2, 0); part("sensors").add(bulb);
       const collar = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.42, 0.25, seg(32, 6)), M.engine));
-      collar.position.set(-1.9, -0.85, 0); ship.add(collar);
+      collar.position.set(-1.9, -0.85, 0); part("sensors").add(collar);
     }
     const reactor = new THREE.Mesh(new THREE.TorusKnotGeometry(0.17, 0.045, seg(128, 16), seg(12, 3), 2, 3), M.reactor);
     reactor.userData.dynamic = true;
     reactor.position.set(-1.9, -1.22, 0);
-    ship.add(reactor);
+    part("sensors").add(reactor);
 
     // ---- 10. Nose: RCS blocks (dodecahedra) + sensor tip.
     for (const side of [1, -1]) {
       const rcs = shadowed(new THREE.Mesh(new THREE.DodecahedronGeometry(0.13, 0), M.dark));
-      rcs.position.set(3.7, 0.05, 0.52 * side); ship.add(rcs);
+      rcs.position.set(3.7, 0.05, 0.52 * side); part("nose").add(rcs);
     }
     const noseTip = shadowed(new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.9, seg(12)), M.gold));
-    noseTip.rotation.z = -Math.PI / 2; noseTip.position.set(5.6, 0, 0); ship.add(noseTip);
+    noseTip.rotation.z = -Math.PI / 2; noseTip.position.set(5.6, 0, 0); part("nose").add(noseTip);
 
     // ---- 11. Navigation lights.
-    const nav = makeNavLights(ship, [
+    const nav = makeNavLights(part("lights"), [
       { color: 0x33ff77, pos: [-3.95, -0.1, 4.85], size: 0.7 },
       { color: 0xff3344, pos: [-3.95, -0.1, -4.85], size: 0.7 },
       { color: 0xffffff, pos: [-5.1, 3.35, 0], size: 0.9, kind: "strobe" },
@@ -1786,7 +1811,7 @@ SHIP_DEFS.push({
     ]);
 
     // ---- 12. Exhaust particles.
-    const exhaust = makeExhaust(ship, U, { count: 420, seed: 77, emitters: [
+    const exhaust = makeExhaust(part("exhaust"), U, { count: 420, seed: 77, emitters: [
       { pos: [-4.6, -0.15, 1.75], spread: 0.35, length: 3.85 },
       { pos: [-4.6, -0.15, -1.75], spread: 0.35, length: 3.85 },
       { pos: [-5.4, 0, 0], spread: 0.5, length: 5.5 },
@@ -1999,6 +2024,8 @@ SHIP_DEFS.push({
     const { seg, bevel } = detailHelpers(detail);
     const ship = new THREE.Group();
     const body = new THREE.Group(); // everything bobs gently while hovering
+    const shipPart = partsOf(ship);   // what doesn't bob with the body (the sweep ring, the exhaust)
+    const part = partsOf(body);   // named parts (see partsOf)
     body.userData.dynamic = true;   // animated: merged as its own unit (see mergeStatic)
     ship.add(body);
 
@@ -2009,7 +2036,7 @@ SHIP_DEFS.push({
     const L = 1.5, H = 1.35, W = 1.15;
     const hullGeo = new THREE.OctahedronGeometry(1, 0);
     hullGeo.scale(L, H, W);
-    body.add(shadowed(new THREE.Mesh(hullGeo, M.hull)));
+    part("hull").add(shadowed(new THREE.Mesh(hullGeo, M.hull)));
     const V = [new THREE.Vector3(L, 0, 0), new THREE.Vector3(-L, 0, 0), new THREE.Vector3(0, 0, W), new THREE.Vector3(0, 0, -W)];
     const TOP = new THREE.Vector3(0, H, 0), BOTTOM = new THREE.Vector3(0, -H, 0);
 
@@ -2027,10 +2054,10 @@ SHIP_DEFS.push({
         frame.setMatrixAt(i, m);
       });
       frame.castShadow = frame.receiveShadow = true;
-      body.add(frame);
+      part("frame").add(frame);
       for (const p of [TOP, BOTTOM]) {
         const cap = shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.1, seg(16, 6), seg(12, 4)), M.gold));
-        cap.position.copy(p); body.add(cap);
+        cap.position.copy(p); part("frame").add(cap);
       }
     }
 
@@ -2046,7 +2073,7 @@ SHIP_DEFS.push({
       beltGeo.translate(0, 0, -0.06);
       const belt = shadowed(new THREE.Mesh(beltGeo, M.gold));
       belt.rotation.x = Math.PI / 2; // shape y -> world z
-      body.add(belt);
+      part("belt").add(belt);
       const count = seg(40, 12);
       const bolts = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.045, 0.045, 0.05, 6), M.dark, count);
       const m = new THREE.Matrix4(), corners = [[1.6, 0], [0, 1.23], [-1.6, 0], [0, -1.23]];
@@ -2056,7 +2083,7 @@ SHIP_DEFS.push({
         m.makeTranslation(a[0] + (b[0] - a[0]) * t, 0.11, a[1] + (b[1] - a[1]) * t);
         bolts.setMatrixAt(i, m);
       }
-      body.add(bolts);
+      part("belt").add(bolts);
     }
 
     // ---- 4. Thruster pods on curved arms (tube along a Catmull-Rom curve),
@@ -2068,16 +2095,16 @@ SHIP_DEFS.push({
       const curve = new THREE.CatmullRomCurve3([
         new THREE.Vector3(ax, 0, az), new THREE.Vector3((ax + px) / 2, 0.4, 1.45 * side), podPos.clone(),
       ]);
-      body.add(shadowed(new THREE.Mesh(new THREE.TubeGeometry(curve, seg(24, 4), 0.075, seg(10, 4), false), M.dark)));
+      part("thrusters").add(shadowed(new THREE.Mesh(new THREE.TubeGeometry(curve, seg(24, 4), 0.075, seg(10, 4), false), M.dark)));
       const sleeve = shadowed(new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.03, seg(8), seg(20, 6)), M.gold));
       const sp = curve.getPoint(0.5), st = curve.getTangent(0.5);
       sleeve.position.copy(sp); sleeve.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), st);
-      body.add(sleeve);
+      part("thrusters").add(sleeve);
 
       const gimbal = new THREE.Group();
       gimbal.userData.dynamic = true;
       gimbal.position.copy(podPos);
-      body.add(gimbal);
+      part("thrusters").add(gimbal);
       engines.add(gimbal, new THREE.Vector3(), { radius: 0.2, length: 0.85, color: 0xffb45a, plumeMat, taper: 1.1, intake: 0.14,
         cone: [0.6, 1.3], bell: [0.45, 1.3], plume: 8, glow: 4.5, res: 0.75 });
       pods.push({ gimbal, phase: pods.length * 1.7, side });
@@ -2088,7 +2115,7 @@ SHIP_DEFS.push({
     // Far enough forward that the sphere swallows the belt's pointed tip
     // (outer rhombus reaches x = 1.74), which otherwise pokes through the iris.
     eyeMount.position.set(L + 0.12, 0, 0);
-    body.add(eyeMount);
+    part("eye").add(eyeMount);
     const eyeMat = makeEyeMaterial(U);
     const eye = new THREE.Mesh(new THREE.SphereGeometry(0.38, seg(40, 10), seg(28, 8)), eyeMat);
     eye.userData.dynamic = true;
@@ -2100,7 +2127,7 @@ SHIP_DEFS.push({
     // ---- 6. Crown: a crystal floating in a ring of scrolling program code.
     const crown = new THREE.Group();
     crown.position.copy(TOP);
-    body.add(crown);
+    part("crown").add(crown);
     // per-model copies (sharing textures) so one drone going offline dims only itself
     const codeMat = M.code.clone(), crystalMat = M.crystal.clone(), gaugeMat = M.gauge.clone();
     const halo = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.3, seg(48, 12), 1, true), codeMat);
@@ -2120,7 +2147,7 @@ SHIP_DEFS.push({
     // slowly track the light.
     const wing = new THREE.Group();
     wing.position.set(-0.75, H * 0.5, 0);
-    body.add(wing);
+    part("solar").add(wing);
     const mast = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, 0.5, seg(12, 6)), M.dark));
     mast.position.y = 0.25; wing.add(mast);
     const hinge = new THREE.Group();
@@ -2144,11 +2171,11 @@ SHIP_DEFS.push({
       const tank = shadowed(new THREE.Mesh(new THREE.LatheGeometry(cap, seg(24, 8)), M.engine));
       tank.rotation.z = Math.PI / 2;
       tank.position.set(-0.1, -0.75, 0.55 * s);
-      body.add(tank);
+      part("tanks").add(tank);
       const gauge = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.05, 0.05), gaugeMat);
       gauge.geometry.translate(0.45, 0, 0); // grows from its left end
       gauge.position.set(-0.55, -0.75, (0.55 + 0.19) * s);
-      body.add(gauge);
+      part("tanks").add(gauge);
       gauge.userData.dynamic = true;
       gauges.push(gauge);
     }
@@ -2157,7 +2184,7 @@ SHIP_DEFS.push({
     // a glowing hit point at its end.
     const turret = new THREE.Group();
     turret.position.copy(BOTTOM);
-    body.add(turret);
+    part("laser").add(turret);
     turret.add(shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.2, seg(24, 8), seg(16, 6)), M.dark)));
     const emitter = new THREE.Group();
     emitter.userData.dynamic = true;
@@ -2179,10 +2206,10 @@ SHIP_DEFS.push({
       new THREE.LineDashedMaterial({ color: 0x4fe3c6, dashSize: 0.2, gapSize: 0.14, transparent: true, opacity: 0.55 }));
     sweep.computeLineDistances();
     sweep.rotation.x = 0.28;
-    ship.add(sweep);
+    shipPart("sweep").add(sweep);
 
     // ---- 11. Navigation lights.
-    const nav = makeNavLights(body, [
+    const nav = makeNavLights(part("lights"), [
       { color: 0x33ff77, pos: [-1.5, 0.4, 2.0], size: 0.55 },
       { color: 0xff3344, pos: [-1.5, 0.4, -2.0], size: 0.55 },
       { color: 0xffffff, pos: [-L - 0.15, 0, 0], size: 0.7, kind: "strobe" },
@@ -2190,7 +2217,7 @@ SHIP_DEFS.push({
     ]);
 
     // ---- 12. Exhaust particles from the four pods.
-    const exhaust = makeExhaust(ship, U, { count: 240, seed: 91, rate: [1.1, 0.7], grow: 1.6,
+    const exhaust = makeExhaust(shipPart("exhaust"), U, { count: 240, seed: 91, rate: [1.1, 0.7], grow: 1.6,
       emitters: podDefs.map((d) => ({ pos: [d[2] - 0.65, 0.18, 2.0 * Math.sign(d[1])], spread: 0.18, length: 2.2 })) });
 
     // ---- actions: laser bolts from the eye, a scan wave from the crown,
@@ -2360,6 +2387,7 @@ SHIP_DEFS.push({
     const U = { uTime: { value: 0 }, uPower: { value: 1 } };
     const { seg, bevel } = detailHelpers(detail);
     const ship = new THREE.Group();
+    const part = partsOf(ship);   // named parts (see partsOf)
     const glowMat = M.glow.clone(); // per model: dims when offline (shares nothing heavy)
 
     // ---- 1. Hull: a lathed dart, flattened, nose along +X.
@@ -2370,7 +2398,7 @@ SHIP_DEFS.push({
     const hull = shadowed(new THREE.Mesh(new THREE.LatheGeometry(profile, seg(40, 8)), M.hull));
     hull.rotation.z = -Math.PI / 2;
     hull.scale.set(0.62, 1, 1); // flattened top-to-bottom (after the turn, local x points down)
-    ship.add(hull);
+    part("hull").add(hull);
 
     // ---- 2. Mandibles: two curved gold-tipped prongs at the nose — the bite emitters.
     const tips = [];
@@ -2378,10 +2406,10 @@ SHIP_DEFS.push({
       const curve = new THREE.CatmullRomCurve3([
         new THREE.Vector3(1.2, 0, 0.3 * side), new THREE.Vector3(2.0, 0, 0.62 * side), new THREE.Vector3(2.7, 0, 0.38 * side),
       ]);
-      ship.add(shadowed(new THREE.Mesh(new THREE.TubeGeometry(curve, seg(16, 4), 0.07, seg(8, 4), false), M.dark)));
+      part("mandibles").add(shadowed(new THREE.Mesh(new THREE.TubeGeometry(curve, seg(16, 4), 0.07, seg(8, 4), false), M.dark)));
       const tip = shadowed(new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.32, seg(12, 5)), M.gold));
       tip.position.set(2.82, 0, 0.36 * side); tip.rotation.z = -Math.PI / 2;
-      ship.add(tip);
+      part("mandibles").add(tip);
       tips.push(new THREE.Vector3(3.0, 0, 0.36 * side));
     }
 
@@ -2392,35 +2420,35 @@ SHIP_DEFS.push({
       const fin = shadowed(new THREE.Mesh(new THREE.ExtrudeGeometry(finShape, { depth: 0.08, steps: 1, ...bevel(0.03, 0.03) }), M.hull));
       fin.rotation.x = side > 0 ? Math.PI / 2 : -Math.PI / 2; // shape y -> world ±z
       fin.position.set(0, side > 0 ? 0.04 : -0.04, 0.2 * side);
-      ship.add(fin);
+      part("fins").add(fin);
       const edge = new THREE.LineCurve3(new THREE.Vector3(0.55, 0.07, 0.25 * side), new THREE.Vector3(-1.72, 0.07, 1.78 * side));
-      ship.add(new THREE.Mesh(new THREE.TubeGeometry(edge, seg(8, 2), 0.04, seg(6, 4), false), glowMat));
+      part("fins").add(new THREE.Mesh(new THREE.TubeGeometry(edge, seg(8, 2), 0.04, seg(6, 4), false), glowMat));
     }
 
     // ---- 4. Canopy + sensor strip along the spine.
     const canopy = new THREE.Mesh(new THREE.SphereGeometry(0.3, seg(24, 8), seg(12, 4), 0, Math.PI * 2, 0, Math.PI / 2), M.glass);
     canopy.scale.set(1.9, 0.7, 0.9); canopy.position.set(0.7, 0.3, 0);
-    ship.add(canopy);
+    part("canopy").add(canopy);
     const strip = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.05, 0.08), glowMat);
     strip.position.set(-0.6, 0.35, 0);
-    ship.add(strip);
+    part("canopy").add(strip);
 
     // ---- 5. Main engine + two small side thrusters (makeEngineSet).
     const engines = makeEngineSet(M, U, seg);
-    engines.add(ship, new THREE.Vector3(-2.2, 0, 0), { radius: 0.36, length: 0.9, color: 0x4fe3c6, res: 0.6, plume: 7.5, glow: 4.6 });
+    engines.add(part("engines"), new THREE.Vector3(-2.2, 0, 0), { radius: 0.36, length: 0.9, color: 0x4fe3c6, res: 0.6, plume: 7.5, glow: 4.6 });
     const smallPlume = makePlumeMaterial(0x4fe3c6, U);
     for (const side of [1, -1]) {
-      engines.add(ship, new THREE.Vector3(-1.2, -0.05, 0.62 * side), { radius: 0.13, length: 0.5, color: 0x4fe3c6,
+      engines.add(part("engines"), new THREE.Vector3(-1.2, -0.05, 0.62 * side), { radius: 0.13, length: 0.5, color: 0x4fe3c6,
         plumeMat: smallPlume, res: 0.4, plume: 6, glow: 4 });
     }
 
     // ---- 6. Running lights, exhaust.
-    const nav = makeNavLights(ship, [
+    const nav = makeNavLights(part("lights"), [
       { color: 0x33ff77, pos: [-1.6, 0.05, 1.7], size: 0.5 },
       { color: 0xff3344, pos: [-1.6, 0.05, -1.7], size: 0.5 },
       { color: 0xffffff, pos: [-2.4, 0.35, 0], size: 0.55, kind: "strobe" },
     ]);
-    const exhaust = makeExhaust(ship, U, { count: 120, seed: 33, rate: [1.1, 0.6], grow: 1.5, emitters: [
+    const exhaust = makeExhaust(part("lights"), U, { count: 120, seed: 33, rate: [1.1, 0.6], grow: 1.5, emitters: [
       { pos: [-2.9, 0, 0], spread: 0.26, length: 2.8 },
       { pos: [-1.55, -0.05, 0.62], spread: 0.1, length: 1.2 },
       { pos: [-1.55, -0.05, -0.62], spread: 0.1, length: 1.2 },
@@ -2521,6 +2549,7 @@ SHIP_DEFS.push({
     const U = { uTime: { value: 0 }, uPower: { value: 1 } };
     const { seg } = detailHelpers(detail);
     const station = new THREE.Group();
+    const part = partsOf(station);   // named parts (see partsOf)
     // per model: these dim when the station goes offline (shares the textures)
     const windowMat = M.window.clone(), gardenMat = M.garden.clone(), glowMat = M.glow.clone(), radiatorMat = M.radiator.clone();
     const R = 4, TUBE = 0.34;                     // habitat ring radius / tube
@@ -2528,11 +2557,11 @@ SHIP_DEFS.push({
     // ---- 1. Spine: stacked modules and nodes along Y, the hub in the middle.
     const cyl = (r, h, y, mat, s = 32) => {
       const m = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg(s, 8)), mat));
-      m.position.y = y; station.add(m); return m;
+      m.position.y = y; part("spine").add(m); return m;
     };
     const node = (r, y) => {
       const m = shadowed(new THREE.Mesh(new THREE.SphereGeometry(r, seg(28, 8), seg(18, 6)), M.hull));
-      m.position.y = y; station.add(m); return m;
+      m.position.y = y; part("spine").add(m); return m;
     };
     cyl(1.05, 1.1, 0, M.hull, 48);                 // hub
     node(0.62, 0.95); node(0.62, -0.95);
@@ -2542,7 +2571,7 @@ SHIP_DEFS.push({
     node(0.56, -2.55);
     for (const y of [0.42, -0.42]) {               // gold collars around the hub
       const c = shadowed(new THREE.Mesh(new THREE.TorusGeometry(1.08, 0.05, seg(8, 3), seg(56, 12)), M.gold));
-      c.rotation.x = Math.PI / 2; c.position.y = y; station.add(c);
+      c.rotation.x = Math.PI / 2; c.position.y = y; part("spine").add(c);
     }
     // hub windows: one instanced band all around
     {
@@ -2554,13 +2583,13 @@ SHIP_DEFS.push({
         m.compose(new THREE.Vector3(Math.cos(ang) * 1.06, 0.18, Math.sin(ang) * 1.06), q, s);
         w.setMatrixAt(i, m);
       }
-      station.add(w);
+      part("spine").add(w);
     }
 
     // ---- 2. Greenhouse dome on top: glass over lit garden beds, gold ribs.
     const dome = new THREE.Group();
     dome.position.y = 3.5;
-    station.add(dome);
+    part("dome").add(dome);
     const bed = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.85, 0.22, seg(40, 10)), gardenMat);
     bed.position.y = -0.45; dome.add(bed);
     {
@@ -2592,7 +2621,7 @@ SHIP_DEFS.push({
     // ---- 3. Docking port at the bottom: a gold ring around a teal glow.
     const port = new THREE.Group();
     port.position.y = -3.1;
-    station.add(port);
+    part("dock").add(port);
     port.add(shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.5, 0.4, seg(32, 8)), M.dark)));
     const portRing = shadowed(new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.07, seg(10, 4), seg(40, 10)), M.gold));
     portRing.rotation.x = Math.PI / 2; portRing.position.y = -0.2; port.add(portRing);
@@ -2602,14 +2631,14 @@ SHIP_DEFS.push({
     // ---- 4. Radiators under the ring plane, glowing faintly with waste heat.
     for (const side of [1, -1]) {
       const rad = shadowed(new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.04, 0.9), radiatorMat));
-      rad.position.set(side * 1.9, -1.75, 0); station.add(rad);
-      station.add(strut(new THREE.Vector3(side * 0.55, -1.75, 0), new THREE.Vector3(side * 0.85, -1.75, 0), 0.08, M.truss, seg(8, 4)));
+      rad.position.set(side * 1.9, -1.75, 0); part("radiators").add(rad);
+      part("radiators").add(strut(new THREE.Vector3(side * 0.55, -1.75, 0), new THREE.Vector3(side * 0.85, -1.75, 0), 0.08, M.truss, seg(8, 4)));
     }
 
     // ---- 5. Habitat ring: spins slowly on four spokes. One segment torn open.
     const spin = new THREE.Group();
     spin.userData.dynamic = true;               // animated: merged as its own unit
-    station.add(spin);
+    part("ring").add(spin);
     // Damage stages: each a pair of groups, the whole and the ruined version,
     // swapped by setDamage (dynamic: toggled, so merged as their own units).
     const stage = (parent) => {
@@ -2619,7 +2648,7 @@ SHIP_DEFS.push({
       parent.add(whole, ruined);
       return { whole, ruined, set(on) { whole.visible = !on; ruined.visible = on; } };
     };
-    const winStage = stage(spin), breachStage = stage(spin), panelStage = stage(station);
+    const winStage = stage(spin), breachStage = stage(spin), panelStage = stage(part("solar"));
     const GAP = 0.5, ARC = Math.PI * 2 - GAP;  // the breach segment: ARC .. 2π
     const ringSeg = (from, arc, parent) => {
       const m = shadowed(new THREE.Mesh(new THREE.TorusGeometry(R, TUBE, seg(20, 6), Math.max(3, Math.round(seg(160, 24) * arc / (Math.PI * 2))), arc), M.hull));
@@ -2699,7 +2728,7 @@ SHIP_DEFS.push({
     // outer -X one breaks and hangs (a damage stage).
     const TY = 1.75, TL = 7.2;
     const beam = shadowed(new THREE.Mesh(new THREE.BoxGeometry(TL * 2, 0.16, 0.16), M.truss));
-    beam.position.y = TY; station.add(beam);
+    beam.position.y = TY; part("solar").add(beam);
     {
       const n = seg(28, 10), braces = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.02, 0.02, 1, 4), M.truss, n);
       const m = new THREE.Matrix4(), q = new THREE.Quaternion();
@@ -2709,9 +2738,9 @@ SHIP_DEFS.push({
         m.compose(new THREE.Vector3(x, TY, i % 2 ? 0.1 : -0.1), q, new THREE.Vector3(1, 0.3, 1));
         braces.setMatrixAt(i, m);
       }
-      station.add(braces);
+      part("solar").add(braces);
     }
-    station.add(strut(new THREE.Vector3(0, 1.2, 0), new THREE.Vector3(0, TY, 0), 0.12, M.truss, seg(8, 4)));
+    part("solar").add(strut(new THREE.Vector3(0, 1.2, 0), new THREE.Vector3(0, TY, 0), 0.12, M.truss, seg(8, 4)));
     const panelGeo = new THREE.PlaneGeometry(2.4, 1.25);
     for (const side of [1, -1]) {
       for (const [i, x] of [[0, 3.4], [1, 6.0]]) {
@@ -2727,18 +2756,18 @@ SHIP_DEFS.push({
           const frame = shadowed(new THREE.Mesh(new THREE.BoxGeometry(2.46, 0.03, 0.05), M.truss));
           frame.position.z = broken ? 0.1 : 0.62; mount.add(frame);
         };
-        if (!breaks) panel(station, false);
+        if (!breaks) panel(part("solar"), false);
         else { panel(panelStage.whole, false); panel(panelStage.ruined, true); }
       }
     }
 
     // ---- 7. Comms dish on a boom off the hub (+Z), slowly scanning.
     const dishBase = new THREE.Vector3(0, 0.55, 1.05), dishTip = new THREE.Vector3(0, 1.1, 2.4);
-    station.add(strut(dishBase, dishTip, 0.06, M.truss, seg(8, 4)));
+    part("dish").add(strut(dishBase, dishTip, 0.06, M.truss, seg(8, 4)));
     const dish = new THREE.Group();
     dish.userData.dynamic = true;
     dish.position.copy(dishTip);
-    station.add(dish);
+    part("dish").add(dish);
     {
       const pts = [], steps = seg(14, 4);
       for (let i = 0; i <= steps; i++) { const r = i / steps * 0.65; pts.push(new THREE.Vector2(r, r * r * 0.55)); }
@@ -2749,7 +2778,7 @@ SHIP_DEFS.push({
     }
 
     // ---- 8. Lights, the scan ping.
-    const nav = makeNavLights(station, [
+    const nav = makeNavLights(part("lights"), [
       { color: 0xff3344, pos: [-TL, TY, 0], size: 0.7 },
       { color: 0x33ff77, pos: [TL, TY, 0], size: 0.7 },
       { color: 0xffffff, pos: [0, -3.35, 0], size: 0.8, kind: "strobe" },
@@ -3088,7 +3117,7 @@ return {
   makeSpaceSky, makeEnvironment,
   makeBoltPool, makeScanWave, textTexture, fxTextures, // action/effect helpers for ship defs
   // building blocks for ship definitions (see "SHIP BUILDING BLOCKS")
-  detailHelpers, withRounding, sealJoints, roundedBoxGeometry, roundedCylinderGeometry, makeEngineSet, makeExhaust, makeNavLights, makeShotQueue, makeOnlineFader, makeSolarCells, strut,
+  detailHelpers, partsOf, withRounding, sealJoints, roundedBoxGeometry, roundedCylinderGeometry, makeEngineSet, makeExhaust, makeNavLights, makeShotQueue, makeOnlineFader, makeSolarCells, strut,
   STANDARD_ACTIONS,
   allTextures,                      // Set of every generated texture
   isSharedMaterial: (m) => sharedMaterials.has(m),

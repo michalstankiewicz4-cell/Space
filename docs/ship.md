@@ -374,6 +374,7 @@ animations).
 | `makeOnlineFader()` | Offline state for the ship's own parts: `set(on)`, `offline`, `update(dt)` → 0..1 online level |
 | `makeBoltPool`, `makeScanWave`, `textTexture`, `fxTextures` | Action effects (see [Actions, offline and damage](#actions-offline-and-damage)) |
 | `makeSolarCells({ seed, cols, rows })` | Solar-cell sheet texture (the drone's wing, the station's panels) |
+| `partsOf(root)` | **Named parts**: `part("engines")` is a Group named "engines" under root, made the first time it's asked for. Every ship puts each numbered section of its build in one (see rule 14). The shared effects (shots, scan wave, damage smoke and sparks) go in `"effects"` (`effectsPart`) unless the host gives them an `fxRoot`. Plain static groups: GAME BUILD merges through them as before |
 | `strut(a, b, radius, material, segments)` | A cylinder from point a to point b: struts, spokes, booms, antenna feeds |
 | `withRounding(round, k, fn)`, `roundedBoxGeometry`, `roundedCylinderGeometry` | **Rounded edges** (`buildShipModel` option `round`, 0..1): while the model builds, boxes and full closed cylinders come out with rounded edges, the radius round × 60 % of the part's smallest half-size; `k` arc segments (1–3, from round × detail). Cones, partial or open cylinders and every other geometry are untouched. Scoped to the build (restored in `finally`). |
 | `sealJoints(group, seal, detail, style)`, `filletGeometry` | **Joints** (`buildShipModel` options `seal`, 0..1, and `sealStyle`): where two solid parts cut into each other, the line where they meet gets a `"fillet"` (default: a concave strip rounding the joint) or a `"bead"` (a round tube, like sealant), in the bigger part's material. See "Shaping" below. |
@@ -535,7 +536,20 @@ Before turning either on in the game, decide the values and measure
     Lights, glows and shader time use `t`. That split is what lets the
     lab's STOP ANIMATIONS freeze the motion and keep the lights on. The
     drone and the station were moved to `mt` for it (they look the same).
-13. **A change to ShipKit is a change to the game**: version bump, a
+13. **Every part of a ship lives in a named part.** Each numbered section of
+    a build (`// ---- 5. Engines…`) adds into `part("<name>")`, not into the
+    ship's root: blocks too (`engines.add(part("engines"), …)`,
+    `makeNavLights(part("lights"), …)`). The parts today:
+
+    | Ship | Parts |
+    |---|---|
+    | codewing | hull, cockpit, wings, engines, gyro, core, fin, sensors, nose, lights, exhaust |
+    | scribe | hull, frame, belt, thrusters, eye, crown, solar, tanks, laser, lights (under the bobbing body); sweep, exhaust (under the ship) |
+    | swarmer | hull, mandibles, fins, canopy, engines, lights |
+    | haven | spine, dome, dock, radiators, ring, solar, dish, lights |
+
+    All of them also have `effects`. Nothing hangs loose off a ship's root.
+14. **A change to ShipKit is a change to the game**: version bump, a
     CHANGELOG entry and a WHAT'S NEW line, even when the game looks the
     same (say so in the line).
 
