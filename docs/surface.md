@@ -25,6 +25,7 @@ player sees only their own base. Later this may move to the server.
 | File | What it is |
 |---|---|
 | `js/surfacekit/sky.js`, `weather.js` | SurfaceKit's sky (what the system puts in it, the world's turn, the light it gives) and weather (kinds per world, particles, wet ground, snow). Classic scripts after `surfacekit.js`, adding to `window.SurfaceKit`. |
+| `js/surfacekit/ground.js` | SurfaceKit's ground (`createGround`): the ground scene, the craft, the descent and its effects, driving, the hop, the base on the ground and building. No DOM: the surface lab and the game both run it and draw their own panels. |
 | `js/surfacekit/surfacekit.js` | **SurfaceKit** (`window.SurfaceKit`), a classic script: the ground as cube-sphere tiles loaded around the player, lat/lon helpers, saved bases (`bases`), the globe's diamond marker (`makeMarker`). Needs BodyKit. |
 | `js/basekit/basekit.js` | **BaseKit** (`window.BaseKit`): the base modules (`MODULES`: landing pad, habitat, solar array, mine, refinery, depot), built from ShipKit's generators. Each one can be shown built, as a placement hologram (fits or doesn't fit), and under construction (clipping planes). |
 | `surface.html` | The surface lab: a BodyKit globe in orbit (click it to pick a landing site), then the ground with a craft, a sky, the compass to the base, and building. |
@@ -197,6 +198,26 @@ The whole planet can be crossed in minutes, yet the base is a dot on the
 globe.
 
 ## Reaching the base: landing, driving, the hop
+
+**The descent** (`ground.js`, 2026-10-03), procedural:
+
+- A world with air: **entry** from 3000 m in 5 s.
+  - A bow shock under the belly: a lathe cup, hot at the tip, bands
+    flowing up its sides.
+  - Filaments of wake, speed streaks, the camera shaking.
+  - A **cloud deck** to fall through (850–1450 m, sprites around the
+    descent column) if the world or the weather is cloudy; white by day,
+    dark at night.
+  - The camera is higher and wider, and eases back to the chase view
+    during the burn.
+- Then the **burn** from 1200 m in 5 s: a jet under the belly, dust (or
+  spray over water) blown out near the ground. An airless world gets only
+  the burn, from 900 m.
+- **The far globe**: the loaded tiles cover only ~5 km around you. Under
+  them sits the planet's own BodyKit globe (no clouds or air shell, held
+  still, 0.4 % lower), so from high up and at the horizon you see the
+  planet, not a hole. The sky's distance haze fades out above 150–1200 m,
+  or the tiles would look washed out next to the globe.
 
 - **LAND HERE / LAND AT THE BASE**: the camera glides to the globe, the
   screen fades, and you descend for 5 s from 650 m onto the ground. LAND AT
