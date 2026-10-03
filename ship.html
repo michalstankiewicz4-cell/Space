@@ -27,12 +27,25 @@
 .tBtn.trig:active, .tBtn.pulse{ border-color:#4fe3c6; box-shadow:0 0 10px rgb(79 227 198 / .6); color:#c8fff2; }
 .tBtn:disabled{ opacity:.32; filter:saturate(0); cursor:not-allowed; box-shadow:none; border-color:#3c55d8; color:#e6ebff; }
 input[type=range]:disabled{ opacity:.35; cursor:not-allowed; }
+/* CHANGE VIEW (top centre, key C): 0 the full UI, 1 the stats only (MODEL +
+   FIGURES left, PERFORMANCE right, moved up, never idle-hidden), 2 nothing
+   (the button comes back when the pointer is near the top) */
+#btnView{ position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:20; height:30px; padding:0 18px; transition:opacity .3s; }
+body.view2 #btnView{ opacity:0; }
+body.view2 #btnView:hover{ opacity:1; }
+body.view1 #hudTop, body.view1 #hudBar, body.view1 #hud .hudPanel > :not(.v1keep):not(.side),
+body.view1 #opt .hudPanel > :not(.v1keep):not(.side){ display:none !important; }
+body.view1 .v1first{ margin-top:0 !important; }
+body.view1 #hud.labIdle, body.view1 #opt.labIdle{ opacity:1; }
+body.view1 #hud.labIdle *, body.view1 #opt.labIdle *{ pointer-events:auto !important; }
+body.view2 #hud, body.view2 #opt{ display:none !important; }
 .tBtn.off.on{ border-color:#e04b50; box-shadow:0 0 8px rgb(224 75 80 / .5), inset 0 0 8px rgb(224 75 80 / .15); color:#ffb4b8; }
 </style>
 </head>
 <body>
 <canvas id="view"></canvas>
 
+<button class="tBtn" id="btnView" title="Change the view: the full UI → the stats only → nothing (key C)">CHANGE VIEW</button>
 <div id="hud">
   <div id="hudTop">
     <div class="mat blue" id="hudBracket"></div>
@@ -385,7 +398,28 @@ document.getElementById("prevShip").addEventListener("click", () => step(-1));
 document.getElementById("nextShip").addEventListener("click", () => step(1));
 
 LabKit.applyGrain();   // the panels' grain (css/lab.css --grain)
-LabKit.autoHideHud([document.getElementById("hud"), document.getElementById("opt")], 5);   // the panels fade out when idle
+LabKit.autoHideHud([document.getElementById("hud"), document.getElementById("opt")], 5);
+// CHANGE VIEW: mark what the stats-only view keeps — MODEL and FIGURES on the
+// left, PERFORMANCE (to the end of its panel) on the right
+{
+  const keep = (el, first) => { el.classList.add("v1keep"); if (first) el.classList.add("v1first"); };
+  const heads = [...document.querySelectorAll("#hud .secHd")];
+  const model = heads.find((h) => h.textContent === "MODEL"), figs = heads.find((h) => h.textContent === "FIGURES");
+  keep(model, true); keep(document.getElementById("infoRows")); keep(figs); keep(document.getElementById("figList"));
+  const perf = [...document.querySelectorAll("#opt .secHd")].find((h) => h.textContent === "PERFORMANCE");
+  for (let el = perf; el; el = el.nextElementSibling) keep(el, el === perf);
+  let view = 0;
+  const setView = (v) => {
+    view = v;
+    document.body.classList.toggle("view1", v === 1); document.body.classList.toggle("view2", v === 2);
+    fitHud();
+  };
+  document.getElementById("btnView").addEventListener("click", () => setView((view + 1) % 3));
+  window.addEventListener("keydown", (e) => {
+    if (e.code !== "KeyC" || e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)) return;
+    setView((view + 1) % 3);
+  });
+}   // the panels fade out when idle
 
 const perf = LabKit.perfCounters(renderer);   // FPS, frame/CPU time, triangles, draw calls + graph
 

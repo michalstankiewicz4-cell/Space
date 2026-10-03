@@ -294,6 +294,16 @@ shots along).
   (disabled ones greyed out, triggers flash, toggles stay lit, OFFLINE in
   red) — and a Damage slider. Toggles and damage survive a detail
   rebuild; switching ships resets the toggles.
+- **CHANGE VIEW** (top centre, key C; the user's design) cycles three views:
+  1. the full UI;
+  2. the stats only: MODEL and FIGURES on the left, PERFORMANCE on the
+     right, both moved to the top. They stay visible when idle; the idle
+     fade is overridden.
+  3. nothing at all. The button fades out too, and comes back when the
+     pointer is over it, at the top centre.
+
+  The kept elements are marked `.v1keep` in JS, and a `body.view1` /
+  `body.view2` class does the rest in CSS.
 - **Right panel, OPTIMIZATION**:
   - **Render quality**, 5 presets:
 
