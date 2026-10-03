@@ -65,4 +65,4 @@ everything inside it in `update(t, dt, opts)`:
     there is along great circles, and `contact` comes from
     `surf.groundAt` in the vehicle's tangent frame;
   - give the hauler a real load to carry between modules;
-  - the sea vehicles lab.
+  - the sea vehicles lab: done, see [`marine.md`](marine.md).

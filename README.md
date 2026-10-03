@@ -54,6 +54,8 @@ js/
                      under construction); the building and surface labs', not in the game yet
   vehiclekit/        VehicleKit — robot ground vehicles from ShipKit's generators (suspension, steering,
                      tracks, dust, lamps, work); the vehicle lab's (vehicles.html), not in the game yet
+  marinekit/         MarineKit — the sea (waves the same in JS and GLSL, a seabed with an island, under water)
+                     and robot vessels (foils, a barge, a submersible, an amphibian); the sea lab's (marine.html)
   postkit/           PostKit — post-processing (bloom, MSAA, FXAA, lensing, depth of field, sun
                      flare, the "robot eyes" filter) and the labs' IMAGE EFFECTS panel, one classic
                      script shared by the game (scene/post.js) and both labs
@@ -145,7 +147,9 @@ seed, editing (centres, orbits, rings, moons, background) — see
 (land on a planet, drive, found a base) and `buildings.html` the building
 lab (the base modules) — see [`docs/surface.md`](docs/surface.md).
 `vehicles.html` is the vehicle lab: robot ground vehicles driving over
-rough ground — see [`docs/vehicles.md`](docs/vehicles.md).
+rough ground — see [`docs/vehicles.md`](docs/vehicles.md). `marine.html` is
+the sea lab: waves, the seabed, diving, robot vessels — see
+[`docs/marine.md`](docs/marine.md).
 `tools/` holds small standalone dev
 utilities (e.g. `grainTexture.html`, which regenerates `css/ui/grain.png`). `blog/` isn't part of the game at all — see "Devlog"
 below.

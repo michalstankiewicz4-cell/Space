@@ -305,7 +305,7 @@ export const en = {
     noLights: "Turn off lights",
     perf: "Performance stats",
     labs: "LABS",
-    lab: { ship: "Ships", bodies: "Bodies", systems: "Systems", surface: "Surface", buildings: "Buildings", vehicles: "Vehicles", scale: "Scale", skins: "Skins" },
+    lab: { ship: "Ships", bodies: "Bodies", systems: "Systems", surface: "Surface", buildings: "Buildings", vehicles: "Vehicles", marine: "Sea vehicles", scale: "Scale", skins: "Skins" },
     stats: {
       fps: "FPS", frame: "Frame time", worst: "Worst frame (0.5 s)",
       cpu: "CPU: update + render", calls: "Draw calls / frame", tris: "Triangles / frame",
@@ -534,6 +534,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.32.9", items: ["A new lab in Dev Tools: Sea vehicles, with waves, a seabed with an island, and diving under water, plus four robot vessels: a foil skimmer, a cargo barge, a submersible and an amphibian that drives out onto the shore."] },
     { v: "2.32.8", items: ["Surface lab: day and night, weather (rain, snow, dust storms, ash) and a sky that shows what's really in the star system: the Moon with its phases, two suns, a giant planet overhead.", "A new lab in Dev Tools: Vehicles, four robot ground vehicles (a scout rover, a hauler, a tracked digger, a crane) driving over rough ground."] },
     { v: "2.32.7", items: ["Two new labs in Dev Tools: Surface (land on a planet, drive around, found a base) and Buildings (the base modules). Under the hood: the planets can now be seen from the ground — a first step toward landing."] },
     { v: "2.32.6", items: ["Dev Tools (the wrench in the 3D view): buttons opening the labs — ships, bodies, systems, scale, skins."] },

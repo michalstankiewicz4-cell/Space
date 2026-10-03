@@ -40,6 +40,7 @@
                                       { throttle -1..1, steer -1..1 }
      makeDust(color)               → { points (add to the world), update(dt) }
      modelStats(group)
+     parts.wheel(r, w, mats, seg), parts.mats()   building blocks for other kits
    ======================================================================= */
 window.VehicleKit = (function () {
 "use strict";
@@ -388,5 +389,6 @@ function makeDust(color = 0xb08a64) {
 
 function modelStats(group) { return SK.modelStats(group); }
 
-return { VEHICLES, buildVehicle, disposeVehicle, drive, makeDust, modelStats };
+// parts for other kits (MarineKit's amphibian): a wheel, the shared materials
+return { VEHICLES, buildVehicle, disposeVehicle, drive, makeDust, modelStats, parts: { wheel, mats } };
 })();

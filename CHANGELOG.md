@@ -4,6 +4,15 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.32.9]
+
+### Added
+- Dev Tools LABS: Sea vehicles (`marine.html`, MarineKit): waves (the same
+  in JS and GLSL), a seabed with an island, under water (the sky's window,
+  caustics, marine snow), four robot vessels: SKIMMER (foils), BARGE
+  (containers, a bow ramp), DIVER (dives, an arm, sonar), AMPHIBIAN
+  (drives ashore). docs/marine.md.
+
 ## [2.32.8]
 
 ### Changed
