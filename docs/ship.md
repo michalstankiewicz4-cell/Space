@@ -279,15 +279,16 @@ shots along).
 - **Left panel**: ship name and prev/next navigation over `SHIP_DEFS`,
   the MODEL statistics, a per-type FIGURES list, toggles for
   auto-rotate, engines (the throttle eases in and out), running lights,
-  wireframe, BOBBING and STOP ANIMATIONS.
-  - BOBBING is the ship's idle drift in the lab: ±12 cm up and down and a
-    slight rock. Off, it eases to rest. It's the ship moving, not the
-    camera.
+  wireframe and STOP ANIMATIONS.
   - STOP ANIMATIONS (red when on, like OFFLINE) gives the model `dt = 0`.
     Every moving part stands still: spinners, rings, the drone's hover
     and gimbals, the station's dish and debris, particles. Lights and
     engine flames keep running, because they go by the clock `t`. OFFLINE
     still switches everything off.
+  - It also eases the lab's idle bobbing to rest. That bobbing (±12 cm up
+    and down and a slight rock) is the ship moving, not the camera. It
+    had its own BOBBING button for a moment; the user merged it into this
+    one.
 - After the toggles, SHAPING (Rounded edges, Sealed joints: rebuild live, like
   Geometry detail), then ACTIONS — one button per `model.actions` entry
   (disabled ones greyed out, triggers flash, toggles stay lit, OFFLINE in

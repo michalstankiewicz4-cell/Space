@@ -535,7 +535,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
-    { v: "2.32.12", items: ["Laboratorium statków: przycisk zatrzymujący animacje statku (światła dalej świecą) i drugi wyłączający kołysanie. W grze nic się nie zmienia."] },
+    { v: "2.32.12", items: ["Laboratorium statków: przycisk zatrzymujący animacje statku razem z kołysaniem (światła dalej świecą). W grze nic się nie zmienia."] },
     { v: "2.32.11", items: ["Za kulisami: lepszy podgląd obciążenia serwera. W grze nic się nie zmienia."] },
     { v: "2.32.10", items: ["Laboratorium statków: zaokrąglone krawędzie oraz łączenia części zaokrąglone gładko albo uszczelnione (nowe suwaki). Statki w grze na razie wyglądają tak samo.", "Światła pozycyjne mają widoczne lampki: po wyłączeniu gasną, a nie znikają."] },
     { v: "2.32.9", items: ["Nowe laboratorium w Dev Tools: Pojazdy morskie, czyli fale, dno z wyspą i nurkowanie pod wodę oraz cztery robotyczne jednostki: wodolot, barka, łódź podwodna i amfibia wyjeżdżająca na brzeg."] },
