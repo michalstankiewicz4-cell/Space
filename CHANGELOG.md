@@ -4,6 +4,20 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.31.0]
+
+### Added
+- Body lab: **MARS** in a new planet group, **DESERT WORLDS** — rust-red
+  dust, dark basalt regions, cratered highlands, a polar cap, thin air.
+  New planet parameters `rust` and `craters` (craters for any planet, not
+  only airless ones).
+- Body lab: **GAS GIANTS**, a new kind of body (`buildGiant`, no surface),
+  and **JUPITER**: belts and zones turning at their own speeds, turbulent
+  band edges, thin sub-bands, the Great Red Spot and white ovals as
+  spiralling vortices, mottled polar haze, limb darkening. 12 parameters.
+- BodyKit is shared with the game, hence the version; the game's planets
+  keep every new parameter off and look the same.
+
 ## [2.30.5]
 
 ### Added

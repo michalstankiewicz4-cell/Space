@@ -365,12 +365,15 @@ void main(){
 // =====================================================================
 const GLSL_PLANET = `
 uniform float uFreq, uSea, uRough, uIce, uClimate, uClouds, uCloudDrift;
+uniform float uAirless, uRays, uCraters, uRust;
 
-uniform float uAirless, uRays;
-// airless worlds: craters of three sizes, fewer on the low plains
+// craters of three sizes, fewer on the low plains: airless worlds, or any
+// planet with "craters" (a desert world's old highlands)
+float craterAmount(){ return max(uAirless, uCraters); }
 float craterRelief(vec3 p, float base){
-  if (uAirless <= 0.001) return 0.0;
-  float share = uAirless * mix(0.18, 0.7, smoothstep(-0.25, 0.25, base));
+  float amt = craterAmount();
+  if (amt <= 0.001) return 0.0;
+  float share = amt * mix(0.18, 0.7, smoothstep(-0.25, 0.25, base));
   return craterField(p, 5.0, share) * 0.10 + craterField(p, 11.0, share) * 0.05 + craterField(p, 24.0, share * 0.9) * 0.022;
 }
 // continents: domain-warped fBm, ~ -1..1
@@ -384,8 +387,9 @@ float heightOct(vec3 p, int octaves){
   float h = baseOct(p, octaves);
   return h + craterRelief(p, h);
 }
-// sea or not: an airless world has none (its crater floors may dip below uSea)
-float seaAt(float h){ return step(h, uSea) * (1.0 - step(0.5, uAirless)); }
+// sea or not: none on an airless world, none with the water level at its
+// minimum (a dry world) — crater floors may dip below uSea there
+float seaAt(float h){ return uSea <= -0.599 ? 0.0 : step(h, uSea) * (1.0 - step(0.5, uAirless)); }
 // young craters with bright ray systems: a few centres from the seed;
 // noise of the direction around a centre gives streaks that only change
 // with the angle, i.e. radial rays. 0..~1.5
@@ -416,7 +420,7 @@ float iceAt(vec3 p, float h){
   float polar = smoothstep(edge, edge + 0.03, lat);
   float alt = (h - uSea) / max(1.0 - uSea, 0.05);
   float snowLine = 0.95 - uIce * 0.45;                  // mountain snow
-  float peaks = step(uSea, h) * smoothstep(snowLine, snowLine + 0.05, alt);
+  float peaks = step(uSea, h) * smoothstep(snowLine, snowLine + 0.05, alt) * (1.0 - uRust);   // no snowy peaks on a desert
   return uIce <= 0.001 ? 0.0 : max(polar, peaks);
 }
 uniform float uOvercast, uBands, uHaze;
@@ -514,6 +518,15 @@ function planetSurfaceMaterial(U) {
           regolith = mix(regolith, vec3(0.86, 0.85, 0.83), clamp(rayAt(p) * 1.3, 0.0, 1.0));
           land = mix(land, regolith, uAirless);
         }
+        // rust-red desert: oxidised dust, dark basalt regions, paler highlands
+        if (uRust > 0.001) {
+          float dark = smoothstep(0.5, 0.72, fbm(p * 1.7 + uSeed.zxy, 4, 0.55) * 0.5 + 0.5);
+          vec3 dust = mix(vec3(0.66, 0.33, 0.17), vec3(0.80, 0.50, 0.29), m);
+          vec3 mars = mix(dust, vec3(0.28, 0.16, 0.11), dark * 0.75);
+          mars = mix(mars, vec3(0.74, 0.47, 0.30), smoothstep(0.45, 0.85, alt) * 0.5);
+          mars *= 1.0 + min(craterField(p, 11.0, craterAmount() * 0.8), 0.0) * 0.25;   // darker crater floors
+          land = mix(land, mars, uRust);
+        }
         // volcanic world: basalt instead of soil, molten rock instead of water
         land = mix(land, mix(vec3(0.10, 0.085, 0.08), vec3(0.24, 0.17, 0.13), m), uLava);
         float flow = uLava > 0.001 ? lavaFlowAt(p) : 0.0;
@@ -547,7 +560,7 @@ function planetSurfaceMaterial(U) {
           float c0 = craterRelief(p, b0), cx = craterRelief(px, bx), cy = craterRelief(py, by);
           float h0 = max(b0 + c0, uSea), hx = max(bx + cx, uSea), hy = max(by + cy, uSea);
           float k = 0.012 + uMountain * 0.25;                    // relief strength
-          float kc = uAirless * 0.3;                             // crater walls: much stronger than the terrain
+          float kc = craterAmount() * 0.3;                       // crater walls: much stronger than the terrain
           vec3 g = k * ((hx - h0) * t1 + (hy - h0) * t2) + kc * ((cx - c0) * t1 + (cy - c0) * t2);
           vec3 nObj = normalize(p - g / eps);
           Nb = normalize(mat3(modelMatrix) * nObj);
@@ -644,7 +657,7 @@ function buildPlanet(values, detail) {
     uFreq: { value: 0 }, uSea: { value: 0 }, uRough: { value: 0 }, uIce: { value: 0 }, uClimate: { value: 0 },
     uClouds: { value: 0 }, uCloudDrift: { value: 0 }, uMountain: { value: 0 }, uAtmo: { value: 0 },
     uAtmoColor: { value: new THREE.Color() }, uLava: { value: 0 }, uFrozen: { value: 0 },
-    uAirless: { value: 0 }, uRays: { value: 0 }, uOvercast: { value: 0 }, uBands: { value: 0 }, uHaze: { value: 0 },
+    uAirless: { value: 0 }, uRays: { value: 0 }, uCraters: { value: 0 }, uRust: { value: 0 }, uOvercast: { value: 0 }, uBands: { value: 0 }, uHaze: { value: 0 },
   });
   const seg = (n, min) => Math.max(min, Math.round(n * detail));
   const group = new THREE.Group();      // tilt goes here…
@@ -700,7 +713,7 @@ function buildPlanet(values, detail) {
       U.uCloudDrift.value = v.cloudDrift; U.uMountain.value = v.mountains;
       U.uAtmo.value = v.atmosphere; U.uAtmoColor.value.copy(hueColor(v.atmoHue));
       U.uLava.value = v.lava; U.uFrozen.value = v.frozen;
-      U.uAirless.value = v.airless; U.uRays.value = v.rays;
+      U.uAirless.value = v.airless; U.uRays.value = v.rays; U.uCraters.value = v.craters; U.uRust.value = v.rust;
       U.uOvercast.value = v.overcast; U.uBands.value = v.bands; U.uHaze.value = v.haze;
     },
     layers: {
@@ -716,6 +729,138 @@ function buildPlanet(values, detail) {
       return rows;
     },
     dispose() { probeRT.dispose(); probeMat.dispose(); probeScene.children[0].geometry.dispose(); },
+  });
+}
+
+// =====================================================================
+// GAS GIANTS
+// No surface: belts (dark) and zones (light) along the latitude lines,
+// each band drifting at its own speed, turbulent eddies on the band edges,
+// thin sub-bands, a great storm (an oval vortex in its band), white ovals,
+// mottled polar haze, limb darkening. Shares the atmosphere shell.
+// =====================================================================
+const GLSL_GIANT = `
+uniform float uBandCount, uTurb, uContrast, uWarm, uStorm, uStormLat, uOvals, uPolar, uWind;
+#define PI 3.14159265
+#define TAU 6.28318531
+// every band turns at its own speed (differential rotation)
+vec3 bandDrift(vec3 p, float lat){
+  float a = uTime * uWind * 0.03 * (0.5 + 0.9 * sin(lat * uBandCount * 0.5 + 1.3));
+  float c = cos(a), s = sin(a);
+  return vec3(c * p.x - s * p.z, p.y, s * p.x + c * p.z);
+}
+// an oval vortex at (lat0, lon0), half-sizes in radians; 0 outside,
+// 1 in the core; swirl = its spiralling texture
+float vortex(vec3 q, float lat, float lat0, float lon0, float hw, float hh, out float swirl, out float dist){
+  float lon = atan(q.z, q.x);
+  float dl = mod(lon - lon0 + PI, TAU) - PI;
+  vec2 e = vec2(dl * cos(lat0) / hw, (lat - lat0) / hh);
+  dist = length(e);
+  float ang = atan(e.y, e.x) + (1.0 - min(dist, 1.0)) * 3.0 - uTime * 0.25;
+  swirl = snoise(vec3(cos(ang) * dist * 1.6, sin(ang) * dist * 1.6, lat0 * 7.0) + uSeed) * 0.5 + 0.5;
+  return 1.0 - smoothstep(0.75, 1.0, dist);
+}
+vec3 giantColor(vec3 p){
+  float lat = asin(clamp(p.y, -1.0, 1.0));
+  vec3 q = bandDrift(p, lat);
+  // eddies: the latitude itself is pushed around, most on the band edges
+  float w = fbm(vec3(q.x * 2.2, q.y * 9.0, q.z * 2.2) + uSeed, uOctaves, 0.55);
+  float w2 = fbm(q * 5.0 + uSeed.yzx + vec3(w * 1.5), uOctaves, 0.5);
+  float y = lat + (w * 0.05 + w2 * 0.03) * uTurb;
+  // uneven band widths, narrower toward the poles
+  float yb = y + 0.07 * sin(y * 2.3 + uSeed.x) + 0.04 * sin(y * 5.7 + uSeed.y);
+  float freq = uBandCount * (1.0 + 0.5 * abs(y));
+  float band = sin(yb * freq);                                         // + zones, - belts
+  float edge = 1.0 - abs(band);                                        // band edges: the most turbulence
+  yb += w2 * 0.03 * uTurb * edge;
+  band = sin(yb * freq);
+  float fine = fbm(vec3(0.0, y * 55.0, 0.0) + uSeed.zxy, 4, 0.6);      // thin sub-bands
+  vec3 zone = vec3(0.94, 0.89, 0.79);
+  vec3 belt = mix(vec3(0.52, 0.47, 0.43), vec3(0.62, 0.38, 0.22), uWarm);
+  float k = smoothstep(-0.65, 0.65, band * (0.35 + 0.65 * uContrast) + fine * 0.45);
+  vec3 col = mix(belt, zone, k);
+  col *= 1.0 + fine * 0.14 + (w2 - 0.0) * 0.08 * uTurb;
+  // some belts redder, the equatorial zone slightly ochre
+  float tint = snoise(vec3(0.0, floor(y * uBandCount / PI) * 1.7, 0.0) + uSeed) * 0.5 + 0.5;
+  col = mix(col, col * vec3(1.06, 0.88, 0.74), smoothstep(0.45, 0.85, tint) * uWarm * (1.0 - k));
+  col = mix(col, col * vec3(1.03, 0.95, 0.84), (1.0 - smoothstep(0.0, 0.12, abs(lat))) * uWarm * 0.6);
+  // poles: darker, grey-blue, mottled
+  float pol = smoothstep(0.62, 0.95, abs(p.y)) * uPolar;
+  col = mix(col, vec3(0.47, 0.49, 0.53) * (0.8 + 0.4 * w2), pol);
+  // the great storm, drifting with its band
+  if (uStorm > 0.001) {
+    float sw, d;
+    float lat0 = radians(uStormLat);
+    float core = vortex(bandDrift(p, lat0), lat, lat0, 1.57, 0.25 * uStorm, 0.125 * uStorm, sw, d);
+    vec3 red = mix(vec3(0.72, 0.32, 0.21), vec3(0.84, 0.50, 0.34), 0.3 + 0.45 * sw + 0.25 * (1.0 - d));
+    float collar = smoothstep(0.8, 1.0, d) * (1.0 - smoothstep(1.0, 1.45, d));
+    col = mix(col, red, core);
+    col = mix(col, vec3(0.96, 0.92, 0.84), collar * 0.65);
+  }
+  // white ovals, strung along the southern temperate belt
+  for (int i = 0; i < 6; i++){
+    float fi = float(i);
+    if (fi >= uOvals * 6.0) break;
+    vec3 hk = hash33(vec3(fi * 5.3, uSeed.x, 3.7));
+    float lat0 = radians(-33.0 - 6.0 * hk.y);
+    float sw, d;
+    float core = vortex(bandDrift(p, lat0), lat, lat0, hk.x * TAU, 0.06 + 0.03 * hk.z, 0.035 + 0.015 * hk.z, sw, d);
+    col = mix(col, vec3(0.97, 0.95, 0.92) * (0.9 + 0.15 * sw), core * 0.9);
+  }
+  return col;
+}
+`;
+
+function giantMaterial(U) {
+  return new THREE.ShaderMaterial({
+    uniforms: U,
+    vertexShader: GLSL_SPHERE_VERTEX,
+    fragmentShader: GLSL_NOISE + GLSL_BODY + GLSL_GIANT + `
+      uniform vec3 uSunDir; uniform float uAtmo; uniform vec3 uAtmoColor;
+      varying vec3 vDir; varying vec3 vWorldPos; varying vec3 vNormalW;
+      void main(){
+        vec3 p = normalize(vDir);
+        vec3 col = giantColor(p);
+        float crack = crackAt(p);
+        col *= 1.0 - crack * 0.6;
+        vec3 N = normalize(vNormalW), L = normalize(uSunDir), V = normalize(cameraPosition - vWorldPos);
+        float diff = smoothstep(-0.12, 0.6, dot(N, L));                 // deep atmosphere: soft terminator
+        float mu = max(dot(N, V), 0.0);
+        vec3 lit = col * (0.02 + diff * 1.1 + pointLightAt(vWorldPos, N)) * (0.55 + 0.45 * pow(mu, 0.4));   // limb darkening
+        float rim = pow(1.0 - mu, 3.0);
+        lit += uAtmoColor * rim * uAtmo * 0.6 * smoothstep(-0.2, 0.4, dot(N, L));
+        gl_FragColor = vec4(lit + vec3(1.0, 0.45, 0.12) * crack * (0.7 + 0.9 * uDamage), 1.0);
+      }`,
+  });
+}
+
+function buildGiant(values, detail) {
+  const v = { ...values };
+  const U = Object.assign(bodyUniforms(v), {
+    uBandCount: { value: 0 }, uTurb: { value: 0 }, uContrast: { value: 0 }, uWarm: { value: 0 }, uStorm: { value: 0 },
+    uStormLat: { value: 0 }, uOvals: { value: 0 }, uPolar: { value: 0 }, uWind: { value: 0 },
+    uAtmo: { value: 0 }, uAtmoColor: { value: new THREE.Color() },
+  });
+  const seg = (n, min) => Math.max(min, Math.round(n * detail));
+  const group = new THREE.Group(), spin = new THREE.Group();
+  group.add(spin);
+  const surface = new THREE.Mesh(new THREE.SphereGeometry(1, seg(160, 16), seg(80, 8)), giantMaterial(U));
+  spin.add(surface);
+  const atmo = new THREE.Mesh(new THREE.SphereGeometry(1.06, seg(96, 12), seg(48, 6)), atmosphereMaterial(U));
+  group.add(atmo);
+  atmo.raycast = () => {};
+  return makeBodyHandle({
+    v, U, group, spin, pickMesh: surface,
+    apply() {
+      U.uBandCount.value = v.bandCount; U.uTurb.value = v.turbulence; U.uContrast.value = v.contrast; U.uWarm.value = v.warm;
+      U.uStorm.value = v.storm; U.uStormLat.value = v.stormLat; U.uOvals.value = v.ovals; U.uPolar.value = v.polar;
+      U.uWind.value = v.wind; U.uAtmo.value = v.atmosphere; U.uAtmoColor.value.copy(hueColor(v.atmoHue));
+    },
+    layers: { atmosphere: { objects: [atmo], when: () => v.atmosphere > 0.001 } },
+    describe() {
+      const pairs = Math.round(v.bandCount / 2);
+      return [["Belts / zones", pairs + " / " + pairs], ["Great storm", v.storm > 0.001 ? Math.round(v.storm * 24000 * 1.4) + " km wide" : "none"]];
+    },
   });
 }
 
@@ -1382,6 +1527,8 @@ const PLANET_PARAMS = [
       { key: "frozen",     label: "Frozen seas",            min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "airless",    label: "Airless, cratered",      min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "rays",       label: "Ray craters",            min: 0,   max: 1.5, step: 0.01, value: 0,    fmt: pct },
+      { key: "rust",       label: "Rust (oxidised dust)",   min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
+      { key: "craters",    label: "Craters",                min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "overcast",   label: "Cloud deck (closed)",    min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "bands",      label: "Band contrast",          min: 0,   max: 1,   step: 0.01, value: 0.6,  fmt: pct },
       { key: "haze",       label: "Haze colour (white → ochre)", min: 0, max: 1, step: 0.01, value: 0.5, fmt: pct },
@@ -1433,6 +1580,18 @@ const GROUPS = [
     build: buildPlanet,
   },
   {
+    id: "desert", name: "DESERT WORLDS", kmPerSize: 6371, view: 4.4, layers: { clouds: "CLOUDS", atmosphere: "ATMOSPHERE" },
+    params: planetParams(["size", ["continents", { label: "Terrain scale" }], "mountains", "roughness", ["rust", { value: 1 }],
+      ["craters", { value: 0.5 }], ["ice", { label: "Polar caps", value: 0.15 }], ["clouds", { label: "Thin clouds", value: 0.05 }],
+      "cloudDrift", ["atmosphere", { value: 0.25 }], ["atmoHue", { value: 22 }]]),
+    fixed: { sea: -0.6, climate: 1 },
+    bodies: [
+      { id: "mars", name: "MARS", values: { seed: 17, size: 0.53, tilt: 25, continents: 1.1, mountains: 0.03, roughness: 0.56,
+        craters: 0.45, ice: 0.12, clouds: 0, atmosphere: 0.12, atmoHue: 24 } },
+    ],
+    build: buildPlanet,
+  },
+  {
     id: "clouded", name: "CLOUD WORLDS", kmPerSize: 6371, view: 4.4, layers: { clouds: "CLOUD DECK", atmosphere: "ATMOSPHERE" },
     params: planetParams(["size", ["overcast", { value: 1 }], "bands", "haze", ["cloudDrift", { label: "Wind speed", value: 0.6 }],
       "atmosphere", ["atmoHue", { value: 42 }]]),
@@ -1451,6 +1610,27 @@ const GROUPS = [
       { id: "mercury", name: "MERCURY", values: { seed: 3, size: 0.38, tilt: 0, spin: 0.25, continents: 1.6, roughness: 0.55 } },
     ],
     build: buildPlanet,
+  },
+  {
+    id: "giants", name: "GAS GIANTS", kmPerSize: 69911, view: 4.4, layers: { atmosphere: "ATMOSPHERE" },
+    params: [
+      { key: "size",       label: "Size (Jupiter radii)",   min: 0.3, max: 2,   step: 0.05, value: 1,    fmt: f2 },
+      { key: "bandCount",  label: "Bands",                  min: 6,   max: 30,  step: 1,    value: 16,   fmt: (x) => Math.round(x) },
+      { key: "turbulence", label: "Turbulence",             min: 0,   max: 1,   step: 0.01, value: 0.6,  fmt: pct },
+      { key: "contrast",   label: "Band contrast",          min: 0,   max: 1,   step: 0.01, value: 0.7,  fmt: pct },
+      { key: "warm",       label: "Colour (grey → rusty)",  min: 0,   max: 1,   step: 0.01, value: 0.7,  fmt: pct },
+      { key: "storm",      label: "Great storm",            min: 0,   max: 1.5, step: 0.01, value: 1,    fmt: pct },
+      { key: "stormLat",   label: "Storm latitude",         min: -60, max: 60,  step: 1,    value: -22,  fmt: (x) => Math.round(x) + "°" },
+      { key: "ovals",      label: "White ovals",            min: 0,   max: 1,   step: 0.01, value: 0.5,  fmt: pct },
+      { key: "polar",      label: "Polar haze",             min: 0,   max: 1,   step: 0.01, value: 0.6,  fmt: pct },
+      { key: "wind",       label: "Wind speed",             min: 0,   max: 1,   step: 0.01, value: 0.5,  fmt: pct },
+      { key: "atmosphere", label: "Atmosphere",             min: 0,   max: 1,   step: 0.01, value: 0.3,  fmt: pct },
+      { key: "atmoHue",    label: "Atmosphere hue",         min: 0,   max: 360, step: 1,    value: 35,   fmt: (x) => Math.round(x) + "°" },
+    ],
+    bodies: [
+      { id: "jupiter", name: "JUPITER", values: { seed: 5, tilt: 3, spin: 1 } },
+    ],
+    build: buildGiant,
   },
   {
     id: "suns", name: "SUNS", kmPerSize: 696000, view: 7, layers: { atmosphere: "CORONA" },
