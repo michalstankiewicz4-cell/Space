@@ -386,6 +386,9 @@ function bodyEntryText() {
     const x = +v[p.key].toFixed(decimals(p.step));
     if (x !== +defaults[p.key].toFixed(decimals(p.step))) parts.push(`${p.key}: ${x}`);
   }
+  // the body's own values for keys its group shows no slider for (kept as they are)
+  const shown = new Set([...BodyKit.COMMON_PARAMS, ...g.params].map((p) => p.key));
+  for (const k of Object.keys(def.values || {})) if (k !== "seed" && !shown.has(k)) parts.push(`${k}: ${def.values[k]}`);
   const slot = def.slot != null ? ` slot: ${def.slot},` : "";
   return `{ id: "${def.id}", name: "${def.name}",${slot} values: { ${parts.join(", ")} } },`;
 }

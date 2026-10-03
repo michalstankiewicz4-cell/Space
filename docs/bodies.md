@@ -31,7 +31,10 @@ from its schema.
 
 | Group | Parameters | Bodies | Lab statistics |
 |---|---|---|---|
-| PLANETS | 13 planet parameters (below) | the game's six planets | measured land / water / lava / ice / clouds |
+| LAVA WORLDS | size, lava level, continents, mountains, roughness, molten lowlands, ash clouds, drift, atmosphere, hue | CINDER (1), MAGMA (2) | measured land / water / lava / ice / clouds |
+| EARTH-LIKE | size, water level, continents, mountains, roughness, climate, ice caps, clouds, drift, atmosphere, hue | TERRA-1 (3), PELAGIA (5) | the same |
+| ICE WORLDS | size, frozen-sea level, continents, mountains, roughness, ice caps, frozen seas, clouds, drift, atmosphere, hue | RIME (6), GLACIES (7) | the same |
+| AIRLESS | size, terrain scale, relief height, roughness, craters, ray craters | MERCURY (lab only) | the same |
 | SUNS | size, temperature, granulation, sunspots, activity, corona, brightness | SOL (slot 0) | temperature, spectral class, luminosity |
 | COMETS | the rock parameters + coma, tail length, dust tail, ion tail hue | COMET (kind `comet`: every comet) | shape in km |
 | ROCKS | the rock parameters: size, lumpiness, elongation, craters, albedo, color, ice, metal veins | FERRUM (slot 8, the meteoroid) | shape in km, albedo |
@@ -44,6 +47,16 @@ opened: a comet's tail is long) and `layers` (the names of the two layer
 toggles: CLOUDS / ATMOSPHERE, CORONA, COMA & TAILS, DISK & LENSING,
 STARS / NEBULAE). The SKY group has no `kmPerSize` (no radius statistics)
 and `common: false` (no spin / tilt / damage sliders).
+
+**The four planet groups are one planet** (`buildPlanet`, one shader):
+they differ only in which sliders they show (`planetParams([...])`, a
+subset of `PLANET_PARAMS`, optionally relabelled — "Lava level" is `sea`
+— or with another default) and in `fixed` values a group sets without a
+slider (lava worlds: no ice caps; airless: no sea, clouds or air). Split
+in 2026-10 because one shared set of 15 sliders let a slider put things
+on a planet that don't belong there. Every planet's values stayed exactly
+the same (checked key by key). COPY VALUES also writes the body's own
+values for keys its group has no slider for.
 
 Every body also has the **common** parameters: rotation speed
 (`spin`, 1 = 0.6 rad/s), axial tilt (`tilt`, degrees) and `damage`
@@ -71,7 +84,7 @@ FERRUM (8), ABYSS (9) and COMET.
 `size` only matters in the lab (it's set to the relative game radius);
 the game sizes each body to its own radius.
 
-### Planet parameters
+### Planet parameters (`PLANET_PARAMS`; each planet group shows a subset)
 
 | Key | Slider | Range | Default |
 |---|---|---|---|
@@ -200,7 +213,7 @@ the game sizes each body to its own radius.
 ## BodyKit API (`window.BodyKit`)
 
 ```js
-const body = BodyKit.buildBody("planets", "terra", { detail: 0.4, values: { seed: 7 } });
+const body = BodyKit.buildBody("earthlike", "terra", { detail: 0.4, values: { seed: 7 } });
 scene.add(body.group);
 body.setRadius(1.9);                  // world units
 // every frame:
@@ -218,7 +231,8 @@ BodyKit.disposeBody(body);
 | `QUALITY_OCTAVES` | Noise octaves for the render-quality presets LOW..MAX (`[3, 4, 5, 6, 8]`), used by the lab and the game |
 | `GAME_BODIES`, `GAME_KINDS` | `{ slot: { groupId, bodyId } }` and `{ kind: { groupId, bodyId } }`, built from the bodies' `slot` and `kind` fields |
 | `SPIN_RAD_PER_UNIT` | 0.6: `values.spin` 1 in rad/s |
-| `GROUPS`, `COMMON_PARAMS`, `defaultValues(group, body)` | Registry and schemas |
+| `GROUPS`, `COMMON_PARAMS`, `defaultValues(group, body)` | Registry and schemas (`defaultValues` = slider defaults + the group's `fixed` + the body's values) |
+| `PLANET_PARAMS`, `PLANET_DEFAULTS` | Every planet parameter and its default; the planet groups show subsets |
 | `GLSL_NOISE`, `GLSL_BODY`, `GLSL_PLANET`, `GLSL_SUN`, `GLSL_ROCK`, `GLSL_HOLE` | Shader code, reusable for new bodies |
 
 Body handle:
@@ -295,7 +309,7 @@ Rules, for every new body and every change:
 
 ## Adding a body or a group
 
-- **Another planet**: add an entry to the planets group's `bodies`, e.g.
+- **Another planet**: add an entry to the fitting planet group's `bodies` (`lava`, `earthlike`, `icy`, `airless`), e.g.
   `{ id: "ocean", name: "…", values: { sea: 0.35, clouds: 0.6 } }`. The
   body-navigation arrows pick it up. Give it `slot: n` to put it on that
   orbit in the game (one body per slot).
@@ -379,7 +393,7 @@ Sun, the meteoroid, comets, the black hole) and since v2.12.0 the sky
 - **Backdrop**: the game's own sky (BodyKit's kind `sky`), so a body looks
   here exactly as in the game; hidden while the SKY tab shows a sky of its
   own.
-- **Left panel**: group tabs (PLANETS / SUNS / COMETS / ROCKS / BLACK HOLES / SKY), body
+- **Left panel**: group tabs (LAVA WORLDS / EARTH-LIKE / ICE WORLDS / AIRLESS / SUNS / COMETS / ROCKS / BLACK HOLES / SKY), body
   navigation, PHYSICAL statistics and MODEL statistics, and toggles for
   auto-rotate, the two layers (named by the group), wireframe, GAME BUILD
   (the body at the detail the game builds it: × `BodyKit.GAME_DETAIL_SCALE`,

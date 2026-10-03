@@ -611,7 +611,7 @@ function planetProbeMaterial(U) {
 }
 
 function buildPlanet(values, detail) {
-  const v = { ...values };
+  const v = { ...PLANET_DEFAULTS, ...values };   // a group shows only some sliders
   const U = Object.assign(bodyUniforms(v), {
     uFreq: { value: 0 }, uSea: { value: 0 }, uRough: { value: 0 }, uIce: { value: 0 }, uClimate: { value: 0 },
     uClouds: { value: 0 }, uCloudDrift: { value: 0 }, uMountain: { value: 0 }, uAtmo: { value: 0 },
@@ -1333,10 +1333,11 @@ const ROCK_PARAMS = [
   { key: "ice",        label: "Ice & frost",            min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
   { key: "metal",      label: "Metal veins",            min: 0,   max: 1,   step: 0.01, value: 0.15, fmt: pct },
 ];
-const GROUPS = [
-  {
-    id: "planets", name: "PLANETS", kmPerSize: 6371, view: 4.4, layers: { clouds: "CLOUDS", atmosphere: "ATMOSPHERE" },
-    params: [
+// Every planet parameter buildPlanet reads, with its slider. The planet
+// groups (lava, Earth-like, ice, airless) share one shader and show only
+// the sliders that matter for them; the rest come from these defaults, the
+// group's `fixed` values and the body's own values.
+const PLANET_PARAMS = [
       { key: "size",       label: "Size (Earth radii)",     min: 0.3, max: 2.5, step: 0.05, value: 1,    fmt: f2 },
       { key: "sea",        label: "Water level",            min: -0.6, max: 0.6, step: 0.01, value: 0.04, fmt: f2 },
       { key: "continents", label: "Continent scale",        min: 0.5, max: 3.5, step: 0.05, value: 1.4,  fmt: f2 },
@@ -1352,21 +1353,60 @@ const GROUPS = [
       { key: "frozen",     label: "Frozen seas",            min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "airless",    label: "Airless, cratered",      min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "rays",       label: "Ray craters",            min: 0,   max: 1.5, step: 0.01, value: 0,    fmt: pct },
-    ],
+];
+const PLANET_DEFAULTS = Object.fromEntries(PLANET_PARAMS.map((p) => [p.key, p.value]));
+// A group's sliders: keys, or [key, overrides] (another label or default).
+function planetParams(list) {
+  return list.map((it) => {
+    const [key, over] = Array.isArray(it) ? it : [it, {}];
+    const base = PLANET_PARAMS.find((p) => p.key === key);
+    if (!base) throw new Error("BodyKit: unknown planet parameter " + key);
+    return { ...base, ...over };
+  });
+}
+const GROUPS = [
+  {
+    id: "lava", name: "LAVA WORLDS", kmPerSize: 6371, view: 4.4, layers: { clouds: "ASH CLOUDS", atmosphere: "ATMOSPHERE" },
+    params: planetParams(["size", ["sea", { label: "Lava level" }], "continents", "mountains", "roughness", ["lava", { value: 1 }],
+      ["clouds", { label: "Ash clouds" }], "cloudDrift", "atmosphere", "atmoHue"]),
+    fixed: { ice: 0 },
     bodies: [
-      { id: "cinder",  name: "CINDER",  slot: 1, values: { seed: 11, size: 0.85, tilt: 6, lava: 1, sea: -0.05, mountains: 0.06,
-        climate: 0.9, ice: 0, clouds: 0.08, cloudDrift: 0.5, atmosphere: 0.35, atmoHue: 18 } },
-      { id: "magma",   name: "MAGMA",   slot: 2, values: { seed: 23, size: 1.2, tilt: 30, lava: 1, sea: 0.06, roughness: 0.6,
-        climate: 1, ice: 0, clouds: 0.15, atmosphere: 0.5, atmoHue: 12 } },
+      { id: "cinder",  name: "CINDER",  slot: 1, values: { seed: 11, size: 0.85, tilt: 6, sea: -0.05, mountains: 0.06,
+        climate: 0.9, clouds: 0.08, cloudDrift: 0.5, atmosphere: 0.35, atmoHue: 18 } },
+      { id: "magma",   name: "MAGMA",   slot: 2, values: { seed: 23, size: 1.2, tilt: 30, sea: 0.06, roughness: 0.6,
+        climate: 1, clouds: 0.15, atmosphere: 0.5, atmoHue: 12 } },
+    ],
+    build: buildPlanet,
+  },
+  {
+    id: "earthlike", name: "EARTH-LIKE", kmPerSize: 6371, view: 4.4, layers: { clouds: "CLOUDS", atmosphere: "ATMOSPHERE" },
+    params: planetParams(["size", "sea", "continents", "mountains", "roughness", "climate", "ice", "clouds", "cloudDrift", "atmosphere", "atmoHue"]),
+    bodies: [
       { id: "terra",   name: "TERRA-1", slot: 3, values: { seed: 1 } },
-      { id: "mercury", name: "MERCURY", values: { seed: 3, size: 0.38, tilt: 0, spin: 0.25, airless: 1, rays: 0.9, sea: -0.6,
-        continents: 1.6, mountains: 0.006, roughness: 0.55, climate: 0.5, ice: 0, clouds: 0, atmosphere: 0 } },
       { id: "pelagia", name: "PELAGIA", slot: 5, values: { seed: 5, size: 1.35, tilt: 12, sea: 0.22, continents: 2.2,
         climate: 0.2, ice: 0.25, clouds: 0.55, atmoHue: 195 } },
-      { id: "rime",    name: "RIME",    slot: 6, values: { seed: 31, size: 0.9, tilt: 20, frozen: 1, sea: 0.05, ice: 0.75,
+    ],
+    build: buildPlanet,
+  },
+  {
+    id: "icy", name: "ICE WORLDS", kmPerSize: 6371, view: 4.4, layers: { clouds: "CLOUDS", atmosphere: "ATMOSPHERE" },
+    params: planetParams(["size", ["sea", { label: "Frozen-sea level" }], "continents", "mountains", "roughness", "ice", ["frozen", { value: 1 }],
+      "clouds", "cloudDrift", "atmosphere", "atmoHue"]),
+    bodies: [
+      { id: "rime",    name: "RIME",    slot: 6, values: { seed: 31, size: 0.9, tilt: 20, sea: 0.05, ice: 0.75,
         climate: 0.1, clouds: 0.3, atmosphere: 0.45, atmoHue: 190 } },
-      { id: "glacies", name: "GLACIES", slot: 7, values: { seed: 47, size: 1.25, tilt: 40, frozen: 1, sea: 0.25, ice: 1,
+      { id: "glacies", name: "GLACIES", slot: 7, values: { seed: 47, size: 1.25, tilt: 40, sea: 0.25, ice: 1,
         mountains: 0.03, clouds: 0.4, atmosphere: 0.35, atmoHue: 215 } },
+    ],
+    build: buildPlanet,
+  },
+  {
+    id: "airless", name: "AIRLESS", kmPerSize: 6371, view: 4.4, layers: {},
+    params: planetParams(["size", ["continents", { label: "Terrain scale" }], ["mountains", { label: "Relief height", value: 0.006 }], "roughness",
+      ["airless", { label: "Craters", value: 1 }], ["rays", { value: 0.9 }]]),
+    fixed: { sea: -0.6, ice: 0, clouds: 0, atmosphere: 0, climate: 0.5 },
+    bodies: [
+      { id: "mercury", name: "MERCURY", values: { seed: 3, size: 0.38, tilt: 0, spin: 0.25, continents: 1.6, roughness: 0.55 } },
     ],
     build: buildPlanet,
   },
@@ -1475,7 +1515,7 @@ for (const g of GROUPS) for (const b of g.bodies) {
 function defaultValues(group, body) {
   const v = { seed: 1 };
   for (const p of [...COMMON_PARAMS, ...group.params]) v[p.key] = p.value;
-  return Object.assign(v, body.values);
+  return Object.assign(v, group.fixed, body.values);   // fixed: values a group sets but shows no slider for
 }
 
 function buildBody(groupId, bodyId, { detail = 1, values = {} } = {}) {
@@ -1506,7 +1546,7 @@ function modelStats(root) {
   return st;
 }
 
-return { GROUPS, COMMON_PARAMS, QUALITY_OCTAVES, GAME_DETAIL_SCALE, MAX_POINT_LIGHTS, GLSL_SKY, GAME_BODIES, GAME_KINDS, SPIN_RAD_PER_UNIT,
+return { GROUPS, COMMON_PARAMS, PLANET_PARAMS, PLANET_DEFAULTS, QUALITY_OCTAVES, GAME_DETAIL_SCALE, MAX_POINT_LIGHTS, GLSL_SKY, GAME_BODIES, GAME_KINDS, SPIN_RAD_PER_UNIT,
          buildBody, disposeBody, modelStats, defaultValues,
          GLSL_NOISE, GLSL_BODY, GLSL_PLANET, GLSL_SUN, GLSL_ROCK, GLSL_HOLE };
 })();

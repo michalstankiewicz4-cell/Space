@@ -4,6 +4,17 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.30.4]
+
+### Changed
+- Body lab: the PLANETS group is split into **LAVA WORLDS** (CINDER,
+  MAGMA), **EARTH-LIKE** (TERRA-1, PELAGIA), **ICE WORLDS** (RIME,
+  GLACIES) and **AIRLESS** (MERCURY), each showing only the sliders that
+  matter for it — one shared set of 15 let a slider add lava, craters or
+  ice where they don't belong. Still one planet shader; every planet's
+  values are unchanged, so the game looks the same (BodyKit is shared
+  with it, hence the version).
+
 ## [2.30.3]
 
 ### Added
