@@ -320,7 +320,7 @@ animations).
 | `detailHelpers(detail)` | `{ seg, bevel }`: segment counts scaled by `detail`, extrude bevel options |
 | `makeEngineSet(M, U, seg)` | `add(parent, pos, opts)` builds an engine (nacelle, intake ring, nose cone, lathed bell, throat, optional heat ring, shader plume, glow), exhaust toward −X; `update(t, power)` drives every plume/glow. Options: `radius, length, color, plumeMat, heatMat, taper, intake, cone, bell, plume, glow, res` |
 | `makeExhaust(parent, U, { count, seed, emitters, rate, grow })` | Exhaust particles from each emitter `{ pos, spread, length }`; `update(dt, power, on, offsetY)` |
-| `makeNavLights(parent, defs)` | Running lights `{ color, pos, size, kind: "steady" \| "strobe", phase }`; `update(t)`, `setVisible(on)` |
+| `makeNavLights(parent, defs)` | Running lights `{ color, pos, size, kind: "steady" \| "strobe", phase }`; `update(t)`, `setVisible(on)`. Each is a lens in its colour (always there) plus a glow; off, the glow fades in ~0.15 s and the lens goes dark (the user's call: the lights stay visible, they just go out) |
 | `makeShotQueue()` | `schedule([{ delay, ... }])` for act("fire"), `run(t, fn)` fires each when due |
 | `makeOnlineFader()` | Offline state for the ship's own parts: `set(on)`, `offline`, `update(dt)` → 0..1 online level |
 | `makeBoltPool`, `makeScanWave`, `textTexture`, `fxTextures` | Action effects (see [Actions, offline and damage](#actions-offline-and-damage)) |

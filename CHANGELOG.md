@@ -13,6 +13,11 @@ shown next to the title on the start screen and in the browser tab title
   sliders and FILLET / SEALANT buttons. Off by default: the game's ships
   look the same (docs/ship.md, "Shaping").
 
+### Changed
+- Running lights have a lens you can see; switched off (or offline) they
+  fade and go dark instead of vanishing. The codewing's ring of chase
+  lights stays as unlit bulbs.
+
 ## [2.32.9]
 
 ### Added

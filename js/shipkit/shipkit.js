@@ -1391,22 +1391,43 @@ function makeExhaust(parent, U, { count, seed, emitters, rate = [0.9, 0.6], grow
 
 // Navigation lights: glow sprites, "steady" (gentle pulse) or "strobe"
 // (short flash; `phase` offsets it). defs: [{ color, pos: [x, y, z], size, kind, phase }]
+// Each light is a small lens in its colour (always there) and a glow
+// sprite; switched off (setVisible(false), offline, damage flicker) the
+// glow fades out in ~0.15 s and the lens goes dark — the fitting stays.
 function makeNavLights(parent, defs) {
   const G = glowTextures();
+  // lenses that blink alike share a material (and so merge into one mesh in the game's build)
+  const lensMats = new Map();
+  const lensMat = (d) => {
+    const key = d.color + "/" + (d.kind || "steady") + "/" + (d.kind === "strobe" ? d.phase || 0 : 0);
+    if (!lensMats.has(key)) {
+      const c = new THREE.Color(d.color);
+      lensMats.set(key, { mat: new THREE.MeshStandardMaterial({ color: c.clone().multiplyScalar(0.18), emissive: c, emissiveIntensity: 0, roughness: 0.18, metalness: 0.2 }),
+        kind: d.kind || "steady", phase: d.phase || 0 });
+    }
+    return lensMats.get(key);
+  };
   const lights = defs.map((d) => {
     const s = additiveSprite(G.nav, d.color);
     s.position.set(d.pos[0], d.pos[1], d.pos[2]); s.scale.setScalar(d.size || 0.6);
     parent.add(s);
+    // the lens: dark tinted glass when off, lit from inside when on
+    const lens = new THREE.Mesh(new THREE.SphereGeometry((d.size || 0.6) * 0.11, 12, 8), lensMat(d).mat);
+    lens.position.copy(s.position);
+    lens.userData.navLens = true;
+    parent.add(lens);
     return { s, kind: d.kind || "steady", phase: d.phase || 0 };
   });
+  let on = true, level = 1, last = null;
   return {
     update(t) {
-      for (const n of lights) {
-        if (n.kind === "strobe") n.s.material.opacity = ((t * 0.8 + n.phase) % 1) < 0.06 ? 1 : 0.05;
-        else n.s.material.opacity = 0.75 + 0.25 * Math.sin(t * 3);
-      }
+      const dt = last === null ? 0 : Math.max(0, Math.min(0.1, t - last)); last = t;
+      level += ((on ? 1 : 0) - level) * Math.min(1, dt * 14);
+      const blink = (n) => n.kind === "strobe" ? (((t * 0.8 + n.phase) % 1) < 0.06 ? 1 : 0.05) : 0.75 + 0.25 * Math.sin(t * 3);
+      for (const n of lights) { n.s.material.opacity = blink(n) * level; n.s.visible = level > 0.01; }
+      for (const m of lensMats.values()) m.mat.emissiveIntensity = blink(m) * level * 2.2;
     },
-    setVisible(on) { for (const n of lights) n.s.visible = on; },
+    setVisible(v) { on = !!v; },
   };
 }
 
@@ -1740,6 +1761,8 @@ SHIP_DEFS.push({
 
     // ---- animation
     const tmpColor = new THREE.Color(), chaseBlue = new THREE.Color(0x7f95ff), chaseGold = new THREE.Color(GOLD);
+    const chaseUnlit = new THREE.Color(0.07, 0.075, 0.09);   // a bulb with its light off
+    let chaseOn = true, chaseLevel = 1;
     // t: seconds since start, dt: frame delta (s),
     // opts.power: engine throttle 0..1 (caller may smooth it),
     // opts.particles: false to skip the exhaust particles (cheap LOD).
@@ -1752,10 +1775,12 @@ SHIP_DEFS.push({
       spinner.rotation.z += dt * 0.5 * online;
       shots.run(t, (sh) => bolts.fire(muzzle.set(-1.45, -0.12, 4.72 * sh.side), forward, sh.target));
       bolts.update(dt); wave.update(dt);
+      chaseLevel += ((chaseOn ? 1 : 0) - chaseLevel) * Math.min(1, dt * 14);
       for (let i = 0; i < LIGHTS; i++) {
         const p1 = ((i / LIGHTS - t * 0.35) % 1 + 1) % 1, p2 = ((i / LIGHTS - t * 0.35 + 0.5) % 1 + 1) % 1;
         const k = Math.max(Math.pow(1 - p1, 10), Math.pow(1 - p2, 10));
-        tmpColor.copy(i % 6 === 0 ? chaseGold : chaseBlue).multiplyScalar(0.12 + 1.6 * k);
+        // lit: the running chase; off: unlit bulbs (still there)
+        tmpColor.copy(i % 6 === 0 ? chaseGold : chaseBlue).multiplyScalar(0.12 + 1.6 * k).lerp(chaseUnlit, 1 - chaseLevel);
         chase.setColorAt(i, tmpColor);
       }
       chase.instanceColor.needsUpdate = true;
@@ -1770,7 +1795,7 @@ SHIP_DEFS.push({
       antennaTip.material.color.setScalar(((t * 0.8) % 1) < 0.06 ? 1 : 0.25);
       exhaust.update(dt, throttle, particlesOn);
     }
-    function setLights(on) { nav.setVisible(on); chase.visible = on; }
+    function setLights(on) { nav.setVisible(on); chaseOn = on; }
     return { group: ship, update, setLights, actions, act };
   },
 });

@@ -535,7 +535,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
-    { v: "2.32.10", items: ["Laboratorium statków: zaokrąglone krawędzie oraz łączenia części zaokrąglone gładko albo uszczelnione (nowe suwaki). Statki w grze na razie wyglądają tak samo."] },
+    { v: "2.32.10", items: ["Laboratorium statków: zaokrąglone krawędzie oraz łączenia części zaokrąglone gładko albo uszczelnione (nowe suwaki). Statki w grze na razie wyglądają tak samo.", "Światła pozycyjne mają widoczne lampki: po wyłączeniu gasną, a nie znikają."] },
     { v: "2.32.9", items: ["Nowe laboratorium w Dev Tools: Pojazdy morskie, czyli fale, dno z wyspą i nurkowanie pod wodę oraz cztery robotyczne jednostki: wodolot, barka, łódź podwodna i amfibia wyjeżdżająca na brzeg."] },
     { v: "2.32.8", items: ["Laboratorium powierzchni: dzień i noc, pogoda (deszcz, śnieg, burze piaskowe, popiół) oraz niebo pokazujące to, co naprawdę jest w układzie: Księżyc w fazach, dwa słońca, olbrzym nad głową.", "Nowe laboratorium w Dev Tools: Pojazdy, czyli cztery naziemne roboty (łazik zwiadowczy, transporter, gąsienicowa koparka i dźwig) jeżdżące po nierównym terenie."] },
     { v: "2.32.7", items: ["Dwa nowe laboratoria w Dev Tools: Powierzchnia (lądowanie na planecie, jazda, zakładanie bazy) i Budynki (moduły bazy). Pod maską: planety można już oglądać z powierzchni — pierwszy krok w stronę lądowania."] },
