@@ -3,6 +3,8 @@ import { t } from "../../i18n.js";
 import { showInfo, hideInfo, getInfoOwner, setInfoRow, setInfoButtons } from "./infoPanel.js";
 import { discover } from "../../core/discovery.js";
 import { focusCameraOn } from "../../scene/camera.js";
+import { baseOn } from "../../world/baseMarkers.js";
+import { bodyLookRef } from "../../world/bodyVisual.js";
 
 // Which planet the PLANET INFO panel is currently showing — module-local,
 // not on ctx, since (unlike the drone/station) this is transient UI focus
@@ -35,6 +37,7 @@ export function openPlanetPanel(p){
 // clicking it again (see scene/controls.js).
 export function closePlanetPanel(){
   currentPlanet = null;
+  document.getElementById("infoBase").classList.add("hidden");
   hideInfo("planet");
 }
 
@@ -57,6 +60,14 @@ export function refreshPlanetPanel(){
   // p.spin is radians/second (see world/bodies.js#materializePlanet) —
   // shown as degrees/second, a more readable unit than raw radians.
   setInfoRow(3, t("planet.spin"), (p.spin * 180 / Math.PI).toFixed(1) + "°/s");
+  // your base from the surface lab (world/baseMarkers.js): only on a planet that has one
+  const base = p.orbitSlot != null && p.kind !== "sun" ? baseOn(bodyLookRef(p.orbitSlot, p.kind)) : null;
+  const baseEl = document.getElementById("infoBase");
+  baseEl.classList.toggle("hidden", !base);
+  if(base){
+    baseEl.textContent = t("planet.base");
+    const n = document.createElement("b"); n.textContent = t("planet.baseModules")(base.modules, base.built); baseEl.appendChild(n);
+  }
   // Mockup actions — not wired up yet.
   // VIEW: the camera flies to the planet and follows it, like a minimap click
   setInfoButtons([{ text: t("planet.waypoint") }, { text: t("planet.scan") },

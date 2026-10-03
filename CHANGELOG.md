@@ -4,6 +4,16 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.32.13]
+
+### Added
+- Your bases on the game's planets: a base founded in the surface lab
+  (kept in this browser, `roj-bases`) shows as a gold diamond on that
+  planet, at its latitude / longitude, turning with it; PLANET INFO gets a
+  "Surface base" row (modules, how many built; not "Your base", which is
+  the station's name in the game). Only you see it; another tab
+  changing the bases moves the markers. `js/world/baseMarkers.js`.
+
 ## [2.32.12]
 
 ### Changed

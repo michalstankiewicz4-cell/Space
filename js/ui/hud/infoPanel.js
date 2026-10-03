@@ -19,6 +19,7 @@ export function getInfoOwner(){
 
 export function showInfo(who, opts){
   owner = who;
+  if(who !== "planet") el("infoBase").classList.add("hidden");   // a planet's surface-base line (ui/hud/planetPanel.js)
   thumbTarget = opts.thumbTarget || null;
   onClose = opts.onClose || null;
   el("infoEmpty").classList.add("hidden");

@@ -295,7 +295,9 @@ export const en = {
   },
   planet: {
     health: "Health", radius: "Radius", spin: "Spin", value: "Value",
-    waypoint: "SET WAYPOINT", scan: "SCAN", colonize: "COLONIZE"
+    waypoint: "SET WAYPOINT", scan: "SCAN", colonize: "COLONIZE",
+    base: "Surface base",
+    baseModules: function(n, built){ return n + (n === 1 ? " module" : " modules") + (built < n ? ", " + built + " built" : ""); }
   },
   blackhole: { pull: "Pull range", noReturn: "No return" },
   devTools: {
@@ -534,6 +536,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.32.13", items: ["A base you found in the Surface lab now shows on that planet in the game: a gold diamond on its surface, and a \"Surface base\" line in PLANET INFO."] },
     { v: "2.32.12", items: ["Ship lab: a button to stop the ships' animations, the idle bobbing included, while their lights stay on, and renaming a ship (the name on its hull follows). Nothing changes in the game."] },
     { v: "2.32.11", items: ["Behind the scenes: better server monitoring. Nothing changes in the game."] },
     { v: "2.32.10", items: ["Ship lab: rounded edges, and joints between parts rounded smoothly or sealed (new sliders). The ships in the game look the same for now.", "Running lights have visible lamps: switched off, they fade and go dark instead of disappearing."] },

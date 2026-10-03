@@ -13,6 +13,9 @@
 #infoThumb{ left:37px; top:40px; width:100px; height:100px; }
 #infoName{ left:145px; right:12px; top:43px; font-size:20px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #infoType{ left:145px; right:12px; top:69px; font-size:15px; line-height:19px; color:#dbe1ff; }
+/* a planet with your surface base (world/baseMarkers.js): its line under the value, in the marker's gold */
+#infoBase{ left:145px; right:12px; top:92px; font-size:13.5px; line-height:17px; color:#f8bb56; }
+#infoBase b{ display:block; font-weight:400; color:#ffe2a8; }
 #plMidLine{ left:37px; right:14px; top:146px; }
 #plRows{ left:40px; top:150px; width:257px; }
 .plRow{ position:relative; height:27px; font-size:15px; line-height:27px; color:#c7d0ff; }

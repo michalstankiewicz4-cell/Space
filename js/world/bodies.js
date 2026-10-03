@@ -9,6 +9,7 @@ import { bodyParams, tempColor, randomPlanetSpawnData, contentKindFor } from "./
 import { SOLAR_BODIES, SOLAR_BODY_BY_SLOT, bodyPosAt, nowSimTime } from "./solarSystem.js";
 import { materializeBlackHole } from "./blackholes.js";
 import { makeBodyLook, bodyLookRef, cometActivity } from "./bodyVisual.js";
+import { attachBaseMarker } from "./baseMarkers.js";
 import { stepComet, advanceComet, COMET_EXIT_RADIUS, computeCometTrajectory } from "./cometPhysics.js";
 import { buildCometTrajectoryLine } from "../scene/orbitLines.js";
 
@@ -74,6 +75,8 @@ export function materializePlanet(row, pos, vel, elapsedSec){
   const scorchMesh = new THREE.Mesh(new THREE.SphereGeometry(1.012, 22, 16), scorchMat);
   scorchMesh.renderOrder = 1; // over a planet's clouds
   look.attach(scorchMesh);
+  // your base from the surface lab, if this planet has one (world/baseMarkers.js)
+  if(orbitSlot != null && kind !== "sun") attachBaseMarker(look, bodyLookRef(orbitSlot, kind));
 
   // the Sun lights the game's own (standard-material) objects: ships,
   // the station; BodyKit bodies light themselves from its position

@@ -91,7 +91,7 @@ const MODULE_FILES = [
   "js/ui/windows/wiki.js", "js/ui/windows/wikiArt.js",
   "js/ui/windows/wikiEntries.js", "js/ui/windows/windows.js",
   "js/version.js", "js/versionCheck.js", "js/world/blackholes.js",
-  "js/world/bodies.js", "js/world/bodyParams.js", "js/world/bodyVisual.js",
+  "js/world/bodies.js", "js/world/baseMarkers.js", "js/world/bodyParams.js", "js/world/bodyVisual.js",
   "js/world/cometPhysics.js", "js/world/rewards.js",
   "js/world/solarGravity.js", "js/world/solarSystem.js",
   "js/world/textures.js"

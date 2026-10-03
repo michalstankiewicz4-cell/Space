@@ -261,6 +261,26 @@ globe.
 - A beacon (a tall additive cylinder) marks the base's centre on the ground.
   The globe shows a gold diamond (`makeMarker`).
 
+## In the game (v2.32.13)
+
+`js/world/baseMarkers.js` reads the same `roj-bases`.
+
+- **The marker.** A planet whose look is a body with a base (its BodyKit
+  ref: `bodyLookRef(slot)`, e.g. the game's slot 3 is `earthlike/terra`)
+  gets a gold diamond sprite at the base's lat/lon.
+  - It is placed through the look's `attach` (BodyKit's `surfaceRoot`, unit
+    radius), so it turns with the planet and survives a rebuilt look.
+  - Size: 0.22 of the radius. Depth-tested, so it hides behind the planet.
+- **PLANET INFO** shows a gold "Surface base" line under the value: the
+  modules, and how many are built.
+  - It is a line of its own (`#infoBase`), because a fourth row didn't fit
+    the panel.
+  - It is not called "Your base": that's the station's name in the game.
+- Only you see your base; nothing goes to the server.
+- Another tab changing the bases moves the markers (the `storage` event).
+- Only bodies the game shows can carry one: the game's planets are CINDER,
+  MAGMA, TERRA, PELAGIA, RIME and GLACIES.
+
 ## Saved bases
 
 Saved in localStorage under `roj-bases`, one base per planet:
@@ -280,8 +300,6 @@ Saved in localStorage under `roj-bases`, one base per planet:
 - Vehicles lab (`vehicles.html` and its own kit, reusing ShipKit's blocks):
   rovers with a driving animation. The user's call: separate from the ship
   lab.
-- The base marker on the game's own planets (read `roj-bases`, map the
-  game's slots to BodyKit refs).
 - Underwater: the seas have a floor, and a sea vehicles lab is planned
   (the user's call: separate from the ground vehicles).
 - The system moving (orbits, so moons rise at different times through a
