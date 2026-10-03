@@ -10,12 +10,16 @@
      Orbit: pick a site on the globe (or your base) and land. Ground: the
      terrain is the planet's own GLSL sampled up close (SurfaceKit +
      BodyKit.planetTerrain), fly the hover craft, hop to the base, place
-     modules (BaseKit) as holograms that then get built. The base lives in
+     modules (BaseKit) as holograms that then get built. The world is a body
+     of a SystemKit system: its sky (suns, planets, moons, the giant it
+     orbits), the time of day and the weather come from SurfaceKit's sky.js
+     and weather.js. The base lives in
      this browser (localStorage "roj-bases"); the game shows its marker. -->
 <link rel="stylesheet" href="css/lab.css">
 <style>
 .hidden{ display:none !important; }
 #hud{ width:340px; }
+select.lab.mini{ width:130px; height:24px; font-size:12.5px; }
 select.lab{ width:100%; height:28px; border:1.5px solid #3c55d8; border-radius:6px; background:#02061a; color:#e6ebff; font-family:var(--fontBody); font-size:13.5px; }
 .btnCol{ display:flex; flex-direction:column; gap:6px; margin-top:8px; }
 .btnCol .tBtn{ width:100%; }
@@ -58,7 +62,9 @@ select.lab{ width:100%; height:28px; border:1.5px solid #3c55d8; border-radius:6
   <div class="mat gold" id="hudBar"></div>
   <div class="hudPanel">
     <div class="mat blue side"></div>
-    <div class="secHd first">PLANET</div>
+    <div class="secHd first">SYSTEM</div>
+    <select class="lab" id="system"></select>
+    <div class="secHd">WORLD</div>
     <select class="lab" id="planet"></select>
     <div id="pRows"></div>
     <div class="secHd">BASE</div>
@@ -80,13 +86,23 @@ select.lab{ width:100%; height:28px; border:1.5px solid #3c55d8; border-radius:6
       <div id="modBtns"></div>
       <div class="note" style="font-size:12.5px;color:#7f92e8;margin-top:6px">Pick a module, click the ground to place it (R: turn, Esc: cancel). Delete: remove the one under the pointer.</div>
     </div>
-    <div id="hint">Orbit: drag to turn the globe · Ground: W/S speed, A/D turn, Shift boost, right-drag camera, scroll zoom</div>
+    <div id="hint">Orbit: drag to turn the globe · Ground: W/S speed, A/D turn, Shift boost, right-drag camera (down to look at the sky), scroll zoom</div>
   </div>
 </div>
 <div id="opt">
   <div class="hudPanel">
     <div class="mat lilac side"></div>
-    <div class="secHd first">OPTIMIZATION</div>
+    <div class="secHd first">SKY</div>
+    <label class="sl"><span>Local time</span><b id="tVal">10:00</b></label>
+    <input type="range" id="tSlider" min="0" max="24" step="0.05" value="10">
+    <div class="row"><span>A day passes in</span><select class="lab mini" id="daySpeed">
+      <option value="0">paused</option><option value="600">10 minutes</option><option value="120" selected>2 minutes</option><option value="30">30 seconds</option></select></div>
+    <div class="row"><span>Sun's height</span><b id="sunEl">–</b></div>
+    <div class="secHd">WEATHER</div>
+    <select class="lab" id="wxSel"></select>
+    <label class="sl"><span>Strength</span><b id="wxVal">70%</b></label>
+    <input type="range" id="wxSlider" min="0" max="1" step="0.01" value="0.7">
+    <div class="secHd">OPTIMIZATION</div>
     <label class="sl"><span>Render quality</span><b id="qVal">HIGH</b></label>
     <input type="range" id="qSlider" min="0" max="3" step="1" value="2">
     <div class="ticks"><span>LOW</span><span>MED</span><span>HIGH</span><span>ULTRA</span></div>
@@ -107,7 +123,10 @@ select.lab{ width:100%; height:28px; border:1.5px solid #3c55d8; border-radius:6
 <script src="js/shipkit/shipkit.js"></script>
 <script src="js/bodykit/bodykit.js"></script>
 <script src="js/basekit/basekit.js"></script>
+<script src="js/systemkit/systemkit.js"></script>
 <script src="js/surfacekit/surfacekit.js"></script>
+<script src="js/surfacekit/sky.js"></script>
+<script src="js/surfacekit/weather.js"></script>
 <script>
 (() => {
 "use strict";
@@ -121,13 +140,42 @@ renderer.localClippingEnabled = true;
 const PR = [0.6, 0.85, 1, Math.min(window.devicePixelRatio || 1, 2)], QN = ["LOW", "MEDIUM", "HIGH", "ULTRA"];
 const env = ShipKit.makeEnvironment(renderer);
 
-// ---------- the planets (every body of the planet groups) ----------
-const PLANET_GROUPS = ["earthlike", "lava", "icy", "desert", "clouded", "moons", "airless"];
+// ---------- the worlds: a SystemKit system's bodies you can land on ----------
+// "A lone planet": any planet-group body, alone around a Sun-like star.
 const planets = [];
-for (const gid of PLANET_GROUPS) { const g = BK.GROUPS.find((x) => x.id === gid); if (g) for (const b of g.bodies) planets.push({ ref: gid + "/" + b.id, name: b.name, group: g.name }); }
-planets.forEach((p) => { const o = document.createElement("option"); o.value = p.ref; o.textContent = p.name + "  ·  " + p.group; $("planet").appendChild(o); });
+for (const gid of SK.WORLD_GROUPS) { const g = BK.GROUPS.find((x) => x.id === gid); if (g) for (const b of g.bodies) planets.push({ ref: gid + "/" + b.id, name: b.name, group: g.name }); }
+const SYSTEMS = SystemKit.PRESETS.map((p) => ({ id: p.id, name: p.name, make: p.make })).concat([{ id: "lone", name: "A lone planet", make: null }]);
+SYSTEMS.forEach((x) => { const o = document.createElement("option"); o.value = x.id; o.textContent = x.name; $("system").appendChild(o); });
+const loneSystem = (ref) => ({ name: "LONE", seed: 1, sky: "deep", centers: [{ ref: "suns/sol", size: 4 }], orbits: [{ ref, distance: 23, size: 1, phase: 0, incl: 0, ring: null, moons: [] }] });
 
-const state = { mode: "orbit", ref: planets[0].ref, pick: null, building: null, buildRot: 0, keys: {}, t: 0 };
+const state = { mode: "orbit", ref: planets[0].ref, values: {}, key: "", sys: null, sky: null, worlds: [], pick: null, building: null, buildRot: 0, keys: {}, t: 0,
+  theta: 0 };
+function loadSystem(id) {
+  const def = SYSTEMS.find((x) => x.id === id);
+  state.sysId = id; $("system").value = id;
+  $("planet").textContent = "";
+  if (def.make) {
+    state.sys = def.make();
+    state.worlds = SK.worldsOf(state.sys);
+  } else {
+    state.sys = null;
+    state.worlds = planets.map((p) => ({ ref: p.ref, values: {}, label: p.name + "  ·  " + p.group, path: { orbit: 0, moon: null } }));
+  }
+  state.worlds.forEach((w, i) => { const o = document.createElement("option"); o.value = i; o.textContent = w.label; $("planet").appendChild(o); });
+  loadWorld(0);
+}
+function loadWorld(i) {
+  const w = state.worlds[i];
+  if (state.mode !== "orbit") backToOrbit(true);
+  state.ref = w.ref; state.values = w.values || {}; state.key = state.sysId + ":" + i;
+  state.sky = SK.skyOf(state.sys || loneSystem(w.ref), w.path);
+  $("planet").value = i;
+  loadGlobe();
+  // mid-morning at the base (or at the planet's 0°, 0°)
+  const b = SK.bases.get(state.ref);
+  setHour(10, b ? SK.latLonToDir(b.lat, b.lon) : new THREE.Vector3(1, 0, 0));
+  fillWeather();
+}
 const toast = (msg) => { const t = $("toast"); t.textContent = msg; t.style.opacity = 1; clearTimeout(toast.h); toast.h = setTimeout(() => { t.style.opacity = 0; }, 2600); };
 
 // =====================================================================
@@ -145,13 +193,14 @@ let globe = null, pin = SK.makeMarker(0x4fe3c6, 0.018), baseMark = SK.makeMarker
 function loadGlobe() {
   if (globe) BK.disposeBody(globe);
   const [g, b] = state.ref.split("/");
-  globe = BK.buildBody(g, b, { detail: 1, values: { spin: 0 } });   // held still: you pick a spot on it, the base stays put
+  globe = BK.buildBody(g, b, { detail: 1, values: Object.assign({}, state.values, { spin: 0 }) });   // held still: you pick a spot on it, the base stays put
   globe.setRadius(3);
   orbit.scene.add(globe.group);
   globe.surfaceRoot.add(pin, baseMark);
   pin.visible = false;
   state.pick = null;
-  const tmp = BK.planetTerrain(g, b);
+  const tmp = BK.planetTerrain(g, b, state.values);
+  state.full = tmp.values;
   const R = state.groundR = Math.max(0.15, tmp.values.size) * SK.M_PER_SIZE; tmp.dispose();
   $("pRows").textContent = "";
   [["Radius on the ground", (R / 1000).toFixed(1) + " km"], ["Around it", (2 * Math.PI * R / 1000).toFixed(0) + " km"]].forEach(([k, v]) => $("pRows").appendChild(row(k, v)));
@@ -195,41 +244,80 @@ const ground = { scene: new THREE.Scene(), camera: new THREE.PerspectiveCamera(5
 ground.scene.environment = env;
 const sunLight = new THREE.DirectionalLight(0xfff1dc, 2.4), hemi = new THREE.HemisphereLight(0x9fb3ff, 0x3a2a1a, 0.35);
 ground.scene.add(sunLight, sunLight.target, hemi);
-let surf = null, sky = null;
-// the sky: a gradient in the air's colour (none without air: black with stars), a sun
-function makeSky(v) {
-  // a cloud world's lid (haze, overcast) hides the stars as well as a thick atmosphere does
-  const air = Math.min(1, (v.atmosphere * 1.6 + (v.haze || 0) * 1.5 + (v.overcast || 0) * 1.5) * (1 - (v.airless || 0)));
-  const hue = new THREE.Color().setHSL(v.atmoHue / 360, 0.65, 0.62);
-  const mat = new THREE.ShaderMaterial({
-    side: THREE.BackSide, depthWrite: false,
-    uniforms: { uUp: { value: new THREE.Vector3(0, 1, 0) }, uSun: { value: new THREE.Vector3() }, uAir: { value: air },
-      uHorizon: { value: hue.clone().lerp(new THREE.Color(1, 1, 1), 0.35) }, uZenith: { value: hue.clone().multiplyScalar(0.45) } },
-    vertexShader: "varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-    fragmentShader: `
-      uniform vec3 uUp, uSun, uHorizon, uZenith; uniform float uAir; varying vec3 vD;
-      float hash(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
-      void main(){
-        vec3 d = normalize(vD);
-        float e = dot(d, uUp), sd = max(dot(d, normalize(uSun)), 0.0);
-        vec3 air = mix(uHorizon, uZenith, smoothstep(-0.02, 0.55, e));
-        air += vec3(1.0, 0.9, 0.7) * pow(sd, 12.0) * 0.6;
-        vec3 c = floor(d * 400.0);
-        float star = step(0.9975, hash(c)) * (0.4 + 0.6 * hash(c + 3.1));
-        vec3 space = vec3(star) + vec3(1.0, 0.95, 0.85) * pow(sd, 400.0) * 6.0;   // the sun's disc
-        gl_FragColor = vec4(mix(space, air, uAir) + vec3(1.0, 0.95, 0.85) * pow(sd, 900.0) * 4.0, 1.0);
-      }`,
-  });
-  const m = new THREE.Mesh(new THREE.SphereGeometry(30000, 32, 16), mat);
-  m.frustumCulled = false; m.renderOrder = -10;
-  m.userData.air = air; m.userData.horizon = mat.uniforms.uHorizon.value;
-  return m;
+const sunLight2 = new THREE.DirectionalLight(0xffffff, 0);
+ground.scene.add(sunLight2, sunLight2.target);
+// the craft's lamp (lights the modules; the ground's shader has its own cone)
+const lamp = new THREE.SpotLight(0xfff0d0, 0, 260, 0.5, 0.5, 1.2);
+ground.scene.add(lamp, lamp.target);
+let surf = null;
+// the sky (sky.js) and the weather (weather.js): one each, set up per world
+const sky = SK.createSky(renderer), weather = SK.createWeather();
+ground.scene.add(sky.root, weather.root);
+let skyKey = "";
+
+// ---------- the time of day: the world's spin (state.theta) ----------
+// The slider shows the local solar hour where you are (the base or the pick
+// in orbit); driving round the planet changes it, as it should.
+const lightNow = { day: 1 }, orbitSun = SUN.clone(), Mframe = new THREE.Matrix4();
+let daySecs = 120, sliding = false, wxStrength = 0.7, lampOn = 0;
+function siteDir() {
+  if (state.mode === "ground") return P.dir;
+  const b = SK.bases.get(state.ref);
+  return b ? SK.latLonToDir(b.lat, b.lon) : state.pick || new THREE.Vector3(1, 0, 0);
+}
+function hourNow() { return SK.hourAt(state.sky, state.full, siteDir(), state.theta); }
+function setHour(h, at) { state.theta = SK.thetaFor(state.sky, state.full, at || siteDir(), h); showHour(); }
+function showHour() {
+  const h = hourNow(), hh = Math.floor(h), mm = Math.floor((h - hh) * 60);
+  $("tVal").textContent = String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0");
+  if (!sliding) { $("tSlider").value = h; LabKit.paintSlider($("tSlider")); }
+}
+function advanceDay(dt) { if (daySecs && !sliding) setHour((hourNow() + 24 * dt / daySecs) % 24); }
+$("tSlider").addEventListener("input", () => { sliding = true; setHour(+$("tSlider").value); LabKit.paintSlider($("tSlider")); });
+$("tSlider").addEventListener("change", () => { sliding = false; });
+$("daySpeed").addEventListener("change", () => { daySecs = +$("daySpeed").value; });
+
+// ---------- the weather: only what this world can have ----------
+function fillWeather() {
+  $("wxSel").textContent = "";
+  SK.weatherFor(state.full).forEach((w) => { const o = document.createElement("option"); o.value = w.id; o.textContent = w.name; $("wxSel").appendChild(o); });
+  $("wxSel").value = "clear"; applyWeather();
+}
+function applyWeather() { weather.set($("wxSel").value, wxStrength, new THREE.Color(0.72, 0.46, 0.3).lerp(sky.horizon, 0.35)); }
+$("wxSel").addEventListener("change", applyWeather);
+$("wxSlider").addEventListener("input", () => {
+  wxStrength = +$("wxSlider").value; $("wxVal").textContent = Math.round(wxStrength * 100) + "%"; LabKit.paintSlider($("wxSlider")); applyWeather();
+});
+
+// ---------- the light the sky gives, onto the ground and the modules ----------
+const lum = (c) => Math.max(c.r, c.g, c.b);
+function applyLight(L, wx, dt) {
+  const U = surf.material.uniforms;
+  U.uSunDir0.value.copy(L.sunDir0); U.uSunCol0.value.copy(L.sunCol0);
+  U.uSunDir1.value.copy(L.sunDir1); U.uSunCol1.value.copy(L.sunCol1);
+  U.uAmbient.value.copy(L.ambient); U.uFogColor.value.copy(L.fogColor); U.uFog.value = L.fog;
+  U.uWet.value = wx.wet; U.uSnow.value = wx.snow;
+  // the modules: the same suns as three.js lights (shadows from the first)
+  sunLight.color.copy(L.sunCol0); sunLight.intensity = 2.4;
+  sunLight.position.copy(craft.position).addScaledVector(L.sunDir0, 200); sunLight.target.position.copy(craft.position);
+  sunLight2.color.copy(L.sunCol1); sunLight2.intensity = 2.4;
+  sunLight2.position.copy(craft.position).addScaledVector(L.sunDir1, 200); sunLight2.target.position.copy(craft.position);
+  hemi.color.copy(L.ambient).multiplyScalar(2.2); hemi.groundColor.copy(L.ambient).multiplyScalar(0.7); hemi.intensity = 1;
+  // the lamp: on when it gets dark
+  const dark = lum(L.sunCol0) + lum(L.sunCol1) + lum(L.ambient) * 2 < 0.35;
+  lampOn += ((dark ? 1 : 0) - lampOn) * Math.min(1, dt * 3);
+  lamp.position.copy(craft.position).addScaledVector(P.dir, 2.5).addScaledVector(P.fwd, 2);
+  lamp.target.position.copy(craft.position).addScaledVector(P.fwd, 40).addScaledVector(P.dir, -8);
+  lamp.intensity = lampOn * 3;
+  U.uLamp.value = lampOn * 2.2; U.uLampPos.value.copy(lamp.position);
+  U.uLampDir.value.subVectors(lamp.target.position, lamp.position).normalize();
+  $("sunEl").textContent = Math.round(Math.asin(Math.max(-1, Math.min(1, L.sunDir0.dot(P.dir)))) * 180 / Math.PI) + "°";
 }
 // the craft: ShipKit's swarm ship as a 7 m hover craft
 const craftModel = ShipKit.buildShipModel("swarmer", { detail: 1, envMap: env });
 const craft = ShipKit.makeGameHolder(craftModel, 7);
 ground.scene.add(craft);
-const P = { dir: new THREE.Vector3(0, 1, 0), fwd: new THREE.Vector3(0, 0, 1), speed: 0, alt: 3, r: 0, yaw: 0, camYaw: 0, camPitch: 0.32, camDist: 26 };
+const P = { dir: new THREE.Vector3(0, 1, 0), fwd: new THREE.Vector3(0, 0, 1), speed: 0, alt: 3, r: 0, yaw: 0, camYaw: 0, camPitch: 0.32, camDist: 26, lookUp: 0 };
 
 // the base on the ground: built modules, the beacon
 const baseObjs = [];
@@ -264,23 +352,14 @@ function buildBase() {
 }
 
 function enterGround(dir, from) {
-  if (!surf || surf.ref !== state.ref) {
+  if (!surf || surf.key !== state.key) {
     if (surf) { ground.scene.remove(surf.root); surf.dispose(); }
-    if (sky) { ground.scene.remove(sky); sky.material.dispose(); }
-    surf = SK.createSurface(renderer, state.ref);
-    surf.ref = state.ref;
+    surf = SK.createSurface(renderer, state.ref, state.values);
+    surf.key = state.key;
     ground.scene.add(surf.root);
-    sky = makeSky(surf.values); ground.scene.add(sky);
   }
-  // always day at the landing site (the sun up in the south-east)
-  const { east, north } = SK.tangentFrame(dir);
-  const sun = dir.clone().multiplyScalar(0.72).addScaledVector(east, 0.5).addScaledVector(north, -0.35).normalize();
-  surf.material.uniforms.uSunDir.value.copy(sun);
-  sky.material.uniforms.uSun.value.copy(sun);
-  surf.material.uniforms.uFogColor.value.copy(sky.userData.horizon).multiplyScalar(0.8);
-  surf.material.uniforms.uFog.value = sky.userData.air * 0.00028;
-  hemi.color.copy(sky.userData.horizon); hemi.intensity = 0.15 + sky.userData.air * 0.4;
-  sunLight.userData.dir = sun;
+  if (skyKey !== state.key) { sky.setup(state.sky, surf.values); skyKey = state.key; applyWeather(); }
+  const { north } = SK.tangentFrame(dir);
   P.dir.copy(dir); P.fwd.copy(north); P.speed = 0;
   surf.ensure(dir); surf.update(dir, 25);
   buildBase();
@@ -297,7 +376,7 @@ function groundRadius(dir) { const g = surf.groundAt(dir); return g ? g.r : null
 // =====================================================================
 // transitions: land, take off, hop
 // =====================================================================
-const fade = (on) => { $("fade").style.background = surf && sky && sky.userData.air > 0.2 ? "#e9eefa" : "#000"; $("fade").style.opacity = on ? 1 : 0; };
+const fade = (on) => { $("fade").style.background = sky.air > 0.2 && lightNow.day > 0.5 ? "#e9eefa" : "#000"; $("fade").style.opacity = on ? 1 : 0; };
 function land(dir) {
   state.mode = "transit";
   const targ = globe.surfaceRoot.localToWorld(dir.clone().multiplyScalar(1.3));
@@ -315,9 +394,8 @@ function land(dir) {
 function takeOff(then) {
   state.phase = "ascending"; state.phaseT = 0; state.after = then;
 }
-function backToOrbit() {
-  fade(true);
-  setTimeout(() => {
+function backToOrbit(now) {
+  const go = () => {
     state.mode = "orbit"; oc.enabled = true;
     $("orbitUi").classList.remove("hidden"); $("groundUi").classList.add("hidden");
     $("compass").classList.add("hidden"); $("readout").classList.add("hidden");
@@ -325,13 +403,15 @@ function backToOrbit() {
     // above the spot we left, turned at most 20° toward the sun (more daylight,
     // the base still well inside the disc)
     const w = globe.surfaceRoot.localToWorld(P.dir.clone()).sub(globe.group.position).normalize();
-    const axis = new THREE.Vector3().crossVectors(w, SUN);
-    if (axis.lengthSq() > 1e-6) w.applyAxisAngle(axis.normalize(), Math.min(0.35, w.angleTo(SUN)));
+    const axis = new THREE.Vector3().crossVectors(w, orbitSun);
+    if (axis.lengthSq() > 1e-6) w.applyAxisAngle(axis.normalize(), Math.min(0.35, w.angleTo(orbitSun)));
     const at = w.multiplyScalar(12).add(globe.group.position);
     orbit.camera.position.copy(at); oc.target.set(0, 0, 0);
     refreshBase();
-    setTimeout(() => fade(false), 80);
-  }, 450);
+  };
+  if (now) { go(); return; }
+  fade(true);
+  setTimeout(() => { go(); setTimeout(() => fade(false), 80); }, 450);
 }
 $("btnLand").addEventListener("click", () => state.pick && land(state.pick));
 $("btnLandBase").addEventListener("click", () => { const b = SK.bases.get(state.ref); if (b) land(SK.offsetDir(SK.latLonToDir(b.lat, b.lon), 0, -30, state.groundR)); });
@@ -343,7 +423,8 @@ $("btnHop").addEventListener("click", () => {
   toast("Suborbital hop: " + km.toFixed(1) + " km");
   takeOff(() => { fade(true); setTimeout(() => { enterGround(SK.offsetDir(c, 0, -30, surf.R), "air"); setTimeout(() => fade(false), 120); }, 450); });
 });
-$("planet").addEventListener("change", () => { state.ref = $("planet").value; if (state.mode !== "orbit") backToOrbit(); loadGlobe(); });
+$("system").addEventListener("change", () => loadSystem($("system").value));
+$("planet").addEventListener("change", () => loadWorld(+$("planet").value));
 
 // =====================================================================
 // building
@@ -416,7 +497,10 @@ function removeUnderPointer() {
   if (!base.modules.length) SK.bases.remove(state.ref); else SK.bases.put(state.ref, base);
   buildBase(); refreshBase(); toast("Removed: " + o.mod.def.name.toLowerCase());
 }
-view.addEventListener("pointermove", (e) => { setMouse(e); if (drag) { P.camYaw -= (e.clientX - drag[0]) * 0.005; P.camPitch = Math.max(0.05, Math.min(1.4, P.camPitch + (e.clientY - drag[1]) * 0.004)); drag = [e.clientX, e.clientY]; } });
+view.addEventListener("pointermove", (e) => { setMouse(e); if (drag) { P.camYaw -= (e.clientX - drag[0]) * 0.005; // dragging down past the lowest camera angle lifts the view to the sky
+    const dy = (e.clientY - drag[1]) * 0.004;
+    if (P.lookUp > 0 || P.camPitch + dy < 0.05) { P.lookUp = Math.max(0, Math.min(1.2, P.lookUp - dy)); P.camPitch = 0.05; }
+    else P.camPitch = Math.min(1.4, P.camPitch + dy); drag = [e.clientX, e.clientY]; } });
 let drag = null;
 view.addEventListener("pointerdown", (e) => { if (state.mode === "ground" && e.button === 2) drag = [e.clientX, e.clientY]; });
 window.addEventListener("pointerup", () => { drag = null; });
@@ -491,10 +575,15 @@ function stepGround(dt, t) {
   const cr = cam.position.length(), cd = camUp.copy(cam.position).normalize(), cg = groundRadius(cd);
   if (cg != null && cr < cg + 2) cam.position.copy(cd).multiplyScalar(cg + 2);
   cam.lookAt(tmp2.copy(craft.position).addScaledVector(P.dir, 2));
-  sky.position.copy(cam.position);
-  sky.material.uniforms.uUp.value.copy(cd);
-  // the sun's shadows follow the craft
-  sunLight.position.copy(craft.position).addScaledVector(sunLight.userData.dir, 200); sunLight.target.position.copy(craft.position);
+  if (P.lookUp) cam.rotateX(P.lookUp);
+  // the sky, the weather, the light
+  advanceDay(dt);
+  SK.frame(state.full, state.theta, Mframe);
+  const wx = weather.update(t, dt, { camera: cam, up: cd, light: Math.min(1, lightNow.day * 0.9 + 0.06), pixelHeight: renderer.domElement.height });
+  if (P.lookUp) cam.updateMatrixWorld();
+  const L = sky.update(t, { camera: cam, up: cd, frame: Mframe, weather: wx });
+  lightNow.day = L.day;
+  applyLight(L, wx, dt);
   // the base: construction progress from the clock, the compass
   const now = Date.now();
   baseObjs.forEach((o) => { o.mod.setProgress((now - o.m.start) / o.m.dur); o.mod.update(t, dt); });
@@ -528,8 +617,11 @@ function frame() {
   const t0 = performance.now(), dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
   renderer.info.reset();
   if (state.mode === "orbit" || state.mode === "transit") {
-    if (state.mode === "orbit") oc.update();
-    globe.update(t, dt, { sunDir: SUN, center: orbit.camera.position, renderer });
+    if (state.mode === "orbit") { oc.update(); advanceDay(dt); }
+    SK.frame(state.full, state.theta, Mframe);
+    globe.surfaceRoot.updateMatrixWorld(true);
+    orbitSun.copy(state.sky.suns[0].dir).applyMatrix4(Mframe).transformDirection(globe.surfaceRoot.matrixWorld);
+    globe.update(t, dt, { sunDir: orbitSun, center: orbit.camera.position, renderer });
     backdrop.update(t, dt, { center: orbit.camera.position, renderer });
     renderer.render(orbit.scene, orbit.camera);
   } else {
@@ -539,9 +631,23 @@ function frame() {
   perf.update(performance.now(), performance.now() - t0);
   requestAnimationFrame(frame);
 }
-LabKit.paintSlider($("qSlider"));
-resize(); loadGlobe(); frame();
-window.surfaceLab = { get sky() { return sky; }, state, P, land, enterGround, startBuild, place, validate, get surf() { return surf; }, get globe() { return globe; }, toast, camera: ground.camera };
+LabKit.paintSlider($("qSlider")); LabKit.paintSlider($("wxSlider"));
+// start: the Solar System, the Earth
+function pickWorld(sysId, ref) {
+  if (state.sysId !== sysId) loadSystem(sysId);
+  const i = state.worlds.findIndex((w) => w.ref === ref);
+  if (i > 0) loadWorld(i);
+}
+resize(); pickWorld("sol", "earthlike/terra"); frame();
+// what's in the sky now: [{ ref, kind, el (degrees above the horizon), az, ang }] — for scripts
+function skyList() {
+  const up = P.dir, { east, north } = SK.tangentFrame(up), v = new THREE.Vector3(), deg = 180 / Math.PI;
+  SK.frame(state.full, state.theta, Mframe);
+  return state.sky.suns.map((x) => ({ ref: "sun", kind: x.kind, d: x.dir, ang: x.ang })).concat(state.sky.bodies.map((x) => ({ ref: x.ref, kind: x.kind, d: x.dir, ang: x.ang })))
+    .map((x) => { v.copy(x.d).applyMatrix4(Mframe).normalize(); return { ref: x.ref, kind: x.kind, ang: +(x.ang * deg).toFixed(2),
+      el: +(Math.asin(v.dot(up)) * deg).toFixed(1), az: +(Math.atan2(v.dot(east), v.dot(north)) * deg).toFixed(0) }; });
+}
+window.surfaceLab = { sky, weather, skyList, pickWorld, setHour, hourNow, get light() { return lightNow; }, get daySecs() { return daySecs; }, set daySecs(v) { daySecs = v; }, state, P, land, enterGround, startBuild, place, validate, get surf() { return surf; }, get globe() { return globe; }, toast, camera: ground.camera };
 })();
 </script>
 </body>

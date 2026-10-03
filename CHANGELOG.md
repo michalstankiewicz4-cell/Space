@@ -4,6 +4,16 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.32.8]
+
+### Changed
+- BodyKit exports `GLSL_PLANET_SURFACE` and `blackbody` (for SurfaceKit's
+  own ground shader and sky). The game looks the same.
+- Surface lab: the world is a body of a star system — its sky (suns,
+  planets, moons with phases, the giant a moon orbits), day and night,
+  weather (haze, overcast, rain with lightning, snow that settles, dust
+  storms, ash), the craft's lamp at night.
+
 ## [2.32.7]
 
 ### Added

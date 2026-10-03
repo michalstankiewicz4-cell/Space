@@ -21,7 +21,8 @@
                                         a planet group) or null
        .R                               radius in metres
        .root                            THREE.Group: the tiles (planet centre at 0)
-       .material                        the ground's material (uSunDir, uFog…)
+       .material                        the ground's material (groundMaterial: two suns,
+                                        ambient, haze, wet / snow cover, the craft's lamp)
        .update(dir, maxLoads)           load tiles around a unit direction
        .ensure(dir)                     load the tiles under dir right now
        .groundAt(dir)                   { r: radius in m, sea } or null (not loaded)
@@ -94,7 +95,7 @@ function createSurface(renderer, ref, values) {
   const T = Math.max(2, Math.ceil((Math.PI / 2 * R) / TILE_TARGET));
   const reliefM = v.mountains * R;                 // metres per unit of the planet's height
   const detailM = 2.5 + 4 * Math.max(v.airless || 0, v.rust || 0, v.lava || 0);
-  const material = terrain.material({ grainFreq: R / 6 });
+  const material = groundMaterial(terrain, R);
   const root = new THREE.Group();
   const tiles = new Map(), meshes = [];
   const uv = { f: 0, x: 0, y: 0 }, tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3();
@@ -218,6 +219,65 @@ function createSurface(renderer, ref, values) {
     loadedCount: () => tiles.size,
     dispose() { for (const k of [...tiles.keys()]) unload(k); material.dispose(); terrain.dispose(); },
   };
+}
+
+// ---------- the ground's material ----------
+// The planet's own colours (BodyKit's planetSurface(), the globe's GLSL) lit
+// the surface's way: up to two suns (uSunDir0/1, uSunCol0/1 — colour ×
+// strength, black when set), an ambient colour (sky + starlight), haze in the
+// sky's colour, weather (uWet darkens and polishes the ground, uSnow covers
+// what's level enough) and a lamp (a cone from uLampPos along uLampDir).
+// The sky / weather code sets these every frame.
+const GROUND_FRAG = `
+uniform vec3 uSunDir0, uSunDir1, uSunCol0, uSunCol1, uAmbient, uFogColor, uLampPos, uLampDir;
+uniform float uFog, uGrainFreq, uWet, uSnow, uLamp;
+varying vec3 vDir; varying float vH; varying vec3 vNormalW; varying vec3 vWorldPos;
+void main(){
+  vec3 p = normalize(vDir);
+  vec3 col, emit; float water, ice;
+  planetSurface(p, vH, col, emit, water, ice);
+  // close up: grain and pebbles (the globe's colour is a whole region's)
+  float g = snoise(p * uGrainFreq) * 0.5 + snoise(p * uGrainFreq * 3.7) * 0.25;
+  col *= 1.0 + g * 0.12 * (1.0 - water);
+  vec3 N = normalize(vNormalW), V = normalize(cameraPosition - vWorldPos);
+  // snow settles on level ground first, never on open water or lava
+  float level = dot(N, p);
+  float snow = uSnow * smoothstep(0.80, 0.95, level + g * 0.08) * (1.0 - water * (1.0 - ice)) * (1.0 - uLava * 0.9);
+  col = mix(col, vec3(0.9, 0.93, 0.98), snow);
+  emit *= 1.0 - snow;
+  float wet = uWet * (1.0 - snow) * (1.0 - water);
+  col *= 1.0 - wet * 0.38;
+  float shine = max(water * (1.0 - ice) * (1.0 - uLava), wet * 0.7);
+  vec3 lit = col * uAmbient + emit;
+  vec3 L0 = normalize(uSunDir0), L1 = normalize(uSunDir1);
+  lit += col * uSunCol0 * max(dot(N, L0), 0.0) * 1.1 + uSunCol0 * shine * pow(max(dot(N, normalize(L0 + V)), 0.0), 60.0) * 0.8;
+  lit += col * uSunCol1 * max(dot(N, L1), 0.0) * 1.1 + uSunCol1 * shine * pow(max(dot(N, normalize(L1 + V)), 0.0), 60.0) * 0.8;
+  // the lamp: a soft cone, fading with distance
+  vec3 toL = uLampPos - vWorldPos; float dl = length(toL); toL /= dl;
+  float cone = smoothstep(0.80, 0.95, dot(-toL, normalize(uLampDir)));
+  lit += col * vec3(1.0, 0.94, 0.82) * uLamp * cone * max(dot(N, toL), 0.0) / (1.0 + dl * dl * 0.0004);
+  float dist = length(cameraPosition - vWorldPos);
+  lit = mix(lit, uFogColor, 1.0 - exp(-dist * uFog));
+  gl_FragColor = vec4(lit, 1.0);
+}`;
+const GROUND_VERT = `
+attribute vec3 aDir; attribute float aH;
+varying vec3 vDir; varying float vH; varying vec3 vNormalW; varying vec3 vWorldPos;
+void main(){
+  vDir = aDir; vH = aH;
+  vec4 wp = modelMatrix * vec4(position, 1.0);
+  vWorldPos = wp.xyz; vNormalW = normalize(mat3(modelMatrix) * normal);
+  gl_Position = projectionMatrix * viewMatrix * wp;
+}`;
+function groundMaterial(terrain, R) {
+  const v3 = (x, y, z) => ({ value: new THREE.Vector3(x, y, z) }), col = (c) => ({ value: new THREE.Color(c) });
+  const U = Object.assign({}, terrain.U, {
+    uSunDir0: v3(0, 1, 0), uSunDir1: v3(0, 1, 0), uSunCol0: col(0xffffff), uSunCol1: col(0x000000),
+    uAmbient: col(0x0d0f14), uFogColor: col(0x000000), uFog: { value: 0 }, uGrainFreq: { value: R / 6 },
+    uWet: { value: 0 }, uSnow: { value: 0 }, uLamp: { value: 0 }, uLampPos: v3(0, 0, 0), uLampDir: v3(0, 0, 1),
+  });
+  return new THREE.ShaderMaterial({ uniforms: U, vertexShader: GROUND_VERT,
+    fragmentShader: BK.GLSL_NOISE + BK.GLSL_BODY + BK.GLSL_PLANET + BK.GLSL_PLANET_SURFACE + GROUND_FRAG });
 }
 
 // ---------- bases (this browser only for now) ----------

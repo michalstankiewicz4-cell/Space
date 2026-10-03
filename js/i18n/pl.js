@@ -535,6 +535,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
+    { v: "2.32.8", items: ["Laboratorium powierzchni: dzień i noc, pogoda (deszcz, śnieg, burze piaskowe, popiół) oraz niebo pokazujące to, co naprawdę jest w układzie: Księżyc w fazach, dwa słońca, olbrzym nad głową."] },
     { v: "2.32.7", items: ["Dwa nowe laboratoria w Dev Tools: Powierzchnia (lądowanie na planecie, jazda, zakładanie bazy) i Budynki (moduły bazy). Pod maską: planety można już oglądać z powierzchni — pierwszy krok w stronę lądowania."] },
     { v: "2.32.6", items: ["Dev Tools (klucz w widoku 3D): przyciski otwierające laboratoria — statki, ciała, układy, skala, skórki."] },
     { v: "2.32.5", items: ["Kolejny szlif górnego paska: niebieski haczyk na końcu górnej linii."] },
