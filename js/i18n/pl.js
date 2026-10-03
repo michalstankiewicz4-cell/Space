@@ -31,6 +31,7 @@ export const pl = {
     needNick: "Najpierw wpisz nick dowódcy roju.",
     needPrivacy: "Najpierw zaakceptuj politykę prywatności (pasek na dole).",
     start: "WEJDŹ NA ORBITĘ",
+    github: "Społeczność: dyskusje na GitHubie", discord: "Discord", youtube: "YouTube",
     setup: "⚙ Ustawienia",
     language: "Język",
     nickRejected: "Wybierz inny nick.",
@@ -532,6 +533,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
+    { v: "2.32.1", items: ["Linki do społeczności na ekranie startowym: dyskusje na GitHubie (Discord i YouTube wkrótce)."] },
     { v: "2.30.0", items: ["Mapa galaktyki (klawisz M): Droga Mleczna z góry z zaznaczonym układem startowym. Kółkiem przybliżasz, przeciągając rozglądasz się."] },
     { v: "2.29.2", items: ["Ta lista: komunikat o aktualizacji pokazuje, co nowego od Twojej wersji."] },
     { v: "2.29.1", items: ["Stacje nie wchodzą już w siebie: jeśli przy pierwszym wejściu Twoje miejsce na pierścieniu jest zajęte, stacja przenosi się na najbliższe wolne."] },

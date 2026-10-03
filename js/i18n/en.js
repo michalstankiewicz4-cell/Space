@@ -25,6 +25,7 @@ export const en = {
     needNick: "Enter your swarm commander's nickname first.",
     needPrivacy: "Accept the privacy policy first (the bar at the bottom).",
     start: "ENTER ORBIT",
+    github: "Community: GitHub Discussions", discord: "Discord", youtube: "YouTube",
     setup: "⚙ Setup",
     language: "Language",
     nickRejected: "Please choose a different nickname.",
@@ -531,6 +532,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.32.1", items: ["Community links on the start screen: GitHub Discussions (Discord and YouTube coming)."] },
     { v: "2.30.0", items: ["Galaxy map (key M): the Milky Way from above, with your starting system marked. Scroll to zoom in, drag to look around."] },
     { v: "2.29.2", items: ["This list: the update notice now shows what's new since your version."] },
     { v: "2.29.1", items: ["Stations no longer stand inside each other: if your spot on the ring is taken when you first join, your station moves to the nearest free one."] },

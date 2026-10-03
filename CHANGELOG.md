@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.32.1]
+
+### Added
+- Start screen: community links in the black box left of DEV Blog.PL —
+  GitHub (the project's Discussions) works now; Discord and YouTube are
+  greyed out with a "coming soon" tooltip.
+
 ## [2.32.0]
 
 ### Added

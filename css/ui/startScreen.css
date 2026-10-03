@@ -11,13 +11,13 @@ body:has(#banner:not(.hidden)) #hud{ visibility:hidden; }
 #versionTag{ font-family:var(--uiFontBody); font-size:14px; font-weight:400; color:#93a6ff; margin-left:6px; }
 /* The two rails are the stretchy middle of the bar (see .uiBar); everything
    right of them is anchored to the right edge. */
-#topRail{ left:465px; right:201px; top:8px; height:8px; border-radius:0 4px 4px 0; }
-#bottomRail{ left:461px; right:201px; top:66px; height:9px; }
-#lilacSwoosh{ right:148px; top:9px; width:50px; height:32px;
+#topRail{ left:465px; right:327px; top:8px; height:8px; border-radius:0 4px 4px 0; }
+#bottomRail{ left:461px; right:327px; top:66px; height:9px; }
+#lilacSwoosh{ right:274px; top:9px; width:50px; height:32px;
   clip-path:path("M0 32 C9 32 12 24 14 14 C16 4 22 0 32 0 H50 V32 Z"); }
-#sdTop{ right:52px; top:9px; width:100px; height:8px; }
-#sdBottom{ right:52px; top:67px; width:100px; height:7px; }
-#sdBox{ right:56px; top:17px; width:110px; height:50px; background:#000; border-radius:20px 0 0 20px; }
+#sdTop{ right:52px; top:9px; width:226px; height:8px; }
+#sdBottom{ right:52px; top:67px; width:226px; height:7px; }
+#sdBox{ right:56px; top:17px; width:236px; height:50px; background:#000; border-radius:20px 0 0 20px; }
 #devBlogBtn{ right:60px; top:25px; width:92px; height:34px; border:1.5px solid #3c55d8; border-radius:6px;
   background:linear-gradient(180deg,#050a24,#00020c); font-family:var(--uiFontLabel); font-size:14px;
   color:#e6ebff; letter-spacing:.3px; text-decoration:none; display:flex; align-items:center; justify-content:center;
@@ -25,7 +25,7 @@ body:has(#banner:not(.hidden)) #hud{ visibility:hidden; }
 /* Player counters, centered on the stretchy part between the gold and
    lilac swooshes (the rails run from 465px to 201px short of the right
    edge, see #topRail). */
-#playerCounts{ left:calc((465px + 100% - 201px) / 2); top:23px; height:36px; transform:translateX(-50%);
+#playerCounts{ left:calc((465px + 100% - 327px) / 2); top:23px; height:36px; transform:translateX(-50%);
   display:flex; align-items:center; gap:18px; padding:0 20px; white-space:nowrap;
   border-radius:18px; background:linear-gradient(180deg,#02030a,#000 60%,#03050f);
   border:1.5px solid #1d36a0; box-shadow:0 0 6px rgb(40 80 255 / .3); }
@@ -40,6 +40,14 @@ body:has(#banner:not(.hidden)) #hud{ visibility:hidden; }
 #playerCounts .pcIcon svg{ width:100%; height:100%; }
 @keyframes pcPulse{ 0%, 100%{ opacity:1; } 50%{ opacity:.35; } }
 #devBlogBtn:hover{ border-color:#6f86ff; box-shadow:0 0 8px rgb(95 119 247 / .5); }
+/* Community links left of DEV Blog: GitHub (Discussions), Discord, YouTube */
+#communityLinks{ right:160px; top:25px; height:34px; display:flex; gap:8px; pointer-events:auto; }
+#communityLinks .commBtn{ width:34px; height:34px; padding:0; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  border:1.5px solid #3c55d8; border-radius:6px; background:linear-gradient(180deg,#050a24,#00020c); color:#e6ebff;
+  transition:box-shadow .15s, border-color .15s; }
+#communityLinks .commBtn svg{ width:18px; height:18px; fill:currentColor; }
+#communityLinks a.commBtn:hover{ border-color:#6f86ff; box-shadow:0 0 8px rgb(95 119 247 / .5); color:#fff; }
+#communityLinks .commBtn:disabled{ cursor:default; color:#5f6fb8; border-color:#26357a; }
 
 /* Set by index.html's <head> script when the saved language isn't the
    HTML's built-in English, cleared by js/ui/i18nApply.js once the panel is
