@@ -332,6 +332,56 @@ first (the skin lab, `skins.html`), per the project's rule.
   planet", "C hides the interface", "SCRIPT programs a unit"), shown once
   (a localStorage flag through `readStorage`/`writeStorage`).
 
+## Travelling in time (2026-10)
+
+The user's idea: log the world's state every so often and let a player go
+back in time — "desynchronising" their game from the server — and come back
+to the present, which resyncs it.
+
+**What the architecture already gives for free**
+- **Positions are a function of time.** Every fixed body is closed-form
+  from the clock (`world/solarSystem.js#bodyPosAt(slot, t)`): any moment,
+  past or future, is just another `t` — nothing to log.
+- **Health** is a checkpoint plus regeneration (`healthBase`,
+  `healthUpdatedAtMs`); the past needs only rare snapshots — 9 bodies
+  every few minutes is tiny.
+- **Comets** already replay from their spawn state for late joiners
+  (`world/cometPhysics.js#advanceComet`); the past needs their spawn rows
+  kept as history instead of deleted.
+
+**What not to go back for**
+- **Other players**: their positions are never stored and should stay
+  that way (cost, and personal data the privacy policy would have to
+  cover). The past is empty of other players — which fits the lore.
+
+**How it could work**
+1. **Desync**: pick a moment; the client stops sending anything (no bites,
+   no broadcasts) and computes that moment locally — bodies from the
+   formula, health from the snapshots, comets from their history.
+2. **A local branch**: fly, look, even eat — locally only, never on the
+   shared world.
+3. **Back to the present**: the branch is dropped, the game rejoins real
+   time and the room.
+
+**Watch out**
+- **Rewards**: points earned in the past would be farmed (go back to full
+  bodies, eat, repeat). Simplest rule: no points there; the trip pays in
+  knowledge (where a comet went, what the system looked like, story
+  fragments).
+- **The future**: fixed bodies can be shown ahead, comets can't (they
+  don't exist yet) — consistent with the game's physics.
+- **Lore**: the notes already have the black hole distorting time (see
+  "Drone computational power", "Story hook"); travelling back could be an
+  ability the AI recovers — the station's records, or the hole's field.
+  Details stay in the local `FABULA.md`.
+
+**Smallest useful version**: a time slider in the system view, view-only —
+scrub hours or days back and forth, the bodies move along their orbits, a
+NOW button returns. Almost all client-side; branches with actions later.
+Server side for the full version: a small snapshot table (solar-body
+health) and comet history, both purged after a set time, behind privacy
+acceptance like every other server call.
+
 ## Privacy policy version history
 
 The user's idea (2026-09-27), for later — there's only one version of the
