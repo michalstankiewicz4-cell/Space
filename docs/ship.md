@@ -299,8 +299,7 @@ shots along).
   2. the stats only: MODEL and FIGURES on the left, PERFORMANCE on the
      right, both moved to the top. They stay visible when idle; the idle
      fade is overridden.
-  3. nothing at all. The button fades out too, and comes back when the
-     pointer is over it, at the top centre.
+  3. nothing but the button, which always stays (the user's call).
 
   The kept elements are marked `.v1keep` in JS, and a `body.view1` /
   `body.view2` class does the rest in CSS.
