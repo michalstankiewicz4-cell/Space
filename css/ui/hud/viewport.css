@@ -74,3 +74,11 @@
 #devToolsMenu input:checked + .chk{ border-color:#f5bd5c; }
 #devToolsMenu input:checked + .chk::after{ left:21px; background:linear-gradient(180deg,#ffda92,#f8bb56 55%,#d38b37); }
 #devToolsMenu input:focus-visible + .chk{ box-shadow:0 0 0 2px #6f86ff; }
+#devToolsMenu .devHd{ margin:4px 0 6px; padding-top:8px; border-top:1px solid #2c4bd8; font-family:var(--uiFontLabel);
+  font-size:14px; letter-spacing:.8px; color:#96a8ff; }
+#devLabs{ display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
+#devLabs button{ display:flex; align-items:center; gap:9px; height:28px; padding:0 10px; cursor:pointer; text-align:left;
+  border:1.5px solid #3c55d8; border-radius:4px 14px 14px 4px; background:linear-gradient(180deg,#050a24,#00020c);
+  font-family:var(--uiFontLabel); font-size:14px; letter-spacing:.5px; color:#e6ebff; transition:border-color .15s, box-shadow .15s; }
+#devLabs button:hover{ border-color:#f5bd5c; box-shadow:0 0 8px rgb(245 189 92 / .4); color:#ffe2a8; }
+#devLabs svg{ width:17px; height:17px; flex:none; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }

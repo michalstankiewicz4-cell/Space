@@ -75,7 +75,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.32.5">
+<link rel="stylesheet" href="css/style.css?v=2.32.6">
 </head>
 <body>
 
@@ -544,6 +544,9 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
       <label class="setupCheckRow"><input type="checkbox" id="devDistanceCheck"><span class="chk"></span><span id="devDistanceLabel" data-i18n="devTools.distance">Connect selected planets</span></label>
       <label class="setupCheckRow"><input type="checkbox" id="devNoLightsCheck"><span class="chk"></span><span id="devNoLightsLabel" data-i18n="devTools.noLights">Turn off lights</span></label>
       <label class="setupCheckRow"><input type="checkbox" id="devPerfCheck"><span class="chk"></span><span id="devPerfLabel" data-i18n="devTools.perf">Performance stats</span></label>
+      <!-- the labs, each opened in a new tab (ui/hud/devTools.js) -->
+      <div class="devHd" data-i18n="devTools.labs">LABS</div>
+      <div id="devLabs"></div>
     </div>
     <div id="perfStats" class="hidden">
       <div id="perfStatsText"></div>
@@ -872,7 +875,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.32.5"></script>
+<script type="module" src="js/main.js?v=2.32.6"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.32.6]
+
+### Added
+- Dev Tools: a LABS section — a button with an icon for each lab (ships,
+  bodies, systems, scale, skins), opening it in a new tab. Buttons, so no
+  address shows on hover. The admin page stays unlinked on purpose.
+
 ## [2.32.5]
 
 ### Changed
