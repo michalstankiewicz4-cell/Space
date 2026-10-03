@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.32.3]
+
+### Changed
+- In the game the stretch after the gold swoosh now looks like the start
+  screen's: straight blue and gold rails (shared `.tbRailTop` /
+  `.tbGoldRail`) instead of the blue rounded frame; the readouts sit in a
+  pill like the start screen's player counters.
+
 ## [2.32.2]
 
 ### Changed

@@ -75,7 +75,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.32.2">
+<link rel="stylesheet" href="css/style.css?v=2.32.3">
 </head>
 <body>
 
@@ -137,7 +137,7 @@
     <div class="mat blue tb3"></div>
     <div class="mat blue tb4"></div>
     <div class="mat gold tbGold"></div>
-    <div class="mat blue" id="topRail"></div>
+    <div class="mat blue tbRailTop" id="topRail"></div>
     <!-- the right group, the same as the HUD's (css/ui/topBar.css) -->
     <div class="mat gold tbGoldRail" id="bottomRail"></div>
     <div class="mat gold tbGoldBlock"></div>
@@ -429,8 +429,8 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
   <div class="mat blue tb4"></div>
   <div class="mat gold tbGold"></div>
 
-  <div class="mat blue" id="resFrame"></div>
-  <div class="mat gold tbGoldRail" id="resGoldLine"></div>
+  <div class="mat blue tbRailTop"></div>
+  <div class="mat gold tbGoldRail"></div>
   <div class="mat gold tbGoldBlock"></div>
   <div id="resBox">
     <div class="res" style="left:10px"><span class="resIcon" data-icon="points"></span><span class="rl" id="labelPoints" data-i18n="topbar.points">Points</span><span class="rv" id="statPoints">0</span></div>
@@ -876,7 +876,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.32.2"></script>
+<script type="module" src="js/main.js?v=2.32.3"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

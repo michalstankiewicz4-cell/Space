@@ -11,10 +11,6 @@ body:has(#banner:not(.hidden)) #hud{ visibility:hidden; }
 #versionTag{ font-family:var(--uiFontBody); font-size:14px; font-weight:400; color:#93a6ff; margin-left:6px; }
 /* The two rails are the stretchy middle of the bar (see .uiBar); everything
    right of them is anchored to the right edge. */
-/* the top rail stops where the HUD's readouts frame does; the bottom one is
-   the shared gold rail (css/ui/topBar.css), from here to the gold block */
-#topRail{ left:465px; right:423px; top:8px; height:8px; border-radius:0 4px 4px 0; }
-#bottomRail{ left:461px; }
 /* in the shared black box (.tbBox): the community links and DEV Blog */
 #devBlogBtn{ right:68px; top:24px; width:92px; height:34px; border:1.5px solid #3c55d8; border-radius:6px;
   background:linear-gradient(180deg,#050a24,#00020c); font-family:var(--uiFontLabel); font-size:14px;

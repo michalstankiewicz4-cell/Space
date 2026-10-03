@@ -25,10 +25,13 @@
 .tb4{ left:226px; top:63px; width:95px; height:11px; }
 .tbGold{ left:326px; top:8px; width:135px; height:67px;
   clip-path:path("M0 51 H46 C64 51 72 44 78 30 C85 12 93 0 112 0 H124 Q135 0 135 10 L128 67 H0 Z"); }
+/* the straight rails after the gold swoosh: blue on top (to the right
+   group), gold below (.tbGoldRail, into the gold block) — both screens */
+.tbRailTop{ left:465px; right:423px; top:8px; height:8px; border-radius:0 4px 4px 0; }
 .tbCap{ right:16px; top:8px; width:42px; height:67px;
   clip-path:path("M0 0 H14 C32 0 42 15 42 33 C42 53 32 67 14 67 H0 Z"); }
 /* the gold rail (bottom, 66–75) — left set per screen, it stretches to the block */
-.tbGoldRail{ right:435px; top:8px; height:67px; clip-path:inset(58px 0 0 0); }
+.tbGoldRail{ left:461px; right:435px; top:8px; height:67px; clip-path:inset(58px 0 0 0); }
 /* the rounded gold block the rail rises into; its right edge under the lilac's body */
 .tbGoldBlock{ right:344px; top:8px; width:100px; height:67px;
   clip-path:path("M0 58 C9 58 14 53 14 45 V40 Q14 36 18 36 H92 Q100 36 100 44 V59 Q100 67 92 67 H0 Z"); }

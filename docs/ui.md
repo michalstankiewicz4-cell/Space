@@ -110,7 +110,9 @@ then read just that range.
   with clip-path, so the `.mat` gradient — the colour — matches the swoosh
   and the rail flows into the block without a seam. Each screen fills only
   the box (the HUD: cycle, clock, speed buttons; the start screen:
-  community links, DEV Blog) and its middle. A try that copied the
+  community links, DEV Blog) and its middle. Since v2.32.3 the stretch after the gold
+  swoosh is the same too: straight rails (`.tbRailTop`, `.tbGoldRail`),
+  the HUD's readouts in a pill like the start screen's player counters. A try that copied the
   original concept art exactly was dropped: "too exact — now I see the
   original's flaws".
 - **File layout mirrors the UI**: `js/ui/hud/` has one module per HUD

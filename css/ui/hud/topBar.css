@@ -1,20 +1,18 @@
 /* HUD top bar: the readouts box and the cycle/clock box (ui/hud/topBar.js).
    The logo/title/end cap shared with the start screen are in ../topBar.css. */
-#resFrame{ left:455px; top:8px; width:658px; height:62px;
-  clip-path:path("M30 0 H658 V20 Q658 31 647 31 H632 V62 H30 C12 62 0 48 0 31 C0 14 12 0 30 0 Z"); }
-#resBox{ left:469px; top:16px; width:618px; height:50px;
-  background:linear-gradient(180deg,#02030a,#000 60%,#03050f);
-  border-radius:22px 14px 14px 22px; }
+/* Between the shared straight rails (css/ui/topBar.css), as on the start
+   screen: the readouts sit in a pill like the start screen's player counters. */
+#resBox{ left:469px; top:19px; width:618px; height:44px;
+  border-radius:22px; background:linear-gradient(180deg,#02030a,#000 60%,#03050f);
+  border:1.5px solid #1d36a0; box-shadow:0 0 6px rgb(40 80 255 / .3); }
 #resBox > *{ position:absolute; }
-/* the shared gold rail (css/ui/topBar.css .tbGoldRail), rounded on the left */
-#resGoldLine{ left:482px; clip-path:inset(58px 0 0 0 round 5px 0 0 5px); }
-.res{ top:4px; height:44px; width:136px; }
+.res{ top:0; height:42px; width:136px; }
 .res > *{ position:absolute; }
 .resIcon{ left:0; top:6px; width:26px; height:30px; }
 .resIcon svg{ width:100%; height:100%; }
 .res .rl{ left:32px; top:1px; font-size:17px; color:#c0cbff; white-space:nowrap; }
 .res .rv{ left:32px; top:20px; font-size:22px; font-weight:500; color:#fff; white-space:nowrap; }
-.resSep{ top:6px; width:2px; height:38px; background:linear-gradient(180deg,transparent,#3b4a8a 30%,#3b4a8a 70%,transparent); }
+.resSep{ top:5px; width:2px; height:32px; background:linear-gradient(180deg,transparent,#3b4a8a 30%,#3b4a8a 70%,transparent); }
 
 /* the cycle, the clock and the speed buttons in the shared black box (.tbBox) */
 #sdDate{ left:22px; top:5px; font-size:18px; color:#c2cdff; white-space:nowrap; }
