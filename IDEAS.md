@@ -456,6 +456,10 @@ wants eventually, not scheduled.
     from ShipKit's generators, and `withRounding` / `sealJoints` are
     exported;
   - planar UVs on rounded cylinders' caps.
+- **Devlog post ideas** (Polish titles, the user's): "Pierwszy kontakt"
+  (First contact) — sending ships to another player's station, orbiting
+  it and holding inside its field (v2.35.0); a good moment once attacks or
+  other contact between players follow.
 - **The ground in the game, next** (v2.34.0 brought the landing, the
   descent, driving and building): a rover from VehicleKit instead of the
   hover craft; building costs (materials, points); the real terrain height
