@@ -272,7 +272,8 @@ shots along).
 - **Left panel**: ship name and prev/next navigation over `SHIP_DEFS`,
   the MODEL statistics, a per-type FIGURES list, toggles for
   auto-rotate, engines (the throttle eases in and out), running lights
-  and wireframe, then ACTIONS — one button per `model.actions` entry
+  and wireframe, SHAPING (Rounded edges, Sealed joints: rebuild live, like
+  Geometry detail), then ACTIONS — one button per `model.actions` entry
   (disabled ones greyed out, triggers flash, toggles stay lit, OFFLINE in
   red) — and a Damage slider. Toggles and damage survive a detail
   rebuild; switching ships resets the toggles.
@@ -325,10 +326,52 @@ animations).
 | `makeBoltPool`, `makeScanWave`, `textTexture`, `fxTextures` | Action effects (see [Actions, offline and damage](#actions-offline-and-damage)) |
 | `makeSolarCells({ seed, cols, rows })` | Solar-cell sheet texture (the drone's wing, the station's panels) |
 | `strut(a, b, radius, material, segments)` | A cylinder from point a to point b: struts, spokes, booms, antenna feeds |
+| `withRounding(round, k, fn)`, `roundedBoxGeometry`, `roundedCylinderGeometry` | **Rounded edges** (`buildShipModel` option `round`, 0..1): while the model builds, boxes and full closed cylinders come out with rounded edges, the radius round × 60 % of the part's smallest half-size; `k` arc segments (1–3, from round × detail). Cones, partial or open cylinders and every other geometry are untouched. Scoped to the build (restored in `finally`). |
+| `sealJoints(group, seal, detail)` | **Sealed joints** (`buildShipModel` option `seal`, 0..1): where two solid parts cut into each other, a tube runs along the line where they meet, in the bigger part's material. See "Shaping" below. |
 | a def's own `setDamage(d)` | Damage stages of its own on top of the shared smoke/sparks (the station's ruin); `buildShipModel` passes every `setDamage` on, and 1 on DESTROY |
 
 Plus, for every ship without any code: the standard action buttons,
 OFFLINE, damage, DESTROY, static-mesh merging and the game wrapper.
+
+### Shaping: rounded edges and sealed joints
+
+The user's idea (2026-10-03), so that models look less like boxes stuck
+together. Both are off by default (`round: 0, seal: 0`), so the game's
+ships are built exactly as before; the ship lab's SHAPING sliders turn
+them on.
+
+**Sealed joints** (`sealJoints`):
+- **Finding the line.** For each pair of solid parts whose boxes overlap,
+  in the same moving unit (`userData.dynamic`), each mesh's edges are tested
+  against the other part's solid. The solid is known from the geometry's
+  parameters, in its own frame (`solidTest`): box, cylinder, cone, sphere
+  and dome, torus, lathe and extrude. An edge with one end inside and one
+  outside is halved down to the crossing point.
+- **Only angled joints.** A point counts only where the surfaces meet at an
+  angle (|n·n| < 0.82). Parts that run on into each other get no bead.
+- **The bead.** Points closer than half a bead are merged, then chained
+  nearest-first from both ends into curves (closed when the ends meet).
+  Each curve gets a TubeGeometry along a centripetal Catmull-Rom curve.
+- **Bead size.** The radius is seal × 35 % of the **thinner part's
+  thickness** (its smallest half-size), at most seal × 1.2 % of the model.
+  A bead finer than 0.12 % of the model is skipped.
+  - The first version sized beads by the parts' bounding spheres. The
+    codewing's 3.5 cm gold trims (each as wide as the 4.5 m gyro ring) got
+    beads thicker than themselves: a string of pearls.
+
+**Cost** at round 0.6 / seal 0.6, detail 1:
+
+| Ship | Triangles (base) | Triangles (both) | Beads | Build time |
+|---|---|---|---|---|
+| swarmer | 12.9k | ~36k | 33–58 | ~40 ms |
+| codewing | 75k | ~171k | 76–86 | ~400 ms |
+| station | 31k | ~182k | — | — |
+
+On the station the rounded boxes are most of it: it has about 400 boxes,
+and each costs (2k+1)² quads a face.
+
+Before turning either on in the game, decide the values and measure
+(GAME BUILD merges the beads with their material).
 
 ### Rules — follow these for every new ship (and every change)
 

@@ -66,6 +66,11 @@ input[type=range]:disabled{ opacity:.35; cursor:not-allowed; }
       <button class="tBtn" id="btnWire">WIREFRAME</button>
       <button class="tBtn" id="btnMerge" title="Build the way the game does: static meshes merged per material (far fewer draw calls)">GAME BUILD</button>
     </div>
+    <div class="secHd">SHAPING</div>
+    <label class="sl"><span>Rounded edges</span><b id="rVal">0%</b></label>
+    <input type="range" id="rSlider" min="0" max="1" step="0.01" value="0">
+    <label class="sl"><span>Sealed joints</span><b id="sVal">0%</b></label>
+    <input type="range" id="sSlider" min="0" max="1" step="0.01" value="0">
     <div class="secHd">ACTIONS</div>
     <div id="actBtns"></div>
     <label class="sl"><span>Damage</span><b id="dmgVal">0%</b></label>
@@ -178,7 +183,7 @@ scene.add(new THREE.HemisphereLight(0x9fb2ff, 0x1a1020, 0.35));
 // =====================================================================
 // Viewer: current ship, rebuild on detail change, disposal
 // =====================================================================
-const state = { rotate: true, engines: true, lights: true, wire: false, merge: false, quality: 3, detail: 1, shipIndex: 0,
+const state = { rotate: true, engines: true, lights: true, wire: false, merge: false, quality: 3, detail: 1, round: 0, seal: 0, shipIndex: 0,
                 toggles: {}, damage: 0 };
 let current = null;      // ShipKit model handle
 const holder = new THREE.Group();
@@ -194,7 +199,7 @@ function loadShip(index, keepCamera) {
   if (current) ShipKit.disposeShipModel(current);
   const def = ShipKit.SHIP_DEFS[index];
   const tb = performance.now();
-  current = ShipKit.buildShipModel(def.id, { detail: state.detail, merge: state.merge });
+  current = ShipKit.buildShipModel(def.id, { detail: state.detail, merge: state.merge, round: state.round, seal: state.seal });
   const buildMs = performance.now() - tb;
   holder.add(current.group);
   current.setLights(state.lights);
@@ -323,15 +328,29 @@ const qSlider = document.getElementById("qSlider"), dSlider = document.getElemen
 const paintSlider = LabKit.paintSlider;
 qSlider.addEventListener("input", () => { state.quality = +qSlider.value; paintSlider(qSlider); applyQuality(state.quality); fx.markCustom(); });
 let rebuildQueued = false;
-dSlider.addEventListener("input", () => {
-  state.detail = +dSlider.value;
-  document.getElementById("dVal").textContent = Math.round(state.detail * 100) + "%";
-  paintSlider(dSlider);
+function queueRebuild() {
   if (!rebuildQueued) { // coalesce rebuilds to at most one per frame while dragging
     rebuildQueued = true;
     requestAnimationFrame(() => { rebuildQueued = false; loadShip(state.shipIndex, true); });
   }
+}
+dSlider.addEventListener("input", () => {
+  state.detail = +dSlider.value;
+  document.getElementById("dVal").textContent = Math.round(state.detail * 100) + "%";
+  paintSlider(dSlider);
+  queueRebuild();
 });
+// SHAPING: rounded edges and sealed joints (ShipKit's SHAPING; the game builds with 0 for now)
+for (const [id, key, val] of [["rSlider", "round", "rVal"], ["sSlider", "seal", "sVal"]]) {
+  const el = document.getElementById(id);
+  paintSlider(el);
+  el.addEventListener("input", () => {
+    state[key] = +el.value;
+    document.getElementById(val).textContent = Math.round(state[key] * 100) + "%";
+    paintSlider(el);
+    queueRebuild();
+  });
+}
 const dmgSlider = document.getElementById("dmgSlider");
 dmgSlider.addEventListener("input", () => {
   state.damage = +dmgSlider.value;
@@ -405,6 +424,8 @@ frame();
 const loading = document.getElementById("loading");
 loading.style.opacity = "0";
 setTimeout(() => loading.remove(), 700);
+// for scripts (tests, screenshots)
+window.shipLab = { camera, controls, state, loadShip, get model() { return current; } };
 })();
 </script>
 </body>

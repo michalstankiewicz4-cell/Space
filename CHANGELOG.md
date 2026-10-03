@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.32.10]
+
+### Added
+- ShipKit SHAPING: rounded edges (`round`) and sealed joints (`seal`) as
+  `buildShipModel` options; the ship lab's SHAPING sliders. Off by default:
+  the game's ships look the same (docs/ship.md, "Shaping").
+
 ## [2.32.9]
 
 ### Added

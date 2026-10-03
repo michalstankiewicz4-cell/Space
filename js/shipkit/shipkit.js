@@ -921,6 +921,252 @@ function detailHelpers(detail) {
   return { seg, bevel };
 }
 
+// ---------------------------------------------------------------------
+// SHAPING — rounded edges and sealed joints, for any model (buildShipModel
+// options `round` and `seal`, 0..1; 0 = the model exactly as defined).
+//
+// Rounded edges: while a model builds with round > 0, THREE.BoxGeometry
+// and THREE.CylinderGeometry make rounded versions (withRounding): a box's
+// edges and corners, a cylinder's two rims. The radius follows the part —
+// round × 60 % of its smallest half-size — so a thin plate gets a soft
+// edge and a block a full one. Partial or open cylinders stay as they are.
+// The swap is scoped to the build (restored in `finally`); cones and every
+// other geometry are untouched.
+//
+// Sealed joints (sealJoints): where two solid parts cut into each other,
+// a smooth bead runs along the line where they meet, in the bigger part's
+// material — the joint reads as filleted, not as two shapes stuck
+// together. The line is found from the parts' own shapes: each mesh's
+// edges are tested against the other's solid (box, cylinder, cone, sphere
+// and dome, torus, lathe, extrude — from the geometry's parameters, in its
+// local frame); an edge with one end inside and one outside gives a point
+// on the meeting line; the points are chained into curves, and a tube
+// follows each one. Moving parts are sealed only to parts that move with
+// them (the same userData.dynamic unit).
+// ---------------------------------------------------------------------
+const _Box = THREE.BoxGeometry, _Cyl = THREE.CylinderGeometry;
+function roundedBoxGeometry(w, h, d, r, k) {
+  const hx = w / 2, hy = h / 2, hz = d / 2;
+  r = Math.min(r, hx, hy, hz);
+  // k segments over each rounded band, one across the flat middle
+  const n = 2 * k + 1;
+  const g = new _Box(w, h, d, n, n, n);
+  const p = g.attributes.position, nr = g.attributes.normal;
+  const remap = (x, half) => {
+    const i = Math.round((x / half + 1) / 2 * n);               // which grid line
+    if (i <= k) return -half + r * (1 - Math.cos(i / k * Math.PI / 2)) * (k ? 1 : 0);
+    if (i >= n - k) return half - r * (1 - Math.cos((n - i) / k * Math.PI / 2));
+    return 0;
+  };
+  const q = new THREE.Vector3(), v = new THREE.Vector3(), o = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) {
+    v.set(remap(p.getX(i), hx), remap(p.getY(i), hy), remap(p.getZ(i), hz));
+    q.set(Math.max(-hx + r, Math.min(hx - r, v.x)), Math.max(-hy + r, Math.min(hy - r, v.y)), Math.max(-hz + r, Math.min(hz - r, v.z)));
+    o.subVectors(v, q);
+    if (o.lengthSq() > 1e-12) { o.normalize(); v.copy(q).addScaledVector(o, r); nr.setXYZ(i, o.x, o.y, o.z); }
+    p.setXYZ(i, v.x, v.y, v.z);
+  }
+  g.userData.shape = { kind: "box", w, h, d };
+  return g;
+}
+function roundedCylinderGeometry(rt, rb, h, radial, r, k) {
+  const hy = h / 2, pts = [];
+  // the profile, axis to axis: bottom disc, its rounded rim, the side, the top rim, the top disc
+  pts.push(new THREE.Vector2(0, -hy));
+  for (let i = 0; i <= k; i++) { const a = -Math.PI / 2 + i / k * Math.PI / 2; pts.push(new THREE.Vector2(rb - r + Math.cos(a) * r, -hy + r + Math.sin(a) * r)); }
+  for (let i = 0; i <= k; i++) { const a = i / k * Math.PI / 2; pts.push(new THREE.Vector2(rt - r + Math.cos(a) * r, hy - r + Math.sin(a) * r)); }
+  pts.push(new THREE.Vector2(0, hy));
+  const g = new THREE.LatheGeometry(pts, radial);
+  g.computeVertexNormals();
+  g.userData.shape = { kind: "cylinder", rt, rb, h };
+  return g;
+}
+// Build `fn` with rounded boxes and cylinders (round 0..1, k: arc segments).
+function withRounding(round, k, fn) {
+  if (!(round > 0)) return fn();
+  THREE.BoxGeometry = function (w = 1, h = 1, d = 1, ...rest) {
+    const r = round * 0.6 * Math.min(w, h, d) / 2;
+    return r > 1e-4 ? roundedBoxGeometry(w, h, d, r, k) : new _Box(w, h, d, ...rest);
+  };
+  THREE.CylinderGeometry = function (rt = 1, rb = 1, h = 1, radial = 8, hs = 1, open = false, t0 = 0, tl = Math.PI * 2) {
+    const r = round * 0.6 * Math.min(rt, rb, h / 2);
+    if (open || tl < Math.PI * 2 - 1e-6 || Math.min(rt, rb) < h * 0.01 || r < 1e-4) return new _Cyl(rt, rb, h, radial, hs, open, t0, tl);
+    return roundedCylinderGeometry(rt, rb, h, radial, r, k);
+  };
+  try { return fn(); } finally { THREE.BoxGeometry = _Box; THREE.CylinderGeometry = _Cyl; }
+}
+
+// Is a point (in the mesh's local frame) inside the mesh's solid? null: not
+// a solid we can tell. The test carries .thick: the part's smallest
+// half-size (a torus' tube, a box's thinnest side…), which sizes the bead.
+function solidTest(geo) {
+  const f = solidTestOf(geo);
+  if (f) f.thick = thicknessOf(geo);
+  return f;
+}
+function thicknessOf(geo) {
+  const s = geo.userData && geo.userData.shape, P = geo.parameters || {}, t = geo.type;
+  if (s && s.kind === "box") return Math.min(s.w, s.h, s.d) / 2;
+  if (s && s.kind === "cylinder") return Math.min(Math.max(s.rt, s.rb), s.h / 2);
+  if (t === "BoxGeometry") return Math.min(P.width, P.height, P.depth) / 2;
+  if (t === "CylinderGeometry") return Math.min(Math.max(P.radiusTop, P.radiusBottom), P.height / 2);
+  if (t === "ConeGeometry") return Math.min(P.radius, P.height / 2);
+  if (t === "SphereGeometry") return P.radius;
+  if (t === "TorusGeometry") return P.tube;
+  geo.computeBoundingBox();
+  const sz = geo.boundingBox.getSize(new THREE.Vector3());
+  return Math.min(sz.x, sz.y, sz.z) / 2;
+}
+function solidTestOf(geo) {
+  const s = geo.userData && geo.userData.shape, P = geo.parameters || {}, t = geo.type;
+  const full = (a) => a === undefined || a >= Math.PI * 2 - 1e-6;
+  const cyl = (rt, rb, h) => (p) => { const hy = h / 2; if (p.y < -hy || p.y > hy) return false; const r = rb + (rt - rb) * (p.y + hy) / h; return p.x * p.x + p.z * p.z < r * r; };
+  if (s && s.kind === "box") return (p) => Math.abs(p.x) < s.w / 2 && Math.abs(p.y) < s.h / 2 && Math.abs(p.z) < s.d / 2;
+  if (s && s.kind === "cylinder") return cyl(s.rt, s.rb, s.h);
+  if (t === "BoxGeometry") return (p) => Math.abs(p.x) < P.width / 2 && Math.abs(p.y) < P.height / 2 && Math.abs(p.z) < P.depth / 2;
+  if (t === "CylinderGeometry" && !P.openEnded && full(P.thetaLength)) return cyl(P.radiusTop, P.radiusBottom, P.height);
+  if (t === "ConeGeometry" && !P.openEnded && full(P.thetaLength)) return cyl(0, P.radius, P.height);
+  if (t === "SphereGeometry") {
+    const r2 = P.radius * P.radius, t0 = P.thetaStart || 0, t1 = t0 + (P.thetaLength === undefined ? Math.PI : P.thetaLength);
+    const p0 = P.phiStart || 0, pl = P.phiLength === undefined ? Math.PI * 2 : P.phiLength;
+    return (p) => {
+      const l2 = p.lengthSq(); if (l2 >= r2) return false;
+      const th = Math.acos(Math.max(-1, Math.min(1, p.y / Math.sqrt(l2 || 1e-12))));
+      if (th < t0 || th > t1) return false;
+      if (pl >= Math.PI * 2 - 1e-6) return true;
+      const ph = ((Math.atan2(p.z, -p.x) - p0) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+      return ph <= pl;
+    };
+  }
+  if (t === "TorusGeometry" && full(P.arc)) return (p) => { const q = Math.hypot(p.x, p.y) - P.radius; return q * q + p.z * p.z < P.tube * P.tube; };
+  if (t === "LatheGeometry" && full(P.phiLength) && P.points && P.points.length > 1) {
+    const pts = P.points;
+    return (p) => {
+      const rr = Math.hypot(p.x, p.z);
+      let best = -1;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i], b = pts[i + 1];
+        if ((p.y - a.y) * (p.y - b.y) > 0 || a.y === b.y) continue;
+        best = Math.max(best, a.x + (b.x - a.x) * (p.y - a.y) / (b.y - a.y));
+      }
+      return rr < best;
+    };
+  }
+  if (t === "ExtrudeGeometry" && P.shapes) {
+    const sh = Array.isArray(P.shapes) ? P.shapes : [P.shapes], o = P.options || {};
+    const depth = o.depth !== undefined ? o.depth : o.amount !== undefined ? o.amount : 1;
+    const bt = o.bevelEnabled === false ? 0 : (o.bevelThickness !== undefined ? o.bevelThickness : 0.2);
+    const polys = sh.map((x) => { const e = x.extractPoints(12); return { outer: e.shape, holes: e.holes }; });
+    const inPoly = (pt, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a.y > pt.y) !== (b.y > pt.y) && pt.x < (b.x - a.x) * (pt.y - a.y) / (b.y - a.y) + a.x) c = !c; } return c; };
+    return (p) => p.z > -bt && p.z < depth + bt && polys.some((q) => inPoly(p, q.outer) && !q.holes.some((h) => inPoly(p, h)));
+  }
+  return null;
+}
+
+function sealJoints(root, seal, detail) {
+  root.updateMatrixWorld(true);
+  const unitOf = (o) => { let u = o; while (u && u !== root && !u.userData.dynamic) u = u.parent; return u || root; };
+  const parts = [];
+  root.traverse((o) => {
+    if (!o.isMesh || o.isInstancedMesh || !o.geometry || !o.geometry.attributes.position) return;
+    const m = Array.isArray(o.material) ? o.material[0] : o.material;
+    if (!m || m.blending === THREE.AdditiveBlending || m.transparent || !o.visible) return;
+    const inside = solidTest(o.geometry);
+    if (!inside) return;
+    const box = new THREE.Box3().setFromObject(o);
+    const pos = o.geometry.attributes.position, idx = o.geometry.index;
+    // the mesh's edges (each once), in world space
+    const world = new Float32Array(pos.count * 3), nrm = new Float32Array(pos.count * 3), v = new THREE.Vector3();
+    const nAttr = o.geometry.attributes.normal, nMat = new THREE.Matrix3().getNormalMatrix(o.matrixWorld);
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld); world[i * 3] = v.x; world[i * 3 + 1] = v.y; world[i * 3 + 2] = v.z;
+      if (nAttr) { v.fromBufferAttribute(nAttr, i).applyMatrix3(nMat).normalize(); nrm[i * 3] = v.x; nrm[i * 3 + 1] = v.y; nrm[i * 3 + 2] = v.z; }
+    }
+    const edges = [], seen = new Set(), tri = idx ? idx.array : null, nTri = (idx ? idx.count : pos.count) / 3;
+    for (let f = 0; f < nTri; f++) for (let e = 0; e < 3; e++) {
+      const a = tri ? tri[f * 3 + e] : f * 3 + e, b = tri ? tri[f * 3 + (e + 1) % 3] : f * 3 + (e + 1) % 3;
+      const key = a < b ? a * 1e7 + b : b * 1e7 + a;
+      if (seen.has(key)) continue; seen.add(key); edges.push(a, b);
+    }
+    parts.push({ o, mat: m, inside, box, world, nrm, edges, unit: unitOf(o), radius: box.getSize(v).length() / 2,
+      thick: inside.thick * o.matrixWorld.getMaxScaleOnAxis(),
+      inv: new THREE.Matrix4().copy(o.matrixWorld).invert() });
+  });
+  const modelR = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).length() / 2;
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), m = new THREE.Vector3(), l = new THREE.Vector3();
+  const isIn = (P, w) => P.inside(l.copy(w).applyMatrix4(P.inv));
+  // the surface direction of a part near a point: its nearest vertex's normal
+  const nA = new THREE.Vector3(), nB = new THREE.Vector3();
+  const normalNear = (P, w, out) => {
+    let bi = 0, bd = Infinity;
+    for (let i = 0; i < P.world.length; i += 3) {
+      const dx = P.world[i] - w.x, dy = P.world[i + 1] - w.y, dz = P.world[i + 2] - w.z, d = dx * dx + dy * dy + dz * dz;
+      if (d < bd) { bd = d; bi = i; }
+    }
+    return out.fromArray(P.nrm, bi);
+  };
+  let beads = 0;
+  for (let i = 0; i < parts.length; i++) for (let j = i + 1; j < parts.length; j++) {
+    const A = parts[i], B = parts[j];
+    if (A.unit !== B.unit || !A.box.intersectsBox(B.box)) continue;
+    // the meeting line: A's edges through B's solid, and B's through A's
+    const pts = [];
+    for (const [S, T] of [[A, B], [B, A]]) {
+      const ov = S.box.clone().intersect(T.box).expandByScalar(1e-3);
+      for (let e = 0; e < S.edges.length; e += 2) {
+        a.fromArray(S.world, S.edges[e] * 3); b.fromArray(S.world, S.edges[e + 1] * 3);
+        if (!ov.containsPoint(a) && !ov.containsPoint(b)) continue;
+        const ia = isIn(T, a), ib = isIn(T, b);
+        if (ia === ib) continue;
+        let lo = 0, hi = 1;                                   // the crossing, by halving
+        for (let s = 0; s < 10; s++) { const mid = (lo + hi) / 2; m.lerpVectors(a, b, mid); if (isIn(T, m) === ia) lo = mid; else hi = mid; }
+        const hit = new THREE.Vector3().lerpVectors(a, b, (lo + hi) / 2);
+        // only where the two surfaces meet at an angle: parts that run on
+        // into each other (a ring's overlapping segments) need no sealing
+        nA.fromArray(S.nrm, S.edges[e] * 3).lerp(nB.fromArray(S.nrm, S.edges[e + 1] * 3), (lo + hi) / 2).normalize();
+        normalNear(T, hit, nB);
+        if (Math.abs(nA.dot(nB)) > 0.82) continue;
+        pts.push(hit);
+      }
+    }
+    if (pts.length < 3) continue;
+    const big = A.radius >= B.radius ? A : B;
+    // the bead: a third of the thinner part's thickness (a fine trim gets a
+    // fine bead), never more than ~1 % of the model; too fine to see: none
+    const rad = Math.min(seal * 0.35 * Math.min(A.thick, B.thick), seal * 0.012 * modelR);
+    if (rad < modelR * 0.0012) continue;
+    // merge points closer than a bead's width, chain the rest into curves
+    const merged = [];
+    for (const p of pts) if (!merged.some((q) => q.distanceToSquared(p) < rad * rad * 0.25)) merged.push(p);
+    if (merged.length < 3) continue;
+    const near = merged.map((p) => { let d = Infinity; for (const q of merged) if (q !== p) d = Math.min(d, p.distanceTo(q)); return d; }).sort((x, y) => x - y);
+    const gap = Math.max(near[Math.floor(near.length / 2)] * 3.5, rad * 3);
+    const left = merged.slice();
+    while (left.length >= 3) {
+      const chain = [left.pop()];
+      for (const back of [false, true]) for (;;) {             // grow from both ends
+        const end = back ? chain[0] : chain[chain.length - 1];
+        let bi = -1, bd = gap;
+        for (let k = 0; k < left.length; k++) { const d = left[k].distanceTo(end); if (d < bd) { bd = d; bi = k; } }
+        if (bi < 0) break;
+        const p = left.splice(bi, 1)[0];
+        if (back) chain.unshift(p); else chain.push(p);
+      }
+      if (chain.length < 3) continue;
+      const closed = chain[0].distanceTo(chain[chain.length - 1]) < gap;
+      const inv = new THREE.Matrix4().copy(A.unit.matrixWorld).invert();
+      const curve = new THREE.CatmullRomCurve3(chain.map((p) => p.clone().applyMatrix4(inv)), closed, "centripetal");
+      const sc = A.unit.matrixWorld.getMaxScaleOnAxis() || 1;
+      const tube = new THREE.TubeGeometry(curve, Math.min(400, Math.max(8, chain.length * 3)), rad / sc, Math.max(4, Math.round(6 * detail)), closed);
+      const bead = shadowed(new THREE.Mesh(tube, big.mat));
+      bead.userData.seal = true;
+      A.unit.add(bead);
+      beads++;
+    }
+  }
+  return beads;
+}
+
 // Engines: a nacelle with a gold intake ring, a nose cone, a lathed bell,
 // a glowing throat, an optional heat ring, a shader plume and a glow
 // sprite. Built along local +Y and turned so the intake faces +X and the
@@ -2404,11 +2650,16 @@ function mergeStatic(root) {
 //   merge    true: merge static meshes (far fewer draw calls — use in the game)
 //   fxRoot   an Object3D (e.g. the scene) for effects that leave the ship
 //   envMap   environment map for the ship's reflective materials
-function buildShipModel(id, { detail = 1, merge = false, fxRoot = null, envMap = null } = {}) {
+// round, seal (0..1): rounded edges and sealed joints (see SHAPING); 0 = the
+// model exactly as its definition builds it (the game's default).
+function buildShipModel(id, { detail = 1, merge = false, fxRoot = null, envMap = null, round = 0, seal = 0 } = {}) {
   const def = SHIP_DEFS.find((d) => d.id === id);
   if (!def) throw new Error("ShipKit: unknown ship id " + id);
   const env = { fxRoot, owned: [] };
-  const built = def.build(detail, env);
+  // arc segments: more for a stronger rounding and a higher detail (each box costs (2k+1)² quads a face)
+  const k = Math.max(1, Math.min(3, Math.round(round * 3 * detail)));
+  const built = withRounding(round, k, () => def.build(detail, env));
+  if (seal > 0) sealJoints(built.group, seal, detail);
   built.group.userData.shipkit = true; // a host's color management can skip ShipKit models
   if (merge) mergeStatic(built.group);
   if (envMap) built.group.traverse((o) => {
@@ -2607,7 +2858,7 @@ return {
   makeSpaceSky, makeEnvironment,
   makeBoltPool, makeScanWave, textTexture, fxTextures, // action/effect helpers for ship defs
   // building blocks for ship definitions (see "SHIP BUILDING BLOCKS")
-  detailHelpers, makeEngineSet, makeExhaust, makeNavLights, makeShotQueue, makeOnlineFader, makeSolarCells, strut,
+  detailHelpers, withRounding, sealJoints, roundedBoxGeometry, roundedCylinderGeometry, makeEngineSet, makeExhaust, makeNavLights, makeShotQueue, makeOnlineFader, makeSolarCells, strut,
   STANDARD_ACTIONS,
   allTextures,                      // Set of every generated texture
   isSharedMaterial: (m) => sharedMaterials.has(m),
