@@ -4,6 +4,19 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.30.3]
+
+### Added
+- Body lab: **MERCURY**, an airless, cratered planet with bright ray
+  craters, modelled on a real photo. Two new planet parameters make it —
+  `airless` (craters as real relief, grey regolith, no seas) and `rays`
+  (young craters with radial rays). BodyKit is shared with the game, hence
+  the version; the game's planets have both at 0 and look the same.
+
+### Changed
+- BodyKit: `craterField` moved into the shared body GLSL (the rocks and the
+  planets use it now), with the share of cratered cells as a parameter.
+
 ## [2.30.2]
 
 ### Security

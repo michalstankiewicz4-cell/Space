@@ -66,6 +66,7 @@ FERRUM (8), ABYSS (9) and COMET.
 | `pelagia` PELAGIA | 5 | neutral | ocean world (≈83% water), cloudy |
 | `rime` RIME | 6 | ice | frozen seas, tundra continents (≈78% ice & snow) |
 | `glacies` GLACIES | 7 | ice | almost fully frozen (≈95%) |
+| `mercury` MERCURY | — | (lab only) | airless and cratered, bright ray craters (`airless`, `rays`); modelled on a real photo of Mercury |
 
 `size` only matters in the lab (it's set to the relative game radius);
 the game sizes each body to its own radius.
@@ -87,6 +88,8 @@ the game sizes each body to its own radius.
 | `atmoHue` | Atmosphere hue (degrees) | 0–360 | 205 |
 | `lava` | Molten lowlands: the seas become lava, land becomes basalt, clouds turn to ash | 0–1 | 0 |
 | `frozen` | Frozen seas: cracked ice sheets, frosted tundra land | 0–1 | 0 |
+| `airless` | Airless, cratered: grey regolith, craters of three sizes (fewer on the low plains), no seas, a sharp terminator | 0–1 | 0 |
+| `rays` | Ray craters: a few young craters with bright radial rays | 0–1.5 | 0 |
 | `seed` | Seed ("NEW SEED" button) | any | 1 |
 
 ## How the planet is made
@@ -107,6 +110,14 @@ the game sizes each body to its own radius.
 - **Frozen seas** (`frozen`, `iceSheetAt`): the sea surface is an ice
   sheet with darker pressure cracks and a duller glint; land turns to
   grey tundra rock with frost.
+- **Airless worlds** (`airless`, `craterRelief`, `rayAt`): `craterField`
+  (shared with the rocks) at three sizes is added to the height, so the
+  craters are real relief; the bump normal gives crater walls a much
+  stronger slope (`kc`) than the continents, or the terrain turned into
+  black stripes. No seas (`seaAt`, also in the probe), grey regolith with
+  darker patches and brownish plains, dark floors and bright rims. Rays:
+  for a few seed-picked centres, noise of the *direction* around the
+  centre — it only changes with the angle, so it draws radial streaks.
 - **Damage** (`damage` / `setDamage`, `crackAt`): a network of glowing
   cracks (two ridged-noise scales) whose reach spreads over the surface
   as damage grows, darkening the ground; self-lit like lava.
@@ -238,7 +249,7 @@ be reused:
 | Block | What it gives you |
 |---|---|
 | `GLSL_NOISE` | `snoise` (3D simplex) and `fbm(p, octaves, persistence)` with a runtime octave count |
-| `GLSL_BODY` | What every body shader includes next: the common uniforms (`uSeed`, `uTime`, `uDamage`, `uOctaves`, the point lights), `crackAt()` (the damage cracks), `pointLightAt()` (nearby point lights) and `hash33()` |
+| `GLSL_BODY` | What every body shader includes next: the common uniforms (`uSeed`, `uTime`, `uDamage`, `uOctaves`, the point lights), `crackAt()` (the damage cracks), `pointLightAt()` (nearby point lights), `hash33()` and `craterField(p, freq, share)` (rocks and airless planets) |
 | `bodyUniforms(v)` | Those uniforms + `uSunDir`, for a new build to extend |
 | `makeBodyHandle({ v, U, group, spin, pickMesh, apply, layers, onUpdate, describe, measure, dispose })` | **The whole body handle** (sun direction, spin, tilt, radius, seed, damage, octaves, layer toggles); a build only passes what's its own |
 | `GLSL_SPHERE_VERTEX` | The plain lit-sphere vertex shader (`vDir`, `vWorldPos`, `vNormalW`): clouds, atmosphere, sun surface |
@@ -246,7 +257,7 @@ be reused:
 | `blackbody(kelvin, color)` | Star / hot gas color from a temperature: the Sun, the black hole's disk |
 | `rockParts(v, detail)` | A rock's uniforms, mesh and `apply()`: ROCKS uses it as is, COMETS adds a coma and tails |
 | `GLSL_PLANET` | The planet's shared uniforms and functions: `heightOct` / `heightAt`, `moistureAt`, `iceAt`, `cloudAt`, `lavaFlowAt`, `iceSheetAt`. Used by the surface, the clouds **and** the coverage probe. |
-| `GLSL_ROCK` | `craterField()`, `rockHeight()`, `rockPoint()`, `rockDetail()`: the rock's shape and relief |
+| `GLSL_ROCK` | `rockHeight()`, `rockPoint()`, `rockDetail()`: the rock's shape and relief (craters from `GLSL_BODY`) |
 | `ROCK_PARAMS` | The rock sliders, shared by ROCKS and COMETS |
 | `GLSL_SKY`, `seededRandom(seed)` | The sky's color function; a deterministic RNG (same sky for everyone) |
 | `COMMON_PARAMS` | Spin, tilt and damage for every body in every group |

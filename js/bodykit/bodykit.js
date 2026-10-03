@@ -208,6 +208,24 @@ vec3 hash33(vec3 p){
   p += dot(p, p.yxz + 33.33);
   return fract((p.xxy + p.yxx) * p.zyx);
 }
+// the nearest crater per cell (only a \`share\` of cells has one): a bowl
+// below 0, a raised rim, 0 elsewhere. Rocks and airless planets.
+float craterField(vec3 p, float freq, float share){
+  vec3 q = p * freq + uSeed;
+  vec3 i = floor(q), f = fract(q);
+  float best = 9.0; vec3 hb = vec3(1.0);
+  for (int x = -1; x <= 1; x++) for (int y = -1; y <= 1; y++) for (int z = -1; z <= 1; z++){
+    vec3 o = vec3(float(x), float(y), float(z));
+    vec3 h = hash33(i + o);
+    vec3 d = o + h - f;
+    float dd = dot(d, d);
+    if (dd < best){ best = dd; hb = h; }
+  }
+  if (hb.y > share) return 0.0;
+  float k = sqrt(best) / (0.25 + 0.3 * hb.z);          // distance in crater radii
+  float bowl = k < 1.0 ? k * k - 1.0 : 0.0;
+  return bowl + exp(-pow((k - 1.0) * 3.5, 2.0)) * 0.3;
+}
 `;
 
 // A quad around the body's center that always faces the camera, sized in
@@ -348,11 +366,46 @@ void main(){
 const GLSL_PLANET = `
 uniform float uFreq, uSea, uRough, uIce, uClimate, uClouds, uCloudDrift;
 
+uniform float uAirless, uRays;
+// airless worlds: craters of three sizes, fewer on the low plains
+float craterRelief(vec3 p, float base){
+  if (uAirless <= 0.001) return 0.0;
+  float share = uAirless * mix(0.18, 0.7, smoothstep(-0.25, 0.25, base));
+  return craterField(p, 5.0, share) * 0.10 + craterField(p, 11.0, share) * 0.05 + craterField(p, 24.0, share * 0.9) * 0.022;
+}
 // continents: domain-warped fBm, ~ -1..1
-float heightOct(vec3 p, int octaves){
+float baseOct(vec3 p, int octaves){
   vec3 q = p * uFreq + uSeed;
   vec3 warp = vec3(snoise(q * 0.7 + 11.3), snoise(q * 0.7 + 27.1), snoise(q * 0.7 + 3.7));
   return fbm(q + warp * 0.35, octaves, uRough);
+}
+// the height: continents + craters on an airless world
+float heightOct(vec3 p, int octaves){
+  float h = baseOct(p, octaves);
+  return h + craterRelief(p, h);
+}
+// sea or not: an airless world has none (its crater floors may dip below uSea)
+float seaAt(float h){ return step(h, uSea) * (1.0 - step(0.5, uAirless)); }
+// young craters with bright ray systems: a few centres from the seed;
+// noise of the direction around a centre gives streaks that only change
+// with the angle, i.e. radial rays. 0..~1.5
+float rayAt(vec3 p){
+  if (uRays <= 0.001) return 0.0;
+  float r = 0.0;
+  for (int k = 0; k < 10; k++){
+    vec3 hk = hash33(vec3(float(k) * 7.13, uSeed.x * 3.1, uSeed.y * 1.7));
+    vec3 c = normalize(hk * 2.0 - 1.0);
+    vec3 d = p - c;
+    float dist = length(d);
+    if (dist > 1.3) continue;
+    vec3 dir = normalize(d - c * dot(d, c) + 1e-5);
+    float streak = smoothstep(0.55, 0.9, snoise(dir * 14.0 + float(k) * 3.1) * 0.5 + 0.5)
+                 + 0.6 * smoothstep(0.62, 0.92, snoise(dir * 37.0 + float(k) * 5.7) * 0.5 + 0.5);
+    float reach = 0.14 + 0.4 * hk.z * hk.z;
+    float strength = 0.45 + 0.55 * fract(hk.x * 13.7);
+    r += (streak * exp(-dist / reach) * smoothstep(0.0, 0.04, dist) + exp(-dist * dist / 0.0012) * 1.4) * strength;
+  }
+  return r * uRays;
 }
 float heightAt(vec3 p){ return heightOct(p, uOctaves); }
 float moistureAt(vec3 p){ return snoise(p * 2.3 + uSeed.zxy * 1.7) * 0.5 + 0.5; }
@@ -420,7 +473,7 @@ function planetSurfaceMaterial(U) {
       void main(){
         vec3 p = normalize(vDir);
         float h = heightAt(p);
-        float water = step(h, uSea);
+        float water = seaAt(h);
         float ice = iceAt(p, h);
         float alt = clamp((h - uSea) / max(1.0 - uSea, 0.05), 0.0, 1.0);
 
@@ -434,6 +487,20 @@ function planetSurfaceMaterial(U) {
         vec3 land = mix(lush, desert, arid);
         land = mix(vec3(0.76, 0.70, 0.52), land, smoothstep(0.0, 0.04, alt));                 // beaches
         land = mix(land, vec3(0.38, 0.33, 0.29), smoothstep(0.45, 0.8, alt));                 // rock
+        // airless world: grey regolith, darker bluish patches, brownish plains, bright ray craters
+        if (uAirless > 0.001) {
+          float dark = smoothstep(0.6, 0.85, snoise(p * 5.0 + uSeed.zxy) * 0.5 + 0.5);
+          float tone = snoise(p * 9.0 + uSeed.yzx) * 0.5 + 0.5;
+          vec3 regolith = mix(vec3(0.30, 0.30, 0.295), vec3(0.50, 0.495, 0.48), m * 0.6 + tone * 0.4);
+          regolith = mix(regolith, vec3(0.25, 0.26, 0.28), dark * 0.35);                        // low-reflectance patches
+          regolith = mix(regolith, vec3(0.40, 0.38, 0.35), (1.0 - smoothstep(-0.3, 0.1, h)) * 0.35);   // smooth plains
+          // craters: darker floors, bright rims, the youngest small ones bright inside
+          float c1 = craterField(p, 11.0, uAirless * 0.8), c2 = craterField(p, 24.0, uAirless * 0.75);
+          regolith *= 1.0 + min(c1, 0.0) * 0.35 + max(c1, 0.0) * 0.6 + max(c2, 0.0) * 0.5;
+          regolith = mix(regolith, vec3(0.72, 0.71, 0.69), step(0.92, fract(c2 * 37.0 + m * 5.0)) * step(c2, -0.2) * 0.6);
+          regolith = mix(regolith, vec3(0.86, 0.85, 0.83), clamp(rayAt(p) * 1.3, 0.0, 1.0));
+          land = mix(land, regolith, uAirless);
+        }
         // volcanic world: basalt instead of soil, molten rock instead of water
         land = mix(land, mix(vec3(0.10, 0.085, 0.08), vec3(0.24, 0.17, 0.13), m), uLava);
         float flow = uLava > 0.001 ? lavaFlowAt(p) : 0.0;
@@ -462,11 +529,14 @@ function planetSurfaceMaterial(U) {
           vec3 t2 = cross(p, t1);
           const float eps = 0.0025;
           int o = uOctaves > 2 ? uOctaves - 1 : uOctaves;
-          float h0 = max(heightOct(p, o), uSea);
-          float hx = max(heightOct(normalize(p + t1 * eps), o), uSea);
-          float hy = max(heightOct(normalize(p + t2 * eps), o), uSea);
+          vec3 px = normalize(p + t1 * eps), py = normalize(p + t2 * eps);
+          float b0 = baseOct(p, o), bx = baseOct(px, o), by = baseOct(py, o);
+          float c0 = craterRelief(p, b0), cx = craterRelief(px, bx), cy = craterRelief(py, by);
+          float h0 = max(b0 + c0, uSea), hx = max(bx + cx, uSea), hy = max(by + cy, uSea);
           float k = 0.012 + uMountain * 0.25;                    // relief strength
-          vec3 nObj = normalize(p - k * ((hx - h0) * t1 + (hy - h0) * t2) / eps);
+          float kc = uAirless * 0.3;                             // crater walls: much stronger than the terrain
+          vec3 g = k * ((hx - h0) * t1 + (hy - h0) * t2) + kc * ((cx - c0) * t1 + (cy - c0) * t2);
+          vec3 nObj = normalize(p - g / eps);
           Nb = normalize(mat3(modelMatrix) * nObj);
         }
 
@@ -474,7 +544,7 @@ function planetSurfaceMaterial(U) {
         vec3 L = normalize(uSunDir);
         vec3 V = normalize(cameraPosition - vWorldPos);
         float diff = max(dot(Nb, L), 0.0);
-        float wrap = smoothstep(-0.15, 0.25, dot(N, L));            // soft terminator
+        float wrap = smoothstep(-0.15 + 0.12 * uAirless, 0.25 - 0.17 * uAirless, dot(N, L));   // soft terminator (sharp without air)
         vec3 H = normalize(L + V);
         float gloss = (1.0 - uLava) * (1.0 - 0.6 * uFrozen);           // lava is matte, ice duller than water
         float spec = water * (1.0 - ice) * gloss * pow(max(dot(N, H), 0.0), 70.0) * 0.9 * wrap;
@@ -534,8 +604,8 @@ function planetProbeMaterial(U) {
         float lon = (vUv.x - 0.5) * 6.28318530718, lat = (vUv.y - 0.5) * 3.14159265359;
         vec3 p = vec3(cos(lat) * cos(lon), sin(lat), cos(lat) * sin(lon));
         float h = heightAt(p);
-        float frozenSea = step(h, uSea) * uFrozen * (1.0 - uLava);
-        gl_FragColor = vec4(step(h, uSea), step(0.5, max(iceAt(p, h), frozenSea)), step(0.5, cloudAt(p)), 1.0);
+        float frozenSea = seaAt(h) * uFrozen * (1.0 - uLava);
+        gl_FragColor = vec4(seaAt(h), step(0.5, max(iceAt(p, h), frozenSea)), step(0.5, cloudAt(p)), 1.0);
       }`,
   });
 }
@@ -546,6 +616,7 @@ function buildPlanet(values, detail) {
     uFreq: { value: 0 }, uSea: { value: 0 }, uRough: { value: 0 }, uIce: { value: 0 }, uClimate: { value: 0 },
     uClouds: { value: 0 }, uCloudDrift: { value: 0 }, uMountain: { value: 0 }, uAtmo: { value: 0 },
     uAtmoColor: { value: new THREE.Color() }, uLava: { value: 0 }, uFrozen: { value: 0 },
+    uAirless: { value: 0 }, uRays: { value: 0 },
   });
   const seg = (n, min) => Math.max(min, Math.round(n * detail));
   const group = new THREE.Group();      // tilt goes here…
@@ -601,6 +672,7 @@ function buildPlanet(values, detail) {
       U.uCloudDrift.value = v.cloudDrift; U.uMountain.value = v.mountains;
       U.uAtmo.value = v.atmosphere; U.uAtmoColor.value.copy(hueColor(v.atmoHue));
       U.uLava.value = v.lava; U.uFrozen.value = v.frozen;
+      U.uAirless.value = v.airless; U.uRays.value = v.rays;
     },
     layers: {
       clouds: { objects: [clouds], when: () => v.clouds > 0.001 },
@@ -732,33 +804,15 @@ function buildSun(values, detail) {
 // =====================================================================
 const GLSL_ROCK = `
 uniform float uLump, uStretch, uCraters, uAlbedo, uRust, uIce, uMetal;
-// the nearest crater per cell (only a uCraters share of cells has one):
-// a bowl below 0, a raised rim, 0 elsewhere
-float craterField(vec3 p, float freq){
-  vec3 q = p * freq + uSeed;
-  vec3 i = floor(q), f = fract(q);
-  float best = 9.0; vec3 hb = vec3(1.0);
-  for (int x = -1; x <= 1; x++) for (int y = -1; y <= 1; y++) for (int z = -1; z <= 1; z++){
-    vec3 o = vec3(float(x), float(y), float(z));
-    vec3 h = hash33(i + o);
-    vec3 d = o + h - f;
-    float dd = dot(d, d);
-    if (dd < best){ best = dd; hb = h; }
-  }
-  if (hb.y > uCraters) return 0.0;
-  float k = sqrt(best) / (0.25 + 0.3 * hb.z);          // distance in crater radii
-  float bowl = k < 1.0 ? k * k - 1.0 : 0.0;
-  return bowl + exp(-pow((k - 1.0) * 3.5, 2.0)) * 0.3;
-}
 float rockHeight(vec3 p){
   float h = fbm(p * 1.1 + uSeed, 4, 0.5) * uLump * 0.5 + snoise(p * 3.1 + uSeed.yzx) * uLump * 0.08;
-  return h + craterField(p, 2.0) * 0.12 + craterField(p, 4.5) * 0.05;
+  return h + craterField(p, 2.0, uCraters) * 0.12 + craterField(p, 4.5, uCraters) * 0.05;
 }
 vec3 rockPoint(vec3 p){
   float s = inversesqrt(uStretch);
   return p * (1.0 + rockHeight(p)) * vec3(uStretch, s, s);
 }
-float rockDetail(vec3 p){ return craterField(p, 11.0) * 0.5 + snoise(p * 24.0 + uSeed) * 0.15; }
+float rockDetail(vec3 p){ return craterField(p, 11.0, uCraters) * 0.5 + snoise(p * 24.0 + uSeed) * 0.15; }
 `;
 const ROCK_GLSL = GLSL_NOISE + GLSL_BODY + GLSL_ROCK;
 
@@ -798,7 +852,7 @@ function rockMaterial(U) {
         // ---- colors: grey to rusty rock, darker crater floors, frost, metal veins
         float n1 = snoise(p * 5.0 + uSeed) * 0.5 + 0.5;
         vec3 base = mix(vec3(0.5), vec3(0.58, 0.38, 0.25), uRust) * uAlbedo * 2.2 * (0.75 + 0.5 * n1);
-        base *= 1.0 + craterField(p, 4.5) * 0.45;
+        base *= 1.0 + craterField(p, 4.5, uCraters) * 0.45;
         float frost = step(0.001, uIce) * smoothstep(0.6 - uIce * 0.6, 0.7 - uIce * 0.6, snoise(p * 3.0 + uSeed.zxy) * 0.5 + 0.5);
         base = mix(base, vec3(0.78, 0.84, 0.9), frost * 0.85);
         float vein = uMetal * smoothstep(0.972, 0.996, 1.0 - abs(snoise(p * 4.0 + uSeed.yxz)))
@@ -1296,6 +1350,8 @@ const GROUPS = [
       { key: "atmoHue",    label: "Atmosphere hue",         min: 0,   max: 360, step: 1,    value: 205,  fmt: (x) => Math.round(x) + "°" },
       { key: "lava",       label: "Molten lowlands",        min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "frozen",     label: "Frozen seas",            min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
+      { key: "airless",    label: "Airless, cratered",      min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
+      { key: "rays",       label: "Ray craters",            min: 0,   max: 1.5, step: 0.01, value: 0,    fmt: pct },
     ],
     bodies: [
       { id: "cinder",  name: "CINDER",  slot: 1, values: { seed: 11, size: 0.85, tilt: 6, lava: 1, sea: -0.05, mountains: 0.06,
@@ -1303,6 +1359,8 @@ const GROUPS = [
       { id: "magma",   name: "MAGMA",   slot: 2, values: { seed: 23, size: 1.2, tilt: 30, lava: 1, sea: 0.06, roughness: 0.6,
         climate: 1, ice: 0, clouds: 0.15, atmosphere: 0.5, atmoHue: 12 } },
       { id: "terra",   name: "TERRA-1", slot: 3, values: { seed: 1 } },
+      { id: "mercury", name: "MERCURY", values: { seed: 3, size: 0.38, tilt: 0, spin: 0.25, airless: 1, rays: 0.9, sea: -0.6,
+        continents: 1.6, mountains: 0.006, roughness: 0.55, climate: 0.5, ice: 0, clouds: 0, atmosphere: 0 } },
       { id: "pelagia", name: "PELAGIA", slot: 5, values: { seed: 5, size: 1.35, tilt: 12, sea: 0.22, continents: 2.2,
         climate: 0.2, ice: 0.25, clouds: 0.55, atmoHue: 195 } },
       { id: "rime",    name: "RIME",    slot: 6, values: { seed: 31, size: 0.9, tilt: 20, frozen: 1, sea: 0.05, ice: 0.75,
