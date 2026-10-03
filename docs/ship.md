@@ -294,35 +294,38 @@ shots along).
   (disabled ones greyed out, triggers flash, toggles stay lit, OFFLINE in
   red) — and a Damage slider. Toggles and damage survive a detail
   rebuild; switching ships resets the toggles.
-- **The left panel** (the user's requests, 2026-10-03):
-  - **The header stays put.** The ship's name, the caption and the gold bar
-    don't move; only what's inside the panel's frame scrolls
-    (`.panelScroll`). The header is `flex: none`, so in a low window the
-    panel gives way, not the header.
-  - **⇅ swaps the two groups**, `#grpStats` (MODEL, FIGURES) and `#grpCtrl`
-    (the toggles, SHAPING, ACTIONS, damage).
-  - **Double-click the name or the caption to edit it.** Enter keeps it, Esc
-    cancels, and empty brings the original back. Kept per ship; the game's
-    names don't change.
-  - **The hull's lettering follows** (`buildShipModel` option `labels: { name,
-    sub }`). On the codewing, the name replaces "SP-01" and the caption
-    replaces "SWARM PROTOCOL"; on the station, the name replaces
+- **Five blocks** (the user's final layout, 2026-10-03).
+  - On the left:
+    - the **name** (the ship's name and caption, the gold bar and the
+      ship arrows), which stays put;
+    - **CONTROLS**: the toggles, SHAPING, ACTIONS, damage;
+    - **STATS**: MODEL, FIGURES.
+
+    The two blocks under the name scroll (`.hudCol`).
+  - On the right: **OPTIMIZATION** and **PERFORMANCE**.
+  - Every block but the name has a **KEEP** checkbox in its header.
+  - **C**, or the **CHANGE VIEW** button (top centre, always on screen),
+    switches between the full UI and only the ticked blocks. The ticked
+    blocks move to the top of their column, and the name block goes away.
+    With nothing ticked, only the ship is left. The kept blocks don't fade
+    when idle.
+  - C works with a checkbox or a slider in focus. It is ignored while
+    typing (a text field, a name being edited).
+  - **Double-click the name or the caption to edit it.** Enter keeps it,
+    Esc cancels, and empty brings the original back. Kept per ship.
+  - **The hull's lettering follows** (`buildShipModel` option `labels: {
+    name, sub }`). On the codewing, the name replaces "SP-01" and the
+    caption replaces "SWARM PROTOCOL"; on the station, the name replaces
     "HAVEN-04".
     - Each label pair gets its own texture set (`assets(labels)`, keyed by
-      `labelKey`). The default set stays the one all ships share, so the
-      game is unchanged.
+      `labelKey`). The default set stays the shared one, so the game is
+      unchanged.
     - Long texts shrink to fit (a marking's `max`, in canvas px).
-  - The swap and the names are per-viewer conveniences, in `localStorage`
+  - The ticks and the names are per-viewer conveniences, in `localStorage`
     under `shipLab.*`, wrapped in try/catch.
-- **CHANGE VIEW** (top centre, key C; the user's design) cycles three views:
-  1. the full UI;
-  2. the stats only: MODEL and FIGURES on the left, PERFORMANCE on the
-     right, both moved to the top. They stay visible when idle; the idle
-     fade is overridden.
-  3. nothing but the button, which always stays (the user's call).
-
-  The kept elements are marked `.v1keep` in JS, and a `body.view1` /
-  `body.view2` class does the rest in CSS.
+  - Dropped on the way:
+    - a three-step CHANGE VIEW (full / stats only / nothing);
+    - a ⇅ button swapping the stats and the controls.
 - **Right panel, OPTIMIZATION**:
   - **Render quality**, 5 presets:
 

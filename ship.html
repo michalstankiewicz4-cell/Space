@@ -27,37 +27,39 @@
 .tBtn.trig:active, .tBtn.pulse{ border-color:#4fe3c6; box-shadow:0 0 10px rgb(79 227 198 / .6); color:#c8fff2; }
 .tBtn:disabled{ opacity:.32; filter:saturate(0); cursor:not-allowed; box-shadow:none; border-color:#3c55d8; color:#e6ebff; }
 input[type=range]:disabled{ opacity:.35; cursor:not-allowed; }
-/* The left panel: the header (name, caption, the gold bar) stays put; only
-   what's inside the panel's frame scrolls */
+/* Five blocks: left the name (+ the ship arrows), CONTROLS, STATS; right
+   OPTIMIZATION, PERFORMANCE. The name stays put, the blocks under it scroll.
+   Each block but the name has a checkbox in its header: C (or the CHANGE
+   VIEW button, always on screen) switches between the full UI and only
+   the ticked blocks, moved up their column — the name block goes too. */
 #hud{ overflow:visible; display:flex; flex-direction:column; }
-#hudTop, #hudBar{ flex:none; }   /* the header never shrinks: the panel below gives way */
-#hud .hudPanel{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
-#hud .panelScroll{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; margin-right:-8px; padding-right:8px;
-  scrollbar-width:thin; scrollbar-color:#3c55d8 transparent; }
-.swapBtn{ height:24px; padding:0 10px; border:1.5px solid #3c55d8; border-radius:6px; background:#02061a; color:#9fb1ff;
-  font-size:15px; line-height:1; cursor:pointer; }
-.swapBtn:hover{ color:#fff; border-color:#90a3ff; }
+#hudTop, #hudBar, #shipNav{ flex:none; }
 #hudTop{ z-index:3; }   /* above the gold bar, which overlaps the caption's lower edge */
+#shipNav{ margin:0 0 10px 34px; }
+#hud .hudCol{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; margin-right:-8px; padding-right:8px;
+  scrollbar-width:thin; scrollbar-color:#3c55d8 transparent; }
+.block + .block{ margin-top:10px; }
+.blockHd{ display:flex; align-items:center; justify-content:space-between; margin:0 0 6px; padding-bottom:3px;
+  border-bottom:1.5px solid #2c4bd8; font-family:var(--fontLabel); letter-spacing:1px; color:#c7d0ff; font-size:15px; }
+#opt .blockHd{ border-bottom-color:#d38b37; }
+.pick{ display:flex; align-items:center; gap:6px; font-size:11px; letter-spacing:.6px; color:#7f92e8; cursor:pointer; }
+.pick input{ width:15px; height:15px; margin:0; accent-color:#f8bb56; cursor:pointer; }
+.block .secHd:first-of-type{ margin-top:4px; }
 #hudTitle, #hudSub{ cursor:text; outline:none; }
 #hudTitle[contenteditable="true"], #hudSub[contenteditable="true"]{ box-shadow:0 0 0 1.5px #f8bb56; border-radius:4px; padding:0 4px;
   -webkit-text-fill-color:#ffd88f; background:#02061a; z-index:5; }
-/* CHANGE VIEW (top centre, key C): 0 the full UI, 1 the stats only (MODEL +
-   FIGURES left, PERFORMANCE right, moved up, never idle-hidden), 2 nothing
-   but the button itself — it always stays (the user's call) */
-#btnView{ position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:20; height:30px; padding:0 18px; transition:opacity .3s; }
-body.view1 #hudTop, body.view1 #hudBar, body.view1 #hud .panelScroll > :not(.v1keep),
-body.view1 #opt .hudPanel > :not(.v1keep):not(.side){ display:none !important; }
-body.view1 .v1first{ margin-top:0 !important; }
-body.view1 #hud.labIdle, body.view1 #opt.labIdle{ opacity:1; }
-body.view1 #hud.labIdle *, body.view1 #opt.labIdle *{ pointer-events:auto !important; }
-body.view2 #hud, body.view2 #opt{ display:none !important; }
+#btnView{ position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:20; height:30px; padding:0 18px; }
+body.focus #hudTop, body.focus #hudBar, body.focus #shipNav, body.focus .block:not(.picked){ display:none !important; }
+body.focus .pick{ display:none; }
+body.focus #hud.labIdle, body.focus #opt.labIdle{ opacity:1; }       /* the picked blocks don't fade when idle */
+body.focus #hud.labIdle *, body.focus #opt.labIdle *{ pointer-events:auto !important; }
 .tBtn.off.on{ border-color:#e04b50; box-shadow:0 0 8px rgb(224 75 80 / .5), inset 0 0 8px rgb(224 75 80 / .15); color:#ffb4b8; }
 </style>
 </head>
 <body>
 <canvas id="view"></canvas>
 
-<button class="tBtn" id="btnView" title="Change the view: the full UI → the stats only → nothing (key C)">CHANGE VIEW</button>
+<button class="tBtn" id="btnView" title="The full UI ↔ only the ticked blocks (key C)">CHANGE VIEW</button>
 <div id="hud">
   <div id="hudTop">
     <div class="mat blue" id="hudBracket"></div>
@@ -73,22 +75,15 @@ body.view2 #hud, body.view2 #opt{ display:none !important; }
     <div id="hudSub" title="Double-click to change the caption (empty: the original)">SWARM PROTOCOL // SHIP LAB</div>
   </div>
   <div class="mat gold" id="hudBar"></div>
-  <div class="hudPanel">
-    <div class="mat blue side"></div>
-    <div class="panelScroll">
     <div id="shipNav">
       <button class="mat blue navArrow" id="prevShip" aria-label="Previous ship"><svg viewBox="0 0 12 16"><path d="M9 2 L3 8 L9 14"/></svg></button>
       <span id="shipIndex">1 / 1</span>
-      <button class="swapBtn" id="btnSwap" title="Swap the order: the stats (MODEL, FIGURES) and the controls">&#8645;</button>
       <button class="mat blue navArrow" id="nextShip" aria-label="Next ship"><svg viewBox="0 0 12 16"><path d="M3 2 L9 8 L3 14"/></svg></button>
     </div>
-    <div id="grpStats" class="v1keep">
-    <div class="secHd">MODEL</div>
-    <div id="infoRows"></div>
-    <div class="secHd">FIGURES</div>
-    <ul id="figList"></ul>
-    </div>
-    <div id="grpCtrl">
+  <div class="hudCol">
+  <div class="hudPanel block" id="blkCtrl" data-block="controls">
+    <div class="mat blue side"></div>
+    <div class="blockHd"><span>CONTROLS</span><label class="pick" title="Keep this block when C hides the rest"><input type="checkbox" data-pick="controls">KEEP</label></div>
     <div id="hudBtns">
       <button class="tBtn on" id="btnRotate">AUTO-ROTATE</button>
       <button class="tBtn on" id="btnEngines">ENGINES</button>
@@ -111,15 +106,22 @@ body.view2 #hud, body.view2 #opt{ display:none !important; }
     <label class="sl"><span>Damage</span><b id="dmgVal">0%</b></label>
     <input type="range" id="dmgSlider" min="0" max="1" step="0.01" value="0">
     <div id="hint">Left-drag: rotate · Right-drag: pan · Scroll: zoom</div>
-    </div>
-    </div>
+  </div>
+  <div class="hudPanel block" id="blkStats" data-block="stats">
+    <div class="mat blue side"></div>
+    <div class="blockHd"><span>STATS</span><label class="pick" title="Keep this block when C hides the rest"><input type="checkbox" data-pick="stats">KEEP</label></div>
+    <div class="secHd">MODEL</div>
+    <div id="infoRows"></div>
+    <div class="secHd">FIGURES</div>
+    <ul id="figList"></ul>
+  </div>
   </div>
 </div>
 
 <div id="opt">
-  <div class="hudPanel">
+  <div class="hudPanel block" id="blkOpt" data-block="optimization">
     <div class="mat gold side"></div>
-    <div class="secHd first">OPTIMIZATION</div>
+    <div class="blockHd"><span>OPTIMIZATION</span><label class="pick" title="Keep this block when C hides the rest"><input type="checkbox" data-pick="optimization">KEEP</label></div>
     <label class="sl"><span>Render quality</span><b id="qVal">ULTRA</b></label>
     <input type="range" id="qSlider" min="0" max="4" step="1" value="3">
     <div class="ticks"><span>LOW</span><span>MED</span><span>HIGH</span><span>ULTRA</span><span>MAX</span></div>
@@ -127,7 +129,10 @@ body.view2 #hud, body.view2 #opt{ display:none !important; }
     <input type="range" id="dSlider" min="0.2" max="2" step="0.05" value="1">
     <div class="ticks"><span>20%</span><span>100%</span><span>200%</span></div>
     <div id="fxPanel"></div>
-    <div class="secHd">PERFORMANCE</div>
+  </div>
+  <div class="hudPanel block" id="blkPerf" data-block="performance">
+    <div class="mat gold side"></div>
+    <div class="blockHd"><span>PERFORMANCE</span><label class="pick" title="Keep this block when C hides the rest"><input type="checkbox" data-pick="performance">KEEP</label></div>
     <div class="row"><span>Frames per second</span><b id="statFps">–</b></div>
     <div class="row"><span>Frame time</span><b id="statMs">–</b></div>
     <div class="row"><span>CPU per frame (JS + draw submit)</span><b id="statCpu">–</b></div>
@@ -424,14 +429,6 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem("shipLab." + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem("shipLab." + k, JSON.stringify(v)); } catch (e) { /* not kept */ } },
 };
-// ⇅: the stats (MODEL, FIGURES) above or below the controls
-{
-  const scroll = document.querySelector("#hud .panelScroll"), stats = document.getElementById("grpStats"), ctrl = document.getElementById("grpCtrl");
-  const apply = (swapped) => { if (swapped) scroll.insertBefore(ctrl, stats); else scroll.insertBefore(stats, ctrl); };
-  let swapped = store.get("swap", false);
-  apply(swapped);
-  document.getElementById("btnSwap").addEventListener("click", () => { swapped = !swapped; apply(swapped); store.set("swap", swapped); });
-}
 // Rename: double-click the ship's name or the caption; Enter keeps it, Esc
 // cancels, empty brings the original back. Kept per ship, in the lab only.
 const DEFAULT_SUB = "SWARM PROTOCOL // SHIP LAB";
@@ -467,26 +464,29 @@ for (const [elId, key] of [["hudTitle", "name"], ["hudSub", "sub"]]) {
   });
   el.addEventListener("blur", () => finish(true));
 }
-// CHANGE VIEW: mark what the stats-only view keeps — MODEL and FIGURES on the
-// left, PERFORMANCE (to the end of its panel) on the right
+// CHANGE VIEW / C: the full UI, or only the ticked blocks (kept per viewer)
 {
-  const keep = (el, first) => { el.classList.add("v1keep"); if (first) el.classList.add("v1first"); };
-  keep(document.querySelector("#grpStats .secHd"), true);       // the stats group itself is .v1keep (markup)
-  const perf = [...document.querySelectorAll("#opt .secHd")].find((h) => h.textContent === "PERFORMANCE");
-  for (let el = perf; el; el = el.nextElementSibling) keep(el, el === perf);
-  let view = 0;
-  const setView = (v) => {
-    view = v;
-    document.body.classList.toggle("view1", v === 1); document.body.classList.toggle("view2", v === 2);
-    fitHud();
-  };
-  const btnView = document.getElementById("btnView");
-  btnView.addEventListener("click", () => setView((view + 1) % 3));
-  window.addEventListener("keydown", (e) => {
-    if (e.code !== "KeyC" || e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName) || document.activeElement.isContentEditable) return;
-    setView((view + 1) % 3);
+  const picked = store.get("picked", {});
+  document.querySelectorAll("[data-pick]").forEach((box) => {
+    const block = box.closest(".block");
+    box.checked = !!picked[box.dataset.pick];
+    block.classList.toggle("picked", box.checked);
+    box.addEventListener("change", () => {
+      picked[box.dataset.pick] = box.checked; store.set("picked", picked);
+      block.classList.toggle("picked", box.checked);
+    });
   });
-}   // the panels fade out when idle
+  let focus = false;
+  const setFocus = (on) => { focus = on; document.body.classList.toggle("focus", on); fitHud(); };
+  document.getElementById("btnView").addEventListener("click", () => setFocus(!focus));
+  window.addEventListener("keydown", (e) => {
+    // not while typing (a text field, a name being edited); a checkbox or a slider in focus is fine
+    const a = document.activeElement, typing = a.isContentEditable || a.tagName === "TEXTAREA" || a.tagName === "SELECT" ||
+      (a.tagName === "INPUT" && !/^(checkbox|range|button|radio)$/.test(a.type));
+    if (e.code !== "KeyC" || e.ctrlKey || e.metaKey || e.altKey || typing) return;
+    setFocus(!focus);
+  });
+}
 
 const perf = LabKit.perfCounters(renderer);   // FPS, frame/CPU time, triangles, draw calls + graph
 
