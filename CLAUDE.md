@@ -141,8 +141,9 @@ the player's own progress stays in `localStorage`.
 - **Rendering** (v2.8.0): sRGB + ACES + `ShipKit.makeEnvironment`; game
   colours converted to linear once per material (`scene/colorManagement.js`)
   — a colour set at runtime must be converted by hand.
-- **ShipKit** (`js/shipkit/shipkit.js`) and **BodyKit**
-  (`js/bodykit/bodykit.js`): one classic-script file each, shared by the
+- **ShipKit** (`js/shipkit/shipkit.js` + one file per ship in
+  `js/shipkit/ships/`, loaded after it on every page) and **BodyKit**
+  (`js/bodykit/bodykit.js`): classic scripts, shared by the
   lab (`ship.html` / `bodies.html`) and the game — changing them changes
   the game (version bump). Build ships from ShipKit's building blocks,
   never copy between ships; a new body is data, never a copied shader

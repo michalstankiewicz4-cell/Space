@@ -68,7 +68,7 @@ const MODULE_FILES = [
   "js/scene/selectionBrackets.js", "js/scene/setup.js",
   "js/scene/shipcam.js", "js/scene/skybox.js", "js/scene/tooltip.js",
   "js/scene/trajectories.js", "js/scene/unitThumb.js",
-  "js/scene/viewRect.js", "js/settings.js", "js/shipkit/shipkit.js",
+  "js/scene/viewRect.js", "js/settings.js", "js/shipkit/shipkit.js", "js/shipkit/ships/codewing.js", "js/shipkit/ships/scribe.js", "js/shipkit/ships/swarmer.js", "js/shipkit/ships/haven.js",
   "js/ships/biteBeam.js", "js/ships/fleetMemory.js",
   "js/ships/shipProgram.js", "js/ships/shipVisual.js", "js/ships/swarm.js",
   "js/station/station.js", "js/station/stationVisual.js",

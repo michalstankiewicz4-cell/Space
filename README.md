@@ -37,8 +37,9 @@ js/
   i18n.js            the i18n API (t, languages); the text itself is one file per language in i18n/
   env.js             Supabase URL/key (anon key — safe to commit, see below)
   supabaseClient.js  Supabase client singleton
-  shipkit/           ShipKit — the procedural ship models (swarm ships, the drone), one classic
-                     script shared with the ship lab (ship.html); see docs/ship.md
+  shipkit/           ShipKit — the procedural ship models (swarm ships, the drone, the station): the
+                     core (shipkit.js) + ships/<id>.js, one file per ship; classic scripts shared
+                     with the ship lab (ship.html); see docs/ship.md
   bodykit/           BodyKit — every procedural celestial body, one classic script shared with the
                      body lab (bodies.html); see docs/bodies.md
   labkit/            LabKit — what the ship, body and system labs share around their models (grain, sliders, idle hiding,

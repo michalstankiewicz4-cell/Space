@@ -11,6 +11,10 @@ shown next to the title on the start screen and in the browser tab title
   own motion clock (advanced by `dt`) instead of the wall clock. They look
   the same; the ship lab's new STOP ANIMATIONS can now freeze every
   moving part (and the lab's idle bobbing) while the lights keep going.
+- ShipKit split: the core stays in `js/shipkit/shipkit.js` (about 1,860
+  lines, from about 3,100), each ship in `js/shipkit/ships/<id>.js`. Every
+  page that loads ShipKit loads them too; `versionCheck` knows them. The
+  models are unchanged (kitcheck PASS).
 - ShipKit: every ship's pieces sit in named parts (`partsOf`: hull,
   wings, engines, lights…, and `effects` for the shared effects). The
   models are the same (tools/kitcheck.html: all 51 fingerprints match).
