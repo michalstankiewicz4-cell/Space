@@ -137,6 +137,48 @@ Found while building the image effects (`js/postkit/postkit.js`,
 - **Changing the number of lights recompiles every lit material** — why
   presets never touch the ship glow lights (a mid-game hitch).
 
+## Lab-building lessons (2026-10: surface, vehicles, sea, ship shaping)
+
+**Three.js r128 API traps**
+- **`THREE.Color` has no `addScaledVector`.** That's a Vector3 method; on
+  a colour it throws (it broke the ship lab once). Blend colours with
+  `lerp`, `add` or `multiplyScalar`.
+- **`LatheGeometry` spreads its UV `v` over the whole profile**, one equal
+  step per profile point, caps included. A lathe standing in for a
+  cylinder squeezes the texture painted along the side: the engine
+  housings' bands merged. Set v by height yourself (ShipKit
+  `roundedCylinderGeometry`).
+- **Moving a geometry's vertices doesn't move its texture.** The rounded
+  box pulls vertices toward the edges, so its UVs are recomputed from the
+  new positions.
+
+**Shapes, normals and depth**
+- **Vertex normals are ambiguous where a box's faces meet**: three faces
+  have a vertex at the same corner. Normals for joints come from the
+  shape's own geometry (ShipKit `solidNormalOf`). Vertex normals turned
+  fillets into flaps.
+- **An open lathe is a shell, not a solid.** Treating an engine bell as
+  solid gave huge skirts around the nozzles. ShipKit seals a lathe only
+  if it closes on its axis.
+- **Depth precision far out.** With the near plane at 1 m, depth steps at
+  45 km are about 120 m, and a planet's cloud shell z-fights its surface.
+  The surface lab keeps sky bodies at 20 km, between an air layer at
+  15 km and the star dome at 30 km.
+- **Transparent objects draw after all the opaque ones**, whatever their
+  `renderOrder`. A transparent "air over the sky" layer with
+  `depthTest: false` covered the ground. Keep it depth-tested, and put it
+  nearer than what it should cover.
+
+**Grids, tiles and scoped tricks**
+- **Equal-angle cube-sphere tiles are narrower toward a face's edges**
+  than the `tileAngle` at its middle. Stepping a whole tile to find the
+  neighbours skipped one, and the ground right next to the player
+  "wasn't loaded". SurfaceKit steps a third of a tile.
+- **Swapping `THREE.BoxGeometry` / `THREE.CylinderGeometry` for a build**
+  (ShipKit `withRounding`) works because the build is synchronous. Always
+  restore in `finally`. Classes that extend them (`ConeGeometry`) bound
+  the originals at definition and aren't affected.
+
 ## Removing a Realtime channel calls its own subscribe callback
 
 `supabase.removeChannel(ch)` makes `ch` report "CLOSED" to the callback

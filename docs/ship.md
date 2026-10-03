@@ -11,6 +11,13 @@ Open `ship.html` straight from disk (double-click). No server, no build
 step and no network are needed: the fonts come from the repo's own
 `css/fonts.css` / `fonts/` (they load from disk too, checked in Chromium).
 
+> **The ship lab is the reference lab** (the user's words, 2026-10-03:
+> the first lab and the most polished; the others take their patterns from
+> it, sometimes indirectly). New ideas for how models look and behave are
+> tried here first, as ShipKit building blocks; the other kits (BaseKit,
+> VehicleKit, MarineKit) build from ShipKit's generators and can pick
+> them up from there.
+
 ## File layout
 
 `ship.html` loads these scripts, in this order (all classic scripts, so
@@ -445,6 +452,34 @@ Before turning either on in the game, decide the values and measure
    N times as fast.
 7. **Per-model state stays per model**: its own `U` uniforms, its own
    copy of any material it dims or recolors (sharing the textures).
+8. **Running lights go through `makeNavLights`, and they never vanish.**
+   Off — the lights button, offline, damage flicker — means the glow
+   fades and the lens goes dark; the fitting stays visible (the user's
+   call, 2026-10-03). The same goes for other "lights" on a ship (the
+   codewing's chase ring stays as unlit bulbs). Effects that aren't lamps
+   (a sensor sweep, a scan wave) may still hide.
+9. **Build solid parts from shapes SHAPING can read.**
+   - Rounded edges reach `BoxGeometry` and full, closed
+     `CylinderGeometry` parts.
+   - Joints reach boxes, cylinders, cones, spheres and domes, tori,
+     extrudes, and lathes that close on their axis.
+   - A part from a custom `BufferGeometry`, an open lathe (a bell, a tube)
+     or a merged mesh is left as it is. That's right for shells, but a
+     solid built that way won't get rounded edges or joints.
+10. **Paint a part's texture so it survives rounding.**
+    - Boxes keep BoxGeometry's per-face mapping.
+    - A cylinder's side keeps v by height: bands painted along it stay
+      put.
+    - A rounded cylinder's caps take the texture's end rows (no planar cap
+      mapping), so don't put a marking you need on a cylinder's cap.
+11. **SHAPING is off in the game** (`round: 0, seal: 0`): the game's ships
+    are built exactly as their definitions say. Turning it on there is a
+    decision with numbers. Take them from the cost table in "Shaping",
+    then measure frames with many ships on screen. `GAME BUILD` in the lab
+    shows the merged result.
+12. **A change to ShipKit is a change to the game**: version bump, a
+    CHANGELOG entry and a WHAT'S NEW line, even when the game looks the
+    same (say so in the line).
 
 ## Adding a ship
 

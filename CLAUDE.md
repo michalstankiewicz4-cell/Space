@@ -141,7 +141,11 @@ the player's own progress stays in `localStorage`.
   the game (version bump). Build ships from ShipKit's building blocks,
   never copy between ships; a new body is data, never a copied shader
   (rules in `docs/ship.md` / `docs/bodies.md`). Mark animated parts
-  `userData.dynamic` or merging bakes them. **PostKit**
+  `userData.dynamic` or merging bakes them. **The ship lab is the
+  reference lab** — new model ideas start there as ShipKit blocks.
+  ShipKit SHAPING (rounded edges, joints as fillet / sealant) is **off in
+  the game** until values are chosen and measured; **running lights never
+  vanish — switched off they only go dark** (user's calls, 2026-10-03). **PostKit**
   (`js/postkit/postkit.js`, post-processing) is shared the same way — its
   IMAGE EFFECTS panel in the labs is the camera's, kept apart from the
   model's own controls (user's call).
@@ -201,6 +205,10 @@ personal tone.
   push — check `gh run list`. `?v=` cache-busting isn't airtight for
   transitively imported files. The supabase-js "falling back to REST API"
   warning is harmless.
+- Building labs (2026-10): `THREE.Color` has no `addScaledVector`;
+  `LatheGeometry` spreads UV v over the whole profile; vertex normals lie
+  at a box's corners; far objects z-fight (depth precision) — the list is
+  in docs/gotchas.md, "Lab-building lessons".
 - An SVG gradient with the default `objectBoundingBox` units paints
   nothing on a perfectly vertical or horizontal line (the research tree's
   traces) — use a flat colour or `userSpaceOnUse`.

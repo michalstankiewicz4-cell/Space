@@ -442,6 +442,18 @@ wants eventually, not scheduled.
   reflection quality (ShipKit texture and environment-map sizes), real
   shadow maps in the game (the ship lab has them), the frame limiter in
   the labs.
+- **Model shaping, next steps** (ShipKit SHAPING, 2026-10-03):
+  - choose `round` / `seal` / `sealStyle` values for the game's ships and
+    measure them with many ships on screen (fillet is the cheap one; see
+    the cost table in `docs/ship.md`);
+  - give BaseKit, VehicleKit and MarineKit the same options: they build
+    from ShipKit's generators, and `withRounding` / `sealJoints` are
+    exported;
+  - planar UVs on rounded cylinders' caps.
+- **The surface, vehicles and sea, joined up**: a rover from VehicleKit
+  instead of the surface lab's hover craft, MarineKit's water and seabed
+  on the planets' seas, the barge carrying vehicles, logistics between a
+  base's modules (`docs/surface.md`, `vehicles.md`, `marine.md`).
 - **A single-player copy of the database** (the admin panel's "Compare
   database with single player" button is a disabled placeholder for it).
 - **Planets to be transformed, farmed and built on**, not devoured — the
