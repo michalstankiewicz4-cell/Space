@@ -69,6 +69,10 @@ canvas#view{ position:fixed; inset:0; width:100%; height:100%; display:block; }
 .tBtn.on{ border-color:#f5bd5c; box-shadow:0 0 8px rgb(245 189 92 / .45), inset 0 0 8px rgb(245 189 92 / .12); color:#ffe2a8; }
 #hint{ margin-top:10px; font-size:12.5px; line-height:18px; color:#7f92e8; }
 
+/* hidden after a few idle seconds (LabKit.autoHideHud) */
+#hud, #opt{ transition:opacity .45s; }
+.labIdle{ opacity:0; }
+.labIdle, .labIdle *{ pointer-events:none !important; }
 #opt{ position:fixed; right:16px; top:16px; width:330px;
   transform:scale(var(--ui, 1)); transform-origin:top right; }
 .sl{ display:flex; justify-content:space-between; font-size:14px; color:#c7d0ff; margin-top:6px; }

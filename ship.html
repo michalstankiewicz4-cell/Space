@@ -354,6 +354,7 @@ document.getElementById("prevShip").addEventListener("click", () => step(-1));
 document.getElementById("nextShip").addEventListener("click", () => step(1));
 
 LabKit.applyGrain();   // the panels' grain (css/lab.css --grain)
+LabKit.autoHideHud([document.getElementById("hud"), document.getElementById("opt")], 5);   // the panels fade out when idle
 
 const perf = LabKit.perfCounters(renderer);   // FPS, frame/CPU time, triangles, draw calls + graph
 

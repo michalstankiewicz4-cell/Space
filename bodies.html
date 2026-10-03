@@ -441,6 +441,7 @@ dSlider.addEventListener("input", () => {
 });
 
 LabKit.applyGrain();   // the panels' grain (css/lab.css --grain)
+LabKit.autoHideHud([$("hud"), $("opt")], 5);   // the panels fade out when idle
 
 // =====================================================================
 // HUD scaling: all panels share one scale factor (--ui) so they follow

@@ -137,5 +137,30 @@ function imageEffects({ renderer, scene, camera, panel, effects, setQuality }) {
   };
 }
 
-return { applyGrain, paintSlider, toggle, makeGlow, fitHud, perfCounters, imageEffects };
+// The panels fade out after `seconds` without a mouse move, click, scroll
+// or key, and come back at the next one (like the game's Setup -> Mouse
+// option). Not while the pointer rests on a panel or a field in it has the
+// focus (a reader, a typist). Styles: css/lab.css .labIdle.
+function autoHideHud(panels, seconds = 5) {
+  let last = performance.now(), hidden = false, over = 0;
+  const show = () => {
+    last = performance.now();
+    if (hidden) { hidden = false; panels.forEach((p) => p.classList.remove("labIdle")); }
+  };
+  ["pointermove", "pointerdown", "wheel", "keydown", "touchstart"].forEach((ev) =>
+    window.addEventListener(ev, show, { capture: true, passive: true }));
+  panels.forEach((p) => {
+    p.addEventListener("pointerenter", () => { over++; });
+    p.addEventListener("pointerleave", () => { over = Math.max(0, over - 1); });
+  });
+  setInterval(() => {
+    if (hidden || over > 0 || performance.now() - last < seconds * 1000) return;
+    const a = document.activeElement;
+    if (a && panels.some((p) => p.contains(a)) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return;
+    hidden = true;
+    panels.forEach((p) => p.classList.add("labIdle"));
+  }, 250);
+}
+
+return { applyGrain, paintSlider, toggle, makeGlow, fitHud, perfCounters, imageEffects, autoHideHud };
 })();

@@ -385,6 +385,7 @@ function systemFx(o) {
   };
 }
 LabKit.applyGrain();
+LabKit.autoHideHud([$("hud"), $("opt")], 5);   // the panels fade out when idle
 const perf = LabKit.perfCounters(renderer);
 function fitHud() { LabKit.fitHud([$("hud"), $("opt")], 0.4, 1.3); }
 

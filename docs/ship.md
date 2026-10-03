@@ -20,7 +20,7 @@ the lab still opens straight from disk):
 |---|---|---|
 | 1. `vendor/three-r128.min.js`, `vendor/three-r128-examples/OrbitControls.js` | Three.js r128 (the game's own copy) and the preview's mouse camera. Until the 2026-10 review both were pasted into the page (~630 KB, twice with bodies.html). | Three.js yes, OrbitControls no |
 | 2. `vendor/three-r128-examples/*` + `js/postkit/postkit.js` | The IMAGE EFFECTS panel: the game's post-processing | **Yes — the same files** |
-| 3. `js/labkit/labkit.js` | What both labs share around the model (`window.LabKit`): the panels' grain, slider fills, toggles, the HUD's scale, performance counters, the IMAGE EFFECTS render. Styles: `css/lab.css` (shared) + a few rules inline. | No |
+| 3. `js/labkit/labkit.js` | What the labs (ship, body, system) share around the model (`window.LabKit`): the panels' grain, slider fills, toggles, the HUD's scale, performance counters, the IMAGE EFFECTS render, and the panels fading out after 5 idle seconds (`autoHideHud`; not while the pointer rests on a panel or a field there has the focus). Styles: `css/lab.css` (shared) + a few rules inline. | No |
 | 4. `js/shipkit/shipkit.js` (`<script id="shipkit">`) | **The ship models**: texture generators, materials, shaders, ship definitions, shared effects, public API (`window.ShipKit`). | **Yes — the same file** |
 | 5. `<script id="viewer">` | Preview page: sky, lights, renderer, camera, HUD wiring, sliders. Uses only the kits' public APIs. | No |
 

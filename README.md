@@ -41,7 +41,7 @@ js/
                      script shared with the ship lab (ship.html); see docs/ship.md
   bodykit/           BodyKit — every procedural celestial body, one classic script shared with the
                      body lab (bodies.html); see docs/bodies.md
-  labkit/            LabKit — what the ship and body labs share around their models (grain, sliders,
+  labkit/            LabKit — what the ship, body and system labs share around their models (grain, sliders, idle hiding,
                      HUD scale, performance counters, image effects); styles in css/lab.css
   galaxy/            the galaxy map's picture: the Milky Way from above as one WebGL shader
                      (galaxyRender.js; the window is ui/windows/galaxyMap.js, key M)
