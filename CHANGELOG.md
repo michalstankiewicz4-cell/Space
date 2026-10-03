@@ -4,6 +4,15 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.30.5]
+
+### Added
+- Body lab: **VENUS** in a new planet group, **CLOUD WORLDS** — a planet
+  wrapped in a closed, cream-to-ochre cloud deck with wind streaks,
+  modelled on a real photo. New planet parameters `overcast`, `bands` and
+  `haze`; the other planets keep the deck off and look the same (BodyKit
+  is shared with the game, hence the version).
+
 ## [2.30.4]
 
 ### Changed

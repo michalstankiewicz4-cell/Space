@@ -419,7 +419,9 @@ float iceAt(vec3 p, float h){
   float peaks = step(uSea, h) * smoothstep(snowLine, snowLine + 0.05, alt);
   return uIce <= 0.001 ? 0.0 : max(polar, peaks);
 }
+uniform float uOvercast, uBands, uHaze;
 float cloudAt(vec3 p){
+  if (uOvercast >= 0.999) return 1.0;                   // a closed deck: no gaps to compute
   float a = uTime * uCloudDrift * 0.05;                  // clouds drift over the surface
   mat3 rot = mat3(cos(a), 0.0, -sin(a), 0.0, 1.0, 0.0, sin(a), 0.0, cos(a));
   vec3 q = rot * p * 3.2 + uSeed.yzx;
@@ -428,7 +430,18 @@ float cloudAt(vec3 p){
   // 1 - uClouds (logistic approximation), so coverage ≈ the slider value
   float cq = clamp(1.0 - uClouds, 0.001, 0.999);
   float t = 0.5 + 0.11 * log(cq / (1.0 - cq)) / 1.702;
-  return smoothstep(t - 0.05, t + 0.05, n);
+  return mix(smoothstep(t - 0.05, t + 0.05, n), 1.0, uOvercast);
+}
+// an overcast deck (a planet wrapped in cloud): bands stretched along the
+// latitude lines plus warped swirls, drifting with the wind, 0..1
+float hazeAt(vec3 p){
+  float a = uTime * uCloudDrift * 0.08;
+  mat3 rot = mat3(cos(a), 0.0, -sin(a), 0.0, 1.0, 0.0, sin(a), 0.0, cos(a));
+  vec3 q = rot * p;
+  float bands = fbm(vec3(q.x * 1.3, q.y * 7.0, q.z * 1.3) + uSeed, uOctaves, 0.55);
+  float swirl = fbm(q * 2.6 + uSeed.yzx + vec3(bands * 0.9, 0.0, bands * 0.6), uOctaves, 0.5);
+  float streak = fbm(vec3(q.x * 4.0, q.y * 22.0, q.z * 4.0) + uSeed.zxy, 3, 0.5);
+  return clamp(0.5 + bands * 0.6 + swirl * 0.22 + streak * 0.1, 0.0, 1.0);
 }
 
 uniform float uLava, uFrozen;
@@ -566,10 +579,25 @@ function planetCloudMaterial(U) {
       uniform vec3 uSunDir;
       varying vec3 vDir; varying vec3 vWorldPos; varying vec3 vNormalW;
       void main(){
-        float c = cloudAt(normalize(vDir));
-        float diff = smoothstep(-0.1, 0.35, dot(normalize(vNormalW), normalize(uSunDir)));
+        vec3 p = normalize(vDir);
+        float c = cloudAt(p);
+        vec3 N = normalize(vNormalW);
+        float diff = smoothstep(-0.1, 0.35, dot(N, normalize(uSunDir)));
         vec3 tint = mix(vec3(0.97), vec3(0.34, 0.30, 0.28), uLava);    // ash clouds over a volcanic world
-        gl_FragColor = vec4(tint * (0.04 + diff * 1.05), c * 0.92);
+        float alpha = c * 0.92;
+        if (uOvercast > 0.001) {
+          // a closed deck: cream to ochre bands, brighter and darker streaks,
+          // opaque, darkening toward the limb (seen through more haze)
+          float h = hazeAt(p);
+          vec3 deck = mix(vec3(0.96, 0.93, 0.87), vec3(0.82, 0.66, 0.45), uHaze * smoothstep(0.3, 0.8, h));
+          deck *= 1.0 + uBands * (h - 0.5) * 0.4;   // gentle: the deck is soft
+          float mu = max(dot(N, normalize(cameraPosition - vWorldPos)), 0.0);
+          deck *= mix(1.0, 0.5 + 0.5 * pow(mu, 0.45), uOvercast);
+          tint = mix(tint, deck, uOvercast);
+          alpha = mix(alpha, 1.0, uOvercast);
+          diff = mix(diff, smoothstep(-0.2, 0.5, dot(N, normalize(uSunDir))), uOvercast);   // light scatters past the terminator
+        }
+        gl_FragColor = vec4(tint * (0.04 + diff * 1.05), alpha);
       }`,
   });
 }
@@ -616,7 +644,7 @@ function buildPlanet(values, detail) {
     uFreq: { value: 0 }, uSea: { value: 0 }, uRough: { value: 0 }, uIce: { value: 0 }, uClimate: { value: 0 },
     uClouds: { value: 0 }, uCloudDrift: { value: 0 }, uMountain: { value: 0 }, uAtmo: { value: 0 },
     uAtmoColor: { value: new THREE.Color() }, uLava: { value: 0 }, uFrozen: { value: 0 },
-    uAirless: { value: 0 }, uRays: { value: 0 },
+    uAirless: { value: 0 }, uRays: { value: 0 }, uOvercast: { value: 0 }, uBands: { value: 0 }, uHaze: { value: 0 },
   });
   const seg = (n, min) => Math.max(min, Math.round(n * detail));
   const group = new THREE.Group();      // tilt goes here…
@@ -673,6 +701,7 @@ function buildPlanet(values, detail) {
       U.uAtmo.value = v.atmosphere; U.uAtmoColor.value.copy(hueColor(v.atmoHue));
       U.uLava.value = v.lava; U.uFrozen.value = v.frozen;
       U.uAirless.value = v.airless; U.uRays.value = v.rays;
+      U.uOvercast.value = v.overcast; U.uBands.value = v.bands; U.uHaze.value = v.haze;
     },
     layers: {
       clouds: { objects: [clouds], when: () => v.clouds > 0.001 },
@@ -1353,6 +1382,9 @@ const PLANET_PARAMS = [
       { key: "frozen",     label: "Frozen seas",            min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "airless",    label: "Airless, cratered",      min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "rays",       label: "Ray craters",            min: 0,   max: 1.5, step: 0.01, value: 0,    fmt: pct },
+      { key: "overcast",   label: "Cloud deck (closed)",    min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
+      { key: "bands",      label: "Band contrast",          min: 0,   max: 1,   step: 0.01, value: 0.6,  fmt: pct },
+      { key: "haze",       label: "Haze colour (white → ochre)", min: 0, max: 1, step: 0.01, value: 0.5, fmt: pct },
 ];
 const PLANET_DEFAULTS = Object.fromEntries(PLANET_PARAMS.map((p) => [p.key, p.value]));
 // A group's sliders: keys, or [key, overrides] (another label or default).
@@ -1397,6 +1429,16 @@ const GROUPS = [
         climate: 0.1, clouds: 0.3, atmosphere: 0.45, atmoHue: 190 } },
       { id: "glacies", name: "GLACIES", slot: 7, values: { seed: 47, size: 1.25, tilt: 40, sea: 0.25, ice: 1,
         mountains: 0.03, clouds: 0.4, atmosphere: 0.35, atmoHue: 215 } },
+    ],
+    build: buildPlanet,
+  },
+  {
+    id: "clouded", name: "CLOUD WORLDS", kmPerSize: 6371, view: 4.4, layers: { clouds: "CLOUD DECK", atmosphere: "ATMOSPHERE" },
+    params: planetParams(["size", ["overcast", { value: 1 }], "bands", "haze", ["cloudDrift", { label: "Wind speed", value: 0.6 }],
+      "atmosphere", ["atmoHue", { value: 42 }]]),
+    fixed: { clouds: 1, sea: -0.2, ice: 0, mountains: 0 },   // flat: mountains would poke through the deck
+    bodies: [
+      { id: "venus", name: "VENUS", values: { seed: 9, size: 0.95, tilt: 3, spin: 0.05, haze: 0.45, atmosphere: 0.25, atmoHue: 48 } },
     ],
     build: buildPlanet,
   },

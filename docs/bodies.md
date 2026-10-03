@@ -34,6 +34,7 @@ from its schema.
 | LAVA WORLDS | size, lava level, continents, mountains, roughness, molten lowlands, ash clouds, drift, atmosphere, hue | CINDER (1), MAGMA (2) | measured land / water / lava / ice / clouds |
 | EARTH-LIKE | size, water level, continents, mountains, roughness, climate, ice caps, clouds, drift, atmosphere, hue | TERRA-1 (3), PELAGIA (5) | the same |
 | ICE WORLDS | size, frozen-sea level, continents, mountains, roughness, ice caps, frozen seas, clouds, drift, atmosphere, hue | RIME (6), GLACIES (7) | the same |
+| CLOUD WORLDS | size, cloud deck, band contrast, haze colour, wind speed, atmosphere, hue | VENUS (lab only) | the same (clouds 100%) |
 | AIRLESS | size, terrain scale, relief height, roughness, craters, ray craters | MERCURY (lab only) | the same |
 | SUNS | size, temperature, granulation, sunspots, activity, corona, brightness | SOL (slot 0) | temperature, spectral class, luminosity |
 | COMETS | the rock parameters + coma, tail length, dust tail, ion tail hue | COMET (kind `comet`: every comet) | shape in km |
@@ -48,11 +49,11 @@ toggles: CLOUDS / ATMOSPHERE, CORONA, COMA & TAILS, DISK & LENSING,
 STARS / NEBULAE). The SKY group has no `kmPerSize` (no radius statistics)
 and `common: false` (no spin / tilt / damage sliders).
 
-**The four planet groups are one planet** (`buildPlanet`, one shader):
+**The five planet groups are one planet** (`buildPlanet`, one shader):
 they differ only in which sliders they show (`planetParams([...])`, a
 subset of `PLANET_PARAMS`, optionally relabelled — "Lava level" is `sea`
 — or with another default) and in `fixed` values a group sets without a
-slider (lava worlds: no ice caps; airless: no sea, clouds or air). Split
+slider (lava worlds: no ice caps; cloud worlds: a closed deck, no relief; airless: no sea, clouds or air). Split
 in 2026-10 because one shared set of 15 sliders let a slider put things
 on a planet that don't belong there. Every planet's values stayed exactly
 the same (checked key by key). COPY VALUES also writes the body's own
@@ -79,6 +80,7 @@ FERRUM (8), ABYSS (9) and COMET.
 | `pelagia` PELAGIA | 5 | neutral | ocean world (≈83% water), cloudy |
 | `rime` RIME | 6 | ice | frozen seas, tundra continents (≈78% ice & snow) |
 | `glacies` GLACIES | 7 | ice | almost fully frozen (≈95%) |
+| `venus` VENUS | — | (lab only) | wrapped in a closed cream-to-ochre cloud deck with wind streaks (`overcast`, `bands`, `haze`); modelled on a real photo of Venus |
 | `mercury` MERCURY | — | (lab only) | airless and cratered, bright ray craters (`airless`, `rays`); modelled on a real photo of Mercury |
 
 `size` only matters in the lab (it's set to the relative game radius);
@@ -103,6 +105,9 @@ the game sizes each body to its own radius.
 | `frozen` | Frozen seas: cracked ice sheets, frosted tundra land | 0–1 | 0 |
 | `airless` | Airless, cratered: grey regolith, craters of three sizes (fewer on the low plains), no seas, a sharp terminator | 0–1 | 0 |
 | `rays` | Ray craters: a few young craters with bright radial rays | 0–1.5 | 0 |
+| `overcast` | Cloud deck: the cloud shell closes into an opaque, banded deck (counted as 100% clouds) | 0–1 | 0 |
+| `bands` | Band contrast of the deck | 0–1 | 0.6 |
+| `haze` | The deck's colour, white → ochre | 0–1 | 0.5 |
 | `seed` | Seed ("NEW SEED" button) | any | 1 |
 
 ## How the planet is made
@@ -131,6 +136,12 @@ the game sizes each body to its own radius.
   darker patches and brownish plains, dark floors and bright rims. Rays:
   for a few seed-picked centres, noise of the *direction* around the
   centre — it only changes with the angle, so it draws radial streaks.
+- **Cloud worlds** (`overcast`, `hazeAt`): `cloudAt` reaches 1 everywhere
+  (so the probe counts 100% clouds), and the cloud shell draws a deck:
+  fBm stretched along the latitude lines (bands) plus warped swirls and
+  fine streaks, drifting with `cloudDrift` (the wind), cream to ochre,
+  darker toward the limb, lit a little past the terminator. The group
+  fixes `mountains` at 0: relief would poke through the shell.
 - **Damage** (`damage` / `setDamage`, `crackAt`): a network of glowing
   cracks (two ridged-noise scales) whose reach spreads over the surface
   as damage grows, darkening the ground; self-lit like lava.
@@ -309,7 +320,7 @@ Rules, for every new body and every change:
 
 ## Adding a body or a group
 
-- **Another planet**: add an entry to the fitting planet group's `bodies` (`lava`, `earthlike`, `icy`, `airless`), e.g.
+- **Another planet**: add an entry to the fitting planet group's `bodies` (`lava`, `earthlike`, `icy`, `clouded`, `airless`), e.g.
   `{ id: "ocean", name: "…", values: { sea: 0.35, clouds: 0.6 } }`. The
   body-navigation arrows pick it up. Give it `slot: n` to put it on that
   orbit in the game (one body per slot).
@@ -393,7 +404,7 @@ Sun, the meteoroid, comets, the black hole) and since v2.12.0 the sky
 - **Backdrop**: the game's own sky (BodyKit's kind `sky`), so a body looks
   here exactly as in the game; hidden while the SKY tab shows a sky of its
   own.
-- **Left panel**: group tabs (LAVA WORLDS / EARTH-LIKE / ICE WORLDS / AIRLESS / SUNS / COMETS / ROCKS / BLACK HOLES / SKY), body
+- **Left panel**: group tabs (LAVA WORLDS / EARTH-LIKE / ICE WORLDS / CLOUD WORLDS / AIRLESS / SUNS / COMETS / ROCKS / BLACK HOLES / SKY), body
   navigation, PHYSICAL statistics and MODEL statistics, and toggles for
   auto-rotate, the two layers (named by the group), wireframe, GAME BUILD
   (the body at the detail the game builds it: × `BodyKit.GAME_DETAIL_SCALE`,
