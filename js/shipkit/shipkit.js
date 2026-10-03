@@ -934,9 +934,10 @@ function detailHelpers(detail) {
 // other geometry are untouched.
 //
 // Sealed joints (sealJoints): where two solid parts cut into each other,
-// a smooth bead runs along the line where they meet, in the bigger part's
-// material — the joint reads as filleted, not as two shapes stuck
-// together. The line is found from the parts' own shapes: each mesh's
+// the line where they meet gets, in the bigger part's material, either
+//   "fillet" (default): a concave strip curving from one surface into the
+//            other — the joint's edge rounded, as if cast in one piece;
+//   "bead":   a round tube lying on the joint, like a line of sealant. The line is found from the parts' own shapes: each mesh's
 // edges are tested against the other's solid (box, cylinder, cone, sphere
 // and dome, torus, lathe, extrude — from the geometry's parameters, in its
 // local frame); an edge with one end inside and one outside gives a point
@@ -1063,7 +1064,7 @@ function solidTestOf(geo) {
   return null;
 }
 
-function sealJoints(root, seal, detail) {
+function sealJoints(root, seal, detail, style = "fillet") {
   root.updateMatrixWorld(true);
   const unitOf = (o) => { let u = o; while (u && u !== root && !u.userData.dynamic) u = u.parent; return u || root; };
   const parts = [];
@@ -1126,7 +1127,9 @@ function sealJoints(root, seal, detail) {
         nA.fromArray(S.nrm, S.edges[e] * 3).lerp(nB.fromArray(S.nrm, S.edges[e + 1] * 3), (lo + hi) / 2).normalize();
         normalNear(T, hit, nB);
         if (Math.abs(nA.dot(nB)) > 0.82) continue;
-        pts.push(hit);
+        // keep both surfaces' directions here (the fillet curves from one to the other)
+        const nS = nA.clone(), nT = nB.clone();
+        pts.push(S === A ? { p: hit, na: nS, nb: nT } : { p: hit, na: nT, nb: nS });
       }
     }
     if (pts.length < 3) continue;
@@ -1137,34 +1140,89 @@ function sealJoints(root, seal, detail) {
     if (rad < modelR * 0.0012) continue;
     // merge points closer than a bead's width, chain the rest into curves
     const merged = [];
-    for (const p of pts) if (!merged.some((q) => q.distanceToSquared(p) < rad * rad * 0.25)) merged.push(p);
+    for (const p of pts) if (!merged.some((q) => q.p.distanceToSquared(p.p) < rad * rad * 0.25)) merged.push(p);
     if (merged.length < 3) continue;
-    const near = merged.map((p) => { let d = Infinity; for (const q of merged) if (q !== p) d = Math.min(d, p.distanceTo(q)); return d; }).sort((x, y) => x - y);
+    const near = merged.map((p) => { let d = Infinity; for (const q of merged) if (q !== p) d = Math.min(d, p.p.distanceTo(q.p)); return d; }).sort((x, y) => x - y);
     const gap = Math.max(near[Math.floor(near.length / 2)] * 3.5, rad * 3);
     const left = merged.slice();
     while (left.length >= 3) {
       const chain = [left.pop()];
       for (const back of [false, true]) for (;;) {             // grow from both ends
-        const end = back ? chain[0] : chain[chain.length - 1];
+        const end = back ? chain[0].p : chain[chain.length - 1].p;
         let bi = -1, bd = gap;
-        for (let k = 0; k < left.length; k++) { const d = left[k].distanceTo(end); if (d < bd) { bd = d; bi = k; } }
+        for (let k = 0; k < left.length; k++) { const d = left[k].p.distanceTo(end); if (d < bd) { bd = d; bi = k; } }
         if (bi < 0) break;
         const p = left.splice(bi, 1)[0];
         if (back) chain.unshift(p); else chain.push(p);
       }
       if (chain.length < 3) continue;
-      const closed = chain[0].distanceTo(chain[chain.length - 1]) < gap;
+      const closed = chain[0].p.distanceTo(chain[chain.length - 1].p) < gap;
       const inv = new THREE.Matrix4().copy(A.unit.matrixWorld).invert();
-      const curve = new THREE.CatmullRomCurve3(chain.map((p) => p.clone().applyMatrix4(inv)), closed, "centripetal");
       const sc = A.unit.matrixWorld.getMaxScaleOnAxis() || 1;
-      const tube = new THREE.TubeGeometry(curve, Math.min(400, Math.max(8, chain.length * 3)), rad / sc, Math.max(4, Math.round(6 * detail)), closed);
-      const bead = shadowed(new THREE.Mesh(tube, big.mat));
+      let geo;
+      if (style === "bead") {
+        const curve = new THREE.CatmullRomCurve3(chain.map((c) => c.p.clone().applyMatrix4(inv)), closed, "centripetal");
+        geo = new THREE.TubeGeometry(curve, Math.min(400, Math.max(8, chain.length * 3)), rad / sc, Math.max(4, Math.round(6 * detail)), closed);
+      } else {
+        geo = filletGeometry(chain, closed, rad * 2.2, Math.max(2, Math.round(4 * detail)), inv);
+        if (!geo) continue;
+      }
+      const bead = shadowed(new THREE.Mesh(geo, big.mat));
       bead.userData.seal = true;
       A.unit.add(bead);
       beads++;
     }
   }
   return beads;
+}
+
+// A fillet along a chain of meeting points { p, na, nb } (world space; na,
+// nb: the two surfaces' outward normals there): at each point a curve from
+// w along surface A to w along surface B, bending through the corner (a
+// quadratic Bézier with its control point in the corner) — concave, and
+// tangent to both surfaces at its edges, so they flow into each other.
+// Built in the frame `inv` takes world points to. null if it degenerates.
+function filletGeometry(chain, closed, w, steps, inv) {
+  const n = chain.length;
+  // smooth the line and the normals a little (the points come from mesh edges)
+  const sm = chain.map((c, i) => {
+    const a = chain[closed ? (i - 1 + n) % n : Math.max(0, i - 1)], b = chain[closed ? (i + 1) % n : Math.min(n - 1, i + 1)];
+    return { p: c.p.clone().multiplyScalar(2).add(a.p).add(b.p).multiplyScalar(0.25),
+      na: c.na.clone().multiplyScalar(2).add(a.na).add(b.na).normalize(), nb: c.nb.clone().multiplyScalar(2).add(a.nb).add(b.nb).normalize() };
+  });
+  const rows = steps + 1, pos = [], nor = [], uv = [], idx = [];
+  const dA = new THREE.Vector3(), dB = new THREE.Vector3(), q = new THREE.Vector3(), nn = new THREE.Vector3(), lift = new THREE.Vector3();
+  const nm = new THREE.Matrix3().getNormalMatrix(inv);
+  let ok = 0;
+  for (let i = 0; i < n; i++) {
+    const { p, na, nb } = sm[i];
+    // along A, away from B (B's outward normal, flattened onto A) — and the other way round
+    dA.copy(nb).addScaledVector(na, -nb.dot(na)); dB.copy(na).addScaledVector(nb, -na.dot(nb));
+    if (dA.lengthSq() < 1e-8 || dB.lengthSq() < 1e-8) { dA.set(0, 0, 0); dB.set(0, 0, 0); } else { dA.normalize(); dB.normalize(); ok++; }
+    lift.copy(na).add(nb).normalize().multiplyScalar(w * 0.015);   // a hair off the surfaces: no z-fighting at its edges
+    for (let j = 0; j < rows; j++) {
+      const s = j / steps, k0 = (1 - s) * (1 - s), k2 = s * s;
+      q.copy(p).addScaledVector(dA, w * k0).addScaledVector(dB, w * k2).add(lift).applyMatrix4(inv);
+      nn.copy(na).multiplyScalar(1 - s).addScaledVector(nb, s).normalize().applyMatrix3(nm).normalize();
+      pos.push(q.x, q.y, q.z); nor.push(nn.x, nn.y, nn.z); uv.push(i / (n - 1), s);
+    }
+  }
+  if (ok < 3) return null;
+  const segs = closed ? n : n - 1;
+  for (let i = 0; i < segs; i++) {
+    const a0 = i * rows, b0 = ((i + 1) % n) * rows;
+    for (let j = 0; j < steps; j++) idx.push(a0 + j, b0 + j, a0 + j + 1, b0 + j, b0 + j + 1, a0 + j + 1);
+  }
+  // face the strip the way its normals point
+  const v0 = new THREE.Vector3().fromArray(pos, idx[0] * 3), v1 = new THREE.Vector3().fromArray(pos, idx[1] * 3), v2 = new THREE.Vector3().fromArray(pos, idx[2] * 3);
+  const fn = new THREE.Vector3().crossVectors(v1.sub(v0), v2.sub(v0));
+  if (fn.dot(new THREE.Vector3().fromArray(nor, idx[0] * 3)) < 0) for (let t = 0; t < idx.length; t += 3) { const x = idx[t + 1]; idx[t + 1] = idx[t + 2]; idx[t + 2] = x; }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  return g;
 }
 
 // Engines: a nacelle with a gold intake ring, a nose cone, a lathed bell,
@@ -2650,16 +2708,17 @@ function mergeStatic(root) {
 //   merge    true: merge static meshes (far fewer draw calls — use in the game)
 //   fxRoot   an Object3D (e.g. the scene) for effects that leave the ship
 //   envMap   environment map for the ship's reflective materials
-// round, seal (0..1): rounded edges and sealed joints (see SHAPING); 0 = the
+// round, seal (0..1): rounded edges and sealed joints (see SHAPING; sealStyle
+// "fillet" — the joint rounded — or "bead" — a line of sealant); 0 = the
 // model exactly as its definition builds it (the game's default).
-function buildShipModel(id, { detail = 1, merge = false, fxRoot = null, envMap = null, round = 0, seal = 0 } = {}) {
+function buildShipModel(id, { detail = 1, merge = false, fxRoot = null, envMap = null, round = 0, seal = 0, sealStyle = "fillet" } = {}) {
   const def = SHIP_DEFS.find((d) => d.id === id);
   if (!def) throw new Error("ShipKit: unknown ship id " + id);
   const env = { fxRoot, owned: [] };
   // arc segments: more for a stronger rounding and a higher detail (each box costs (2k+1)² quads a face)
   const k = Math.max(1, Math.min(3, Math.round(round * 3 * detail)));
   const built = withRounding(round, k, () => def.build(detail, env));
-  if (seal > 0) sealJoints(built.group, seal, detail);
+  if (seal > 0) sealJoints(built.group, seal, detail, sealStyle);
   built.group.userData.shipkit = true; // a host's color management can skip ShipKit models
   if (merge) mergeStatic(built.group);
   if (envMap) built.group.traverse((o) => {

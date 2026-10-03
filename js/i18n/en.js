@@ -534,7 +534,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
-    { v: "2.32.10", items: ["Ship lab: rounded edges and smoothly sealed joints between parts (two new sliders). The ships in the game look the same for now."] },
+    { v: "2.32.10", items: ["Ship lab: rounded edges, and joints between parts rounded smoothly or sealed (new sliders). The ships in the game look the same for now."] },
     { v: "2.32.9", items: ["A new lab in Dev Tools: Sea vehicles, with waves, a seabed with an island, and diving under water, plus four robot vessels: a foil skimmer, a cargo barge, a submersible and an amphibian that drives out onto the shore."] },
     { v: "2.32.8", items: ["Surface lab: day and night, weather (rain, snow, dust storms, ash) and a sky that shows what's really in the star system: the Moon with its phases, two suns, a giant planet overhead.", "A new lab in Dev Tools: Vehicles, four robot ground vehicles (a scout rover, a hauler, a tracked digger, a crane) driving over rough ground."] },
     { v: "2.32.7", items: ["Two new labs in Dev Tools: Surface (land on a planet, drive around, found a base) and Buildings (the base modules). Under the hood: the planets can now be seen from the ground — a first step toward landing."] },

@@ -7,9 +7,11 @@ shown next to the title on the start screen and in the browser tab title
 ## [2.32.10]
 
 ### Added
-- ShipKit SHAPING: rounded edges (`round`) and sealed joints (`seal`) as
-  `buildShipModel` options; the ship lab's SHAPING sliders. Off by default:
-  the game's ships look the same (docs/ship.md, "Shaping").
+- ShipKit SHAPING: rounded edges (`round`) and rounded joints (`seal`,
+  `sealStyle`: "fillet" — the joint's edge rounded, concave — or "bead" —
+  a line of sealant) as `buildShipModel` options; the ship lab's SHAPING
+  sliders and FILLET / SEALANT buttons. Off by default: the game's ships
+  look the same (docs/ship.md, "Shaping").
 
 ## [2.32.9]
 

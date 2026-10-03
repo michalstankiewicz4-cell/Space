@@ -327,7 +327,7 @@ animations).
 | `makeSolarCells({ seed, cols, rows })` | Solar-cell sheet texture (the drone's wing, the station's panels) |
 | `strut(a, b, radius, material, segments)` | A cylinder from point a to point b: struts, spokes, booms, antenna feeds |
 | `withRounding(round, k, fn)`, `roundedBoxGeometry`, `roundedCylinderGeometry` | **Rounded edges** (`buildShipModel` option `round`, 0..1): while the model builds, boxes and full closed cylinders come out with rounded edges, the radius round × 60 % of the part's smallest half-size; `k` arc segments (1–3, from round × detail). Cones, partial or open cylinders and every other geometry are untouched. Scoped to the build (restored in `finally`). |
-| `sealJoints(group, seal, detail)` | **Sealed joints** (`buildShipModel` option `seal`, 0..1): where two solid parts cut into each other, a tube runs along the line where they meet, in the bigger part's material. See "Shaping" below. |
+| `sealJoints(group, seal, detail, style)`, `filletGeometry` | **Joints** (`buildShipModel` options `seal`, 0..1, and `sealStyle`): where two solid parts cut into each other, the line where they meet gets a `"fillet"` (default: a concave strip rounding the joint) or a `"bead"` (a round tube, like sealant), in the bigger part's material. See "Shaping" below. |
 | a def's own `setDamage(d)` | Damage stages of its own on top of the shared smoke/sparks (the station's ruin); `buildShipModel` passes every `setDamage` on, and 1 on DESTROY |
 
 Plus, for every ship without any code: the standard action buttons,
@@ -349,9 +349,24 @@ them on.
   outside is halved down to the crossing point.
 - **Only angled joints.** A point counts only where the surfaces meet at an
   angle (|n·n| < 0.82). Parts that run on into each other get no bead.
-- **The bead.** Points closer than half a bead are merged, then chained
+- **The chain.** Points closer than half a bead are merged, then chained
   nearest-first from both ends into curves (closed when the ends meet).
-  Each curve gets a TubeGeometry along a centripetal Catmull-Rom curve.
+  Each point keeps both surfaces' normals.
+- **Two styles** (the lab's FILLET / SEALANT buttons). The user asked "add
+  some silicone" meaning the joint's edge rounded. The real sealant came
+  first, looked good, and stayed as the second style.
+  - **`fillet`** (default, `filletGeometry`): at each point, a quadratic
+    Bézier runs from w along surface A, through the corner as its control
+    point, to w along surface B.
+    - A's direction is B's normal flattened onto A, and the other way
+      round.
+    - The result is concave and tangent to both surfaces, so they flow
+      into each other.
+    - Normals blend from A's to B's. The strip sits a hair off the
+      surfaces, to avoid z-fighting.
+    - w = 2.2 × the bead radius; 4 × detail rows across.
+  - **`bead`**: a TubeGeometry along a centripetal Catmull-Rom curve
+    through the points.
 - **Bead size.** The radius is seal × 35 % of the **thinner part's
   thickness** (its smallest half-size), at most seal × 1.2 % of the model.
   A bead finer than 0.12 % of the model is skipped.
@@ -359,16 +374,20 @@ them on.
     codewing's 3.5 cm gold trims (each as wide as the 4.5 m gyro ring) got
     beads thicker than themselves: a string of pearls.
 
-**Cost** at round 0.6 / seal 0.6, detail 1:
+**Cost** of joints at seal 0.8, detail 1, in triangles:
 
-| Ship | Triangles (base) | Triangles (both) | Beads | Build time |
-|---|---|---|---|---|
-| swarmer | 12.9k | ~36k | 33–58 | ~40 ms |
-| codewing | 75k | ~171k | 76–86 | ~400 ms |
-| station | 31k | ~182k | — | — |
+| Ship | Base | Bead | Fillet |
+|---|---|---|---|
+| swarmer | 12.9k | 36k | 18k |
+| scribe | 28k | 54k | 34k |
+| station | 31k | 66k | 38k |
+| codewing | 75k | 130k | 88k |
 
-On the station the rounded boxes are most of it: it has about 400 boxes,
-and each costs (2k+1)² quads a face.
+- The fillet costs 4–5× less than the bead, which is a full tube, mostly
+  hidden inside the parts.
+- Finding the joints takes 20–230 ms, once per build.
+- Rounded edges cost the most on the station, about +120k at round 0.6:
+  it has about 400 boxes, and each costs (2k+1)² quads a face.
 
 Before turning either on in the game, decide the values and measure
 (GAME BUILD merges the beads with their material).
