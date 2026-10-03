@@ -1801,7 +1801,7 @@ SHIP_DEFS.push({
     // ---- animation
     const tmpColor = new THREE.Color(), chaseBlue = new THREE.Color(0x7f95ff), chaseGold = new THREE.Color(GOLD);
     const chaseUnlit = new THREE.Color(0.07, 0.075, 0.09);   // a bulb with its light off
-    let chaseOn = true, chaseLevel = 1;
+    let chaseOn = true, chaseLevel = 1, chaseLastT = null;
     // t: seconds since start, dt: frame delta (s),
     // opts.power: engine throttle 0..1 (caller may smooth it),
     // opts.particles: false to skip the exhaust particles (cheap LOD).
@@ -1814,7 +1814,9 @@ SHIP_DEFS.push({
       spinner.rotation.z += dt * 0.5 * online;
       shots.run(t, (sh) => bolts.fire(muzzle.set(-1.45, -0.12, 4.72 * sh.side), forward, sh.target));
       bolts.update(dt); wave.update(dt);
-      chaseLevel += ((chaseOn ? 1 : 0) - chaseLevel) * Math.min(1, dt * 14);
+      // lights fade by the clock (t), not dt: they still switch with the motion stopped
+      const lightDt = chaseLastT === null ? 0 : Math.max(0, Math.min(0.1, t - chaseLastT)); chaseLastT = t;
+      chaseLevel += ((chaseOn ? 1 : 0) - chaseLevel) * Math.min(1, lightDt * 14);
       for (let i = 0; i < LIGHTS; i++) {
         const p1 = ((i / LIGHTS - t * 0.35) % 1 + 1) % 1, p2 = ((i / LIGHTS - t * 0.35 + 0.5) % 1 + 1) % 1;
         const k = Math.max(Math.pow(1 - p1, 10), Math.pow(1 - p2, 10));
