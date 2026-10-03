@@ -312,6 +312,13 @@ shots along).
     when idle.
   - C works with a checkbox or a slider in focus. It is ignored while
     typing (a text field, a name being edited).
+  - **PART NAMES** (in CONTROLS, on by default): point at the ship and its
+    named part (`partsOf`) lights up, with a tip by the pointer: the part's
+    name, its pieces and triangles.
+    - Each lit material is a cached copy with a teal emissive.
+    - Not while dragging the view, not for the effects part, not in GAME
+      BUILD (the parts are merged there).
+    - A rebuilt model clears it (`partTipClear` in `loadShip`).
   - **Double-click the name or the caption to edit it.** Enter keeps it,
     Esc cancels, and empty brings the original back. Kept per ship.
   - **The hull's lettering follows** (`buildShipModel` option `labels: {

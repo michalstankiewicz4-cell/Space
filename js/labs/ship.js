@@ -71,6 +71,7 @@ scene.add(new THREE.HemisphereLight(0x9fb2ff, 0x1a1020, 0.35));
 const state = { rotate: true, freeze: false, engines: true, lights: true, wire: false, merge: false, quality: 3, detail: 1, round: 0, seal: 0, sealStyle: "fillet", shipIndex: 0,
                 toggles: {}, damage: 0 };
 let current = null;      // ShipKit model handle
+let partTipClear = () => {};   // PART NAMES (below) puts its own here
 const holder = new THREE.Group();
 scene.add(holder);
 
@@ -81,6 +82,7 @@ function applyWire() {
   });
 }
 function loadShip(index, keepCamera) {
+  partTipClear();
   if (current) ShipKit.disposeShipModel(current);
   const def = ShipKit.SHIP_DEFS[index];
   const tb = performance.now();
@@ -267,6 +269,62 @@ document.getElementById("nextShip").addEventListener("click", () => step(1));
 
 LabKit.applyGrain();   // the panels' grain (css/lab.css --grain)
 LabKit.autoHideHud([document.getElementById("hud"), document.getElementById("opt")], 5);
+// PART NAMES: the ship's named part under the pointer (ShipKit partsOf) lights
+// up and its name shows by the pointer, with how many pieces and triangles it
+// has. Not in GAME BUILD: the parts are merged there, so they have no names.
+{
+  const tip = document.getElementById("partTip"), ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  const glow = new Map();                 // original material → its lit copy (made once)
+  let lit = null, down = null;            // the lit part: { part, swaps: [[mesh, original]] }
+  state.inspect = true;
+  const lightUp = (m) => {
+    if (!glow.has(m)) {
+      const c = m.clone();
+      if (c.emissive) { c.emissive = new THREE.Color(0x2a8c7c); c.emissiveIntensity = 1; c.emissiveMap = null; }
+      else if (c.color) c.color = c.color.clone().lerp(new THREE.Color(0x4fe3c6), 0.5);
+      glow.set(m, c);
+    }
+    return glow.get(m);
+  };
+  const clear = () => {
+    if (lit) for (const [mesh, orig] of lit.swaps) mesh.material = orig;
+    lit = null; tip.classList.add("hidden");
+  };
+  const partOf = (o) => { while (o && !o.userData.part) o = o.parent; return o; };
+  const solid = (o) => o.isMesh && o.visible && !(o.material && (o.material.blending === THREE.AdditiveBlending || Array.isArray(o.material)));
+  const label = (name) => name.charAt(0).toUpperCase() + name.slice(1);
+  view.addEventListener("pointerdown", (e) => { down = [e.clientX, e.clientY]; });
+  window.addEventListener("pointerup", () => { down = null; });
+  view.addEventListener("pointerleave", clear);
+  view.addEventListener("pointermove", (e) => {
+    if (!state.inspect || state.merge || down || !current) { clear(); return; }   // not while dragging the view
+    ndc.set(e.clientX / window.innerWidth * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const hit = ray.intersectObject(current.group, true).find((h) => solid(h.object) && partOf(h.object) && partOf(h.object).name !== "effects");
+    const part = hit && partOf(hit.object);
+    if (!part) { clear(); return; }
+    if (!lit || lit.part !== part) {
+      clear();
+      const swaps = []; let pieces = 0, tris = 0;
+      part.traverse((o) => {
+        if (!solid(o)) return;
+        pieces += o.isInstancedMesh ? o.count : 1;
+        const g = o.geometry, t = (g.index ? g.index.count : g.attributes.position.count) / 3;
+        tris += t * (o.isInstancedMesh ? o.count : 1);
+        swaps.push([o, o.material]); o.material = lightUp(o.material);
+      });
+      lit = { part, swaps };
+      tip.textContent = "";
+      const b = document.createElement("b"); b.textContent = label(part.name);
+      const s = document.createElement("span"); s.textContent = pieces + " pieces · " + Math.round(tris).toLocaleString("en-US") + " triangles";
+      tip.append(b, s);
+      tip.classList.remove("hidden");
+    }
+    tip.style.left = (e.clientX + 16) + "px"; tip.style.top = (e.clientY + 14) + "px";
+  });
+  toggle("btnInspect", "inspect", (on) => { if (!on) clear(); });
+  partTipClear = clear;                   // loadShip calls it: a rebuilt model's meshes are new
+}
 // Per-viewer conveniences, in this browser only (storage may be unavailable)
 const store = {
   get(k, d) { try { const v = localStorage.getItem("shipLab." + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },

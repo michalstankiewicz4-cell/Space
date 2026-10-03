@@ -48,6 +48,12 @@ input[type=range]:disabled{ opacity:.35; cursor:not-allowed; }
 #hudTitle, #hudSub{ cursor:text; outline:none; }
 #hudTitle[contenteditable="true"], #hudSub[contenteditable="true"]{ box-shadow:0 0 0 1.5px #f8bb56; border-radius:4px; padding:0 4px;
   -webkit-text-fill-color:#ffd88f; background:#02061a; z-index:5; }
+/* PART NAMES: the part under the pointer, named next to it */
+#partTip.hidden{ display:none; }
+#partTip{ position:fixed; z-index:15; pointer-events:none; padding:5px 10px; border:1.5px solid #4fe3c6; border-radius:6px;
+  background:rgb(2 6 26 / .88); font-family:var(--fontLabel); letter-spacing:1px; color:#e6ebff; font-size:14px; white-space:nowrap; }
+#partTip b{ color:#4fe3c6; font-weight:500; }
+#partTip span{ display:block; font-family:var(--fontBody); font-size:11.5px; letter-spacing:0; color:#9fb1ff; }
 #btnView{ position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:20; height:30px; padding:0 18px; }
 body.focus #hudTop, body.focus #hudBar, body.focus #shipNav, body.focus .block:not(.picked){ display:none !important; }
 body.focus .pick{ display:none; }
@@ -59,6 +65,7 @@ body.focus #hud.labIdle *, body.focus #opt.labIdle *{ pointer-events:auto !impor
 <body>
 <canvas id="view"></canvas>
 
+<div id="partTip" class="hidden"></div>
 <button class="tBtn" id="btnView" title="The full UI ↔ only the ticked blocks (key C)">CHANGE VIEW</button>
 <div id="hud">
   <div id="hudTop">
@@ -91,6 +98,7 @@ body.focus #hud.labIdle *, body.focus #opt.labIdle *{ pointer-events:auto !impor
       <button class="tBtn" id="btnWire">WIREFRAME</button>
       <button class="tBtn tgl off" id="btnFreeze" title="Stop the ship's moving parts (spinners, rings, turrets, particles) and its idle bobbing; lights and engines stay on. OFFLINE switches everything off">STOP ANIMATIONS</button>
       <button class="tBtn" id="btnMerge" title="Build the way the game does: static meshes merged per material (far fewer draw calls)">GAME BUILD</button>
+      <button class="tBtn on" id="btnInspect" title="Point at the ship: its part lights up and its name shows (not in GAME BUILD, where the parts are merged)">PART NAMES</button>
     </div>
     <div class="secHd">SHAPING</div>
     <label class="sl"><span>Rounded edges</span><b id="rVal">0%</b></label>

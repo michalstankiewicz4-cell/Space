@@ -416,6 +416,12 @@ were in force, e.g. "2026–2028", "2028–2029".
 Moved here from the assistant's memory (2026-09-28) — things the user
 wants eventually, not scheduled.
 
+**Priorities** (the user's call, 2026-10-03):
+1. **Bring the labs into the game and grow the game.** Surface, landing,
+   bases, vehicles, the sea, the sky, model shaping.
+2. **Tools and docs for players** who build their own games on the
+   engine. Further down the list.
+
 - **Station: from overview to management.** v1 (2026-09-21) was scoped
   down on purpose to a read-only overview + shortcuts to Research/Fleet;
   the original ask was a station to *manage* the fleet and resources.
