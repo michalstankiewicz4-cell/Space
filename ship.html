@@ -32,7 +32,7 @@ input[type=range]:disabled{ opacity:.35; cursor:not-allowed; }
    (the button comes back when the pointer is near the top) */
 #btnView{ position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:20; height:30px; padding:0 18px; transition:opacity .3s; }
 body.view2 #btnView{ opacity:0; }
-body.view2 #btnView:hover{ opacity:1; }
+body.view2 #btnView:hover:not(.justHid){ opacity:1; }   /* .justHid: the click that hid everything — the pointer is still on it */
 body.view1 #hudTop, body.view1 #hudBar, body.view1 #hud .hudPanel > :not(.v1keep):not(.side),
 body.view1 #opt .hudPanel > :not(.v1keep):not(.side){ display:none !important; }
 body.view1 .v1first{ margin-top:0 !important; }
@@ -414,7 +414,9 @@ LabKit.autoHideHud([document.getElementById("hud"), document.getElementById("opt
     document.body.classList.toggle("view1", v === 1); document.body.classList.toggle("view2", v === 2);
     fitHud();
   };
-  document.getElementById("btnView").addEventListener("click", () => setView((view + 1) % 3));
+  const btnView = document.getElementById("btnView");
+  btnView.addEventListener("click", () => { setView((view + 1) % 3); if (view === 2) btnView.classList.add("justHid"); });
+  btnView.addEventListener("pointerleave", () => btnView.classList.remove("justHid"));
   window.addEventListener("keydown", (e) => {
     if (e.code !== "KeyC" || e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)) return;
     setView((view + 1) % 3);
