@@ -105,9 +105,14 @@ export const NET_REMOTE_PLAYER_TIMEOUT_MS = 6000;
 export const NET_GHOST_LERP_SPEED = 6;
 
 // Limits on what other clients broadcast — broadcast has no server-side
-// validation, so one malicious message mustn't freeze everyone's browser.
-export const NET_MAX_REMOTE_SHIPS = 40;
+// validation, so one malicious message mustn't freeze everyone's browser
+// (net/shipsBroadcast.js). Ships: the biggest real fleet (the Fleet tree's
+// last level) + 2 to spare. Messages per sender: a real client sends ships
+// every NET_SHIP_BROADCAST_MS (~8/s) and print() at most every 1.5 s.
+export const NET_MAX_REMOTE_SHIPS = TREE.fleet.effect(TREE.fleet.maxLvl) + 2;
 export const NET_MAX_REMOTE_PLAYERS = 60;
+export const NET_SHIPS_MSG_RATE = 12, NET_SHIPS_MSG_BURST = 24;   // per second, bucket size
+export const NET_PRINT_MSG_RATE = 1, NET_PRINT_MSG_BURST = 3;
 // Also the limit on your own nick (net/identity.js#confirmNick).
 export const NET_MAX_NICK_LENGTH = 20;
 

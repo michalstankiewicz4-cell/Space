@@ -7,11 +7,21 @@ import { clientId } from "./identity.js";
 // next client picks up the role on its own, with no extra coordination.
 export let isSteward = false;
 let presenceState = {};
+let inRoom = new Set();   // every client_id present in the room
 
 export function setPresenceState(next){
   presenceState = next;
+  inRoom = new Set();
+  Object.keys(next).forEach(function(key){
+    (next[key] || []).forEach(function(meta){ if(meta && typeof meta.client_id === "string") inRoom.add(meta.client_id); });
+  });
   recomputeSteward();
 }
+
+// Is this client id in the room's presence right now? Broadcasts from ids
+// that aren't are dropped (net/shipsBroadcast.js): one connection is one
+// presence, so a spoofing client can't invent dozens of players.
+export function isInRoom(id){ return inRoom.has(id); }
 
 // How many OTHER clients are in the room right now (presence).
 export function othersOnline(){

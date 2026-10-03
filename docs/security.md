@@ -25,6 +25,7 @@ then read just that range.
 - [Aggregate statistics (v2.27.0)](#aggregate-statistics-v2270)
 - [Solar-body kill rule (v2.28.3)](#solar-body-kill-rule-v2283)
 - [Helpers (v2.28.6)](#helpers-v2286)
+- [Broadcast from other players (v2.30.2)](#broadcast-from-other-players-v2302)
 
 ## No client-writable UPDATE policy
 
@@ -501,3 +502,29 @@ throttle (5/min, the 6th logged once) and hash check, for
 anon/authenticated at the end of `schema.sql` (verified with
 `has_function_privilege`). Rotating the admin secret means changing the hash
 in `admin_secret_ok` only.
+
+## Broadcast from other players (v2.30.2)
+
+Ship positions, drones, stations, print() — everything players see of each
+other — travels as Realtime broadcast, which the server doesn't validate:
+any client can send any payload with any `id`. Nothing of it is stored, so
+the risk is what it does to other players' screens. The receiving side
+(`net/shipsBroadcast.js`) checks, in this order:
+
+- **The sender's id must be in the room's presence** (`presence.js#isInRoom`,
+  rebuilt on every presence sync). One channel join is one presence, so
+  inventing players takes one connection each instead of one string each.
+  Before this, one client could fill all 60 player slots.
+- **A token bucket per sender and message kind** (`NET_SHIPS_MSG_RATE` /
+  `_BURST` 12/s, 24; print 1/s, 3). A real client sends ships every
+  120 ms and print() at most every 1.5 s.
+- **Caps on what a payload can make**: `NET_MAX_REMOTE_SHIPS` = the Fleet
+  tree's last level + 2 (25), `NET_MAX_REMOTE_PLAYERS` 60, one drone and
+  one station per player, coordinates clamped to ±1000, the nick cut and
+  checked (`isAcceptableNick`, profanity), colours validated, a drone's
+  shots at most 2 per update.
+
+Tested with two tabs: a payload with an id not in presence never appeared,
+100 ships showed as 25, and a flood of 80 messages was cut after the
+burst (24). What's still self-reported and unverifiable: points and bodies
+eaten shown in the players list — display only.

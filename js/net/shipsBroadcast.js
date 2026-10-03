@@ -1,11 +1,12 @@
 import { ctx } from "../core/context.js";
 import { disposeMesh } from "../core/utils.js";
-import { NET_SHIP_BROADCAST_MS, NET_REMOTE_PLAYER_TIMEOUT_MS, NET_GHOST_LERP_SPEED, NET_MAX_REMOTE_SHIPS, NET_MAX_REMOTE_PLAYERS, NET_MAX_NICK_LENGTH, DRONE_PRINT_MAX_LEN } from "../config.js";
+import { NET_SHIP_BROADCAST_MS, NET_REMOTE_PLAYER_TIMEOUT_MS, NET_GHOST_LERP_SPEED, NET_MAX_REMOTE_SHIPS, NET_MAX_REMOTE_PLAYERS, NET_MAX_NICK_LENGTH, DRONE_PRINT_MAX_LEN,
+  NET_SHIPS_MSG_RATE, NET_SHIPS_MSG_BURST, NET_PRINT_MSG_RATE, NET_PRINT_MSG_BURST } from "../config.js";
 import { clientId, myIdentity, isAcceptableNick } from "./identity.js";
 import { state } from "../core/gameState.js";
 import { updatePlayersHud } from "../ui/hud/topBar.js";
 import { roomChannel } from "./connect.js";
-import { othersOnline } from "./presence.js";
+import { othersOnline, isInRoom } from "./presence.js";
 import { containsProfanity } from "../moderation.js";
 import { t } from "../i18n.js";
 import { spawnPrintEffect } from "../drone/dronePrintFx.js";
@@ -154,6 +155,24 @@ function safeCoord(v){
   return Number.isFinite(n) ? Math.max(-1000, Math.min(1000, n)) : 0;
 }
 
+// Per-sender token buckets ("ships:<id>", "print:<id>"): a sender over its
+// rate is dropped until the bucket refills. Pruned when it grows.
+const buckets = new Map();
+function allowFrom(key, perSec, burst){
+  const now = performance.now();
+  let b = buckets.get(key);
+  if(!b){
+    if(buckets.size > 300) buckets.forEach(function(v, k){ if(now - v.at > 10000) buckets.delete(k); });
+    b = { tokens: burst, at: now };
+    buckets.set(key, b);
+  }
+  b.tokens = Math.min(burst, b.tokens + (now - b.at) / 1000 * perSec);
+  b.at = now;
+  if(b.tokens < 1) return false;
+  b.tokens -= 1;
+  return true;
+}
+
 // Broadcast has no server-side validation whatsoever — the payload can be
 // crafted by any client, straight over the WebSocket, bypassing our UI
 // entirely. So everything coming from here is treated as untrusted and
@@ -161,6 +180,7 @@ function safeCoord(v){
 // config.js).
 export function handleRemoteShips(payload){
   if(!payload || typeof payload.id !== "string" || payload.id === clientId) return;
+  if(!isInRoom(payload.id) || !allowFrom("ships:" + payload.id, NET_SHIPS_MSG_RATE, NET_SHIPS_MSG_BURST)) return;
   let rp = ctx.remotePlayers[payload.id];
   if(!rp){
     if(Object.keys(ctx.remotePlayers).length >= NET_MAX_REMOTE_PLAYERS) return;
@@ -310,6 +330,7 @@ export function broadcastDronePrint(pos, heading, text){
 
 export function handleRemoteDronePrint(payload){
   if(!payload || typeof payload.id !== "string" || payload.id === clientId) return;
+  if(!isInRoom(payload.id) || !allowFrom("print:" + payload.id, NET_PRINT_MSG_RATE, NET_PRINT_MSG_BURST)) return;
   const p = Array.isArray(payload.pos) ? payload.pos : null;
   if(!p) return;
   const text = typeof payload.text === "string" ? payload.text.trim().slice(0, DRONE_PRINT_MAX_LEN) : "";

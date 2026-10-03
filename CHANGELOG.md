@@ -4,6 +4,18 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.30.2]
+
+### Security
+- Other players' broadcasts are checked harder (`net/shipsBroadcast.js`):
+  - **only players present in the room** (Realtime presence) are shown —
+    a modified client can no longer invent dozens of fake players, each
+    of its connections is one player;
+  - **at most 25 ships per player** (the biggest real fleet + 2, derived
+    from the Fleet tree), down from 40;
+  - **a message rate per sender** (ships: 12/s, burst 24; print(): 1/s,
+    burst 3) — a flood is dropped; a real client sends ~8/s.
+
 ## [2.30.1]
 
 ### Fixed
