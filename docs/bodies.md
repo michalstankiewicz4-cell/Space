@@ -203,13 +203,19 @@ the game sizes each body to its own radius.
   ion tail is straight, narrow and blue (`ionHue`); the dust tail is
   wider, warm and bent back along `-opts.velocity`. `opts.activity`
   scales the coma and the tail length.
-- **Gas giant** (`buildGiant`, `GLSL_GIANT`): one sphere, no surface. The
-  latitude is pushed around by two fBm layers (most on the band edges),
-  then `sin(lat × bands)` splits it into zones and belts — uneven widths,
-  narrower toward the poles, thin sub-bands from 1D noise, some belts
-  redder; every band turns at its own speed (`bandDrift`, `wind`). The
-  great storm and the white ovals are `vortex()` ovals riding their own
-  band, with a spiral texture; mottled grey-blue poles, limb darkening, a
+- **Gas giant** (`buildGiant`, `GLSL_GIANT`): one sphere, no surface,
+  modelled on a real photo of Jupiter. The latitude is pushed around by a
+  **marbled flow** — fBm warped by fBm (most on the band edges), smooth
+  curls instead of torn edges, thin bright veins along it (the user saw
+  "polished granite or marble"; `sheen` adds a soft polish) — then
+  `sin(lat × bands)` splits it into pastel zones and belts: uneven widths,
+  narrower toward the poles, thin sub-bands, some belts redder, some zones
+  bluish; every band turns at its own speed (`bandDrift`, `wind`). The
+  great storm (`vortex()`: a sharp oval, darker centre, a rim, a pale
+  collar outside) has a **turbulent wake** west of it — big folded white
+  curls (fBm warped by fBm, stretched along the band; fBm here is centred
+  on 0, about ±0.6, so its thresholds sit near 0) — and a rusty streak
+  east. White ovals ride their own band; muted poles, limb darkening, a
   soft terminator; the atmosphere shell is the planets'.
 - **Black hole** (`buildBlackHole`, `GLSL_HOLE`): a black horizon sphere,
   an **accretion disk** (a ring whose radius is remapped in the vertex

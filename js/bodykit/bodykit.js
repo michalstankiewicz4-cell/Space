@@ -735,12 +735,14 @@ function buildPlanet(values, detail) {
 // =====================================================================
 // GAS GIANTS
 // No surface: belts (dark) and zones (light) along the latitude lines,
-// each band drifting at its own speed, turbulent eddies on the band edges,
-// thin sub-bands, a great storm (an oval vortex in its band), white ovals,
-// mottled polar haze, limb darkening. Shares the atmosphere shell.
+// each band drifting at its own speed, a marbled flow (noise warped by
+// noise) bending the band edges into curls, thin sub-bands and veins, a
+// great storm (an oval vortex) with a turbulent wake behind it and a rusty
+// streak ahead, white ovals, mottled polar haze, limb darkening and a soft
+// sheen (polished stone, the user's look). Shares the atmosphere shell.
 // =====================================================================
 const GLSL_GIANT = `
-uniform float uBandCount, uTurb, uContrast, uWarm, uStorm, uStormLat, uOvals, uPolar, uWind;
+uniform float uBandCount, uTurb, uContrast, uWarm, uStorm, uStormLat, uOvals, uPolar, uWind, uSheen;
 #define PI 3.14159265
 #define TAU 6.28318531
 // every band turns at its own speed (differential rotation)
@@ -758,54 +760,77 @@ float vortex(vec3 q, float lat, float lat0, float lon0, float hw, float hh, out 
   dist = length(e);
   float ang = atan(e.y, e.x) + (1.0 - min(dist, 1.0)) * 3.0 - uTime * 0.25;
   swirl = snoise(vec3(cos(ang) * dist * 1.6, sin(ang) * dist * 1.6, lat0 * 7.0) + uSeed) * 0.5 + 0.5;
-  return 1.0 - smoothstep(0.75, 1.0, dist);
+  return 1.0 - smoothstep(0.9, 1.0, dist);
 }
 vec3 giantColor(vec3 p){
   float lat = asin(clamp(p.y, -1.0, 1.0));
   vec3 q = bandDrift(p, lat);
-  // eddies: the latitude itself is pushed around, most on the band edges
-  float w = fbm(vec3(q.x * 2.2, q.y * 9.0, q.z * 2.2) + uSeed, uOctaves, 0.55);
-  float w2 = fbm(q * 5.0 + uSeed.yzx + vec3(w * 1.5), uOctaves, 0.5);
-  float y = lat + (w * 0.05 + w2 * 0.03) * uTurb;
+  // marbled flow: the noise is warped by noise (twice), so the bands bend
+  // into smooth curls and filaments instead of torn edges
+  vec3 a = vec3(q.x * 1.8, q.y * 5.0, q.z * 1.8) + uSeed;
+  vec3 w1 = vec3(fbm(a, 4, 0.5), fbm(a + 5.2, 4, 0.5), fbm(a + 9.7, 4, 0.5));
+  float flow = fbm(a * 1.6 + w1 * 2.2 + uSeed.yzx, uOctaves, 0.5);
+  float y = lat + flow * 0.12 * uTurb;
   // uneven band widths, narrower toward the poles
   float yb = y + 0.07 * sin(y * 2.3 + uSeed.x) + 0.04 * sin(y * 5.7 + uSeed.y);
   float freq = uBandCount * (1.0 + 0.5 * abs(y));
   float band = sin(yb * freq);                                         // + zones, - belts
-  float edge = 1.0 - abs(band);                                        // band edges: the most turbulence
-  yb += w2 * 0.03 * uTurb * edge;
+  yb += flow * 0.06 * uTurb * (1.0 - abs(band));                       // band edges: the most turbulence
+
+  // the great storm and its wake: west of it a long chaotic region of
+  // folded white curls, east of it a rusty streak along the band
+  float lat0 = radians(uStormLat);
+  vec3 qs = bandDrift(p, lat0);
+  float lonS = mod(atan(qs.z, qs.x) - 1.57 + PI, TAU) - PI;            // longitude from the storm
+  float inBand = exp(-pow((lat - lat0) / (0.09 * max(uStorm, 0.2)), 2.0));
+  float wake = uStorm > 0.001 ? inBand * smoothstep(0.1, 0.3, lonS) * exp(-lonS * 0.6) : 0.0;
+  float streak = uStorm > 0.001 ? exp(-pow((lat - lat0 - 0.01) / (0.045 * uStorm), 2.0)) * smoothstep(0.2, 0.45, -lonS) * exp(lonS * 0.7) : 0.0;
+  vec3 c = vec3(qs.x * 3.2, qs.y * 6.0, qs.z * 3.2) + w1 * 1.5 + uSeed.zxy;   // big folds, stretched along the band
+  float curls = fbm(c + vec3(fbm(c * 1.2, 3, 0.5) * 3.0), 4, 0.5);
+  yb += (curls * 0.16 + flow * 0.08) * wake;
   band = sin(yb * freq);
-  float fine = fbm(vec3(0.0, y * 55.0, 0.0) + uSeed.zxy, 4, 0.6);      // thin sub-bands
-  vec3 zone = vec3(0.94, 0.89, 0.79);
-  vec3 belt = mix(vec3(0.52, 0.47, 0.43), vec3(0.62, 0.38, 0.22), uWarm);
-  float k = smoothstep(-0.65, 0.65, band * (0.35 + 0.65 * uContrast) + fine * 0.45);
+
+  float fine = fbm(vec3(0.0, yb * 55.0, 0.0) + uSeed.zxy, 4, 0.6);     // thin sub-bands
+  vec3 zone = vec3(0.86, 0.85, 0.80);
+  vec3 belt = mix(vec3(0.62, 0.58, 0.53), vec3(0.78, 0.60, 0.45), uWarm);
+  float k = smoothstep(-0.7, 0.7, band * (0.3 + 0.7 * uContrast) + fine * 0.4);
   vec3 col = mix(belt, zone, k);
-  col *= 1.0 + fine * 0.14 + (w2 - 0.0) * 0.08 * uTurb;
-  // some belts redder, the equatorial zone slightly ochre
-  float tint = snoise(vec3(0.0, floor(y * uBandCount / PI) * 1.7, 0.0) + uSeed) * 0.5 + 0.5;
-  col = mix(col, col * vec3(1.06, 0.88, 0.74), smoothstep(0.45, 0.85, tint) * uWarm * (1.0 - k));
-  col = mix(col, col * vec3(1.03, 0.95, 0.84), (1.0 - smoothstep(0.0, 0.12, abs(lat))) * uWarm * 0.6);
-  // poles: darker, grey-blue, mottled
+  col *= 1.0 + fine * 0.1;
+  // some belts redder, some zones a little blue-white, the equator ochre
+  float tint = snoise(vec3(0.0, floor(yb * freq / PI) * 1.7, 0.0) + uSeed) * 0.5 + 0.5;
+  col = mix(col, col * vec3(1.05, 0.86, 0.72), smoothstep(0.45, 0.85, tint) * uWarm * (1.0 - k));
+  col = mix(col, col * vec3(0.95, 0.98, 1.04), smoothstep(0.4, 0.9, 1.0 - tint) * k * 0.6);
+  col = mix(col, col * vec3(1.03, 0.95, 0.84), (1.0 - smoothstep(0.0, 0.12, abs(lat))) * uWarm * 0.5);
+  // marble veins: thin bright lines along the flow, like polished stone
+  float vein = pow(1.0 - abs(sin(yb * freq * 3.0 + flow * 9.0)), 10.0);
+  col += vein * 0.05 * uTurb;
+  // the wake's curls are white folded cloud; the streak rusty
+  // (fbm is centred on 0, about -0.6..0.6)
+  col = mix(col, vec3(0.90, 0.89, 0.86), smoothstep(0.05, 0.3, curls) * wake * 0.9);
+  col = mix(col, col * vec3(0.90, 0.76, 0.64), smoothstep(0.05, 0.3, -curls) * wake * 0.6);
+  col = mix(col, vec3(0.74, 0.44, 0.32), streak * 0.6 * uWarm);
+  // poles: muted grey-ochre, mottled
   float pol = smoothstep(0.62, 0.95, abs(p.y)) * uPolar;
-  col = mix(col, vec3(0.47, 0.49, 0.53) * (0.8 + 0.4 * w2), pol);
-  // the great storm, drifting with its band
+  col = mix(col, vec3(0.72, 0.68, 0.60) * (0.85 + 0.3 * flow), pol);
+  // the great storm: an orange core, a darker rim, a pale collar
   if (uStorm > 0.001) {
     float sw, d;
-    float lat0 = radians(uStormLat);
-    float core = vortex(bandDrift(p, lat0), lat, lat0, 1.57, 0.25 * uStorm, 0.125 * uStorm, sw, d);
-    vec3 red = mix(vec3(0.72, 0.32, 0.21), vec3(0.84, 0.50, 0.34), 0.3 + 0.45 * sw + 0.25 * (1.0 - d));
-    float collar = smoothstep(0.8, 1.0, d) * (1.0 - smoothstep(1.0, 1.45, d));
+    float core = vortex(qs, lat, lat0, 1.57, 0.13 * uStorm, 0.08 * uStorm, sw, d);
+    vec3 red = mix(vec3(0.86, 0.52, 0.24), vec3(0.70, 0.32, 0.15), (1.0 - smoothstep(0.0, 0.6, d)) * 0.7 + (sw - 0.5) * 0.4);   // darker centre, spiral
+    red = mix(red, vec3(0.62, 0.28, 0.14), smoothstep(0.78, 0.92, d) * (1.0 - smoothstep(0.92, 1.0, d)) * 0.8);   // the rim
+    float collar = smoothstep(0.97, 1.08, d) * (1.0 - smoothstep(1.08, 1.55, d));   // pale ring just outside
     col = mix(col, red, core);
-    col = mix(col, vec3(0.96, 0.92, 0.84), collar * 0.65);
+    col = mix(col, vec3(0.94, 0.92, 0.87), collar * 0.45);
   }
   // white ovals, strung along the southern temperate belt
   for (int i = 0; i < 6; i++){
     float fi = float(i);
     if (fi >= uOvals * 6.0) break;
     vec3 hk = hash33(vec3(fi * 5.3, uSeed.x, 3.7));
-    float lat0 = radians(-33.0 - 6.0 * hk.y);
+    float latO = radians(-33.0 - 6.0 * hk.y);
     float sw, d;
-    float core = vortex(bandDrift(p, lat0), lat, lat0, hk.x * TAU, 0.06 + 0.03 * hk.z, 0.035 + 0.015 * hk.z, sw, d);
-    col = mix(col, vec3(0.97, 0.95, 0.92) * (0.9 + 0.15 * sw), core * 0.9);
+    float core = vortex(bandDrift(p, latO), lat, latO, hk.x * TAU, 0.05 + 0.03 * hk.z, 0.03 + 0.015 * hk.z, sw, d);
+    col = mix(col, vec3(0.98, 0.97, 0.95) * (0.92 + 0.12 * sw), core * 0.9);
   }
   return col;
 }
@@ -826,7 +851,9 @@ function giantMaterial(U) {
         vec3 N = normalize(vNormalW), L = normalize(uSunDir), V = normalize(cameraPosition - vWorldPos);
         float diff = smoothstep(-0.12, 0.6, dot(N, L));                 // deep atmosphere: soft terminator
         float mu = max(dot(N, V), 0.0);
-        vec3 lit = col * (0.02 + diff * 1.1 + pointLightAt(vWorldPos, N)) * (0.55 + 0.45 * pow(mu, 0.4));   // limb darkening
+        vec3 lit = col * (0.02 + diff * 1.1 + pointLightAt(vWorldPos, N)) * (0.6 + 0.4 * pow(mu, 0.35));   // limb darkening
+        vec3 H = normalize(L + V);
+        lit += vec3(1.0, 0.97, 0.92) * pow(max(dot(N, H), 0.0), 18.0) * uSheen * 0.35 * smoothstep(0.0, 0.3, dot(N, L));   // polish
         float rim = pow(1.0 - mu, 3.0);
         lit += uAtmoColor * rim * uAtmo * 0.6 * smoothstep(-0.2, 0.4, dot(N, L));
         gl_FragColor = vec4(lit + vec3(1.0, 0.45, 0.12) * crack * (0.7 + 0.9 * uDamage), 1.0);
@@ -838,7 +865,7 @@ function buildGiant(values, detail) {
   const v = { ...values };
   const U = Object.assign(bodyUniforms(v), {
     uBandCount: { value: 0 }, uTurb: { value: 0 }, uContrast: { value: 0 }, uWarm: { value: 0 }, uStorm: { value: 0 },
-    uStormLat: { value: 0 }, uOvals: { value: 0 }, uPolar: { value: 0 }, uWind: { value: 0 },
+    uStormLat: { value: 0 }, uOvals: { value: 0 }, uPolar: { value: 0 }, uWind: { value: 0 }, uSheen: { value: 0 },
     uAtmo: { value: 0 }, uAtmoColor: { value: new THREE.Color() },
   });
   const seg = (n, min) => Math.max(min, Math.round(n * detail));
@@ -854,7 +881,7 @@ function buildGiant(values, detail) {
     apply() {
       U.uBandCount.value = v.bandCount; U.uTurb.value = v.turbulence; U.uContrast.value = v.contrast; U.uWarm.value = v.warm;
       U.uStorm.value = v.storm; U.uStormLat.value = v.stormLat; U.uOvals.value = v.ovals; U.uPolar.value = v.polar;
-      U.uWind.value = v.wind; U.uAtmo.value = v.atmosphere; U.uAtmoColor.value.copy(hueColor(v.atmoHue));
+      U.uWind.value = v.wind; U.uSheen.value = v.sheen; U.uAtmo.value = v.atmosphere; U.uAtmoColor.value.copy(hueColor(v.atmoHue));
     },
     layers: { atmosphere: { objects: [atmo], when: () => v.atmosphere > 0.001 } },
     describe() {
@@ -1615,15 +1642,16 @@ const GROUPS = [
     id: "giants", name: "GAS GIANTS", kmPerSize: 69911, view: 4.4, layers: { atmosphere: "ATMOSPHERE" },
     params: [
       { key: "size",       label: "Size (Jupiter radii)",   min: 0.3, max: 2,   step: 0.05, value: 1,    fmt: f2 },
-      { key: "bandCount",  label: "Bands",                  min: 6,   max: 30,  step: 1,    value: 16,   fmt: (x) => Math.round(x) },
+      { key: "bandCount",  label: "Bands",                  min: 6,   max: 30,  step: 1,    value: 13,   fmt: (x) => Math.round(x) },
       { key: "turbulence", label: "Turbulence",             min: 0,   max: 1,   step: 0.01, value: 0.6,  fmt: pct },
-      { key: "contrast",   label: "Band contrast",          min: 0,   max: 1,   step: 0.01, value: 0.7,  fmt: pct },
+      { key: "contrast",   label: "Band contrast",          min: 0,   max: 1,   step: 0.01, value: 0.5,  fmt: pct },
       { key: "warm",       label: "Colour (grey → rusty)",  min: 0,   max: 1,   step: 0.01, value: 0.7,  fmt: pct },
       { key: "storm",      label: "Great storm",            min: 0,   max: 1.5, step: 0.01, value: 1,    fmt: pct },
       { key: "stormLat",   label: "Storm latitude",         min: -60, max: 60,  step: 1,    value: -22,  fmt: (x) => Math.round(x) + "°" },
       { key: "ovals",      label: "White ovals",            min: 0,   max: 1,   step: 0.01, value: 0.5,  fmt: pct },
       { key: "polar",      label: "Polar haze",             min: 0,   max: 1,   step: 0.01, value: 0.6,  fmt: pct },
       { key: "wind",       label: "Wind speed",             min: 0,   max: 1,   step: 0.01, value: 0.5,  fmt: pct },
+      { key: "sheen",      label: "Polish (sheen)",         min: 0,   max: 1,   step: 0.01, value: 0.25, fmt: pct },
       { key: "atmosphere", label: "Atmosphere",             min: 0,   max: 1,   step: 0.01, value: 0.3,  fmt: pct },
       { key: "atmoHue",    label: "Atmosphere hue",         min: 0,   max: 360, step: 1,    value: 35,   fmt: (x) => Math.round(x) + "°" },
     ],
