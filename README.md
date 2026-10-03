@@ -57,6 +57,9 @@ js/
                      tracks, dust, lamps, work); the vehicle lab's (vehicles.html), not in the game yet
   marinekit/         MarineKit — the sea (waves the same in JS and GLSL, a seabed with an island, under water)
                      and robot vessels (foils, a barge, a submersible, an amphibian); the sea lab's (marine.html)
+  labs/              each lab's own script (ship.js, bodies.js, systems.js, skins.js, surface.js,
+                     buildings.js, vehicles.js, marine.js): its scene and panels, wired to the kits;
+                     the lab pages (*.html) keep the markup and styles; scale.html's is js/scalelab/
   postkit/           PostKit — post-processing (bloom, MSAA, FXAA, lensing, depth of field, sun
                      flare, the "robot eyes" filter) and the labs' IMAGE EFFECTS panel, one classic
                      script shared by the game (scene/post.js) and both labs

@@ -30,7 +30,7 @@ the lab still opens straight from disk):
 | 3. `js/labkit/labkit.js` | What the labs (ship, body, system) share around the model (`window.LabKit`): the panels' grain, slider fills, toggles, the HUD's scale, performance counters, the IMAGE EFFECTS render, and the panels fading out after 5 idle seconds (`autoHideHud`; not while the pointer rests on a panel or a field there has the focus). Styles: `css/lab.css` (shared) + a few rules inline. | No |
 | 4. `js/shipkit/shipkit.js` (`<script id="shipkit">`) | **ShipKit's core**: texture generators, materials, shaders, shared effects, the building blocks, SHAPING, the model build, public API (`window.ShipKit`), and `ShipKit._`: the internals the ship files build with (not a public API). | **Yes — the same file** |
 | 4b. `js/shipkit/ships/codewing.js`, `scribe.js`, `swarmer.js`, `haven.js` | **One file per ship** (split out 2026-10-03, ~150–475 lines each). Each pushes its definition into `ShipKit.SHIP_DEFS` and takes what it uses from `ShipKit._`. They load after the core, in this order, which is the lab's order. | **Yes — the same files** |
-| 5. `<script id="viewer">` | Preview page: sky, lights, renderer, camera, HUD wiring, sliders. Uses only the kits' public APIs. | No |
+| 5. `js/labs/ship.js` (`<script id="viewer">`; in the page until 2026-10-03) | Preview page: sky, lights, renderer, camera, HUD wiring, sliders. Uses only the kits' public APIs. | No |
 
 ## ShipKit (`window.ShipKit`)
 

@@ -45,7 +45,8 @@ the player's own progress stays in `localStorage`.
   `bodies.html` / `scale.html` (+ `js/scalelab/`) / `skins.html` /
   `systems.html` (+ `js/systemkit/`, not in the game yet) / `surface.html`
   (+ `js/surfacekit/`) / `buildings.html` (+ `js/basekit/`) / `vehicles.html`
-  (+ `js/vehiclekit/`) / `marine.html` (+ `js/marinekit/`) and their LabKit
+  (+ `js/vehiclekit/`) / `marine.html` (+ `js/marinekit/`), the labs' own
+  scripts (`js/labs/<lab>.js` — a lab page is markup and styles) and their LabKit
   (`js/labkit/`, `css/lab.css`),
   `tools/`, the devlog (`blog/`, Blogger), and `.md`-only edits — those are
   plain commits, no changelog entry.

@@ -21,7 +21,7 @@ bump (`js/version.js`, `CHANGELOG.md`, the `?v=` params).
 | 1. `vendor/three-r128.min.js`, `vendor/three-r128-examples/OrbitControls.js` | Three.js r128 (the game's own copy; pasted into the page until the 2026-10 review) and the preview's mouse camera | Three.js yes |
 | 2. `js/labkit/labkit.js` + `css/lab.css` | Shared with the ship lab: grain, sliders, toggles, HUD scale, performance counters, the IMAGE EFFECTS render (see docs/ship.md) | No |
 | 3. `js/bodykit/bodykit.js` (`<script id="bodykit" src=…>`) | **The bodies**: groups, parameter schemas, GLSL shaders, public API. A classic script exposing `window.BodyKit`; its header repeats the API. | **Yes**, `index.html` loads it (`defer`, after Three.js and ShipKit) |
-| 4. `<script id="viewer">` in `bodies.html` | Preview page: sky, camera, HUD, sliders generated from the schemas, statistics, counters | No |
+| 4. `js/labs/bodies.js` (`<script id="viewer">`; in the page until 2026-10-03) | Preview page: sky, camera, HUD, sliders generated from the schemas, statistics, counters | No |
 
 ## Groups
 
