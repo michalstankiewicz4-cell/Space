@@ -377,6 +377,16 @@ them on.
   Vertex normals were used first and failed: at a box's corner three faces
   share a position, and the wrong one turned fillets into flaps sticking
   out (the user saw it).
+- **Extrudes include their bevel** (`extrudeSolid`). Three.js grows the
+  outline by `bevelSize` along the whole depth, easing back at the caps
+  over `bevelThickness`. Ignoring it put the codewing's fin root 4 cm
+  inside the fin on screen, so its joint only showed past about 70 % (the
+  user's find).
+- **Long edges are tested in pieces** (modelR / 60). A fin's straight
+  root crosses the hull in its middle with both ends on the same side.
+  Points join a chain only where both surfaces face alike, so the two
+  sides of a thin plate stay two lines instead of a zigzag through the
+  plate. Below about 0.03 % of the model, nothing is made.
 - **Lathes and shells.** A lathe is a solid only if it closes on its axis
   at one end at least. An open engine bell is a shell, and treating it as
   a solid gave wide white skirts around the nozzles. A lathe's thickness

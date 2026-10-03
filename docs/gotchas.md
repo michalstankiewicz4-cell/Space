@@ -157,6 +157,12 @@ Found while building the image effects (`js/postkit/postkit.js`,
   have a vertex at the same corner. Normals for joints come from the
   shape's own geometry (ShipKit `solidNormalOf`). Vertex normals turned
   fillets into flaps.
+- **`ExtrudeGeometry`'s bevel makes the mesh bigger than its shape**: the
+  outline grows by `bevelSize` all along the depth, plus `bevelThickness`
+  beyond each cap. Anything measured from the shape alone sits inside the
+  visible part.
+- **A long edge can cross a surface with both ends on the same side.**
+  Testing only an edge's ends misses that; test it in pieces.
 - **An open lathe is a shell, not a solid.** Treating an engine bell as
   solid gave huge skirts around the nozzles. ShipKit seals a lathe only
   if it closes on its axis.

@@ -1011,6 +1011,56 @@ function withRounding(round, k, fn) {
   try { return fn(); } finally { THREE.BoxGeometry = _Box; THREE.CylinderGeometry = _Cyl; }
 }
 
+// An ExtrudeGeometry as a solid, bevel included. Three.js bevels by growing
+// the outline: by bevelSize all along the depth, easing back to the plain
+// outline at the caps (a quarter ellipse, bevelThickness deep). Ignoring
+// that put a fin's root 4 cm inside the fin seen on screen (its joint only
+// showed past ~70 %).
+function extrudeSolid(P) {
+  const sh = Array.isArray(P.shapes) ? P.shapes : [P.shapes], o = P.options || {};
+  const depth = o.depth !== undefined ? o.depth : o.amount !== undefined ? o.amount : 1;
+  const bev = o.bevelEnabled !== false;
+  const bt = bev ? (o.bevelThickness !== undefined ? o.bevelThickness : 0.2) : 0;
+  const bs = bev ? (o.bevelSize !== undefined ? o.bevelSize : bt - 0.1) : 0, bo = bev ? (o.bevelOffset || 0) : 0;
+  const polys = sh.map((x) => { const e = x.extractPoints(12); return { outer: e.shape, holes: e.holes }; });
+  const loops = []; for (const q of polys) loops.push(q.outer, ...q.holes);
+  const inPoly = (pt, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a.y > pt.y) !== (b.y > pt.y) && pt.x < (b.x - a.x) * (pt.y - a.y) / (b.y - a.y) + a.x) c = !c; } return c; };
+  const out2 = { d: 0, ux: 0, uy: 0 };
+  // signed distance to the plain outline (− inside) and the outward direction there
+  const outline = (p) => {
+    let bd = Infinity, qx = 0, qy = 0, ex = 1, ey = 0;
+    for (const L of loops) for (let i = 0, j = L.length - 1; i < L.length; j = i++) {
+      const a = L[j], b = L[i], vx = b.x - a.x, vy = b.y - a.y, l2 = vx * vx + vy * vy || 1e-12;
+      const k = Math.max(0, Math.min(1, ((p.x - a.x) * vx + (p.y - a.y) * vy) / l2));
+      const cx = a.x + vx * k - p.x, cy = a.y + vy * k - p.y, d = cx * cx + cy * cy;
+      if (d < bd) { bd = d; qx = cx; qy = cy; ex = vx; ey = vy; }
+    }
+    const inside = polys.some((q) => inPoly(p, q.outer) && !q.holes.some((h) => inPoly(p, h)));
+    let ux = inside ? qx : -qx, uy = inside ? qy : -qy, l = Math.hypot(ux, uy);
+    if (l < 1e-9) { const m = Math.hypot(ex, ey) || 1; ux = ey / m; uy = -ex / m; l = 1;   // on the line: its perpendicular, pointing out
+      if (polys.some((q) => inPoly({ x: p.x + ux * 1e-4, y: p.y + uy * 1e-4 }, q.outer))) { ux = -ux; uy = -uy; } }
+    out2.d = (inside ? -1 : 1) * Math.sqrt(bd); out2.ux = ux / l; out2.uy = uy / l;
+    return out2;
+  };
+  const beyond = (z) => (z < 0 ? -z : z > depth ? z - depth : 0);   // how far into a cap's bevel
+  const grow = (ez) => (bt > 0 ? bs * Math.sqrt(Math.max(0, 1 - (ez / bt) * (ez / bt))) : 0) + bo;
+  return {
+    inside: (p) => { const ez = beyond(p.z); if (ez >= bt && bt > 0 || (bt === 0 && ez > 0)) return false; return outline(p).d < grow(ez); },
+    normal: (p, out) => {
+      const o2 = outline(p), ez = beyond(p.z), zs = p.z > depth / 2 ? 1 : -1;
+      if (ez > 0 && bt > 0) {
+        // on the bevel: the ellipse's normal; within the plain outline: the cap
+        if (o2.d <= bo) return out.set(0, 0, zs);
+        const d = o2.d - bo;
+        return out.set(o2.ux * d / (bs * bs || 1e-9), o2.uy * d / (bs * bs || 1e-9), zs * ez / (bt * bt)).normalize();
+      }
+      const dSide = Math.abs(bs + bo - o2.d), dCap = bt + Math.min(Math.abs(p.z), Math.abs(depth - p.z));
+      if (dCap < dSide) return out.set(0, 0, zs);
+      return out.set(o2.ux, o2.uy, 0);
+    },
+  };
+}
+
 // Is a point (in the mesh's local frame) inside the mesh's solid? null: not
 // a solid we can tell. The test carries .thick: the part's smallest
 // half-size (a torus' tube, a box's thinnest side…), which sizes the bead.
@@ -1057,28 +1107,7 @@ function solidNormalOf(geo) {
       return out.set(p.x / r, -slope, p.z / r).normalize();      // the gradient of r − f(y)
     };
   }
-  if (t === "ExtrudeGeometry") {
-    const sh = Array.isArray(P.shapes) ? P.shapes : [P.shapes], o = P.options || {};
-    const depth = o.depth !== undefined ? o.depth : o.amount !== undefined ? o.amount : 1;
-    const loops = [];
-    for (const x of sh) { const e = x.extractPoints(12); loops.push(e.shape, ...e.holes); }
-    return (p, out) => {
-      // the nearest outline edge, or a cap
-      let bd = Infinity, nx = 0, ny = 0;
-      for (const L of loops) for (let i = 0, j = L.length - 1; i < L.length; j = i++) {
-        const a = L[j], b = L[i], ex = b.x - a.x, ey = b.y - a.y, l2 = ex * ex + ey * ey || 1e-12;
-        const k = Math.max(0, Math.min(1, ((p.x - a.x) * ex + (p.y - a.y) * ey) / l2));
-        const qx = a.x + ex * k - p.x, qy = a.y + ey * k - p.y, d = qx * qx + qy * qy;
-        if (d < bd) { bd = d; nx = -qx; ny = -qy; const l = Math.hypot(ey, ex) || 1; if (nx * nx + ny * ny < 1e-12) { nx = ey / l; ny = -ex / l; } }
-      }
-      const dSide = Math.sqrt(bd), dCap = Math.min(Math.abs(p.z), Math.abs(depth - p.z));
-      if (dCap < dSide) return out.set(0, 0, p.z > depth / 2 ? 1 : -1);
-      // inside the outline the vector to the edge points out; outside, in — flip so it points out
-      const len = Math.hypot(nx, ny) || 1;
-      out.set(-nx / len, -ny / len, 0);
-      return out;
-    };
-  }
+  if (t === "ExtrudeGeometry" && P.shapes) { const E = extrudeSolid(P); return E.normal; }
   return null;
 }
 function thicknessOf(geo) {
@@ -1137,14 +1166,7 @@ function solidTestOf(geo) {
       return rr < best;
     };
   }
-  if (t === "ExtrudeGeometry" && P.shapes) {
-    const sh = Array.isArray(P.shapes) ? P.shapes : [P.shapes], o = P.options || {};
-    const depth = o.depth !== undefined ? o.depth : o.amount !== undefined ? o.amount : 1;
-    const bt = o.bevelEnabled === false ? 0 : (o.bevelThickness !== undefined ? o.bevelThickness : 0.2);
-    const polys = sh.map((x) => { const e = x.extractPoints(12); return { outer: e.shape, holes: e.holes }; });
-    const inPoly = (pt, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a.y > pt.y) !== (b.y > pt.y) && pt.x < (b.x - a.x) * (pt.y - a.y) / (b.y - a.y) + a.x) c = !c; } return c; };
-    return (p) => p.z > -bt && p.z < depth + bt && polys.some((q) => inPoly(p, q.outer) && !q.holes.some((h) => inPoly(p, h)));
-  }
+  if (t === "ExtrudeGeometry" && P.shapes) return extrudeSolid(P).inside;
   return null;
 }
 
@@ -1176,6 +1198,11 @@ function sealJoints(root, seal, detail, style = "fillet") {
   });
   const modelR = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).length() / 2;
   const a = new THREE.Vector3(), b = new THREE.Vector3(), m = new THREE.Vector3(), l = new THREE.Vector3();
+  const e0 = new THREE.Vector3(), e1 = new THREE.Vector3(), seg3 = new THREE.Line3(), cp = new THREE.Vector3();
+  const step = modelR / 60;                                   // the longest piece of an edge tested at once
+  // does the edge pass through the overlap box (not just have an end in it)?
+  const ovLine = (box, p0, p1) => box.containsPoint(p0) || box.containsPoint(p1) ||
+    box.containsPoint(seg3.set(p0, p1).closestPointToPoint(box.getCenter(cp), true, cp)) || box.distanceToPoint(cp) < 1e-6;
   const isIn = (P, w) => P.inside(l.copy(w).applyMatrix4(P.inv));
   // a part's outward surface normal at a world point (the shape's own, see solidNormalOf)
   const surfaceNormal = (P, w, out) => P.inside.normal(l.copy(w).applyMatrix4(P.inv), out).applyMatrix3(P.nMat).normalize();
@@ -1192,12 +1219,19 @@ function sealJoints(root, seal, detail, style = "fillet") {
     for (const [S, T] of [[A, B], [B, A]]) {
       const ov = S.box.clone().intersect(T.box).expandByScalar(1e-3);
       for (let e = 0; e < S.edges.length; e += 2) {
-        a.fromArray(S.world, S.edges[e] * 3); b.fromArray(S.world, S.edges[e + 1] * 3);
-        if (!ov.containsPoint(a) && !ov.containsPoint(b)) continue;
-        const ia = isIn(T, a), ib = isIn(T, b);
+        e0.fromArray(S.world, S.edges[e] * 3); e1.fromArray(S.world, S.edges[e + 1] * 3);
+        if (!ovLine(ov, e0, e1)) continue;
+        // a long edge can cross the other surface in its middle with both ends
+        // on the same side (a fin's root along a hull): test it in short pieces
+        const pieces = Math.max(1, Math.min(64, Math.ceil(e0.distanceTo(e1) / step)));
+        let ia = isIn(T, e0);
+        for (let q = 0; q < pieces; q++) {
+        a.lerpVectors(e0, e1, q / pieces); b.lerpVectors(e0, e1, (q + 1) / pieces);
+        const ib = isIn(T, b);
         if (ia === ib) continue;
+        const iaWas = ia; ia = ib;
         let lo = 0, hi = 1;                                   // the crossing, by halving
-        for (let s = 0; s < 10; s++) { const mid = (lo + hi) / 2; m.lerpVectors(a, b, mid); if (isIn(T, m) === ia) lo = mid; else hi = mid; }
+        for (let s = 0; s < 10; s++) { const mid = (lo + hi) / 2; m.lerpVectors(a, b, mid); if (isIn(T, m) === iaWas) lo = mid; else hi = mid; }
         const hit = new THREE.Vector3().lerpVectors(a, b, (lo + hi) / 2);
         // only where the two surfaces meet at an angle: parts that run on
         // into each other (a ring's overlapping segments) need no sealing
@@ -1205,14 +1239,15 @@ function sealJoints(root, seal, detail, style = "fillet") {
         const na = surfaceNormal(A, hit, new THREE.Vector3()), nb = surfaceNormal(B, hit, new THREE.Vector3());
         if (Math.abs(na.dot(nb)) > 0.82) continue;
         pts.push({ p: hit, na, nb });
+        }
       }
     }
     if (pts.length < 3) continue;
     const big = A.radius >= B.radius ? A : B;
     // the bead: a third of the thinner part's thickness (a fine trim gets a
-    // fine bead), never more than ~1 % of the model; too fine to see: none
+    // fine bead), never more than ~1 % of the model; finer than ~0.03 % of it: none
     const rad = Math.min(seal * 0.35 * Math.min(A.thick, B.thick), seal * 0.012 * modelR);
-    if (rad < modelR * 0.0012) continue;
+    if (rad < modelR * 0.0003) continue;
     // merge points closer than a bead's width, chain the rest into curves
     const merged = [];
     for (const p of pts) if (!merged.some((q) => q.p.distanceToSquared(p.p) < rad * rad * 0.25)) merged.push(p);
@@ -1225,7 +1260,11 @@ function sealJoints(root, seal, detail, style = "fillet") {
       for (const back of [false, true]) for (;;) {             // grow from both ends
         const end = back ? chain[0].p : chain[chain.length - 1].p;
         let bi = -1, bd = gap;
-        for (let k = 0; k < left.length; k++) { const d = left[k].p.distanceTo(end); if (d < bd) { bd = d; bi = k; } }
+        const ec = back ? chain[0] : chain[chain.length - 1];
+        for (let k = 0; k < left.length; k++) {
+          if (left[k].na.dot(ec.na) < 0.5 || left[k].nb.dot(ec.nb) < 0.5) continue;
+          const d = left[k].p.distanceTo(end); if (d < bd) { bd = d; bi = k; }
+        }
         if (bi < 0) break;
         const p = left.splice(bi, 1)[0];
         if (back) chain.unshift(p); else chain.push(p);
