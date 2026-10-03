@@ -17,9 +17,9 @@ body:has(#banner:not(.hidden)) #hud{ visibility:hidden; }
   color:#e6ebff; letter-spacing:.3px; text-decoration:none; display:flex; align-items:center; justify-content:center;
   pointer-events:auto; transition:box-shadow .15s, border-color .15s; }
 /* Player counters, centered on the stretchy part between the gold and
-   right group (the top rail runs from 465px to 423px short of the right
+   right group (the top rail runs from 465px to 434px short of the right
    edge, see #topRail). */
-#playerCounts{ left:calc((465px + 100% - 423px) / 2); top:23px; height:36px; transform:translateX(-50%);
+#playerCounts{ left:calc((465px + 100% - 434px) / 2); top:23px; height:36px; transform:translateX(-50%);
   display:flex; align-items:center; gap:18px; padding:0 20px; white-space:nowrap;
   border-radius:18px; background:linear-gradient(180deg,#02030a,#000 60%,#03050f);
   border:1.5px solid #1d36a0; box-shadow:0 0 6px rgb(40 80 255 / .3); }

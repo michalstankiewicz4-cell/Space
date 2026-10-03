@@ -532,6 +532,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.32.5", items: ["Another touch to the top bar: a blue hook where the top line ends."] },
     { v: "2.32.4", items: ["A refreshed top bar, the same on the start screen and in the game: one line under the title flowing into the gold, a new right corner, the menu a little longer."] },
     { v: "2.32.1", items: ["Community links on the start screen: GitHub Discussions (Discord and YouTube coming)."] },
     { v: "2.30.0", items: ["Galaxy map (key M): the Milky Way from above, with your starting system marked. Scroll to zoom in, drag to look around."] },

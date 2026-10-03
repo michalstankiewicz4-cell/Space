@@ -4,6 +4,12 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.32.5]
+
+### Changed
+- The top bar: a blue hook (`.tbHook`, the top rail's colour) where the top
+  rail ends, over the gold block's left edge, and the lilac bracket level with it (top and bottom) — on both screens.
+
 ## [2.32.4]
 
 ### Changed
