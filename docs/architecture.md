@@ -86,6 +86,17 @@ then read just that range.
     will sample it).
   - Fleet memory saves the order kind (`roj-fleet-pos`, 6th field; older
     saves restore as attacks).
+  - **Another player's station** (v2.35.0): a click on it with ships
+    selected is a course there and the same menu (`clickRemoteStation`;
+    its handle `rp.stationRef` got `mesh` so it works as a target).
+    ORBIT circles it just outside its protective field
+    (`STATION_FIELD_RADIUS` + 2.5); LAND goes into the field and holds in
+    its inner layer (0.55 of the field's radius), a place per ship, still
+    relative to the station (`orders.js#updateDock`; status "In the
+    field"); ATTACK is greyed out ("coming soon"). The order ends when the
+    owner leaves (`targetAlive`); it isn't kept across a reload. Nothing
+    new goes over the network: the owner sees the ships through the usual
+    ship broadcast.
 - **An ordered ship ignores gravity** (`solarGravity.js` skips it while
   `sh.commandedTarget` or `sh.returning`). Steering against real gravity
   was tried twice and measured: a ship sent 345 units never arrived in

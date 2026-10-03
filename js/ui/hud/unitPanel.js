@@ -1,5 +1,5 @@
 import { ctx } from "../../core/context.js";
-import { orderStatus } from "../../ships/orders.js";
+import { orderStatus, targetLabel } from "../../ships/orders.js";
 import { state, swarmStats } from "../../core/gameState.js";
 import { TREE } from "../../config.js";
 import { setShipSelected } from "../../ships/swarm.js";
@@ -74,6 +74,8 @@ export function getUnitThumbTarget(){
 }
 
 function bodyName(b){
+  const st = targetLabel(b);
+  if(st) return st;
   return b && !b.dying ? t("body." + bodyVariantKey(b)) : "—";
 }
 

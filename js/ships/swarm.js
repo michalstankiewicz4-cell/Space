@@ -9,7 +9,7 @@ import { swarmStats } from "../core/gameState.js";
 import { paintScorch, applyHealthVisual, isSpent } from "../world/bodies.js";
 import { spawnBiteParticles, spawnSparks } from "../fx/particles.js";
 import { showBeam, hideBolt, disposeBeam } from "./biteBeam.js";
-import { orderOf, arriveRange, manoeuvring, updateOrbit, updateLanding } from "./orders.js";
+import { orderOf, arriveRange, manoeuvring, updateOrbit, updateLanding, updateDock, isStation, targetAlive } from "./orders.js";
 import { showToast } from "../ui/hud/eventLog.js";
 import { t } from "../i18n.js";
 import { SHIP_API, updateProgrammedShip } from "./shipProgram.js";
@@ -206,7 +206,7 @@ export function updateShips(dt){
 
     // Ships only ever move on an explicit player order (commandTo() in
     // scene/controls.js) — no automatic nearest-planet targeting.
-    if(sh.commandedTarget && (sh.commandedTarget.dying || ctx.planets.indexOf(sh.commandedTarget)===-1)){
+    if(sh.commandedTarget && !targetAlive(sh.commandedTarget)){   // a body gone, a station whose owner left (ships/orders.js)
       sh.commandedTarget = null;
     }
     if(sh.commandedTarget) sh.returning = false;   // a course order replaces RETURN TO BASE
@@ -231,7 +231,9 @@ export function updateShips(dt){
     const dist = toTarget.length();
     const eatRange = sh.target.radius + EAT_ORBIT_GAP;   // just above the surface, whatever the body's size
     // what it does on arrival: orbit, attack or land (ships/orders.js)
-    const order = orderOf(sh);
+    // what it does on arrival; a station can't be attacked (yet): it orbits
+    let order = orderOf(sh);
+    if(order === "attack" && isStation(sh.target)) order = "orbit";
 
     if(dist > arriveRange(sh, sh.target) && !manoeuvring(sh)){
       hideBolt(sh);
@@ -250,7 +252,8 @@ export function updateShips(dt){
       updateOrbit(sh, sh.target, dt);
     } else if(order === "land"){
       hideBolt(sh);
-      updateLanding(sh, sh.target, dt);
+      if(isStation(sh.target)) updateDock(sh, sh.target, dt);   // into its field's inner layer
+      else updateLanding(sh, sh.target, dt);
     } else {
       // orbit gently around the planet while eating
       sh.eatPulse += dt*4;

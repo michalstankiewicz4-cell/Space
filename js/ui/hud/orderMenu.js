@@ -1,10 +1,11 @@
 import { t } from "../../i18n.js";
-import { ORDERS, canLand } from "../../ships/orders.js";
+import { ORDERS, canLand, canAttack } from "../../ships/orders.js";
 
 // The order menu (#orderMenu): a click on a body with ships selected sends
 // them there into orbit (scene/controls.js#clickPlanet) and opens this at
 // the pointer — ORBIT / ATTACK / LAND, what they do once there
-// (ships/orders.js). LAND only where there's ground. It closes on a pick, a
+// (ships/orders.js). LAND only where there's ground (or into a station's
+// field); ATTACK not against a station yet. It closes on a pick, a
 // press anywhere else, Esc, or after CLOSE_S seconds untouched.
 const CLOSE_S = 6;
 let el = null, onPick = null, timer = 0;
@@ -23,9 +24,9 @@ export function openOrderMenu(x, y, body, current, pick){
     const order = b.dataset.order;
     b.textContent = t("orders." + order);
     b.classList.toggle("on", order === current);
-    const blocked = order === "land" && !canLand(body);
-    b.disabled = blocked;
-    b.title = blocked ? t("orders.noGround") : "";
+    const noLand = order === "land" && !canLand(body), noAttack = order === "attack" && !canAttack(body);
+    b.disabled = noLand || noAttack;
+    b.title = noLand ? t("orders.noGround") : noAttack ? t("orders.attackSoon") : "";
   });
   el.classList.remove("hidden");
   // beside the pointer, kept inside the window

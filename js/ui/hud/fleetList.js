@@ -1,5 +1,5 @@
 import { ctx } from "../../core/context.js";
-import { orderStatus } from "../../ships/orders.js";
+import { orderStatus, targetLabel } from "../../ships/orders.js";
 import { setShipCamTarget } from "../../scene/shipcam.js";
 import { setShipSelected } from "../../ships/swarm.js";
 import { clearSelection } from "../../scene/controls.js";
@@ -27,6 +27,8 @@ function statusText(sh){
 function targetText(sh){
   if(sh.returning) return "→ " + t("hud.base");
   const b = sh.commandedTarget || sh.target;
+  const st = targetLabel(b);
+  if(st) return "→ " + st;
   return b && !b.dying ? "→ " + t("body." + bodyVariantKey(b)) : "";
 }
 

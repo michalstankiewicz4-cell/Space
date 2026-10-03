@@ -335,7 +335,7 @@ export const en = {
     shipClass: "Swarm ship", droneClass: "Programmable drone",
     group: function(n){ return n + " units"; }, groupClass: "Group selection", mixed: "Various",
     idle: "Idle", enRoute: "En route", feeding: "Feeding", returning: "Returning to base", base: "Base",
-    orbiting: "In orbit", landing: "Landing", landed: "Landed",
+    orbiting: "In orbit", landing: "Landing", landed: "Landed", docking: "Entering the field", docked: "In the field",
     pause: "Pause", fast: "Faster", speedSoon: "Game time is shared by every player online — it can't be paused or sped up in multiplayer.",
     status: "Status", target: "Target", velocity: "Velocity", bite: "Bite/s", selected: "Selected",
     speedLvl: "Speed", biteLvl: "Bite", heatLvl: "Heat res.",
@@ -365,6 +365,8 @@ export const en = {
   orders: {
     orbit: "ORBIT", attack: "ATTACK", land: "LAND",
     noGround: "No ground to land on",
+    attackSoon: "Attacking stations: coming soon",
+    stationOf: function(nick){ return "Station: " + nick; },
     given: function(o, n){ return "Order: " + o + " (" + n + (n === 1 ? " unit)" : " units)"); }
   },
   cmd: {
@@ -556,6 +558,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.35.0", items: ["You can send ships to another player's station: they orbit it, or enter its protective field and hold there. Attacking stations comes later."] },
     { v: "2.34.2", items: ["Building is clearer: next to the pointer you see whether a module fits here, and why not if it doesn't. Any module can be the first one.", "You can now build on ice: frozen seas and ice sheets count as solid ground."] },
     { v: "2.34.1", items: ["Your graphics settings now apply on a planet's surface too: the same detail, effects and smoothing as in space."] },
     { v: "2.34.0", items: ["Watch a ship (VIEW) and order it to LAND: the view goes down to the surface with it, through the atmosphere.", "On the ground you can drive around, hop to your base and build it, then take off back into orbit."] },

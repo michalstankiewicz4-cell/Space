@@ -340,7 +340,7 @@ export const pl = {
     shipClass: "Statek roju", droneClass: "Dron programowalny",
     group: function(n){ return "Grupa: " + n; }, groupClass: "Zaznaczenie grupowe", mixed: "Różne",
     idle: "Bezczynny", enRoute: "W drodze", feeding: "Żeruje", returning: "Wraca do bazy", base: "Baza",
-    orbiting: "Na orbicie", landing: "Ląduje", landed: "Wylądował",
+    orbiting: "Na orbicie", landing: "Ląduje", landed: "Wylądował", docking: "Wchodzi w pole", docked: "W polu ochronnym",
     pause: "Pauza", fast: "Szybciej", speedSoon: "Czas gry jest wspólny dla wszystkich graczy online — w trybie wieloosobowym nie da się go zatrzymać ani przyspieszyć.",
     status: "Status", target: "Cel", velocity: "Prędkość", bite: "Gryz/s", selected: "Zaznaczone",
     speedLvl: "Prędkość", biteLvl: "Gryz", heatLvl: "Ciepło",
@@ -370,6 +370,8 @@ export const pl = {
   orders: {
     orbit: "ORBITA", attack: "ATAKUJ", land: "LĄDUJ",
     noGround: "Tu nie ma gruntu do lądowania",
+    attackSoon: "Atak na stacje: wkrótce",
+    stationOf: function(nick){ return "Stacja: " + nick; },
     given: function(o, n){ return "Rozkaz: " + o + " (" + n + " " + plPlural(n, "jednostka", "jednostki", "jednostek") + ")"; }
   },
   cmd: {
@@ -557,6 +559,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
+    { v: "2.35.0", items: ["Możesz wysłać statki do stacji innego gracza: krążą wokół niej albo wchodzą w jej pole ochronne i tam się zatrzymują. Atak na stacje przyjdzie później."] },
     { v: "2.34.2", items: ["Budowanie jest czytelniejsze: przy kursorze widać, czy moduł tu pasuje, a jeśli nie, to dlaczego. Pierwszym modułem może być dowolny.", "Można teraz budować na lodzie: zamarznięte morza i lądolód liczą się jako twardy grunt."] },
     { v: "2.34.1", items: ["Ustawienia grafiki działają teraz także na powierzchni planety: ten sam detal, efekty i wygładzanie co w kosmosie."] },
     { v: "2.34.0", items: ["Obserwuj statek (VIEW) i wydaj mu rozkaz LĄDUJ: widok schodzi z nim na powierzchnię, przez atmosferę.", "Na powierzchni możesz jeździć, skoczyć do bazy i ją budować, a potem wystartować z powrotem na orbitę."] },

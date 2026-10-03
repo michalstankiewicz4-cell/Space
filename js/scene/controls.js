@@ -17,7 +17,7 @@ import { t } from "../i18n.js";
 import { settings } from "../settings.js";
 import { stopUnitProgram } from "../program/runner.js";
 import { camState, rotateCamera, zoomCamera, initCameraButtons } from "./camera.js";
-import { orderOf, resetOrder } from "../ships/orders.js";
+import { orderOf, resetOrder, canAttack } from "../ships/orders.js";
 import { openOrderMenu } from "../ui/hud/orderMenu.js";
 import { isOnGround } from "../surface/groundView.js";
 
@@ -79,8 +79,11 @@ function deselectBlackHole(){
 
 // Another player's station (rp.stationRef, net/shipsBroadcast.js), clicked
 // in the world or on the minimap: selected, shown read-only in the info slot.
-export function clickRemoteStation(ref){
+export function clickRemoteStation(ref, at){
   if(!ref || !ref.alive()) return;
+  // with ships selected: a course there, into orbit, and the order menu
+  const sel = selectedShips();
+  if(sel.length > 0){ orderWithMenu(ref, sel, at); return; }
   clearSelection();
   selectedRemoteStation = ref;
   ref.selected = true;
@@ -152,6 +155,19 @@ function commandTo(planet, list, order){
   showToast(list.length===ctx.ships.length ? t("toast.orderAll") : t("toast.orderSome")(list.length));
 }
 
+// A course for the selected ships (into orbit), then the order menu at `at`
+// (the click; else the target on screen): a body or another player's station.
+function orderWithMenu(target, sel, at){
+  commandTo(target, sel);
+  const p = at || screenPos(target.mesh.position);
+  openOrderMenu(p.x, p.y, target, orderOf(sel[0]), function(order){
+    if(order === "attack" && !canAttack(target)) return;
+    const still = sel.filter(function(sh){ return ctx.ships.indexOf(sh) >= 0; });
+    commandTo(target, still, order);
+    showToast(t("orders.given")(t("orders." + order), still.length));
+  });
+}
+
 // A plain (non-drag) click on a planet — shared by the 3D view below and
 // the HUD minimap (ui/hud/minimap.js), so both behave exactly alike: with
 // ships selected it's a course order (into orbit, with the order menu at
@@ -179,13 +195,7 @@ export function clickPlanet(hitPlanet, shiftKey, at){
   } else {
     const sel = selectedShips();
     if(sel.length>0){
-      commandTo(hitPlanet, sel);
-      const p = at || screenPos(hitPlanet.mesh.position);
-      openOrderMenu(p.x, p.y, hitPlanet, orderOf(sel[0]), function(order){
-        const still = sel.filter(function(sh){ return ctx.ships.indexOf(sh) >= 0; });
-        commandTo(hitPlanet, still, order);
-        showToast(t("orders.given")(t("orders." + order), still.length));
-      });
+      orderWithMenu(hitPlanet, sel, at);
     } else {
       clearSelection();
       setPlanetSelected(hitPlanet, true);
@@ -328,7 +338,7 @@ export function initControls(){
       }
       const hitRemoteStation = pickRemoteStationAt(e);
       if(hitRemoteStation){
-        clickRemoteStation(hitRemoteStation);
+        clickRemoteStation(hitRemoteStation, { x: e.clientX, y: e.clientY });
         return;
       }
       const hitShip = pickShipAt(e);

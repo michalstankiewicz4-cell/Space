@@ -126,7 +126,7 @@ function makeGhostStation(rp){
   // The handle selection, the info panel, the minimap and the camera focus
   // use; alive() turns false when the owner leaves or stops sending it.
   rp.stationRef = {
-    kind: "remoteStation", rp: rp, group: mesh, pickMesh: pickMesh,
+    kind: "remoteStation", rp: rp, group: mesh, mesh: mesh, pickMesh: pickMesh,   // mesh: a course target (ships/orders.js)
     radius: STATION_PICK_RADIUS, frameRadius: STATION_PICK_RADIUS, focusDistance: 8,
     selected: false,
     alive: function(){ return rp.stationMesh === mesh && !!ctx.remotePlayers[rp.id]; }

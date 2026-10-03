@@ -4,6 +4,16 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.35.0]
+
+### Added
+- Ships can be sent to another player's station: click it with ships
+  selected, then the order menu. ORBIT circles it just outside its
+  protective field; LAND enters the field and holds in its inner layer
+  (a place per ship, following the station); ATTACK is greyed out, coming
+  later. The fleet list and the unit panel show "Station: <name>", "In
+  the field". The order ends when the owner leaves.
+
 ## [2.34.2]
 
 ### Changed

@@ -1,3 +1,4 @@
+import { targetAlive } from "../ships/orders.js";
 import { ctx } from "../core/context.js";
 import { swarmStats } from "../core/gameState.js";
 import { parseDroneScript } from "../drone/dsl.js";
@@ -99,7 +100,7 @@ export function predictCurrentPath(unit){
   for(let e = 0; e < HORIZON_S; e += SIM_DT){
     const t = t0 + e;
     if(target){
-      if(target.dying || ctx.planets.indexOf(target) === -1) break;
+      if(!targetAlive(target)) break;
       bodyAt(target, t, TMP).sub(v.pos);
       if(TMP.length() <= target.radius + EAT_ORBIT_GAP) break;     // arrived: it orbits and eats there
       v.vel.lerp(TMP.normalize().multiplyScalar(cruise), steer);
