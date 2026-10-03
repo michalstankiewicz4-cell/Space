@@ -4,6 +4,20 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.32.7]
+
+### Added
+- Dev Tools LABS: Surface (`surface.html`) and Buildings (`buildings.html`).
+- BodyKit: `planetTerrain()` — a planet's ground sampled up close from its
+  own GLSL (`planetSurface()`, now shared with the globe's shader), the base
+  of the surface lab's terrain (SurfaceKit). The planets themselves look
+  exactly the same.
+
+### Fixed
+- BodyKit's cloud worlds: the ground under the deck (seen only from the
+  surface) is dry, rusty rock instead of seas and grass; the globe is
+  pixel-identical.
+
 ## [2.32.6]
 
 ### Added

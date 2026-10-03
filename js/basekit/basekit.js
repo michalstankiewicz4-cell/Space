@@ -102,7 +102,7 @@ function legs(g, s, h, mat, seg) {
 
 // ---------- the modules ----------
 const MODULES = [
-  { id: "pad", name: "LANDING PAD", footprint: 10, height: 1.2, maxSlope: 0.12, build: 40,
+  { id: "pad", name: "LANDING PAD", footprint: 10, height: 1.2, maxSlope: 0.2, build: 40,
     cost: [["concrete", 30], ["hull plating", 6]],
     make(g, m, seg) {
       const plate = mesh(new THREE.CylinderGeometry(9, 9.4, 0.6, 6), [m.dark, m.pad, m.dark], 0, 0.3, 0);
@@ -114,7 +114,7 @@ const MODULES = [
         const l = light(k % 2 ? 0x4fe3c6 : 0xf8bb56, 1.2); l.position.set(x, 1.2, z); l.userData.phase = k; g.add(l); g.userData.lights.push(l);
       }
     } },
-  { id: "hab", name: "HABITAT", footprint: 7, height: 6.5, maxSlope: 0.18, build: 90,
+  { id: "hab", name: "HABITAT", footprint: 7, height: 6.5, maxSlope: 0.28, build: 90,
     cost: [["hull plating", 24], ["glass", 10], ["electronics", 6]],
     make(g, m, seg) {
       g.add(mesh(new THREE.CylinderGeometry(6, 6.3, 2.6, seg(32, 12)), m.hull, 0, 1.3, 0));
@@ -129,7 +129,7 @@ const MODULES = [
       const door = mesh(new THREE.BoxGeometry(2.4, 2.2, 1.6), m.dark, 0, 1.1, 6.3); g.add(door);
       g.add(mesh(new THREE.BoxGeometry(1.4, 1.5, 0.1), m.teal, 0, 1.15, 7.12));
     } },
-  { id: "solar", name: "SOLAR ARRAY", footprint: 7, height: 4.2, maxSlope: 0.22, build: 45,
+  { id: "solar", name: "SOLAR ARRAY", footprint: 7, height: 4.2, maxSlope: 0.35, build: 45,
     cost: [["silicon", 18], ["hull plating", 4]],
     make(g, m, seg) {
       for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) {
@@ -145,7 +145,7 @@ const MODULES = [
       g.add(mesh(new THREE.BoxGeometry(1.2, 1, 1.2), m.dark, 6.6, 0.5, 0));     // the inverter box
       g.add(mesh(new THREE.BoxGeometry(0.6, 0.12, 0.05), m.teal, 6.6, 0.75, 0.61));
     } },
-  { id: "drill", name: "MINE", footprint: 6, height: 15, maxSlope: 0.25, build: 120,
+  { id: "drill", name: "MINE", footprint: 6, height: 15, maxSlope: 0.4, build: 120,
     cost: [["steel", 20], ["hull plating", 8], ["electronics", 4]],
     make(g, m, seg) {
       g.add(mesh(new THREE.BoxGeometry(7, 1, 7), m.dark, 0, 0.5, 0));
@@ -163,7 +163,7 @@ const MODULES = [
       g.add(mesh(new THREE.BoxGeometry(2.0, 0.1, 0.1), m.hot, 4.2, 2.3, 1.22));
       const l = light(0xff5a3c, 1.4); l.position.set(0, top + 1.6, 0); l.userData.phase = 0; g.add(l); g.userData.lights = [l];
     } },
-  { id: "refinery", name: "REFINERY", footprint: 8, height: 11, maxSlope: 0.15, build: 150,
+  { id: "refinery", name: "REFINERY", footprint: 8, height: 11, maxSlope: 0.25, build: 150,
     cost: [["steel", 26], ["hull plating", 10], ["electronics", 8]],
     make(g, m, seg) {
       g.add(mesh(new THREE.BoxGeometry(12, 0.6, 9), m.dark, 0, 0.3, 0));
@@ -179,7 +179,7 @@ const MODULES = [
         g.add(SK.strut(new THREE.Vector3(...a), new THREE.Vector3(...b), 0.18, m.frame, seg(8, 4)));
       const l = light(0xff8a3c, 1.6); l.position.set(4.8, 11, -2.5); l.userData.phase = 2; g.add(l); g.userData.lights = [l];
     } },
-  { id: "depot", name: "DEPOT", footprint: 7, height: 6.5, maxSlope: 0.2, build: 60,
+  { id: "depot", name: "DEPOT", footprint: 7, height: 6.5, maxSlope: 0.3, build: 60,
     cost: [["hull plating", 16], ["steel", 8]],
     make(g, m, seg) {
       g.add(mesh(new THREE.BoxGeometry(11, 0.4, 9), m.dark, 0, 0.2, 0));
@@ -222,6 +222,11 @@ function buildModule(id, { detail = 1 } = {}) {
   // root: the solid model, its hologram and the construction ring
   const root = new THREE.Group(), solid = new THREE.Group();
   def.make(solid, m, seg);
+  // the foundation: a levelled plinth reaching down as far as the steepest
+  // ground the module accepts (maxSlope) — on a slope its low side shows,
+  // on flat ground it stays buried. Built first (it's under the work's front).
+  const depth = def.maxSlope * def.footprint + 0.6, fr = def.footprint * 0.9;
+  solid.add(mesh(new THREE.CylinderGeometry(fr, fr + depth * 0.7, depth, seg(24, 8)), m.dark, 0, 0.05 - depth / 2, 0));   // flared: an earthwork, not a disc
   const lights = solid.userData.lights || [];
   const ghost = new THREE.Group(), holo = holoMaterial();
   solid.updateMatrixWorld(true);

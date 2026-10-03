@@ -1331,7 +1331,7 @@ function planetTerrain(groupId, bodyId, values) {
             gl_Position = projectionMatrix * viewMatrix * wp;
           }`,
         fragmentShader: PLANET_GLSL + GLSL_PLANET_SURFACE + `
-          uniform vec3 uSunDir; uniform vec3 uFogColor; uniform float uFog, uGrainFreq;
+          uniform vec3 uSunDir; uniform vec3 uFogColor; uniform float uFog, uGrainFreq; uniform float uAtmo; uniform vec3 uAtmoColor;
           varying vec3 vDir; varying float vH; varying vec3 vNormalW; varying vec3 vWorldPos;
           void main(){
             vec3 p = normalize(vDir);
@@ -2087,7 +2087,9 @@ const GROUPS = [
     id: "clouded", name: "CLOUD WORLDS", kmPerSize: 6371, view: 4.4, layers: { clouds: "CLOUD DECK", atmosphere: "ATMOSPHERE" },
     params: planetParams(["size", ["overcast", { value: 1 }], "bands", "haze", ["cloudDrift", { label: "Wind speed", value: 0.6 }],
       "atmosphere", ["atmoHue", { value: 42 }]]),
-    fixed: { clouds: 1, sea: -0.2, ice: 0, mountains: 0 },   // flat: mountains would poke through the deck
+    // flat: mountains would poke through the deck. Under it (seen only from the
+    // ground, planetTerrain): no seas, scorched rusty rock
+    fixed: { clouds: 1, sea: -0.6, ice: 0, mountains: 0, climate: 0, rust: 0.8 },
     bodies: [
       { id: "venus", name: "VENUS", values: { seed: 9, size: 0.95, tilt: 3, spin: 0.05, haze: 0.45, atmosphere: 0.25, atmoHue: 48 } },
     ],

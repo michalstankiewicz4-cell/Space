@@ -47,6 +47,11 @@ js/
                      (galaxyRender.js; the window is ui/windows/galaxyMap.js, key M)
   systemkit/         SystemKit — star systems from BodyKit's bodies (data, presets, a seeded
                      generator, building); the system lab's (systems.html), not in the game yet
+  surfacekit/        SurfaceKit — a planet's ground up close (cube-sphere tiles from BodyKit's
+                     planetTerrain), lat/lon helpers, bases saved in localStorage; the surface
+                     lab's (surface.html), not in the game yet; see docs/surface.md
+  basekit/           BaseKit — planetary base modules from ShipKit's generators (built, hologram,
+                     under construction); the building and surface labs', not in the game yet
   postkit/           PostKit — post-processing (bloom, MSAA, FXAA, lensing, depth of field, sun
                      flare, the "robot eyes" filter) and the labs' IMAGE EFFECTS panel, one classic
                      script shared by the game (scene/post.js) and both labs
@@ -134,7 +139,9 @@ colourful code-editor theme), switchable, not yet part of the game — see
 [`docs/skins.md`](docs/skins.md). `systems.html` is the system lab: star
 systems built from the body lab's bodies — presets, random systems from a
 seed, editing (centres, orbits, rings, moons, background) — see
-[`docs/systems.md`](docs/systems.md).
+[`docs/systems.md`](docs/systems.md). `surface.html` is the surface lab
+(land on a planet, drive, found a base) and `buildings.html` the building
+lab (the base modules) — see [`docs/surface.md`](docs/surface.md).
 `tools/` holds small standalone dev
 utilities (e.g. `grainTexture.html`, which regenerates `css/ui/grain.png`). `blog/` isn't part of the game at all — see "Devlog"
 below.

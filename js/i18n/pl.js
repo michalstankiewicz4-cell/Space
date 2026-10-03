@@ -310,7 +310,7 @@ export const pl = {
     noLights: "Wyłącz światła",
     perf: "Statystyki wydajności",
     labs: "LABORATORIA",
-    lab: { ship: "Statki", bodies: "Ciała", systems: "Układy", scale: "Skala", skins: "Skórki" },
+    lab: { ship: "Statki", bodies: "Ciała", systems: "Układy", surface: "Powierzchnia", buildings: "Budynki", scale: "Skala", skins: "Skórki" },
     stats: {
       fps: "FPS", frame: "Czas klatki", worst: "Najgorsza klatka (0,5 s)",
       cpu: "CPU: logika + render", calls: "Wywołania rysowania / klatka", tris: "Trójkąty / klatka",
@@ -535,6 +535,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
+    { v: "2.32.7", items: ["Dwa nowe laboratoria w Dev Tools: Powierzchnia (lądowanie na planecie, jazda, zakładanie bazy) i Budynki (moduły bazy). Pod maską: planety można już oglądać z powierzchni — pierwszy krok w stronę lądowania."] },
     { v: "2.32.6", items: ["Dev Tools (klucz w widoku 3D): przyciski otwierające laboratoria — statki, ciała, układy, skala, skórki."] },
     { v: "2.32.5", items: ["Kolejny szlif górnego paska: niebieski haczyk na końcu górnej linii."] },
     { v: "2.32.4", items: ["Odświeżony górny pasek, taki sam na ekranie startowym i w grze: ciągła linia pod tytułem przechodząca w złoty kształt, nowy prawy narożnik, nieco dłuższe przyciski menu."] },
