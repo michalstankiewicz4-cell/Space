@@ -10,6 +10,9 @@ shown next to the title on the start screen and in the browser tab title
 - The line under the title is one continuous bar (it was four segments,
   one with an arrow), on the start screen and in the game; its last third
   widens smoothly into the gold swoosh's foot.
+- In the game the black gap under the top bar is 8 px, the same as above
+  it (it was 14): the menu, the 3D view, PLANET INFO and the fleet list
+  moved up. The menu buttons reach the fleet list frame's right edge.
 
 ## [2.32.3]
 

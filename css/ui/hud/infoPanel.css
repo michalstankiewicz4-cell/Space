@@ -1,5 +1,5 @@
 /* HUD planet info panel: a planet or the station (ui/hud/infoPanel.js). */
-#infoPanel{ right:16px; top:88px; width:307px; height:333px; }
+#infoPanel{ right:16px; top:83px; width:307px; height:338px; }
 #plTopBar{ left:12px; top:6px; width:16px; height:24px; border-radius:9px 0 0 0; }
 #infoHd{ left:37px; top:3px; }
 #infoCloseBtn{ right:10px; top:5px; z-index:1; }
