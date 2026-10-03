@@ -1002,8 +1002,70 @@ function withRounding(round, k, fn) {
 // half-size (a torus' tube, a box's thinnest side…), which sizes the bead.
 function solidTest(geo) {
   const f = solidTestOf(geo);
-  if (f) f.thick = thicknessOf(geo);
+  if (f) { f.thick = thicknessOf(geo); f.normal = solidNormalOf(geo); }
   return f;
+}
+// The outward normal of a solid's surface nearest a local point, from the
+// shape itself (a mesh's vertex normals are ambiguous where faces meet).
+function solidNormalOf(geo) {
+  const s = geo.userData && geo.userData.shape, P = geo.parameters || {}, t = geo.type;
+  const box = (w, h, d) => (p, out) => {
+    const dx = w / 2 - Math.abs(p.x), dy = h / 2 - Math.abs(p.y), dz = d / 2 - Math.abs(p.z);
+    if (dx <= dy && dx <= dz) return out.set(Math.sign(p.x) || 1, 0, 0);
+    if (dy <= dz) return out.set(0, Math.sign(p.y) || 1, 0);
+    return out.set(0, 0, Math.sign(p.z) || 1);
+  };
+  const cyl = (rt, rb, h) => (p, out) => {
+    const r = Math.hypot(p.x, p.z), rr = rb + (rt - rb) * (p.y + h / 2) / h;
+    const dSide = Math.abs(rr - r), dTop = Math.abs(h / 2 - p.y), dBot = Math.abs(p.y + h / 2);
+    if (dTop < dSide && dTop <= dBot) return out.set(0, 1, 0);
+    if (dBot < dSide) return out.set(0, -1, 0);
+    return r > 1e-9 ? out.set(p.x / r, (rb - rt) / h, p.z / r).normalize() : out.set(1, 0, 0);
+  };
+  if (s && s.kind === "box") return box(s.w, s.h, s.d);
+  if (s && s.kind === "cylinder") return cyl(s.rt, s.rb, s.h);
+  if (t === "BoxGeometry") return box(P.width, P.height, P.depth);
+  if (t === "CylinderGeometry") return cyl(P.radiusTop, P.radiusBottom, P.height);
+  if (t === "ConeGeometry") return cyl(0, P.radius, P.height);
+  if (t === "SphereGeometry") return (p, out) => out.copy(p).normalize();
+  if (t === "TorusGeometry") return (p, out) => { const l = Math.hypot(p.x, p.y) || 1; return out.set(p.x - p.x / l * P.radius, p.y - p.y / l * P.radius, p.z).normalize(); };
+  if (t === "LatheGeometry") {
+    const pts = P.points;
+    return (p, out) => {
+      const r = Math.hypot(p.x, p.z) || 1e-9;
+      let best = -1, slope = 0;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i], b = pts[i + 1];
+        if ((p.y - a.y) * (p.y - b.y) > 0 || a.y === b.y) continue;
+        const x = a.x + (b.x - a.x) * (p.y - a.y) / (b.y - a.y);
+        if (x > best) { best = x; slope = (b.x - a.x) / (b.y - a.y); }
+      }
+      return out.set(p.x / r, -slope, p.z / r).normalize();      // the gradient of r − f(y)
+    };
+  }
+  if (t === "ExtrudeGeometry") {
+    const sh = Array.isArray(P.shapes) ? P.shapes : [P.shapes], o = P.options || {};
+    const depth = o.depth !== undefined ? o.depth : o.amount !== undefined ? o.amount : 1;
+    const loops = [];
+    for (const x of sh) { const e = x.extractPoints(12); loops.push(e.shape, ...e.holes); }
+    return (p, out) => {
+      // the nearest outline edge, or a cap
+      let bd = Infinity, nx = 0, ny = 0;
+      for (const L of loops) for (let i = 0, j = L.length - 1; i < L.length; j = i++) {
+        const a = L[j], b = L[i], ex = b.x - a.x, ey = b.y - a.y, l2 = ex * ex + ey * ey || 1e-12;
+        const k = Math.max(0, Math.min(1, ((p.x - a.x) * ex + (p.y - a.y) * ey) / l2));
+        const qx = a.x + ex * k - p.x, qy = a.y + ey * k - p.y, d = qx * qx + qy * qy;
+        if (d < bd) { bd = d; nx = -qx; ny = -qy; const l = Math.hypot(ey, ex) || 1; if (nx * nx + ny * ny < 1e-12) { nx = ey / l; ny = -ex / l; } }
+      }
+      const dSide = Math.sqrt(bd), dCap = Math.min(Math.abs(p.z), Math.abs(depth - p.z));
+      if (dCap < dSide) return out.set(0, 0, p.z > depth / 2 ? 1 : -1);
+      // inside the outline the vector to the edge points out; outside, in — flip so it points out
+      const len = Math.hypot(nx, ny) || 1;
+      out.set(-nx / len, -ny / len, 0);
+      return out;
+    };
+  }
+  return null;
 }
 function thicknessOf(geo) {
   const s = geo.userData && geo.userData.shape, P = geo.parameters || {}, t = geo.type;
@@ -1014,6 +1076,10 @@ function thicknessOf(geo) {
   if (t === "ConeGeometry") return Math.min(P.radius, P.height / 2);
   if (t === "SphereGeometry") return P.radius;
   if (t === "TorusGeometry") return P.tube;
+  if (t === "LatheGeometry" && P.points) {
+    const ys = P.points.map((q) => q.y);
+    return Math.min(Math.max(...P.points.map((q) => q.x)), (Math.max(...ys) - Math.min(...ys)) / 2);
+  }
   geo.computeBoundingBox();
   const sz = geo.boundingBox.getSize(new THREE.Vector3());
   return Math.min(sz.x, sz.y, sz.z) / 2;
@@ -1040,7 +1106,11 @@ function solidTestOf(geo) {
     };
   }
   if (t === "TorusGeometry" && full(P.arc)) return (p) => { const q = Math.hypot(p.x, p.y) - P.radius; return q * q + p.z * p.z < P.tube * P.tube; };
-  if (t === "LatheGeometry" && full(P.phiLength) && P.points && P.points.length > 1) {
+  // a lathe is a solid only if it closes on its axis at one end at least (a
+  // hull with a nose); an open bell or tube is a thin shell, not a solid
+  const latheSolid = t === "LatheGeometry" && full(P.phiLength) && P.points && P.points.length > 1 &&
+    Math.min(P.points[0].x, P.points[P.points.length - 1].x) < 0.05 * Math.max(...P.points.map((q) => q.x));
+  if (latheSolid) {
     const pts = P.points;
     return (p) => {
       const rr = Math.hypot(p.x, p.z);
@@ -1077,35 +1147,28 @@ function sealJoints(root, seal, detail, style = "fillet") {
     const box = new THREE.Box3().setFromObject(o);
     const pos = o.geometry.attributes.position, idx = o.geometry.index;
     // the mesh's edges (each once), in world space
-    const world = new Float32Array(pos.count * 3), nrm = new Float32Array(pos.count * 3), v = new THREE.Vector3();
-    const nAttr = o.geometry.attributes.normal, nMat = new THREE.Matrix3().getNormalMatrix(o.matrixWorld);
-    for (let i = 0; i < pos.count; i++) {
-      v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld); world[i * 3] = v.x; world[i * 3 + 1] = v.y; world[i * 3 + 2] = v.z;
-      if (nAttr) { v.fromBufferAttribute(nAttr, i).applyMatrix3(nMat).normalize(); nrm[i * 3] = v.x; nrm[i * 3 + 1] = v.y; nrm[i * 3 + 2] = v.z; }
-    }
+    const world = new Float32Array(pos.count * 3), v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld); world[i * 3] = v.x; world[i * 3 + 1] = v.y; world[i * 3 + 2] = v.z; }
     const edges = [], seen = new Set(), tri = idx ? idx.array : null, nTri = (idx ? idx.count : pos.count) / 3;
     for (let f = 0; f < nTri; f++) for (let e = 0; e < 3; e++) {
       const a = tri ? tri[f * 3 + e] : f * 3 + e, b = tri ? tri[f * 3 + (e + 1) % 3] : f * 3 + (e + 1) % 3;
       const key = a < b ? a * 1e7 + b : b * 1e7 + a;
       if (seen.has(key)) continue; seen.add(key); edges.push(a, b);
     }
-    parts.push({ o, mat: m, inside, box, world, nrm, edges, unit: unitOf(o), radius: box.getSize(v).length() / 2,
+    parts.push({ o, mat: m, inside, box, world, edges, unit: unitOf(o), radius: box.getSize(v).length() / 2,
+      nMat: new THREE.Matrix3().getNormalMatrix(o.matrixWorld),
       thick: inside.thick * o.matrixWorld.getMaxScaleOnAxis(),
       inv: new THREE.Matrix4().copy(o.matrixWorld).invert() });
   });
   const modelR = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).length() / 2;
   const a = new THREE.Vector3(), b = new THREE.Vector3(), m = new THREE.Vector3(), l = new THREE.Vector3();
   const isIn = (P, w) => P.inside(l.copy(w).applyMatrix4(P.inv));
-  // the surface direction of a part near a point: its nearest vertex's normal
-  const nA = new THREE.Vector3(), nB = new THREE.Vector3();
-  const normalNear = (P, w, out) => {
-    let bi = 0, bd = Infinity;
-    for (let i = 0; i < P.world.length; i += 3) {
-      const dx = P.world[i] - w.x, dy = P.world[i + 1] - w.y, dz = P.world[i + 2] - w.z, d = dx * dx + dy * dy + dz * dz;
-      if (d < bd) { bd = d; bi = i; }
-    }
-    return out.fromArray(P.nrm, bi);
-  };
+  // a part's outward surface normal at a world point (the shape's own, see solidNormalOf)
+  const surfaceNormal = (P, w, out) => P.inside.normal(l.copy(w).applyMatrix4(P.inv), out).applyMatrix3(P.nMat).normalize();
+  // the strips are seen from both sides (a twist at a corner must not vanish):
+  // one double-sided copy per material, shared, so merging still groups them
+  const twoSided = new Map();
+  const sideOf = (mat) => { if (!twoSided.has(mat)) { const c = mat.clone(); c.side = THREE.DoubleSide; twoSided.set(mat, c); } return twoSided.get(mat); };
   let beads = 0;
   for (let i = 0; i < parts.length; i++) for (let j = i + 1; j < parts.length; j++) {
     const A = parts[i], B = parts[j];
@@ -1124,12 +1187,10 @@ function sealJoints(root, seal, detail, style = "fillet") {
         const hit = new THREE.Vector3().lerpVectors(a, b, (lo + hi) / 2);
         // only where the two surfaces meet at an angle: parts that run on
         // into each other (a ring's overlapping segments) need no sealing
-        nA.fromArray(S.nrm, S.edges[e] * 3).lerp(nB.fromArray(S.nrm, S.edges[e + 1] * 3), (lo + hi) / 2).normalize();
-        normalNear(T, hit, nB);
-        if (Math.abs(nA.dot(nB)) > 0.82) continue;
-        // keep both surfaces' directions here (the fillet curves from one to the other)
-        const nS = nA.clone(), nT = nB.clone();
-        pts.push(S === A ? { p: hit, na: nS, nb: nT } : { p: hit, na: nT, nb: nS });
+        // both surfaces' directions here, from the shapes (the fillet curves from one to the other)
+        const na = surfaceNormal(A, hit, new THREE.Vector3()), nb = surfaceNormal(B, hit, new THREE.Vector3());
+        if (Math.abs(na.dot(nb)) > 0.82) continue;
+        pts.push({ p: hit, na, nb });
       }
     }
     if (pts.length < 3) continue;
@@ -1164,10 +1225,10 @@ function sealJoints(root, seal, detail, style = "fillet") {
         const curve = new THREE.CatmullRomCurve3(chain.map((c) => c.p.clone().applyMatrix4(inv)), closed, "centripetal");
         geo = new THREE.TubeGeometry(curve, Math.min(400, Math.max(8, chain.length * 3)), rad / sc, Math.max(4, Math.round(6 * detail)), closed);
       } else {
-        geo = filletGeometry(chain, closed, rad * 2.2, Math.max(2, Math.round(4 * detail)), inv);
+        geo = filletGeometry(chain, closed, Math.min(rad * 2.2, 0.5 * Math.min(A.thick, B.thick)), Math.max(2, Math.round(4 * detail)), inv);
         if (!geo) continue;
       }
-      const bead = shadowed(new THREE.Mesh(geo, big.mat));
+      const bead = shadowed(new THREE.Mesh(geo, style === "bead" ? big.mat : sideOf(big.mat)));
       bead.userData.seal = true;
       A.unit.add(bead);
       beads++;
@@ -1213,10 +1274,15 @@ function filletGeometry(chain, closed, w, steps, inv) {
     const a0 = i * rows, b0 = ((i + 1) % n) * rows;
     for (let j = 0; j < steps; j++) idx.push(a0 + j, b0 + j, a0 + j + 1, b0 + j, b0 + j + 1, a0 + j + 1);
   }
-  // face the strip the way its normals point
-  const v0 = new THREE.Vector3().fromArray(pos, idx[0] * 3), v1 = new THREE.Vector3().fromArray(pos, idx[1] * 3), v2 = new THREE.Vector3().fromArray(pos, idx[2] * 3);
-  const fn = new THREE.Vector3().crossVectors(v1.sub(v0), v2.sub(v0));
-  if (fn.dot(new THREE.Vector3().fromArray(nor, idx[0] * 3)) < 0) for (let t = 0; t < idx.length; t += 3) { const x = idx[t + 1]; idx[t + 1] = idx[t + 2]; idx[t + 2] = x; }
+  // face the strip the way its normals point: a vote of all its triangles
+  // (one could be degenerate)
+  const v0 = new THREE.Vector3(), v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), fn = new THREE.Vector3(), vn = new THREE.Vector3();
+  let vote = 0;
+  for (let t = 0; t < idx.length; t += 3) {
+    v0.fromArray(pos, idx[t] * 3); v1.fromArray(pos, idx[t + 1] * 3).sub(v0); v2.fromArray(pos, idx[t + 2] * 3).sub(v0);
+    vote += fn.crossVectors(v1, v2).dot(vn.fromArray(nor, idx[t] * 3));
+  }
+  if (vote < 0) for (let t = 0; t < idx.length; t += 3) { const x = idx[t + 1]; idx[t + 1] = idx[t + 2]; idx[t + 2] = x; }
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));

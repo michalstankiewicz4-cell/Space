@@ -349,6 +349,20 @@ them on.
   outside is halved down to the crossing point.
 - **Only angled joints.** A point counts only where the surfaces meet at an
   angle (|n·n| < 0.82). Parts that run on into each other get no bead.
+- **Normals come from the shapes.** Both normals are the shapes' own
+  (`solidNormalOf`):
+  - the nearest face of a box;
+  - the side or a cap of a cylinder;
+  - the gradient of a lathe's profile;
+  - the nearest outline edge or cap of an extrude.
+
+  Vertex normals were used first and failed: at a box's corner three faces
+  share a position, and the wrong one turned fillets into flaps sticking
+  out (the user saw it).
+- **Lathes and shells.** A lathe is a solid only if it closes on its axis
+  at one end at least. An open engine bell is a shell, and treating it as
+  a solid gave wide white skirts around the nozzles. A lathe's thickness
+  is its largest radius.
 - **The chain.** Points closer than half a bead are merged, then chained
   nearest-first from both ends into curves (closed when the ends meet).
   Each point keeps both surfaces' normals.
@@ -364,6 +378,11 @@ them on.
       into each other.
     - Normals blend from A's to B's. The strip sits a hair off the
       surfaces, to avoid z-fighting.
+    - The strip is two-sided: one DoubleSide copy per material, shared, so
+      GAME BUILD still merges the strips.
+    - It faces by a vote of all its triangles. Single-sided, and turned by
+      its first triangle, it vanished from some angles.
+    - Its width is capped at half the thinner part's thickness.
     - w = 2.2 × the bead radius; 4 × detail rows across.
   - **`bead`**: a TubeGeometry along a centripetal Catmull-Rom curve
     through the points.
