@@ -294,6 +294,18 @@ shots along).
   (disabled ones greyed out, triggers flash, toggles stay lit, OFFLINE in
   red) — and a Damage slider. Toggles and damage survive a detail
   rebuild; switching ships resets the toggles.
+- **The left panel** (the user's requests, 2026-10-03):
+  - **The header stays put.** The ship's name, the caption and the gold bar
+    don't move; only what's inside the panel's frame scrolls
+    (`.panelScroll`). The header is `flex: none`, so in a low window the
+    panel gives way, not the header.
+  - **⇅ swaps the two groups**, `#grpStats` (MODEL, FIGURES) and `#grpCtrl`
+    (the toggles, SHAPING, ACTIONS, damage).
+  - **Double-click the name or the caption to edit it.** Enter keeps it, Esc
+    cancels, and empty brings the original back. Kept per ship; the game's
+    names don't change.
+  - The swap and the names are per-viewer conveniences, in `localStorage`
+    under `shipLab.*`, wrapped in try/catch.
 - **CHANGE VIEW** (top centre, key C; the user's design) cycles three views:
   1. the full UI;
   2. the stats only: MODEL and FIGURES on the left, PERFORMANCE on the
