@@ -76,7 +76,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.34.1">
+<link rel="stylesheet" href="css/style.css?v=2.34.2">
 </head>
 <body>
 
@@ -866,6 +866,8 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
 <div id="cmdFlash"></div>
 <!-- ORBIT / ATTACK / LAND after a course order (ui/hud/orderMenu.js) -->
 <div id="orderMenu" class="hidden"></div>
+<!-- on the ground: whether the module under the pointer fits (js/surface/groundView.js) -->
+<div id="gBuildTip" class="hidden"></div>
 
 <script defer src="vendor/three-r128.min.js"></script>
 <!-- Three.js r128 add-ons (examples/js, MIT): anti-aliased thick lines for
@@ -909,7 +911,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.34.1"></script>
+<script type="module" src="js/main.js?v=2.34.2"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

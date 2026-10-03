@@ -355,14 +355,15 @@ export const pl = {
   },
   ground: {
     takeOff: "STARTUJ", hop: "SKOK DO BAZY", space: "WIDOK Z KOSMOSU", build: "BUDUJ (B)",
-    hint: "W/S prędkość, A/D skręt, Shift przyspiesza. Prawy przycisk i przeciągnięcie: kamera, kółko: zoom. Kliknij miejsce, by postawić moduł (R obraca, Esc anuluje, Delete usuwa ten pod kursorem).",
+    hint: "W/S prędkość, A/D skręt, Shift przyspiesza. Prawy przycisk i przeciągnięcie: kamera, kółko: zoom. Każdy moduł zakłada bazę; kliknij tam, gdzie hologram jest turkusowy (R obraca, Esc anuluje, Delete usuwa ten pod kursorem).",
     base: "BAZA", speed: "Prędkość", alt: "Wysokość",
     landed: "Wylądowano", founded: "Baza założona",
     placed: function(m){ return "Rozpoczęto budowę: " + m; },
     removed: function(m){ return "Usunięto: " + m; },
     noBase: "Na tej planecie nie ma jeszcze bazy: najpierw postaw moduł.",
     hopping: function(km){ return "Skok suborbitalny: " + km + " km"; },
-    why: { far: "Za daleko od bazy (600 m)", unloaded: "Teren w tym miejscu jeszcze się nie wczytał", wet: "Nie na wodzie, lawie ani lodzie", steep: "Za stromo",
+    fits: "Pasuje: kliknij, by zbudować",
+    why: { far: "Za daleko od bazy (600 m)", unloaded: "Teren w tym miejscu jeszcze się nie wczytał", water: "Nie na otwartej wodzie", lava: "Nie na lawie", steep: "Za stromo",
       close: function(m){ return "Za blisko: " + m; } },
     mod: { pad: "LĄDOWISKO", hab: "HABITAT", solar: "PANELE SŁONECZNE", drill: "KOPALNIA", refinery: "RAFINERIA", depot: "MAGAZYN" }
   },
@@ -556,6 +557,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
+    { v: "2.34.2", items: ["Budowanie jest czytelniejsze: przy kursorze widać, czy moduł tu pasuje, a jeśli nie, to dlaczego. Pierwszym modułem może być dowolny.", "Można teraz budować na lodzie: zamarznięte morza i lądolód liczą się jako twardy grunt."] },
     { v: "2.34.1", items: ["Ustawienia grafiki działają teraz także na powierzchni planety: ten sam detal, efekty i wygładzanie co w kosmosie."] },
     { v: "2.34.0", items: ["Obserwuj statek (VIEW) i wydaj mu rozkaz LĄDUJ: widok schodzi z nim na powierzchnię, przez atmosferę.", "Na powierzchni możesz jeździć, skoczyć do bazy i ją budować, a potem wystartować z powrotem na orbitę."] },
     { v: "2.33.0", items: ["Kliknięcie planety z zaznaczonymi statkami wysyła je teraz na orbitę, a nie od razu do ataku. Małe menu przy kursorze pozwala wybrać ORBITA, ATAKUJ albo LĄDUJ.", "Statki mogą lądować na skalistych planetach: schodzą i zostają na powierzchni, obok twojej bazy, jeśli ją tam masz."] },

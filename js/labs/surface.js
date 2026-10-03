@@ -216,15 +216,26 @@ BaseKit.MODULES.forEach((d) => {
 function markBuild() { [...$("modBtns").children].forEach((b, i) => b.classList.toggle("on", !!G.building && BaseKit.MODULES[i].id === G.building.id)); }
 function startBuild(id) { G.startBuild(id); markBuild(); }
 function cancelBuild() { G.cancelBuild(); markBuild(); }
-const WHY = { far: "Too far from the base (" + SK.BASE_RADIUS + " m)", unloaded: "Ground not loaded", wet: "Not on water, lava or ice sheets", steep: "Too steep" };
+const WHY = { far: "Too far from the base (" + SK.BASE_RADIUS + " m)", unloaded: "Ground not loaded", water: "Not on open water", lava: "Not on lava", steep: "Too steep" };
+const whyText = (b) => b.why === "close" ? "Too close to the " + b.name.toLowerCase() : WHY[b.why];
+// while placing: fits or why not, next to the pointer
+let tipAt = null;
+function buildTip() {
+  const el = $("buildTip"), b = G.building, show = !!(b && b.dir && tipAt && b.mod.group.visible);
+  el.classList.toggle("hidden", !show);
+  if (!show) return;
+  el.textContent = b.ok ? "Fits here: click to build" : whyText(b);
+  el.classList.toggle("bad", !b.ok);
+  el.style.left = (tipAt[0] + 16) + "px"; el.style.top = (tipAt[1] + 18) + "px";
+}
 function place() {
   const r = G.place();
-  if (r && !r.ok) toast(r.why === "close" ? "Too close to the " + r.name.toLowerCase() : WHY[r.why]);
+  if (r && !r.ok) toast(whyText(r));
   markBuild(); refreshBase();
 }
 function removeUnderPointer() { const name = G.removeUnderPointer(); if (name) { toast("Removed: " + name.toLowerCase()); refreshBase(); } }
 let drag = null;
-view.addEventListener("pointermove", (e) => { setMouse(e); if (drag) { G.drag(e.clientX - drag[0], e.clientY - drag[1]); drag = [e.clientX, e.clientY]; } });
+view.addEventListener("pointermove", (e) => { setMouse(e); tipAt = [e.clientX, e.clientY]; if (drag) { G.drag(e.clientX - drag[0], e.clientY - drag[1]); drag = [e.clientX, e.clientY]; } });
 view.addEventListener("pointerdown", (e) => { if (state.mode === "ground" && e.button === 2) drag = [e.clientX, e.clientY]; });
 window.addEventListener("pointerup", () => { drag = null; });
 view.addEventListener("contextmenu", (e) => e.preventDefault());
@@ -270,6 +281,7 @@ function stepGround(dt, t) {
   $("rSpeed").textContent = Math.round(info.speed); $("rAlt").textContent = Math.round(info.alt);
   $("rWhere").textContent = info.lat.toFixed(2) + "°, " + info.lon.toFixed(2) + "°";
   $("statTiles").textContent = info.tiles;
+  buildTip();
 }
 function frame() {
   const t0 = performance.now(), dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;

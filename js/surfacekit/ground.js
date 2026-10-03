@@ -38,7 +38,8 @@
                                 settings (the game's Setup; the lab: 1, on, 6)
        G.leave(), G.dispose()
      onEvent(name, data): "landed", "founded", "placed", "removed"
-     validate codes: "far" (BASE_RADIUS), "unloaded", "wet", "steep", "close" (+ name)
+     validate codes: "far" (BASE_RADIUS), "unloaded", "water", "lava", "steep", "close" (+ name)
+       — frozen seas, ice caps and sheets are solid ground (the user's call, 2026-10-03)
    ======================================================================= */
 (function () {
 "use strict";
@@ -387,15 +388,21 @@ function createGround(renderer, opts = {}) {
     for (let k = 0; k < 8; k++) {
       const a = k / 8 * Math.PI * 2, d = SK.offsetDir(dir, Math.cos(a) * def.footprint, Math.sin(a) * def.footprint, surf.R);
       const g = surf.groundAt(d); if (!g) return { why: "unloaded" };
-      if (g.sea && !def.wet) return { why: "wet" };
+      const no = underfoot(g, def); if (no) return { why: no };
       sx += g.r * Math.cos(a); sy += g.r * Math.sin(a);
     }
-    if (g0.sea && !def.wet) return { why: "wet" };
+    const no0 = underfoot(g0, def); if (no0) return { why: no0 };
     if (Math.hypot(sx, sy) / (4 * def.footprint) > def.maxSlope) return { why: "steep" };
     for (const o of baseObjs) if (SK.greatCircle(o.dir, dir, surf.R) < def.footprint + o.mod.footprint - 1) return { why: "close", name: o.mod.def.name };
     return { why: "" };
   }
   G.validate = validate;
+  // open water (unless the module may stand in it) and lava: no; ice: solid
+  function underfoot(g, def) {
+    if (g.kind === "lava") return "lava";
+    if (g.kind === "water" && !def.wet) return "water";
+    return "";
+  }
   G.place = function () {
     const b = building; if (!b || !b.dir) return null;
     if (!b.ok) return { ok: false, why: b.why, name: b.name };
@@ -537,7 +544,9 @@ function createGround(renderer, opts = {}) {
     surf.material.uniforms.uFog.value *= 1 - smooth(150, 1200, alt);
     // the jets blow dust (spray over water) as they near the ground
     const g0 = surf.groundAt(P.dir);
-    if (g0 && g0.sea) dustCol.setRGB(0.92, 0.96, 1); else dustCol.setRGB(0.62, 0.53, 0.42);
+    if (g0 && g0.kind === "water") dustCol.setRGB(0.92, 0.96, 1);                // spray
+    else if (g0 && g0.kind === "ice") dustCol.setRGB(0.85, 0.9, 0.97);            // snow blown off
+    else dustCol.setRGB(0.62, 0.53, 0.42);
     dustCol.multiply(dusk.copy(L.ambient).multiplyScalar(2.5).add(L.sunCol0).add(L.sunCol1));
     dust.update(t, jets * (1 - smooth(8, 70, alt)), P.dir, gr0, surf.R, dustCol);
     if (clouds.cloudy) {

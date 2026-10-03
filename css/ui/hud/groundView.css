@@ -25,3 +25,7 @@
 /* the space view's own controls and overlays step aside on the ground */
 body.onGround #cameraModeToggle, body.onGround #returnBaseBtn, body.onGround #linesToggleBtn,
 body.onGround #selectionBrackets, body.onGround #bodyTooltip, body.onGround #orderMenu{ display:none !important; }
+/* next to the pointer while placing a module: fits (cyan) or why not (red) */
+#gBuildTip{ position:fixed; z-index:8; pointer-events:none; padding:4px 10px; border-radius:6px; white-space:nowrap;
+  background:rgb(0 2 12 / .85); border:1.5px solid #4fe3c6; color:#bff6ea; font-family:var(--uiFontLabel); font-size:13.5px; letter-spacing:.3px; }
+#gBuildTip.bad{ border-color:#e04b50; color:#ffb3b5; }

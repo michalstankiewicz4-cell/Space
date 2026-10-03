@@ -243,7 +243,10 @@ globe.
 - `validate()` checks, in this order:
   - **within 600 m** of the base's centre (the first module founds the base);
   - **ground loaded**;
-  - **not on water, lava or ice sheets**;
+  - **not on open water or lava** (`groundAt().kind`: a lava world's sea
+    is lava, a frozen world's sea and every ice cap or sheet is solid ice —
+    buildable since v2.34.2; before it the icy worlds had almost nowhere
+    to build);
   - **not too steep**;
   - **no overlap** with other modules.
 - **Slope**: a plane is fitted through 8 points on the footprint's rim, so
@@ -314,7 +317,11 @@ game's main view.
   the camera on it. VIEW FROM SPACE leaves it down and points the camera at
   the planet. The view also goes back up if the ship gets another order or
   a program, is lost, or the camera goes elsewhere.
-- **Building** as in the lab (free for now). The event log says what
+- **Building** as in the lab (free for now). While a hologram follows the
+  pointer, a label next to it says whether it fits or why not (v2.34.2;
+  the lab has it too). The placement hologram blends normally, so cyan and
+  red read true on any ground (additive, red on green came out orange);
+  the construction hologram still glows. The event log says what
   happened and why a module doesn't fit; the base markers follow at once
   (`refreshBaseMarkers`).
 - Rendering: through the same post-processing as the space view

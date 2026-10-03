@@ -25,7 +25,9 @@
                                         ambient, haze, wet / snow cover, the craft's lamp)
        .update(dir, maxLoads)           load tiles around a unit direction
        .ensure(dir)                     load the tiles under dir right now
-       .groundAt(dir)                   { r: radius in m, sea } or null (not loaded)
+       .groundAt(dir)                   { r: radius in m, sea, ice, kind } or null (not loaded);
+                                        kind: "water" (open), "lava", "ice" (frozen sea,
+                                        an ice cap or sheet) or "ground"
        .meshes                          the loaded tiles (raycasting)
        .dispose()
      latLonToDir(lat, lon), dirToLatLon(dir), tangentFrame(dir) → { east, north }
@@ -112,7 +114,7 @@ function createSurface(renderer, ref, values) {
     const uv0x = -1 + 2 * i / T - step, uv0y = -1 + 2 * j / T - step;
     const s = terrain.sample(renderer, FACES[f], uv0x, uv0y, step, n, R / DETAIL_WAVE);
     // positions with a 1-sample border (for normals), radii and flags
-    const P = new Float32Array(n * n * 3), rad = new Float32Array(GRID * GRID), sea = new Uint8Array(GRID * GRID);
+    const P = new Float32Array(n * n * 3), rad = new Float32Array(GRID * GRID), sea = new Uint8Array(GRID * GRID), ice = new Uint8Array(GRID * GRID);
     const dirs = new Float32Array(GRID * GRID * 3), hs = new Float32Array(GRID * GRID);
     for (let b = 0; b < n; b++) for (let a = 0; a < n; a++) {
       const k = b * n + a;
@@ -121,7 +123,7 @@ function createSurface(renderer, ref, values) {
       P[k * 3] = tmpA.x * r; P[k * 3 + 1] = tmpA.y * r; P[k * 3 + 2] = tmpA.z * r;
       if (a > 0 && b > 0 && a <= GRID && b <= GRID) {
         const q = (b - 1) * GRID + (a - 1);
-        rad[q] = r; sea[q] = s.sea[k] && seaWorld ? 1 : 0; hs[q] = s.h[k];
+        rad[q] = r; sea[q] = s.sea[k] && seaWorld ? 1 : 0; ice[q] = s.ice[k]; hs[q] = s.h[k];
         dirs[q * 3] = tmpA.x; dirs[q * 3 + 1] = tmpA.y; dirs[q * 3 + 2] = tmpA.z;
       }
     }
@@ -161,7 +163,7 @@ function createSurface(renderer, ref, values) {
     mesh.position.copy(center);
     mesh.receiveShadow = true;
     mesh.userData.tile = true;
-    return { f, i, j, mesh, rad, sea, uv0x: uv0x + step, uv0y: uv0y + step, step };
+    return { f, i, j, mesh, rad, sea, ice, uv0x: uv0x + step, uv0y: uv0y + step, step };
   }
 
   const key = (f, i, j) => f * 1e6 + i * 1000 + j;
@@ -214,7 +216,10 @@ function createSurface(renderer, ref, values) {
       const a = Math.max(0, Math.min(GRID - 1.001, fx)), b = Math.max(0, Math.min(GRID - 1.001, fy));
       const a0 = Math.floor(a), b0 = Math.floor(b), ta = a - a0, tb = b - b0, q = b0 * GRID + a0;
       const r = (tile.rad[q] * (1 - ta) + tile.rad[q + 1] * ta) * (1 - tb) + (tile.rad[q + GRID] * (1 - ta) + tile.rad[q + GRID + 1] * ta) * tb;
-      return { r, sea: !!tile.sea[Math.round(b) * GRID + Math.round(a)] };
+      const n = Math.round(b) * GRID + Math.round(a), isSea = !!tile.sea[n], isIce = !!tile.ice[n];
+      // what's underfoot: a lava world's "sea" is lava, a frozen world's is ice
+      const kind = isSea ? ((v.lava || 0) >= 0.5 ? "lava" : (v.frozen || 0) >= 0.5 || isIce ? "ice" : "water") : isIce ? "ice" : "ground";
+      return { r, sea: isSea, ice: isIce, kind };
     },
     loadedCount: () => tiles.size,
     dispose() { for (const k of [...tiles.keys()]) unload(k); material.dispose(); terrain.dispose(); },

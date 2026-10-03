@@ -350,14 +350,15 @@ export const en = {
   },
   ground: {
     takeOff: "TAKE OFF", hop: "HOP TO THE BASE", space: "VIEW FROM SPACE", build: "BUILD (B)",
-    hint: "W/S speed, A/D turn, Shift boost. Right-drag: camera, wheel: zoom. Click a spot to place a module (R turn, Esc cancel, Delete removes the one under the pointer).",
+    hint: "W/S speed, A/D turn, Shift boost. Right-drag: camera, wheel: zoom. Any module founds the base; click where it shows cyan (R turn, Esc cancel, Delete removes the one under the pointer).",
     base: "BASE", speed: "Speed", alt: "Altitude",
     landed: "Landed", founded: "Base founded",
     placed: function(m){ return "Construction started: " + m; },
     removed: function(m){ return "Removed: " + m; },
     noBase: "No base on this planet yet: place a module first.",
     hopping: function(km){ return "Suborbital hop: " + km + " km"; },
-    why: { far: "Too far from the base (600 m)", unloaded: "The ground there isn't loaded yet", wet: "Not on water, lava or ice sheets", steep: "Too steep",
+    fits: "Fits here: click to build",
+    why: { far: "Too far from the base (600 m)", unloaded: "The ground there isn't loaded yet", water: "Not on open water", lava: "Not on lava", steep: "Too steep",
       close: function(m){ return "Too close to the " + m; } },
     mod: { pad: "LANDING PAD", hab: "HABITAT", solar: "SOLAR ARRAY", drill: "MINE", refinery: "REFINERY", depot: "DEPOT" }
   },
@@ -555,6 +556,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.34.2", items: ["Building is clearer: next to the pointer you see whether a module fits here, and why not if it doesn't. Any module can be the first one.", "You can now build on ice: frozen seas and ice sheets count as solid ground."] },
     { v: "2.34.1", items: ["Your graphics settings now apply on a planet's surface too: the same detail, effects and smoothing as in space."] },
     { v: "2.34.0", items: ["Watch a ship (VIEW) and order it to LAND: the view goes down to the surface with it, through the atmosphere.", "On the ground you can drive around, hop to your base and build it, then take off back into orbit."] },
     { v: "2.33.0", items: ["Clicking a planet with ships selected now sends them into orbit, no longer straight into an attack. A small menu at the pointer lets you pick ORBIT, ATTACK or LAND.", "Ships can land on rocky planets: they come down and stay on the surface, next to your surface base if that planet has one."] },

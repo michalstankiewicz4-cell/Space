@@ -36,12 +36,16 @@ select.lab{ width:100%; height:28px; border:1.5px solid #3c55d8; border-radius:6
 #toast{ position:fixed; left:50%; top:70px; transform:translateX(-50%); padding:8px 18px; border-radius:8px; background:rgb(0 3 16 / .85);
   border:1.5px solid #f8bb56; color:#ffe2a8; font-family:var(--fontLabel); letter-spacing:.5px; opacity:0; transition:opacity .3s; z-index:6; }
 #fpsGraph{ height:40px; }
+#buildTip{ position:fixed; z-index:6; pointer-events:none; padding:4px 10px; border-radius:6px; white-space:nowrap; background:rgb(0 3 16 / .85);
+  border:1.5px solid #4fe3c6; color:#bff6ea; font-family:var(--fontLabel); font-size:13.5px; letter-spacing:.3px; }
+#buildTip.bad{ border-color:#e04b50; color:#ffb3b5; }
 </style>
 </head>
 <body>
 <canvas id="view"></canvas>
 <div id="fade"></div>
 <div id="toast"></div>
+<div id="buildTip" class="hidden"></div>
 <div id="compass" class="hidden"><svg viewBox="0 0 30 30"><g id="cArrow"><path d="M15 3 L21 22 L15 18 L9 22 Z" fill="#f8bb56"/></g></svg><span>BASE</span><span class="d" id="cDist">–</span></div>
 <div id="readout" class="hidden"><span>Speed <b id="rSpeed">0</b> m/s</span><span>Altitude <b id="rAlt">0</b> m</span><span id="rWhere"></span></div>
 

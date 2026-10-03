@@ -198,24 +198,36 @@ varying vec3 vN; varying vec3 vW; varying float vY;
 void main(){ vN = normalize(normalMatrix * normal); vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vY = position.y;
   gl_Position = projectionMatrix * viewMatrix * w; }`;
 const HOLO_FRAG = `
-uniform vec3 uColor; uniform float uTime, uFrom;
+uniform vec3 uColor; uniform float uTime, uFrom, uSolid;
 varying vec3 vN; varying vec3 vW; varying float vY;
 void main(){
   if (vY < uFrom) discard;                                       // under the work's front: the solid model is there
   float fres = pow(1.0 - abs(normalize(vN).z), 2.0);
   float scan = 0.55 + 0.45 * sin(vW.y * 6.0 - uTime * 4.0);
   float a = (0.12 + fres * 0.6) * scan;
-  gl_FragColor = vec4(uColor * (0.6 + fres), a);
+  // a placement preview (uSolid 1) covers the ground instead of adding to it,
+  // so cyan and red stay cyan and red on any ground
+  a = mix(a, min(1.0, 0.3 + a * 1.1), uSolid);
+  gl_FragColor = vec4(uColor * mix(0.6 + fres, 0.75 + fres * 0.5, uSolid), a);
 }`;
 function holoMaterial() {
   return new THREE.ShaderMaterial({
-    uniforms: { uColor: { value: new THREE.Color(0x4fe3c6) }, uTime: { value: 0 }, uFrom: { value: -1e9 } },
+    uniforms: { uColor: { value: new THREE.Color(0x4fe3c6) }, uTime: { value: 0 }, uFrom: { value: -1e9 }, uSolid: { value: 0 } },
     vertexShader: HOLO_VERT, fragmentShader: HOLO_FRAG,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
   });
 }
 
 function buildModule(id, { detail = 1 } = {}) {
+  let preview = null;
+  // the placement preview blends normally (true colours); construction glows (additive)
+  const setPreview = (on) => {
+    if (preview === on) return;
+    preview = on;
+    holo.uniforms.uSolid.value = on ? 1 : 0;
+    holo.blending = on ? THREE.NormalBlending : THREE.AdditiveBlending;
+    holo.needsUpdate = true;
+  };
   const def = MODULES.find((d) => d.id === id);
   if (!def) throw new Error("BaseKit: unknown module " + id);
   const m = mats(), seg = (n = 16, min = 3) => Math.max(min, Math.round(n * detail));
@@ -265,6 +277,7 @@ function buildModule(id, { detail = 1 } = {}) {
       clip.constant = done ? 1e9 : up.dot(tmp);
       holo.uniforms.uFrom.value = done ? 1e9 : yCut;
       holo.uniforms.uColor.value.set(0x4fe3c6);
+      setPreview(false);
       solid.visible = true;
       ghost.visible = !done;
       ring.visible = progress > 0 && !done;
@@ -273,8 +286,9 @@ function buildModule(id, { detail = 1 } = {}) {
     },
     // a placement preview: only the hologram, cyan (fits) or red (doesn't)
     setGhostState(state) {
-      holo.uniforms.uColor.value.set(state === "bad" ? 0xff5a5f : 0x4fe3c6);
+      holo.uniforms.uColor.value.set(state === "bad" ? 0xff3b45 : 0x3fe8d0);
       holo.uniforms.uFrom.value = -1e9;
+      setPreview(true);
       solid.visible = false; ghost.visible = true; ring.visible = false;
     },
     update(t, dt = 0.016) {

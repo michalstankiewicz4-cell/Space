@@ -4,6 +4,19 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.34.2]
+
+### Changed
+- Building on the ground: frozen seas, ice caps and ice sheets are solid
+  ground now; only open water and lava are refused (the icy planets had
+  almost nowhere to build). Measured on the game's planets: a mine fits in
+  60-100 % of the dry places around a landing.
+- While placing a module, a label at the pointer says whether it fits or
+  why not (not only in the event log after a click); the hint says any
+  module founds the base.
+- The placement hologram keeps its colour on any ground (cyan fits, red
+  doesn't); additive, red on green grass came out orange.
+
 ## [2.34.1]
 
 ### Fixed

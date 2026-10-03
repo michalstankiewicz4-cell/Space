@@ -122,6 +122,7 @@ function leave(opts){
     $("groundPanel").classList.add("hidden");
     $("gReadout").classList.add("hidden");
     $("gCompass").classList.add("hidden");
+    $("gBuildTip").classList.add("hidden");
     if(opts && opts.takeOff && ship && body && ctx.ships.indexOf(ship) >= 0){
       resetOrder(ship, "orbit", 0);
       ship.commandedTarget = body; ship.target = body;
@@ -147,6 +148,18 @@ function place(){
     showToast(why);
   }
   markBuild();
+}
+// While a hologram follows the pointer: whether it fits, and if not why,
+// right next to it (not only in the event log after a click).
+let tipAt = null;
+function buildTip(){
+  const el = $("gBuildTip"), b = G.building;
+  const show = !!(b && b.dir && tipAt && b.mod.group.visible);
+  el.classList.toggle("hidden", !show);
+  if(!show) return;
+  el.textContent = b.ok ? t("ground.fits") : b.why === "close" ? t("ground.why.close")(t("ground.mod." + idOfName(b.name))) : t("ground.why." + b.why);
+  el.classList.toggle("bad", !b.ok);
+  el.style.left = (tipAt[0] + 16) + "px"; el.style.top = (tipAt[1] + 18) + "px";
 }
 function idOfName(name){ const m = BaseKit.MODULES.find(function(d){ return d.name === name; }); return m ? m.id : ""; }
 
@@ -176,6 +189,7 @@ export function updateGroundView(dt){
     $("gArrow").setAttribute("transform", "rotate(" + (info.base.ang * 180 / Math.PI).toFixed(1) + " 15 15)");
     $("gDist").textContent = info.base.dist < 1000 ? Math.round(info.base.dist) + " m" : (info.base.dist / 1000).toFixed(1) + " km";
   }
+  buildTip();
   $("gSpeed").textContent = Math.round(info.speed);
   $("gAlt").textContent = Math.round(info.alt);
   $("gWhere").textContent = info.lat.toFixed(2) + "°, " + info.lon.toFixed(2) + "°";
@@ -227,6 +241,7 @@ export function initGroundView(){
   dom.addEventListener("pointermove", function(e){
     if(!active) return;
     toPointer(e);
+    tipAt = [e.clientX, e.clientY];
     if(drag){ G.drag(e.clientX - drag[0], e.clientY - drag[1]); drag = [e.clientX, e.clientY]; }
   });
   dom.addEventListener("pointerdown", function(e){
