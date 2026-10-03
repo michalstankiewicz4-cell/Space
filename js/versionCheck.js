@@ -43,7 +43,7 @@ const MODULE_FILES = [
   "js/blocks/blockProject.js", "js/blocks/blockSpecs.js",
   "js/bodies/blackhole.js", "js/bodies/comet.js", "js/bodies/icePlanet.js",
   "js/bodies/meteoroid.js", "js/bodies/neutralPlanet.js", "js/bodies/sun.js",
-  "js/bodies/volcanicPlanet.js", "js/bodykit/bodykit.js", "js/config.js",
+  "js/bodies/volcanicPlanet.js", "js/bodykit/bodykit.js", "js/bodykit/kinds/planets.js", "js/bodykit/kinds/giants.js", "js/bodykit/kinds/pulsars.js", "js/bodykit/kinds/suns.js", "js/bodykit/kinds/rocks.js", "js/bodykit/kinds/holes.js", "js/bodykit/kinds/sky.js", "js/config.js",
   "js/content.js", "js/core/context.js", "js/core/discovery.js",
   "js/core/gameState.js", "js/core/storyLog.js", "js/core/utils.js",
   "js/drone/drone.js", "js/drone/dronePrintFx.js", "js/drone/dsl.js",
