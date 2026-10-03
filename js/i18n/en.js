@@ -348,6 +348,19 @@ export const en = {
     viewTitle: "the camera orbits and follows this unit",
     shipCam: "the view from its cockpit, on/off"
   },
+  ground: {
+    takeOff: "TAKE OFF", hop: "HOP TO THE BASE", space: "VIEW FROM SPACE", build: "BUILD (B)",
+    hint: "W/S speed, A/D turn, Shift boost. Right-drag: camera, wheel: zoom. Click a spot to place a module (R turn, Esc cancel, Delete removes the one under the pointer).",
+    base: "BASE", speed: "Speed", alt: "Altitude",
+    landed: "Landed", founded: "Base founded",
+    placed: function(m){ return "Construction started: " + m; },
+    removed: function(m){ return "Removed: " + m; },
+    noBase: "No base on this planet yet: place a module first.",
+    hopping: function(km){ return "Suborbital hop: " + km + " km"; },
+    why: { far: "Too far from the base (600 m)", unloaded: "The ground there isn't loaded yet", wet: "Not on water, lava or ice sheets", steep: "Too steep",
+      close: function(m){ return "Too close to the " + m; } },
+    mod: { pad: "LANDING PAD", hab: "HABITAT", solar: "SOLAR ARRAY", drill: "MINE", refinery: "REFINERY", depot: "DEPOT" }
+  },
   orders: {
     orbit: "ORBIT", attack: "ATTACK", land: "LAND",
     noGround: "No ground to land on",
@@ -542,6 +555,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.34.0", items: ["Watch a ship (VIEW) and order it to LAND: the view goes down to the surface with it, through the atmosphere.", "On the ground you can drive around, hop to your base and build it, then take off back into orbit."] },
     { v: "2.33.0", items: ["Clicking a planet with ships selected now sends them into orbit, no longer straight into an attack. A small menu at the pointer lets you pick ORBIT, ATTACK or LAND.", "Ships can land on rocky planets: they come down and stay on the surface, next to your surface base if that planet has one."] },
     { v: "2.32.13", items: ["A base you found in the Surface lab now shows on that planet in the game: a gold diamond on its surface, and a \"Surface base\" line in PLANET INFO."] },
     { v: "2.32.12", items: ["Ship lab: a button to stop the ships' animations, the idle bobbing included, while their lights stay on, and renaming a ship (the name on its hull follows). Nothing changes in the game."] },

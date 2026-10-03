@@ -1,3 +1,4 @@
+import { initGroundView, updateGroundView, renderGroundView, isOnGround } from "./surface/groundView.js";
 import { load } from "./core/gameState.js";
 import { NET_ENABLED } from "./env.js";
 import { NET_DAMAGE_FLUSH_MS } from "./config.js";
@@ -130,6 +131,7 @@ initUiMode();        // key C: hide the interface step by step; key O: lines
 initAnisotropy();
 initUnitThumb();
 initInfoThumb();
+initGroundView();
 
 // Nothing reaches the server (anonymous account, presence, broadcasts)
 // before the player accepts the privacy policy (ui/privacy.js).
@@ -194,6 +196,7 @@ function tick(now){
   }
 
   updateHud(dt);
+  updateGroundView(dt);         // down on a planet with a watched ship (surface/groundView.js)
 
   updateShipVisuals(dt);        // ship models: level of detail, animation, wrecks
   updateTrails(dt);             // engine trails behind own ships and the drone
@@ -210,7 +213,7 @@ function tick(now){
   // full-window canvas (see scene/viewRect.js).
   perfRenderStart();
   updateResolution();           // manual quality, or auto: following the frame rate
-  renderMainView();
+  if(isOnGround()) renderGroundView(); else renderMainView();   // on a planet's surface (surface/groundView.js)
   updateShipCam();
   renderShipCamPIP();
   renderUnitThumb();

@@ -4,6 +4,25 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.34.0]
+
+### Added
+- **Landing, for real**: watch a ship (VIEW) and give it LAND, and the
+  main view goes down to the surface with it (`js/surface/groundView.js`).
+  - A procedural descent: entry through the air (bow shock, wake, streaks,
+    buffeting, a cloud deck on cloudy worlds), then the burn on the
+    landing jet with dust or spray; airless worlds only burn.
+  - Drive the ship on the ground (W/S/A/D, Shift), hop to your base, build
+    it (the six modules, as in the surface lab). TAKE OFF puts the ship
+    back in orbit; VIEW FROM SPACE leaves it down.
+  - The sky is the game's solar system as it stands; the hour is the Sun's
+    real place over the spot.
+- The game now loads SurfaceKit (with `ground.js`) and BaseKit.
+
+### Changed
+- The base marker on the planets: a small pulsing gold dot with rings
+  instead of the diamond, a constant size on screen.
+
 ## [2.33.0]
 
 ### Added

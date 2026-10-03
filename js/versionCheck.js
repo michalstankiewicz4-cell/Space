@@ -30,7 +30,7 @@ const CHECK_INTERVAL_MS = 3 * 60 * 1000; // deploys are infrequent; no need to p
 const MODULE_FILES = [
   "css/fonts.css", "css/lab.css", "css/style.css",
   "css/ui/hud/commandBar.css", "css/ui/hud/eventLog.css",
-  "css/ui/hud/fleetList.css", "css/ui/hud/hud.css",
+  "css/ui/hud/fleetList.css", "css/ui/hud/groundView.css", "css/ui/hud/hud.css",
   "css/ui/hud/infoPanel.css", "css/ui/hud/minimap.css", "css/ui/hud/nav.css",
   "css/ui/hud/topBar.css", "css/ui/hud/unitPanel.css",
   "css/ui/hud/viewport.css", "css/ui/kit.css", "css/ui/setupModal.css",
@@ -55,7 +55,7 @@ const MODULE_FILES = [
   "js/net/connect.js", "js/net/identity.js", "js/net/presence.js",
   "js/net/shipsBroadcast.js", "js/net/solarBodiesSync.js",
   "js/net/stewardFallback.js", "js/net/stewardStats.js",
-  "js/postkit/postkit.js", "js/program/runner.js", "js/program/simulate.js",
+  "js/postkit/postkit.js", "js/basekit/basekit.js", "js/surfacekit/surfacekit.js", "js/surfacekit/sky.js", "js/surfacekit/weather.js", "js/surfacekit/ground.js", "js/surface/groundView.js", "js/program/runner.js", "js/program/simulate.js",
   "js/program/unitBite.js", "js/program/unitMotion.js",
   "js/program/unitPrint.js", "js/program/unitPrograms.js",
   "js/scene/anisotropy.js", "js/scene/camera.js",

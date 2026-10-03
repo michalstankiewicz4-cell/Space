@@ -71,6 +71,22 @@ export function renderMainView(){
   ctx.renderer.setScissorTest(false);
 }
 
+// Another scene into the view rect instead of the game's (the ground,
+// surface/groundView.js): the same clear and rect, no post-processing.
+export function renderSceneInView(scene, camera){
+  const r = getViewRect();
+  const aspect = r.width / Math.max(1, r.height);
+  if(Math.abs(camera.aspect - aspect) > 1e-4){ camera.aspect = aspect; camera.updateProjectionMatrix(); }
+  ctx.renderer.setScissorTest(false);
+  ctx.renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
+  ctx.renderer.setClearColor(0x000000, 1);
+  ctx.renderer.clear();
+  ctx.renderer.setClearColor(0x05060a, 1);
+  setRenderRect(r);
+  ctx.renderer.render(scene, camera);
+  ctx.renderer.setScissorTest(false);
+}
+
 // "Studio" light for the miniatures: the scene's own lights are fixed in
 // space, so a miniature camera often looks at an object's dark side. This
 // light sits at the miniature camera and is only switched on for that one

@@ -19,6 +19,7 @@ import { stopUnitProgram } from "../program/runner.js";
 import { camState, rotateCamera, zoomCamera, initCameraButtons } from "./camera.js";
 import { orderOf, resetOrder } from "../ships/orders.js";
 import { openOrderMenu } from "../ui/hud/orderMenu.js";
+import { isOnGround } from "../surface/groundView.js";
 
 let camDragging = false, camLastX = 0, camLastY = 0;
 
@@ -220,15 +221,16 @@ export function initControls(){
   // The canvas covers the whole window but the 3D view is only the HUD's
   // viewport rect (scene/viewRect.js) — presses/scrolls in the black gaps
   // between HUD panels land on the canvas too and are ignored here.
+  // On the ground (surface/groundView.js) the view takes its own input.
   dom.addEventListener("wheel", function(e){
     e.preventDefault();
-    if(!isInViewRect(e.clientX, e.clientY)) return;
+    if(isOnGround() || !isInViewRect(e.clientX, e.clientY)) return;
     zoomCamera(e.deltaY);
   }, { passive:false });
 
   dom.addEventListener("pointerdown", function(e){
     hideTooltip();
-    if(!isInViewRect(e.clientX, e.clientY)) return;
+    if(isOnGround() || !isInViewRect(e.clientX, e.clientY)) return;
     if(e.button === rotateButton()){
       camDragging = true; camState.autoSpin = false; camLastX=e.clientX; camLastY=e.clientY;
     } else if(e.button === selectButton()){
@@ -237,6 +239,7 @@ export function initControls(){
   });
 
   window.addEventListener("pointermove", function(e){
+    if(isOnGround()) return;
     if(camDragging){
       const dx = e.clientX-camLastX, dy = e.clientY-camLastY;
       camLastX=e.clientX; camLastY=e.clientY;

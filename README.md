@@ -49,11 +49,14 @@ js/
                      (galaxyRender.js; the window is ui/windows/galaxyMap.js, key M)
   systemkit/         SystemKit — star systems from BodyKit's bodies (data, presets, a seeded
                      generator, building); the system lab's (systems.html), not in the game yet
+  surface/           the game's ground view: down to a planet with a watched landing ship
+                     (groundView.js, on SurfaceKit's ground); docs/surface.md
   surfacekit/        SurfaceKit — a planet's ground up close (cube-sphere tiles from BodyKit's
-                     planetTerrain), lat/lon helpers, bases saved in localStorage; the surface
-                     lab's (surface.html), not in the game yet; see docs/surface.md
+                     planetTerrain), lat/lon helpers, bases saved in localStorage, the sky, the
+                     weather and the ground itself (ground.js: descent, driving, building);
+                     shared by the surface lab (surface.html) and the game; see docs/surface.md
   basekit/           BaseKit — planetary base modules from ShipKit's generators (built, hologram,
-                     under construction); the building and surface labs', not in the game yet
+                     under construction); the building and surface labs' and the game's ground
   vehiclekit/        VehicleKit — robot ground vehicles from ShipKit's generators (suspension, steering,
                      tracks, dust, lamps, work); the vehicle lab's (vehicles.html), not in the game yet
   marinekit/         MarineKit — the sea (waves the same in JS and GLSL, a seabed with an island, under water)

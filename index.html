@@ -62,6 +62,7 @@
 <link rel="stylesheet" href="css/ui/hud/fleetList.css">
 <link rel="stylesheet" href="css/ui/hud/unitPanel.css">
 <link rel="stylesheet" href="css/ui/hud/viewport.css">
+<link rel="stylesheet" href="css/ui/hud/groundView.css">
 <link rel="stylesheet" href="css/ui/hud/commandBar.css">
 <link rel="stylesheet" href="css/ui/hud/infoPanel.css">
 <link rel="stylesheet" href="css/ui/hud/eventLog.css">
@@ -75,7 +76,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.33.0">
+<link rel="stylesheet" href="css/style.css?v=2.34.0">
 </head>
 <body>
 
@@ -529,6 +530,19 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
       <button type="button" id="camModeBaseBtn" data-i18n="camera.base" class="mat gold camModeActive">Base</button>
       <button type="button" id="camModeSystemBtn" data-i18n="camera.system" class="mat blueT">System</button>
     </div>
+    <!-- On a planet's surface (js/surface/groundView.js): the fade, the controls,
+         the compass to your base, the readout -->
+    <div id="groundFade"></div>
+    <div id="groundPanel" class="hidden">
+      <button type="button" class="mat gold gBtn" id="gTakeOffBtn" data-i18n="ground.takeOff">TAKE OFF</button>
+      <button type="button" class="mat blueT gBtn" id="gHopBtn" data-i18n="ground.hop">HOP TO THE BASE</button>
+      <button type="button" class="mat blueT gBtn" id="gSpaceBtn" data-i18n="ground.space">VIEW FROM SPACE</button>
+      <div class="gHd" data-i18n="ground.build">BUILD (B)</div>
+      <div id="gModBtns"></div>
+      <div class="gHint" data-i18n="ground.hint"></div>
+    </div>
+    <div id="gCompass" class="hidden"><svg viewBox="0 0 30 30" aria-hidden="true"><g id="gArrow"><path d="M15 3 L21 22 L15 18 L9 22 Z" fill="#f8bb56"/></g></svg><span data-i18n="ground.base">BASE</span><span class="d" id="gDist">–</span></div>
+    <div id="gReadout" class="hidden"><span><span data-i18n="ground.speed">Speed</span> <b id="gSpeed">0</b> m/s</span><span><span data-i18n="ground.alt">Altitude</span> <b id="gAlt">0</b> m</span><span id="gWhere"></span></div>
     <!-- RETURN TO BASE: shown while own ships are selected (ui/hud/returnBase.js) -->
     <button type="button" id="returnBaseBtn" data-i18n-title="camera.returnBaseTip" data-i18n="camera.returnBase" class="mat gold hidden">RETURN TO BASE</button>
     <!-- orbits + trajectories on/off (scene/linesToggle.js) -->
@@ -883,13 +897,19 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
 <script defer src="js/bodykit/kinds/sky.js"></script>
 <!-- PostKit: post-processing (bloom, lensing, flare, filter…), shared with the labs -->
 <script defer src="js/postkit/postkit.js"></script>
+<!-- the ground under a landing ship (js/surface/groundView.js) -->
+<script defer src="js/basekit/basekit.js"></script>
+<script defer src="js/surfacekit/surfacekit.js"></script>
+<script defer src="js/surfacekit/sky.js"></script>
+<script defer src="js/surfacekit/weather.js"></script>
+<script defer src="js/surfacekit/ground.js"></script>
 <script defer src="vendor/supabase-js-2.117.2.js"></script>
 <!-- defer: the two libraries no longer block the HTML parser, so main.js's
      module graph starts downloading right away instead of after the CDN
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.33.0"></script>
+<script type="module" src="js/main.js?v=2.34.0"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

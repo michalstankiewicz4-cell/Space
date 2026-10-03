@@ -43,8 +43,9 @@ the player's own progress stays in `localStorage`.
   say what it means for them, e.g. "fixes and stability"). **Not** for: `admin.html` (+ `js/admin/`,
   `css/admin.css`, `css/devTheme.css`), the labs `ship.html` /
   `bodies.html` / `scale.html` (+ `js/scalelab/`) / `skins.html` /
-  `systems.html` (+ `js/systemkit/`, not in the game yet) / `surface.html`
-  (+ `js/surfacekit/`) / `buildings.html` (+ `js/basekit/`) / `vehicles.html`
+  `systems.html` (+ `js/systemkit/`, not in the game yet) / `surface.html` /
+  `buildings.html` (their kits `js/surfacekit/` and `js/basekit/` **are** in
+  the game since v2.34.0: changing them is a bump) / `vehicles.html`
   (+ `js/vehiclekit/`) / `marine.html` (+ `js/marinekit/`), the labs' own
   scripts (`js/labs/<lab>.js` — a lab page is markup and styles) and their LabKit
   (`js/labkit/`, `css/lab.css`),
@@ -164,6 +165,12 @@ the player's own progress stays in `localStorage`.
   key after the colon unique across tabs); texts in i18n
   `wiki.entries.<key>`. Story premise: humanity is gone, only AI and
   robots — keep lore consistent, no spoilers in game texts.
+- **The ground** (v2.34.0, `js/surface/groundView.js`): a watched ship
+  (VIEW, not the cockpit cam) that LANDs takes the main view down to the
+  surface — SurfaceKit's `createGround` (`js/surfacekit/ground.js`), the
+  same ground the surface lab runs (no DOM in the kit; the game draws its
+  own panel inside `#viewport`). Orders: a click is orbit, the menu picks
+  ATTACK / LAND (`ships/orders.js`). Bases stay in localStorage.
 - **Station** (`js/station/`): ShipKit's ST-04 HAVEN, starting as a ruin
   (`STATION_START_DAMAGE`; repairs planned). Ships and the drone spawn
   inside its gravity-free field (`STATION_FIELD_RADIUS`) — **the field

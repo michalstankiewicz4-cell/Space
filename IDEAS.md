@@ -456,14 +456,11 @@ wants eventually, not scheduled.
     from ShipKit's generators, and `withRounding` / `sealJoints` are
     exported;
   - planar UVs on rounded cylinders' caps.
-- **Landing → the surface view in the game** (next step after v2.33.0's
-  LAND order, the user's call 2026-10-03): when the camera follows a ship
-  (VIEW, not the cockpit cam) and it lands, the game loads the surface
-  view, with a procedural descent animation (entry glow, the air and
-  clouds rushing past). The surface lab stays a lab: the ground scene,
-  descent, driving and building move from `js/labs/surface.js` into
-  SurfaceKit, and both the lab and the game call them. Prototype the
-  descent animation in the surface lab first.
+- **The ground in the game, next** (v2.34.0 brought the landing, the
+  descent, driving and building): a rover from VehicleKit instead of the
+  hover craft; building costs (materials, points); the real terrain height
+  for a ship landing seen from space; the ship landing on the pad when the
+  base has one; other players' bases (the server).
 - **The surface, vehicles and sea, joined up**: a rover from VehicleKit
   instead of the surface lab's hover craft, MarineKit's water and seabed
   on the planets' seas, the barge carrying vehicles, logistics between a

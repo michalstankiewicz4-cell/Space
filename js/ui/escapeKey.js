@@ -12,12 +12,14 @@ import { isSetupModalOpen, closeSetupModal } from "./setupModal.js";
 import { toggleBanner } from "./banner.js";
 import { isAboutOpen, closeAbout } from "./about.js";
 import { isUiHidden, showUi } from "./hud/uiMode.js";
+import { isBuildingOnGround, cancelGroundBuild } from "../surface/groundView.js";
 
 // Escape closes whichever overlay is topmost first (drone script/blocks, then the
 // HUD windows, then setup, then the drone/station/planet selection or
 // ship cam), and only once nothing else is open does it reopen/close the
 // start screen itself (e.g. to change nickname or language mid-game).
 const ESCAPE_CHAIN = [
+  [isBuildingOnGround, cancelGroundBuild],   // a module's hologram on the ground (surface/groundView.js)
   [isDroneScriptModalOpen, closeDroneScriptModal],
   [isBlockEditorOpen, closeBlockEditor],
   [isTechModalOpen, closeTechModal],

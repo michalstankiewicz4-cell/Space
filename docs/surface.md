@@ -32,7 +32,8 @@ player sees only their own base. Later this may move to the server.
 | `buildings.html` | The building lab: one module at a time on a flat patch of ground, with BUILT / GHOST / BLOCKED views, a construction slider and BUILD IT. |
 | `js/bodykit/bodykit.js` | `planetTerrain()` (the sampler) and the shared GLSL (`GLSL_PLANET_SURFACE`, exported with `blackbody`). **This is game-shared**: changing it means a version bump. |
 
-None of this is in the game yet. The labs are in Dev Tools → LABS.
+SurfaceKit and BaseKit are in the game since v2.34.0 (the ground under a
+landing ship, "In the game" below). The labs are in Dev Tools → LABS.
 
 ## The ground: terrain from the planet's own look
 
@@ -282,16 +283,59 @@ globe.
 - A beacon (a tall additive cylinder) marks the base's centre on the ground.
   The globe shows a gold diamond (`makeMarker`).
 
-## In the game (v2.32.13)
+## In the game
+
+### Landing: the ground view (v2.34.0)
+
+`js/surface/groundView.js` runs SurfaceKit's ground (`createGround`) in the
+game's main view.
+
+- **When**: the camera follows one of your ships (VIEW, `unitInView()`;
+  not the cockpit cam) and it has the LAND order (`ships/orders.js`). A
+  moment into its descent from space (`land.t` 0.2) the view fades and goes
+  down with it: the full descent. VIEW on a ship that is already down puts
+  you straight on the ground.
+- **The world**: the landing body's BodyKit look (`bodyLookRef`), its
+  default values. The sky is the game's own solar system as it stands
+  (`skyFromGame`: the Sun and every fixed body where it is now, scaled so
+  the Sun looks as the lab's does from the Earth). The hour is where the
+  Sun really is over the landing spot (the body's `surfaceRoot` frame is
+  the ground's). The day: the planet's own turn, but at least 10 minutes
+  (the game's planets turn in about a minute). Weather: what the world can
+  have, clear 55 % of the time.
+- **The panel** (inside `#viewport`, `css/ui/hud/groundView.css`): TAKE OFF,
+  HOP TO THE BASE, VIEW FROM SPACE, the six modules (B: the first), a hint;
+  the compass to the base at the top, the readout at the bottom. The space
+  view's toggles, brackets and tooltips step aside (`body.onGround`). The
+  canvas input goes to the ground; `scene/controls.js` stands aside. Esc
+  cancels a hologram first.
+- **The ship**: driving moves it (its landing spot follows the craft).
+  TAKE OFF climbs, then the ship is back in orbit (the "orbit" order) with
+  the camera on it. VIEW FROM SPACE leaves it down and points the camera at
+  the planet. The view also goes back up if the ship gets another order or
+  a program, is lost, or the camera goes elsewhere.
+- **Building** as in the lab (free for now). The event log says what
+  happened and why a module doesn't fit; the base markers follow at once
+  (`refreshBaseMarkers`).
+- Rendering: `scene/viewRect.js#renderSceneInView` (the view rect, no
+  post-processing); `localClippingEnabled` is switched on for BaseKit's
+  construction cut on the first landing.
+
+### The base marker (v2.32.13)
 
 `js/world/baseMarkers.js` reads the same `roj-bases`.
 
 - **The marker.** A planet whose look is a body with a base (its BodyKit
   ref: `bodyLookRef(slot)`, e.g. the game's slot 3 is `earthlike/terra`)
-  gets a gold diamond sprite at the base's lat/lon.
+  gets a marker at the base's lat/lon.
   - It is placed through the look's `attach` (BodyKit's `surfaceRoot`, unit
     radius), so it turns with the planet and survives a rebuilt look.
-  - Size: 0.22 of the radius. Depth-tested, so it hides behind the planet.
+  - Since v2.34.0 a small pulsing gold dot: two rings spread out of it and
+    fade, every 2.4 s (the user's call: discreet). It was a gold diamond,
+    0.22 of the radius, and swallowed a landed ship's miniature.
+  - Constant size on screen (the dot 1.8 % of the view's height; the
+    surface is scaled by the planet's radius, so the sprites are divided by
+    it). Depth-tested, so it hides behind the planet.
 - **PLANET INFO** shows a gold "Surface base" line under the value: the
   modules, and how many are built.
   - It is a line of its own (`#infoBase`), because a fourth row didn't fit

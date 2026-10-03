@@ -1,0 +1,27 @@
+/* On a planet's surface (js/surface/groundView.js): the controls on the
+   left, the compass to your base at the top, the readout at the bottom,
+   the fade over the whole view. Inside #viewport (design pixels). */
+#groundFade{ inset:0; pointer-events:none !important; opacity:0; background:#000; transition:opacity .45s; border-radius:6px; }
+#groundPanel{ left:12px; top:10px; width:196px; display:flex; flex-direction:column; gap:6px;
+  padding:8px; border-radius:8px; border:1.5px solid var(--uiFrame); background:rgb(0 2 12 / .78); box-shadow:0 0 8px var(--uiFrameGlow); }
+#groundPanel .gBtn{ height:28px; border-radius:6px; font-family:var(--uiFontLabel); font-weight:500; font-size:14.5px; letter-spacing:.3px; color:#0c1440; }
+#groundPanel .gBtn.gold{ color:#241404; }
+#groundPanel button:hover:not(:disabled){ filter:brightness(1.12); }
+#groundPanel button:disabled{ opacity:.4; cursor:default; }
+#groundPanel .gHd{ margin-top:4px; font-family:var(--uiFontLabel); font-size:13.5px; letter-spacing:.6px; color:#9fb1ff; }
+#gModBtns{ display:grid; grid-template-columns:1fr; gap:4px; }
+#gModBtns .gMod{ height:26px; border-radius:5px; font-family:var(--uiFontLabel); font-size:11.5px; letter-spacing:.2px; color:#0c1440; }
+#gModBtns .gMod.on{ --c:#f8bb56; --hi:#ffda92; --lo:#d38b37; color:#241404; }
+#groundPanel .gHint{ font-size:11.5px; line-height:15px; color:#7f92e8; }
+#gCompass{ left:50%; top:10px; transform:translateX(-50%); display:flex; align-items:center; gap:10px; padding:4px 14px;
+  border:1.5px solid var(--uiFrame); border-radius:16px; background:rgb(0 2 12 / .75); pointer-events:none;
+  font-family:var(--uiFontLabel); font-size:14px; letter-spacing:.6px; color:#e6ebff; }
+#gCompass svg{ width:26px; height:26px; }
+#gCompass .d{ font-size:16px; color:#f8bb56; }
+#gReadout{ left:50%; bottom:12px; transform:translateX(-50%); display:flex; gap:16px; padding:5px 14px; white-space:nowrap;
+  border:1.5px solid var(--uiFrame); border-radius:16px; background:rgb(0 2 12 / .75); pointer-events:none;
+  font-family:var(--uiFontLabel); font-size:13.5px; color:#c7d0ff; }
+#gReadout b{ color:#fff; font-weight:500; }
+/* the space view's own controls and overlays step aside on the ground */
+body.onGround #cameraModeToggle, body.onGround #returnBaseBtn, body.onGround #linesToggleBtn,
+body.onGround #selectionBrackets, body.onGround #bodyTooltip, body.onGround #orderMenu{ display:none !important; }
