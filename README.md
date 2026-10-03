@@ -151,7 +151,9 @@ rough ground — see [`docs/vehicles.md`](docs/vehicles.md). `marine.html` is
 the sea lab: waves, the seabed, diving, robot vessels — see
 [`docs/marine.md`](docs/marine.md).
 `tools/` holds small standalone dev
-utilities (e.g. `grainTexture.html`, which regenerates `css/ui/grain.png`). `blog/` isn't part of the game at all — see "Devlog"
+utilities (e.g. `grainTexture.html`, which regenerates `css/ui/grain.png`,
+and `kitcheck.html`, the kits' and labs' safety net: every default model's
+fingerprint against `kitcheck.golden.json`, every lab checked for errors). `blog/` isn't part of the game at all — see "Devlog"
 below.
 
 Adding a new mechanic (e.g. another upgrade type, a new kind of celestial

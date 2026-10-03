@@ -54,7 +54,13 @@ the player's own progress stays in `localStorage`.
   links), or "Refresh now" silently misses it.
 - **Testing**: no test suite. A local server (`python -m http.server
   8877`) + a throwaway Playwright script in the scratchpad (screenshots,
-  console/pageerror listeners). It hits the **live** Supabase — keep
+  console/pageerror listeners). **Kits and labs: `tools/kitcheck.html`**.
+  - It holds the fingerprints of every default model (ShipKit, BodyKit,
+    BaseKit, VehicleKit, MarineKit, SystemKit) against
+    `tools/kitcheck.golden.json`, and opens every lab looking for errors.
+  - It must PASS before and after a refactor.
+  - A change meant to alter models: check the diff, then commit a new
+    golden file with it. It hits the **live** Supabase — keep
   traffic light. Test "hidden" with `getComputedStyle(el).display` or a
   screenshot, never a class name.
 - **Git**: new commits (amend only before anything is pushed); every
