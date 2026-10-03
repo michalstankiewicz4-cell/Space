@@ -278,8 +278,10 @@ shots along).
   (several passes).
 - **Left panel**: ship name and prev/next navigation over `SHIP_DEFS`,
   the MODEL statistics, a per-type FIGURES list, toggles for
-  auto-rotate, engines (the throttle eases in and out), running lights
-  and wireframe, SHAPING (Rounded edges, Sealed joints: rebuild live, like
+  auto-rotate, engines (the throttle eases in and out), running lights,
+  wireframe and BOBBING (the ship's idle drift in the lab: ±12 cm up and
+  down and a slight rock; off, it eases to rest — it's the ship moving,
+  not the camera), SHAPING (Rounded edges, Sealed joints: rebuild live, like
   Geometry detail), then ACTIONS — one button per `model.actions` entry
   (disabled ones greyed out, triggers flash, toggles stay lit, OFFLINE in
   red) — and a Damage slider. Toggles and damage survive a detail
