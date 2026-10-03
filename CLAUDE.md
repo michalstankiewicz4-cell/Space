@@ -10,7 +10,8 @@ why and the history behind each item live in `docs/`:
 [`ship.md`](docs/ship.md) / [`bodies.md`](docs/bodies.md) (the labs),
 [`scale.md`](docs/scale.md) (sizes; `scale.html`), [`skins.md`](docs/skins.md)
 (`skins.html`), [`systems.md`](docs/systems.md) (`systems.html`, SystemKit),
-[`surface.md`](docs/surface.md) (`surface.html` / `buildings.html`, SurfaceKit, BaseKit). **Read the relevant doc before changing a subsystem** —
+[`surface.md`](docs/surface.md) (`surface.html` / `buildings.html`, SurfaceKit, BaseKit),
+[`vehicles.md`](docs/vehicles.md) (`vehicles.html`, VehicleKit). **Read the relevant doc before changing a subsystem** —
 the long ones have a Contents block: grep `^## ` and read only that section.
 [`README.md`](README.md) has the file map, [`CHANGELOG.md`](CHANGELOG.md)
 the versions, [`IDEAS.md`](IDEAS.md) the plans and open threads.
@@ -42,7 +43,8 @@ the player's own progress stays in `localStorage`.
   `css/admin.css`, `css/devTheme.css`), the labs `ship.html` /
   `bodies.html` / `scale.html` (+ `js/scalelab/`) / `skins.html` /
   `systems.html` (+ `js/systemkit/`, not in the game yet) / `surface.html`
-  (+ `js/surfacekit/`) / `buildings.html` (+ `js/basekit/`) and their LabKit
+  (+ `js/surfacekit/`) / `buildings.html` (+ `js/basekit/`) / `vehicles.html`
+  (+ `js/vehiclekit/`) and their LabKit
   (`js/labkit/`, `css/lab.css`),
   `tools/`, the devlog (`blog/`, Blogger), and `.md`-only edits — those are
   plain commits, no changelog entry.

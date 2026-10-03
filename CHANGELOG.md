@@ -14,6 +14,11 @@ shown next to the title on the start screen and in the browser tab title
   weather (haze, overcast, rain with lightning, snow that settles, dust
   storms, ash), the craft's lamp at night.
 
+### Added
+- Dev Tools LABS: Vehicles (`vehicles.html`, VehicleKit): four robot
+  ground vehicles with suspension, steering, tracks, dust, lamps and work
+  animations (docs/vehicles.md).
+
 ## [2.32.7]
 
 ### Added

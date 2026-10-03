@@ -5,7 +5,7 @@ import { svgIcon } from "../icons.js";
 import { initPerfStats, setPerfStatsVisible, perfStatsVisible } from "./perfStats.js";
 import { t, onLangChange } from "../../i18n.js";
 
-// The labs (docs: ship.md, bodies.md, systems.md, surface.md, scale.md, skins.md): one
+// The labs (docs: ship.md, bodies.md, systems.md, surface.md, vehicles.md, scale.md, skins.md): one
 // button each, opened in a new tab. Buttons, not links: no URL shown on hover.
 const LABS = [
   ["ship.html", "ship", '<path d="M12 3 L18 20 L12 16 L6 20 Z"/>'],
@@ -13,6 +13,7 @@ const LABS = [
   ["systems.html", "systems", '<circle cx="12" cy="12" r="2.4"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="9.5"/><circle cx="18" cy="12" r="1.3" fill="currentColor"/>'],
   ["surface.html", "surface", '<path d="M2 19 L8 10 L12 15 L15 11 L22 19 Z"/><circle cx="17" cy="5.5" r="1.8"/>'],
   ["buildings.html", "buildings", '<path d="M3 19 H21 M5.5 19 V14.5 A6.5 6.5 0 0 1 18.5 14.5 V19"/><path d="M12 8 V4.5 M10.5 19 V16 H13.5 V19"/>'],
+  ["vehicles.html", "vehicles", '<path d="M3 15 V10 H14 L17 13 H21 V15"/><circle cx="7" cy="17" r="2.2"/><circle cx="17" cy="17" r="2.2"/><path d="M6 10 V7 H10"/>'],
   ["scale.html", "scale", '<rect x="2.5" y="8" width="19" height="8" rx="1.5"/><path d="M6 8 V11 M9.5 8 V12.5 M13 8 V11 M16.5 8 V12.5"/>'],
   ["skins.html", "skins", '<path d="M12 3 C6.5 3 3 7 3 11.5 C3 16 6.5 20 11 20 C12.5 20 13 19 12.5 17.8 C12 16.5 13 15.5 14.3 15.5 H16.5 C19 15.5 21 13.5 21 11 C21 6.5 17 3 12 3 Z"/><circle cx="7.8" cy="11" r="1.2" fill="currentColor"/><circle cx="11" cy="7.3" r="1.2" fill="currentColor"/><circle cx="15.5" cy="8.6" r="1.2" fill="currentColor"/>'],
 ];

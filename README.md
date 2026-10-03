@@ -52,6 +52,8 @@ js/
                      lab's (surface.html), not in the game yet; see docs/surface.md
   basekit/           BaseKit — planetary base modules from ShipKit's generators (built, hologram,
                      under construction); the building and surface labs', not in the game yet
+  vehiclekit/        VehicleKit — robot ground vehicles from ShipKit's generators (suspension, steering,
+                     tracks, dust, lamps, work); the vehicle lab's (vehicles.html), not in the game yet
   postkit/           PostKit — post-processing (bloom, MSAA, FXAA, lensing, depth of field, sun
                      flare, the "robot eyes" filter) and the labs' IMAGE EFFECTS panel, one classic
                      script shared by the game (scene/post.js) and both labs
@@ -142,6 +144,8 @@ seed, editing (centres, orbits, rings, moons, background) — see
 [`docs/systems.md`](docs/systems.md). `surface.html` is the surface lab
 (land on a planet, drive, found a base) and `buildings.html` the building
 lab (the base modules) — see [`docs/surface.md`](docs/surface.md).
+`vehicles.html` is the vehicle lab: robot ground vehicles driving over
+rough ground — see [`docs/vehicles.md`](docs/vehicles.md).
 `tools/` holds small standalone dev
 utilities (e.g. `grainTexture.html`, which regenerates `css/ui/grain.png`). `blog/` isn't part of the game at all — see "Devlog"
 below.
