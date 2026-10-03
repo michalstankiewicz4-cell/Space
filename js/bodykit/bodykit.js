@@ -743,6 +743,39 @@ function buildPlanet(values, detail) {
 // =====================================================================
 const GLSL_GIANT = `
 uniform float uBandCount, uTurb, uContrast, uWarm, uStorm, uStormLat, uOvals, uPolar, uWind, uSheen;
+uniform float uRings, uOblate, uHexagon, uPolarBlue, uGold;
+uniform vec3 uSunObj;   // the light direction in the spinning body's own frame (rings, shadows)
+// The rings, by radius in body radii (Saturn's): C 1.24-1.53 faint, B
+// 1.53-1.95 the densest, the Cassini division, A 2.03-2.27 with the Encke
+// gap, the thin F ring; fine ringlets everywhere. 0..1
+float ringDensity(float r){
+  if (r < 1.22 || r > 2.36) return 0.0;
+  float c = smoothstep(1.22, 1.26, r) * (1.0 - smoothstep(1.51, 1.53, r)) * 0.3;
+  float b = smoothstep(1.52, 1.56, r) * (1.0 - smoothstep(1.93, 1.95, r)) * (0.82 + 0.18 * smoothstep(1.6, 1.8, r));
+  float cassini = smoothstep(1.95, 1.96, r) * (1.0 - smoothstep(2.02, 2.03, r)) * 0.06;
+  float a = smoothstep(2.02, 2.04, r) * (1.0 - smoothstep(2.25, 2.27, r)) * 0.62 * (1.0 - exp(-pow((r - 2.214) / 0.004, 2.0)));
+  float f = exp(-pow((r - 2.326) / 0.004, 2.0)) * 0.55;
+  float ringlets = 0.72 + 0.28 * (snoise(vec3(r * 260.0, 0.5, 0.5)) * 0.5 + 0.5) + 0.12 * snoise(vec3(r * 900.0, 1.5, 0.5));
+  return clamp((c + b + cassini + a) * ringlets + f, 0.0, 1.0);
+}
+vec3 ringColor(float r){
+  vec3 col = mix(vec3(0.55, 0.50, 0.45), vec3(0.93, 0.87, 0.77), smoothstep(1.5, 1.6, r));   // C dusky, B creamy
+  col = mix(col, vec3(0.80, 0.78, 0.74), smoothstep(2.0, 2.05, r));                           // A greyer
+  return col * (0.92 + 0.16 * snoise(vec3(r * 140.0, 2.5, 0.5)));
+}
+// the rings' shadow on a point of the body (spin frame, flattened): 1 = lit
+float ringShadow(vec3 pp){
+  if (uRings <= 0.001 || pp.y * uSunObj.y >= 0.0 || abs(uSunObj.y) < 1e-4) return 1.0;
+  vec3 hit = pp + uSunObj * (-pp.y / uSunObj.y);
+  return 1.0 - ringDensity(length(hit.xz)) * uRings * 0.85;
+}
+// the body's shadow on a point of the rings: 0 = in shadow
+float bodyShadow(vec3 pp){
+  float k = 1.0 - uOblate;
+  vec3 o = vec3(pp.x, pp.y / k, pp.z), d = normalize(vec3(uSunObj.x, uSunObj.y / k, uSunObj.z));
+  float b = dot(o, d), c = dot(o, o) - 1.0, disc = b * b - c;
+  return disc > 0.0 && -b + sqrt(disc) > 0.0 ? 0.06 : 1.0;
+}
 #define PI 3.14159265
 #define TAU 6.28318531
 // every band turns at its own speed (differential rotation)
@@ -791,8 +824,8 @@ vec3 giantColor(vec3 p){
   band = sin(yb * freq);
 
   float fine = fbm(vec3(0.0, yb * 55.0, 0.0) + uSeed.zxy, 4, 0.6);     // thin sub-bands
-  vec3 zone = vec3(0.86, 0.85, 0.80);
-  vec3 belt = mix(vec3(0.62, 0.58, 0.53), vec3(0.78, 0.60, 0.45), uWarm);
+  vec3 zone = mix(vec3(0.86, 0.85, 0.80), vec3(0.90, 0.80, 0.60), uGold);   // white or golden zones
+  vec3 belt = mix(mix(vec3(0.62, 0.58, 0.53), vec3(0.78, 0.60, 0.45), uWarm), vec3(0.80, 0.66, 0.46), uGold * 0.6);
   float k = smoothstep(-0.7, 0.7, band * (0.3 + 0.7 * uContrast) + fine * 0.4);
   vec3 col = mix(belt, zone, k);
   col *= 1.0 + fine * 0.1;
@@ -809,9 +842,25 @@ vec3 giantColor(vec3 p){
   col = mix(col, vec3(0.90, 0.89, 0.86), smoothstep(0.05, 0.3, curls) * wake * 0.9);
   col = mix(col, col * vec3(0.90, 0.76, 0.64), smoothstep(0.05, 0.3, -curls) * wake * 0.6);
   col = mix(col, vec3(0.74, 0.44, 0.32), streak * 0.6 * uWarm);
-  // poles: muted grey-ochre, mottled
+  // poles: muted grey-ochre (or blue), mottled
   float pol = smoothstep(0.62, 0.95, abs(p.y)) * uPolar;
-  col = mix(col, vec3(0.72, 0.68, 0.60) * (0.85 + 0.3 * flow), pol);
+  col = mix(col, mix(vec3(0.72, 0.68, 0.60), vec3(0.56, 0.66, 0.80), uPolarBlue) * (0.85 + 0.3 * flow), pol);
+  // the north polar hexagon: a six-sided jet stream around a blue vortex
+  if (uHexagon > 0.001 && p.y > 0.7) {
+    vec3 qh = bandDrift(p, 1.35);
+    float phi = atan(qh.z, qh.x) + uSeed.x;
+    float colat = acos(clamp(p.y, -1.0, 1.0));
+    float segA = PI / 3.0;
+    float rHex = 0.28 / cos(mod(phi, segA) - segA * 0.5);              // a hexagon in polar coordinates
+    float inside = 1.0 - smoothstep(rHex - 0.025, rHex + 0.01, colat);
+    float jet = exp(-pow((colat - rHex) / 0.014, 2.0));
+    float swirlH = fbm(vec3(qh.x * 9.0, qh.y * 3.0, qh.z * 9.0) + uSeed + vec3(colat * 6.0), 4, 0.5);
+    vec3 blue = mix(vec3(0.18, 0.30, 0.52), vec3(0.40, 0.54, 0.72), swirlH * 0.5 + 0.5 + 0.25 * sin(colat * 60.0));
+    blue = mix(blue, vec3(0.75, 0.85, 0.95), exp(-pow(colat / 0.025, 2.0)) * 0.8);                // the eye
+    col = mix(col, blue, inside * uHexagon);
+    col = mix(col, vec3(0.86, 0.90, 0.94), jet * 0.55 * uHexagon);
+    col = mix(col, col * vec3(0.85, 0.92, 1.05), exp(-pow((colat - rHex - 0.1) / 0.06, 2.0)) * 0.6 * uHexagon);   // a bluish collar
+  }
   // the great storm: an orange core, a darker rim, a pale collar
   if (uStorm > 0.001) {
     float sw, d;
@@ -846,6 +895,7 @@ function giantMaterial(U) {
       void main(){
         vec3 p = normalize(vDir);
         vec3 col = giantColor(p);
+        col *= ringShadow(vec3(p.x, p.y * (1.0 - uOblate), p.z));
         float crack = crackAt(p);
         col *= 1.0 - crack * 0.6;
         vec3 N = normalize(vNormalW), L = normalize(uSunDir), V = normalize(cameraPosition - vWorldPos);
@@ -861,11 +911,34 @@ function giantMaterial(U) {
   });
 }
 
+// The rings: a flat annulus in the spin frame, its look from the radius
+// (ringDensity / ringColor), lit by how high the light stands over the
+// ring plane, dark where the body shadows it. Transparent, both sides.
+function giantRingMaterial(U) {
+  return new THREE.ShaderMaterial({
+    uniforms: U, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+    vertexShader: `
+      varying vec3 vP;
+      void main(){ vP = position; gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0); }`,
+    fragmentShader: GLSL_NOISE + GLSL_BODY + GLSL_GIANT + `
+      varying vec3 vP;
+      void main(){
+        float r = length(vP.xz);
+        float dens = ringDensity(r);
+        if (dens < 0.004) discard;
+        float lit = 0.75 + 0.25 * smoothstep(0.0, 0.2, abs(uSunObj.y));     // ice scatters: bright even with the light low
+        vec3 col = ringColor(r) * lit * bodyShadow(vP) * 1.3;
+        gl_FragColor = vec4(col, clamp(dens * uRings, 0.0, 1.0));
+      }`,
+  });
+}
+
 function buildGiant(values, detail) {
   const v = { ...values };
   const U = Object.assign(bodyUniforms(v), {
     uBandCount: { value: 0 }, uTurb: { value: 0 }, uContrast: { value: 0 }, uWarm: { value: 0 }, uStorm: { value: 0 },
     uStormLat: { value: 0 }, uOvals: { value: 0 }, uPolar: { value: 0 }, uWind: { value: 0 }, uSheen: { value: 0 },
+    uRings: { value: 0 }, uOblate: { value: 0 }, uHexagon: { value: 0 }, uPolarBlue: { value: 0 }, uGold: { value: 0 }, uSunObj: { value: new THREE.Vector3(1, 0, 0) },
     uAtmo: { value: 0 }, uAtmoColor: { value: new THREE.Color() },
   });
   const seg = (n, min) => Math.max(min, Math.round(n * detail));
@@ -875,18 +948,33 @@ function buildGiant(values, detail) {
   spin.add(surface);
   const atmo = new THREE.Mesh(new THREE.SphereGeometry(1.06, seg(96, 12), seg(48, 6)), atmosphereMaterial(U));
   group.add(atmo);
-  atmo.raycast = () => {};
+  const ringGeo = new THREE.RingGeometry(1.2, 2.38, seg(256, 48), 1);
+  ringGeo.rotateX(-Math.PI / 2);                     // into the equatorial (XZ) plane, baked
+  const rings = new THREE.Mesh(ringGeo, giantRingMaterial(U));
+  spin.add(rings);
+  atmo.raycast = rings.raycast = () => {};
+  const qInv = new THREE.Quaternion();
   return makeBodyHandle({
     v, U, group, spin, pickMesh: surface,
     apply() {
       U.uBandCount.value = v.bandCount; U.uTurb.value = v.turbulence; U.uContrast.value = v.contrast; U.uWarm.value = v.warm;
       U.uStorm.value = v.storm; U.uStormLat.value = v.stormLat; U.uOvals.value = v.ovals; U.uPolar.value = v.polar;
       U.uWind.value = v.wind; U.uSheen.value = v.sheen; U.uAtmo.value = v.atmosphere; U.uAtmoColor.value.copy(hueColor(v.atmoHue));
+      U.uRings.value = v.rings; U.uOblate.value = v.oblate; U.uHexagon.value = v.hexagon; U.uPolarBlue.value = v.polarBlue; U.uGold.value = v.gold;
+      surface.scale.set(1, 1 - v.oblate, 1);         // flattened at the poles
     },
-    layers: { atmosphere: { objects: [atmo], when: () => v.atmosphere > 0.001 } },
+    // the light in the spin frame, for the rings and their shadows
+    onUpdate() { U.uSunObj.value.copy(U.uSunDir.value).applyQuaternion(spin.getWorldQuaternion(qInv).invert()).normalize(); },
+    layers: {
+      atmosphere: { objects: [atmo], when: () => v.atmosphere > 0.001 },
+      clouds: { objects: [rings], when: () => v.rings > 0.001 },       // the lab's second layer button: RINGS
+    },
     describe() {
-      const pairs = Math.round(v.bandCount / 2);
-      return [["Belts / zones", pairs + " / " + pairs], ["Great storm", v.storm > 0.001 ? Math.round(v.storm * 24000 * 1.4) + " km wide" : "none"]];
+      const pairs = Math.round(v.bandCount / 2), km = (x) => Math.round(x * v.size * 69911).toLocaleString("en-US") + " km";
+      const rows = [["Belts / zones", pairs + " / " + pairs], ["Great storm", v.storm > 0.001 ? Math.round(v.storm * 24000 * 1.4) + " km wide" : "none"]];
+      if (v.rings > 0.001) rows.push(["Rings (outer edge)", km(2.33)]);
+      if (v.oblate > 0.001) rows.push(["Flattening", Math.round(v.oblate * 1000) / 10 + "%"]);
+      return rows;
     },
   });
 }
@@ -1639,7 +1727,7 @@ const GROUPS = [
     build: buildPlanet,
   },
   {
-    id: "giants", name: "GAS GIANTS", kmPerSize: 69911, view: 4.4, layers: { atmosphere: "ATMOSPHERE" },
+    id: "giants", name: "GAS GIANTS", kmPerSize: 69911, view: 4.4, layers: { clouds: "RINGS", atmosphere: "ATMOSPHERE" },
     params: [
       { key: "size",       label: "Size (Jupiter radii)",   min: 0.3, max: 2,   step: 0.05, value: 1,    fmt: f2 },
       { key: "bandCount",  label: "Bands",                  min: 6,   max: 30,  step: 1,    value: 13,   fmt: (x) => Math.round(x) },
@@ -1652,11 +1740,19 @@ const GROUPS = [
       { key: "polar",      label: "Polar haze",             min: 0,   max: 1,   step: 0.01, value: 0.6,  fmt: pct },
       { key: "wind",       label: "Wind speed",             min: 0,   max: 1,   step: 0.01, value: 0.5,  fmt: pct },
       { key: "sheen",      label: "Polish (sheen)",         min: 0,   max: 1,   step: 0.01, value: 0.25, fmt: pct },
+      { key: "rings",      label: "Rings",                  min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
+      { key: "oblate",     label: "Flattening",             min: 0,   max: 0.15, step: 0.005, value: 0,  fmt: pct },
+      { key: "hexagon",    label: "Polar hexagon",          min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
+      { key: "polarBlue",  label: "Polar haze (grey → blue)", min: 0, max: 1,   step: 0.01, value: 0,    fmt: pct },
+      { key: "gold",       label: "Golden tint",            min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "atmosphere", label: "Atmosphere",             min: 0,   max: 1,   step: 0.01, value: 0.3,  fmt: pct },
       { key: "atmoHue",    label: "Atmosphere hue",         min: 0,   max: 360, step: 1,    value: 35,   fmt: (x) => Math.round(x) + "°" },
     ],
     bodies: [
       { id: "jupiter", name: "JUPITER", values: { seed: 5, tilt: 3, spin: 1 } },
+      { id: "saturn",  name: "SATURN",  view: 8.5, values: { seed: 11, size: 0.84, tilt: 27, spin: 1, bandCount: 24, turbulence: 0.12, contrast: 0.2,
+        warm: 0.6, gold: 0.65, storm: 0, ovals: 0, polar: 0.55, polarBlue: 0.7, wind: 0.35, sheen: 0.15, rings: 1, oblate: 0.1, hexagon: 1,
+        atmosphere: 0.22, atmoHue: 40 } },
     ],
     build: buildGiant,
   },

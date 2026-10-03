@@ -37,7 +37,7 @@ from its schema.
 | DESERT WORLDS | size, terrain scale, mountains, roughness, rust, craters, polar caps, thin clouds, drift, atmosphere, hue | MARS (lab only) | the same |
 | CLOUD WORLDS | size, cloud deck, band contrast, haze colour, wind speed, atmosphere, hue | VENUS (lab only) | the same (clouds 100%) |
 | AIRLESS | size, terrain scale, relief height, roughness, craters, ray craters | MERCURY (lab only) | the same |
-| GAS GIANTS | size, bands, turbulence, band contrast, colour, great storm (size, latitude), white ovals, polar haze, wind speed, atmosphere, hue | JUPITER (lab only) | belts / zones, the storm's width |
+| GAS GIANTS | size, bands, turbulence, band contrast, colour, great storm (size, latitude), white ovals, polar haze, wind speed, polish, rings, flattening, polar hexagon, polar haze colour, golden tint, atmosphere, hue | JUPITER, SATURN (lab only) | belts / zones, the storm's width, the rings' outer edge, flattening |
 | SUNS | size, temperature, granulation, sunspots, activity, corona, brightness | SOL (slot 0) | temperature, spectral class, luminosity |
 | COMETS | the rock parameters + coma, tail length, dust tail, ion tail hue | COMET (kind `comet`: every comet) | shape in km |
 | ROCKS | the rock parameters: size, lumpiness, elongation, craters, albedo, color, ice, metal veins | FERRUM (slot 8, the meteoroid) | shape in km, albedo |
@@ -217,6 +217,22 @@ the game sizes each body to its own radius.
   on 0, about ±0.6, so its thresholds sit near 0) — and a rusty streak
   east. White ovals ride their own band; muted poles, limb darkening, a
   soft terminator; the atmosphere shell is the planets'.
+- **Saturn** (the same giant, data + four parameters, from two real
+  photos): `gold` tints zones and belts golden, `oblate` flattens the
+  surface mesh (10%), `hexagon` draws the north polar hexagon — a hexagon
+  in polar coordinates (`0.28 / cos(φ mod 60° − 30°)`) with a blue swirling
+  interior, a bright jet on its edge, a pale eye — and `polarBlue` turns
+  the polar haze blue. **Rings** (`rings`): a flat annulus in the spin
+  frame (`RingGeometry` rotated into XZ and baked, so its own position
+  gives the radius); `ringDensity(r)` / `ringColor(r)` follow the real
+  layout in planet radii — C 1.24–1.53 faint and dusky, B 1.53–1.95 the
+  densest and creamy, the Cassini division, A 2.03–2.27 greyer with the
+  Encke gap, the thin F ring, fine ringlets everywhere. They stay bright
+  even with the light low (ice scatters). `uSunObj`, the light in the
+  spin frame (`onUpdate`), drives both shadows: the rings on the planet
+  (`ringShadow`: from the surface point to the ring plane, the density
+  there) and the planet on the rings (`bodyShadow`: a ray to the light
+  against the flattened sphere). The lab's second layer button is RINGS.
 - **Black hole** (`buildBlackHole`, `GLSL_HOLE`): a black horizon sphere,
   an **accretion disk** (a ring whose radius is remapped in the vertex
   shader to `disk`, turbulent noise turning with the disk, hotter and
@@ -429,6 +445,8 @@ Sun, the meteoroid, comets, the black hole) and since v2.12.0 the sky
 - **Backdrop**: the game's own sky (BodyKit's kind `sky`), so a body looks
   here exactly as in the game; hidden while the SKY tab shows a sky of its
   own.
+- **Camera distance**: a group's `view`, or a body's own `view` (SATURN:
+  its rings need more room), applied when the group or the body changes.
 - **Left panel**: group tabs (LAVA WORLDS / EARTH-LIKE / ICE WORLDS / DESERT WORLDS / CLOUD WORLDS / AIRLESS / GAS GIANTS / SUNS / COMETS / ROCKS / BLACK HOLES / SKY), body
   navigation, PHYSICAL statistics and MODEL statistics, and toggles for
   auto-rotate, the two layers (named by the group), wireframe, GAME BUILD

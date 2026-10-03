@@ -4,6 +4,17 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.31.1]
+
+### Added
+- Body lab: **SATURN** among the gas giants, from two real photos — golden,
+  calm bands, 10% flattening, the blue north polar hexagon around a
+  vortex, and **rings**: C, B, the Cassini division, A with the Encke gap
+  and the thin F ring, fine ringlets, the rings' shadow on the planet and
+  the planet's shadow on the rings. New giant parameters `rings`,
+  `oblate`, `hexagon`, `polarBlue`, `gold`; JUPITER keeps them at 0 and
+  looks the same. A lab body can set its own camera distance (`view`).
+
 ## [2.31.0]
 
 ### Added

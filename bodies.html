@@ -342,7 +342,7 @@ BodyKit.GROUPS.forEach((g, i) => {
   b.className = "mat groupTab"; b.textContent = g.name;
   b.addEventListener("click", () => {
     state.groupIndex = i; state.bodyIndex = 0;
-    camera.position.setLength(g.view || 4.4);    // frame the group's bodies (a comet's tail is long)
+    camera.position.setLength((g.bodies[0] && g.bodies[0].view) || g.view || 4.4);    // frame the group's bodies (a comet's tail is long)
     [...tabs.children].forEach((t, j) => { t.classList.toggle("gold", j === i); t.classList.toggle("blueT", j !== i); });
     loadBody(false);
   });
@@ -352,6 +352,8 @@ BodyKit.GROUPS.forEach((g, i) => {
 const stepBody = (d) => {
   const n = currentGroup().bodies.length; if (n < 2) return;
   state.bodyIndex = (state.bodyIndex + d + n) % n; loadBody(false);
+  const g = currentGroup();
+  camera.position.setLength(g.bodies[state.bodyIndex].view || g.view || 4.4);   // a body may need more room (rings)
 };
 $("prevBody").addEventListener("click", () => stepBody(-1));
 $("nextBody").addEventListener("click", () => stepBody(1));
