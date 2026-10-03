@@ -203,6 +203,10 @@ function makePlating({ size = 1024, seed = 1, base = [150, 156, 170], minPanel =
   for (const m of markings) {
     col.save(); col.translate(m.x * W, m.y * H); col.rotate(m.rot || 0);
     col.font = `600 ${m.size}px "Oswald", "Arial Narrow", sans-serif`;
+    if (m.max) {                                   // a long text shrinks to fit its place
+      const w = col.measureText(m.text).width;
+      if (w > m.max) col.font = `600 ${Math.floor(m.size * m.max / w)}px "Oswald", "Arial Narrow", sans-serif`;
+    }
     col.textAlign = "center"; col.textBaseline = "middle";
     col.fillStyle = m.color; col.globalAlpha = 0.9; col.fillText(m.text, 0, 0); col.restore();
   }
@@ -914,6 +918,9 @@ function strut(a, b, radius, material, segments = 8) {
   return m;
 }
 
+// A cache key for a ship's lettering: "" for the defaults (the shared set).
+const labelKey = (l) => (l && (l.name || l.sub) ? JSON.stringify([l.name || "", l.sub || ""]) : "");
+
 // Segment-count and bevel helpers bound to a build's `detail`.
 function detailHelpers(detail) {
   const seg = (n, min = 3) => Math.max(min, Math.round(n * detail));
@@ -1516,18 +1523,23 @@ SHIP_DEFS.push({
   name: "SP-01 CODEWING",
   camera: [9.5, 4.2, 11.5],
   _assets: null,
-  assets() {
-    if (this._assets) return this._assets;
+  // labels { name, sub }: the hull's lettering (default "SP-01" / "SWARM
+  // PROTOCOL"); each pair gets its own texture set, the default one shared
+  assets(labels) {
+    const key = labelKey(labels);
+    this._assets = this._assets || {};
+    if (this._assets[key]) return this._assets[key];
+    const tag = (labels && labels.name) || "SP-01", motto = (labels && labels.sub) || "SWARM PROTOCOL";
     const hullTex = makePlating({
       seed: 5, base: [156, 162, 176],
       stripes: [{ y: 0.10, h: 0.028, color: "#f8bb56" }, { y: 0.142, h: 0.012, color: "#5f77f7" },
                 { y: 0.80, h: 0.02, color: "#5f77f7" }],
       // rotation per side so the text reads upright from both flanks (+z / -z)
       markings: [
-        { text: "SP-01", x: 0.07, y: 0.36, rot: -Math.PI / 2, size: 44, color: "#f8bb56" },
-        { text: "SP-01", x: 0.57, y: 0.36, rot: Math.PI / 2, size: 44, color: "#f8bb56" },
-        { text: "SWARM PROTOCOL", x: 0.93, y: 0.56, rot: -Math.PI / 2, size: 26, color: "#dfe6ff" },
-        { text: "SWARM PROTOCOL", x: 0.43, y: 0.56, rot: Math.PI / 2, size: 26, color: "#dfe6ff" },
+        { text: tag, x: 0.07, y: 0.36, rot: -Math.PI / 2, size: 44, color: "#f8bb56", max: 300 },
+        { text: tag, x: 0.57, y: 0.36, rot: Math.PI / 2, size: 44, color: "#f8bb56", max: 300 },
+        { text: motto, x: 0.93, y: 0.56, rot: -Math.PI / 2, size: 26, color: "#dfe6ff", max: 300 },
+        { text: motto, x: 0.43, y: 0.56, rot: Math.PI / 2, size: 26, color: "#dfe6ff", max: 300 },
       ],
       windows: [{ x: 0.0, y: 0.47, count: 9, gap: 0.022 }, { x: 0.5, y: 0.47, count: 9, gap: 0.022 },
                 { x: 0.99, y: 0.47, count: 9, gap: 0.022 }],
@@ -1560,11 +1572,11 @@ SHIP_DEFS.push({
       throat: new THREE.MeshBasicMaterial({ color: 0xbfd0ff }),
     };
     for (const m of Object.values(a)) sharedMaterials.add(m);
-    return (this._assets = a);
+    return (this._assets[key] = a);
   },
 
   build(detail, env) {
-    const M = this.assets(), G = glowTextures();
+    const M = this.assets(env && env.labels), G = glowTextures();
     const U = { uTime: { value: 0 }, uPower: { value: 1 }, uOn: { value: 1 } }; // per-model shader uniforms
     const { seg, bevel } = detailHelpers(detail);
     const ship = new THREE.Group();
@@ -2465,12 +2477,16 @@ SHIP_DEFS.push({
   camera: [12, 7.5, 13],
   features: { damage: true, destroy: true },
   _assets: null,
-  assets() {
-    if (this._assets) return this._assets;
+  // labels { name }: the hull's lettering (default "HAVEN-04"), as on the codewing
+  assets(labels) {
+    const key = labelKey(labels && { name: labels.name });
+    this._assets = this._assets || {};
+    if (this._assets[key]) return this._assets[key];
+    const tag = (labels && labels.name) || "HAVEN-04";
     const hullTex = makePlating({
       seed: 44, size: 1024, base: [176, 180, 188], minPanel: 50, maxPanel: 180,
       stripes: [{ y: 0.12, h: 0.022, color: "#4fe3c6" }, { y: 0.88, h: 0.022, color: "#f8bb56" }],
-      markings: [{ text: "HAVEN-04", x: 0.5, y: 0.5, size: 64, color: "#2a3140" }],
+      markings: [{ text: tag, x: 0.5, y: 0.5, size: 64, color: "#2a3140", max: 900 }],
     });
     for (const k of ["map", "roughnessMap", "bumpMap", "emissiveMap"]) hullTex[k].repeat.set(3, 1);
     const moduleTex = makePlating({ seed: 45, size: 512, base: [104, 110, 122], minPanel: 40, maxPanel: 140,
@@ -2497,11 +2513,11 @@ SHIP_DEFS.push({
       glow: new THREE.MeshStandardMaterial({ color: 0x0b3a33, emissive: 0x4fe3c6, emissiveIntensity: 2.2, metalness: 0.2, roughness: 0.3 }),
     };
     for (const m of Object.values(a)) sharedMaterials.add(m);
-    return (this._assets = a);
+    return (this._assets[key] = a);
   },
 
   build(detail, env) {
-    const M = this.assets();
+    const M = this.assets(env && env.labels);
     const U = { uTime: { value: 0 }, uPower: { value: 1 } };
     const { seg } = detailHelpers(detail);
     const station = new THREE.Group();
@@ -2864,10 +2880,12 @@ function mergeStatic(root) {
 // round, seal (0..1): rounded edges and sealed joints (see SHAPING; sealStyle
 // "fillet" — the joint rounded — or "bead" — a line of sealant); 0 = the
 // model exactly as its definition builds it (the game's default).
-function buildShipModel(id, { detail = 1, merge = false, fxRoot = null, envMap = null, round = 0, seal = 0, sealStyle = "fillet" } = {}) {
+// labels { name, sub }: the lettering on a hull that has any (the codewing,
+// the station); omitted = the ship's own.
+function buildShipModel(id, { detail = 1, merge = false, fxRoot = null, envMap = null, round = 0, seal = 0, sealStyle = "fillet", labels = null } = {}) {
   const def = SHIP_DEFS.find((d) => d.id === id);
   if (!def) throw new Error("ShipKit: unknown ship id " + id);
-  const env = { fxRoot, owned: [] };
+  const env = { fxRoot, owned: [], labels };
   // arc segments: more for a stronger rounding and a higher detail (each box costs (2k+1)² quads a face)
   const k = Math.max(1, Math.min(3, Math.round(round * 3 * detail)));
   const built = withRounding(round, k, () => def.build(detail, env));

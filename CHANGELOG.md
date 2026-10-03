@@ -11,6 +11,11 @@ shown next to the title on the start screen and in the browser tab title
   own motion clock (advanced by `dt`) instead of the wall clock. They look
   the same; the ship lab's new STOP ANIMATIONS can now freeze every
   moving part (and the lab's idle bobbing) while the lights keep going.
+- ShipKit: `buildShipModel` takes `labels { name, sub }`: the lettering on
+  the codewing's and the station's hulls (one texture set per pair, the
+  default one shared — the game's ships are unchanged). Markings shrink
+  to fit. The ship lab renames a ship and its caption (double-click) and
+  repaints the hull.
 
 ## [2.32.11]
 

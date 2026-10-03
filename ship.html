@@ -236,7 +236,8 @@ function loadShip(index, keepCamera) {
   if (current) ShipKit.disposeShipModel(current);
   const def = ShipKit.SHIP_DEFS[index];
   const tb = performance.now();
-  current = ShipKit.buildShipModel(def.id, { detail: state.detail, merge: state.merge, round: state.round, seal: state.seal, sealStyle: state.sealStyle });
+  current = ShipKit.buildShipModel(def.id, { detail: state.detail, merge: state.merge, round: state.round, seal: state.seal, sealStyle: state.sealStyle,
+    labels: shipLabels(def.id) });   // the hull's lettering follows the renamed name / caption
   const buildMs = performance.now() - tb;
   holder.add(current.group);
   current.setLights(state.lights);
@@ -448,9 +449,11 @@ for (const [elId, key] of [["hudTitle", "name"], ["hudSub", "sub"]]) {
     el.removeAttribute("contenteditable");
     const def = ShipKit.SHIP_DEFS[state.shipIndex], all = store.get("names", {}), mine = Object.assign({}, all[def.id]);
     const text = el.textContent.replace(/\s+/g, " ").trim().slice(0, 40);
+    const changed = keepIt && text !== (all[def.id] || {})[key] && !(text === "" && !(all[def.id] || {})[key]);
     if (keepIt) { if (text) mine[key] = text; else delete mine[key]; all[def.id] = mine; store.set("names", all); }
     else el.textContent = before;
     showLabels();
+    if (changed) loadShip(state.shipIndex, true);          // repaint the hull's lettering
   };
   el.addEventListener("dblclick", () => {
     before = el.textContent;

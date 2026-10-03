@@ -304,6 +304,14 @@ shots along).
   - **Double-click the name or the caption to edit it.** Enter keeps it, Esc
     cancels, and empty brings the original back. Kept per ship; the game's
     names don't change.
+  - **The hull's lettering follows** (`buildShipModel` option `labels: { name,
+    sub }`). On the codewing, the name replaces "SP-01" and the caption
+    replaces "SWARM PROTOCOL"; on the station, the name replaces
+    "HAVEN-04".
+    - Each label pair gets its own texture set (`assets(labels)`, keyed by
+      `labelKey`). The default set stays the one all ships share, so the
+      game is unchanged.
+    - Long texts shrink to fit (a marking's `max`, in canvas px).
   - The swap and the names are per-viewer conveniences, in `localStorage`
     under `shipLab.*`, wrapped in try/catch.
 - **CHANGE VIEW** (top centre, key C; the user's design) cycles three views:
