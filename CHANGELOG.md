@@ -11,6 +11,10 @@ shown next to the title on the start screen and in the browser tab title
   own motion clock (advanced by `dt`) instead of the wall clock. They look
   the same; the ship lab's new STOP ANIMATIONS can now freeze every
   moving part (and the lab's idle bobbing) while the lights keep going.
+- BodyKit split: the core stays in `js/bodykit/bodykit.js` (about 725
+  lines, from about 2,330), each kind of body in `js/bodykit/kinds/<kind>.js`.
+  A group's `build` names its kind (`KINDS`). Every page that loads
+  BodyKit loads them too. The bodies are unchanged (kitcheck PASS).
 - ShipKit split: the core stays in `js/shipkit/shipkit.js` (about 1,860
   lines, from about 3,100), each ship in `js/shipkit/ships/<id>.js`. Every
   page that loads ShipKit loads them too; `versionCheck` knows them. The

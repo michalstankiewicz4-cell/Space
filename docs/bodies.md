@@ -20,7 +20,8 @@ bump (`js/version.js`, `CHANGELOG.md`, the `?v=` params).
 |---|---|---|
 | 1. `vendor/three-r128.min.js`, `vendor/three-r128-examples/OrbitControls.js` | Three.js r128 (the game's own copy; pasted into the page until the 2026-10 review) and the preview's mouse camera | Three.js yes |
 | 2. `js/labkit/labkit.js` + `css/lab.css` | Shared with the ship lab: grain, sliders, toggles, HUD scale, performance counters, the IMAGE EFFECTS render (see docs/ship.md) | No |
-| 3. `js/bodykit/bodykit.js` (`<script id="bodykit" src=…>`) | **The bodies**: groups, parameter schemas, GLSL shaders, public API. A classic script exposing `window.BodyKit`; its header repeats the API. | **Yes**, `index.html` loads it (`defer`, after Three.js and ShipKit) |
+| 3. `js/bodykit/bodykit.js` (`<script id="bodykit" src=…>`) | **BodyKit's core**: the shared GLSL (noise, the body uniforms), the shared blocks, the groups and their parameter schemas, the public API (`window.BodyKit`; its header repeats it), and `BodyKit._`: the internals the kind files build with (not a public API). | **Yes**, `index.html` loads it (`defer`, after Three.js and ShipKit) |
+| 3b. `js/bodykit/kinds/planets.js`, `giants.js`, `pulsars.js`, `suns.js`, `rocks.js`, `holes.js`, `sky.js` | **One file per kind of body** (split out 2026-10-03; the core went from ~2330 to ~725 lines).<br>Each holds its shaders and builder(s) and registers them in `KINDS`. A group's `build` names its kind: `"planet"`, `"giant"`, `"rings"`, `"pulsar"`, `"sun"`, `"rock"`, `"comet"`, `"hole"` or `"sky"`.<br>Their public parts (`planetTerrain`, `GLSL_PLANET`, `GLSL_PLANET_SURFACE`, `GLSL_SUN`, `GLSL_ROCK`, `GLSL_HOLE`, `GLSL_SKY`) are added to `window.BodyKit` by these files.<br>Load order matters: `planets.js` before `giants.js`, because the giants use the planets' atmosphere. | **Yes**, after `bodykit.js` everywhere |
 | 4. `js/labs/bodies.js` (`<script id="viewer">`; in the page until 2026-10-03) | Preview page: sky, camera, HUD, sliders generated from the schemas, statistics, counters | No |
 
 ## Groups
@@ -397,10 +398,20 @@ Rules, for every new body and every change:
   `{ id: "ocean", name: "…", values: { sea: 0.35, clouds: 0.6 } }`. The
   body-navigation arrows pick it up. Give it `slot: n` to put it on that
   orbit in the game (one body per slot).
-- **A new kind** (a gas giant, a nebula, …): give the group its own
-  `params` schema, `kmPerSize` / `view` / `layers`, a
-  `build(values, detail)` that composes the building blocks and returns
-  `makeBodyHandle({...})`, and at least one body. The viewer generates
+- **A new kind** (a gas giant, a nebula, …): a new file
+  `js/bodykit/kinds/<kind>.js`, shaped like the others.
+  - It takes what it needs from `BodyKit._`.
+  - It holds the kind's shaders and a `build(values, detail)` that composes
+    the building blocks and returns `makeBodyHandle({...})`.
+  - It registers the builder: `KINDS.<kind> = build…`.
+
+  In the core's `GROUPS`, the new group gets its own `params` schema,
+  `kmPerSize` / `view` / `layers`, `build: "<kind>"` and at least one body.
+
+  Load the new file after `bodykit.js` on every page that loads BodyKit:
+  `index.html` (`defer`), `bodies.html`, `systems.html`, `scale.html`,
+  `surface.html` and `tools/kitcheck.html`. Add it to
+  `js/versionCheck.js#MODULE_FILES`, then run `tools/kitcheck.html`. The viewer generates
   the sliders and statistics from these, so no viewer code is needed.
   Give the body a `slot` or a `kind` and the game draws it
   (`world/bodyVisual.js#bodyLookRef`).

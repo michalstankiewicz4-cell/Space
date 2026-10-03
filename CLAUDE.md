@@ -144,7 +144,8 @@ the player's own progress stays in `localStorage`.
   — a colour set at runtime must be converted by hand.
 - **ShipKit** (`js/shipkit/shipkit.js` + one file per ship in
   `js/shipkit/ships/`, loaded after it on every page) and **BodyKit**
-  (`js/bodykit/bodykit.js`): classic scripts, shared by the
+  (`js/bodykit/bodykit.js` + one file per kind in `js/bodykit/kinds/`):
+  classic scripts, shared by the
   lab (`ship.html` / `bodies.html`) and the game — changing them changes
   the game (version bump). Build ships from ShipKit's building blocks,
   never copy between ships; a new body is data, never a copied shader

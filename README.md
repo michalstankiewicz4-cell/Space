@@ -40,7 +40,8 @@ js/
   shipkit/           ShipKit — the procedural ship models (swarm ships, the drone, the station): the
                      core (shipkit.js) + ships/<id>.js, one file per ship; classic scripts shared
                      with the ship lab (ship.html); see docs/ship.md
-  bodykit/           BodyKit — every procedural celestial body, one classic script shared with the
+  bodykit/           BodyKit — every procedural celestial body: the core (bodykit.js) + kinds/<kind>.js
+                     (planets, giants, pulsars, suns, rocks, holes, sky); classic scripts shared with the
                      body lab (bodies.html); see docs/bodies.md
   labkit/            LabKit — what the ship, body and system labs share around their models (grain, sliders, idle hiding,
                      HUD scale, performance counters, image effects); styles in css/lab.css
