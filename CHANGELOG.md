@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.32.4]
+
+### Changed
+- The line under the title is one continuous bar (it was four segments,
+  one with an arrow), on the start screen and in the game; its last third
+  widens smoothly into the gold swoosh's foot.
+
 ## [2.32.3]
 
 ### Changed

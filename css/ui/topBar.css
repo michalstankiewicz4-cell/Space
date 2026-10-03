@@ -1,5 +1,5 @@
 /* The top bar shared by the start screen and the in-game HUD: on the left
-   the bracket, logo, title, four short segments and the gold swoosh; on the
+   the bracket, logo, title, the line under it and the gold swoosh; on the
    right the right group — the gold rail running into a rounded gold block,
    the lilac bracket, the black box between two blue strips and the end cap
    (the user's drawing, 2026-10-03). The box's strips sit at the same heights
@@ -19,10 +19,10 @@
 .tbTitle .t{ background:linear-gradient(180deg,#ffd88f 0%,#f8bb56 50%,#dd9540 100%);
   -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
   filter:drop-shadow(0 0 5px rgb(255 180 80 / .25)); }
-.tb1{ left:49px;  top:63px; width:61px; height:11px; border-radius:5px 0 0 5px; }
-.tb2{ left:112px; top:63px; width:74px; height:11px; clip-path:polygon(0 0, 88% 0, 100% 50%, 88% 100%, 0 100%); }
-.tb3{ left:186px; top:63px; width:34px; height:11px; }
-.tb4{ left:226px; top:63px; width:95px; height:11px; }
+/* the line under the title: 11 px for two thirds, then it widens smoothly
+   to the gold swoosh's foot (59–75) where it meets it */
+.tbUnder{ left:49px; top:59px; width:278px; height:16px;
+  clip-path:path("M5.5 4 H181 C225 4 250 0 278 0 V16 C250 16 225 15 181 15 H5.5 Q0 15 0 9.5 Q0 4 5.5 4 Z"); }
 .tbGold{ left:326px; top:8px; width:135px; height:67px;
   clip-path:path("M0 51 H46 C64 51 72 44 78 30 C85 12 93 0 112 0 H124 Q135 0 135 10 L128 67 H0 Z"); }
 /* the straight rails after the gold swoosh: blue on top (to the right
