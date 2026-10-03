@@ -517,9 +517,9 @@ export const en = {
     connectionBack: "Reconnected to the server"
   },
   // What's new, for players (the update notice's WHAT'S NEW button,
-  // js/versionCheck.js): newest first, short, what a player notices. Add an
-  // entry with every version bump that changes something visible; leave out
-  // under-the-hood ones. pl.js has the same versions.
+  // js/versionCheck.js): newest first, short, what a player notices. An
+  // entry with EVERY version bump (each one makes players refresh); for
+  // under-the-hood work say what it means for them. pl.js has the same.
   galaxy: {
     title: "Milky Way — top view",
     hint: "Scroll: zoom · Drag: move · M or Esc: close",
@@ -532,6 +532,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.32.4", items: ["A refreshed top bar, the same on the start screen and in the game: one line under the title flowing into the gold, a new right corner, the menu a little longer."] },
     { v: "2.32.1", items: ["Community links on the start screen: GitHub Discussions (Discord and YouTube coming)."] },
     { v: "2.30.0", items: ["Galaxy map (key M): the Milky Way from above, with your starting system marked. Scroll to zoom in, drag to look around."] },
     { v: "2.29.2", items: ["This list: the update notice now shows what's new since your version."] },

@@ -327,10 +327,10 @@ module's cache entry, then navigates to a cache-busted URL). Since v2.29.2
 it also imports the deployed `js/i18n/<lang>.js` under a `?_=` URL (a
 separate module instance, so the fresh file) and lists its `whatsNew`
 entries newer than the tab's own `VERSION` behind a WHAT'S NEW button
-(`textContent` only). The list is player-facing and short — one entry per
-version players would notice, both languages, newest first; versions that
-only changed the code are left out (the button stays hidden when nothing
-newer is listed). The button only exists from v2.29.2 on, so the first tab
+(`textContent` only). The list is player-facing and short — **one entry per version bump**
+(since 2026-10-03, the user's call: a refresh is always explained; for
+under-the-hood work, what it means for players), both languages, newest
+first. The button stays hidden when nothing newer is listed. The button only exists from v2.29.2 on, so the first tab
 to benefit is one opened on 2.29.2.
 
 ## Load order and first paint

@@ -533,6 +533,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
+    { v: "2.32.4", items: ["Odświeżony górny pasek, taki sam na ekranie startowym i w grze: ciągła linia pod tytułem przechodząca w złoty kształt, nowy prawy narożnik, nieco dłuższe przyciski menu."] },
     { v: "2.32.1", items: ["Linki do społeczności na ekranie startowym: dyskusje na GitHubie (Discord i YouTube wkrótce)."] },
     { v: "2.30.0", items: ["Mapa galaktyki (klawisz M): Droga Mleczna z góry z zaznaczonym układem startowym. Kółkiem przybliżasz, przeciągając rozglądasz się."] },
     { v: "2.29.2", items: ["Ta lista: komunikat o aktualizacji pokazuje, co nowego od Twojej wersji."] },
