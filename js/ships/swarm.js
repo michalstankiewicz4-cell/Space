@@ -9,6 +9,7 @@ import { swarmStats } from "../core/gameState.js";
 import { paintScorch, applyHealthVisual, isSpent } from "../world/bodies.js";
 import { spawnBiteParticles, spawnSparks } from "../fx/particles.js";
 import { showBeam, hideBolt, disposeBeam } from "./biteBeam.js";
+import { orderOf, arriveRange, manoeuvring, updateOrbit, updateLanding } from "./orders.js";
 import { showToast } from "../ui/hud/eventLog.js";
 import { t } from "../i18n.js";
 import { SHIP_API, updateProgrammedShip } from "./shipProgram.js";
@@ -229,8 +230,10 @@ export function updateShips(dt){
     const toTarget = toTargetScratch.subVectors(sh.target.mesh.position, sh.pos);
     const dist = toTarget.length();
     const eatRange = sh.target.radius + EAT_ORBIT_GAP;   // just above the surface, whatever the body's size
+    // what it does on arrival: orbit, attack or land (ships/orders.js)
+    const order = orderOf(sh);
 
-    if(dist > eatRange){
+    if(dist > arriveRange(sh, sh.target) && !manoeuvring(sh)){
       hideBolt(sh);
       // Deliberately gravity-immune - see updateShips()'s own header
       // comment above for why.
@@ -242,6 +245,12 @@ export function updateShips(dt){
       const lookTarget = lookTargetScratch.addVectors(sh.pos, sh.vel);
       sh.mesh.lookAt(lookTarget);
       sh.visual.power = 1;                         // cruising
+    } else if(order === "orbit"){
+      hideBolt(sh);
+      updateOrbit(sh, sh.target, dt);
+    } else if(order === "land"){
+      hideBolt(sh);
+      updateLanding(sh, sh.target, dt);
     } else {
       // orbit gently around the planet while eating
       sh.eatPulse += dt*4;

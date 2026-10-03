@@ -4,6 +4,20 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.33.0]
+
+### Added
+- Orders: a click on a body with ships selected is a course into **orbit**
+  (it no longer starts an attack); the order menu at the pointer picks
+  ORBIT / ATTACK / LAND (`js/ui/hud/orderMenu.js`). Ships already sent to
+  that body keep their order on a repeated click.
+- LAND (rocky planets only, BodyKit's planet kind): the ship comes down in
+  4 s and stays on the surface, turning with the planet: around your
+  surface base if the planet has one, else under where it arrived.
+  `js/ships/orders.js` (orbit, landing, the status line).
+- Statuses "In orbit", "Landing", "Landed" in the fleet list and the unit
+  panel; the fleet memory keeps the order kind across a reload.
+
 ## [2.32.13]
 
 ### Added

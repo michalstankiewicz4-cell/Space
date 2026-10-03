@@ -335,6 +335,7 @@ export const en = {
     shipClass: "Swarm ship", droneClass: "Programmable drone",
     group: function(n){ return n + " units"; }, groupClass: "Group selection", mixed: "Various",
     idle: "Idle", enRoute: "En route", feeding: "Feeding", returning: "Returning to base", base: "Base",
+    orbiting: "In orbit", landing: "Landing", landed: "Landed",
     pause: "Pause", fast: "Faster", speedSoon: "Game time is shared by every player online — it can't be paused or sped up in multiplayer.",
     status: "Status", target: "Target", velocity: "Velocity", bite: "Bite/s", selected: "Selected",
     speedLvl: "Speed", biteLvl: "Bite", heatLvl: "Heat res.",
@@ -346,6 +347,11 @@ export const en = {
     viewBtn: "VIEW", cockpitBtn: "COCKPIT",
     viewTitle: "the camera orbits and follows this unit",
     shipCam: "the view from its cockpit, on/off"
+  },
+  orders: {
+    orbit: "ORBIT", attack: "ATTACK", land: "LAND",
+    noGround: "No ground to land on",
+    given: function(o, n){ return "Order: " + o + " (" + n + (n === 1 ? " unit)" : " units)"); }
   },
   cmd: {
     tactical: "TACTICAL", movement: "MOVEMENT", build: "BUILD", special: "SPECIAL",
@@ -536,6 +542,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.33.0", items: ["Clicking a planet with ships selected now sends them into orbit, no longer straight into an attack. A small menu at the pointer lets you pick ORBIT, ATTACK or LAND.", "Ships can land on rocky planets: they come down and stay on the surface, next to your surface base if that planet has one."] },
     { v: "2.32.13", items: ["A base you found in the Surface lab now shows on that planet in the game: a gold diamond on its surface, and a \"Surface base\" line in PLANET INFO."] },
     { v: "2.32.12", items: ["Ship lab: a button to stop the ships' animations, the idle bobbing included, while their lights stay on, and renaming a ship (the name on its hull follows). Nothing changes in the game."] },
     { v: "2.32.11", items: ["Behind the scenes: better server monitoring. Nothing changes in the game."] },

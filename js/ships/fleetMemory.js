@@ -1,12 +1,14 @@
 import { ctx } from "../core/context.js";
 import { readStorage, writeStorage } from "../core/utils.js";
+import { orderOf, resetOrder } from "./orders.js";
 
 // Where the fleet was: every ship's position (and a course order to a
 // fixed solar body, or RETURN TO BASE, if it had one) and the drone's,
 // kept in this browser so a reload doesn't send the swarm back to the
 // station. Saved every SAVE_S seconds and when the page is hidden or
 // closed; restored once at start-up, after the fleet and the drone exist
-// (main.js). Comet orders and running programs aren't kept — a comet may
+// (main.js). An order keeps what it was (orbit, attack, land — ships/orders.js;
+// a landed ship comes down again where it is). Comet orders and running programs aren't kept — a comet may
 // be gone by then, and a program restarts from its first line anyway.
 const KEY = "roj-fleet-pos";
 const SAVE_S = 2;
@@ -29,7 +31,7 @@ function saveFleet(){
     v: 1,
     ships: ctx.ships.map(function(sh){
       const tgt = sh.commandedTarget && sh.commandedTarget.orbitSlot != null ? sh.commandedTarget.orbitSlot : null;
-      return [r2(sh.pos.x), r2(sh.pos.y), r2(sh.pos.z), tgt, sh.returning ? 1 : 0];
+      return [r2(sh.pos.x), r2(sh.pos.y), r2(sh.pos.z), tgt, sh.returning ? 1 : 0, tgt != null ? orderOf(sh) : null];
     }),
     drone: ctx.drone ? [r2(ctx.drone.pos.x), r2(ctx.drone.pos.y), r2(ctx.drone.pos.z)] : null
   };
@@ -46,7 +48,7 @@ export function restoreFleet(){
       if(!finite3(s)) continue;
       sh.pos.set(s[0], s[1], s[2]);
       sh.mesh.position.copy(sh.pos);
-      if(s[3] != null) pending.push([sh, s[3]]);
+      if(s[3] != null) pending.push([sh, s[3], s[5]]);
       else if(s[4] === 1) sh.returning = true;
     }
     if(ctx.drone && finite3(data.drone)){
@@ -67,6 +69,8 @@ function resolvePending(){
     if(ctx.ships.indexOf(sh) < 0 || sh.commandedTarget || sh.returning || sh.running) return false;   // gone, or given a new order meanwhile
     const body = ctx.planets.find(function(p){ return p.orbitSlot === pair[1]; });
     if(!body) return true;
+    // saves from before the order menu had only attacks
+    resetOrder(sh, pair[2] === "orbit" || pair[2] === "land" ? pair[2] : "attack", ctx.ships.indexOf(sh));
     sh.commandedTarget = body; sh.target = body;
     return false;
   });

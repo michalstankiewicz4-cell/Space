@@ -340,6 +340,7 @@ export const pl = {
     shipClass: "Statek roju", droneClass: "Dron programowalny",
     group: function(n){ return "Grupa: " + n; }, groupClass: "Zaznaczenie grupowe", mixed: "Różne",
     idle: "Bezczynny", enRoute: "W drodze", feeding: "Żeruje", returning: "Wraca do bazy", base: "Baza",
+    orbiting: "Na orbicie", landing: "Ląduje", landed: "Wylądował",
     pause: "Pauza", fast: "Szybciej", speedSoon: "Czas gry jest wspólny dla wszystkich graczy online — w trybie wieloosobowym nie da się go zatrzymać ani przyspieszyć.",
     status: "Status", target: "Cel", velocity: "Prędkość", bite: "Gryz/s", selected: "Zaznaczone",
     speedLvl: "Prędkość", biteLvl: "Gryz", heatLvl: "Ciepło",
@@ -351,6 +352,11 @@ export const pl = {
     viewBtn: "WIDOK", cockpitBtn: "KOKPIT",
     viewTitle: "kamera krąży wokół tej jednostki i za nią podąża",
     shipCam: "widok z jej kokpitu, wł./wył."
+  },
+  orders: {
+    orbit: "ORBITA", attack: "ATAKUJ", land: "LĄDUJ",
+    noGround: "Tu nie ma gruntu do lądowania",
+    given: function(o, n){ return "Rozkaz: " + o + " (" + n + " " + plPlural(n, "jednostka", "jednostki", "jednostek") + ")"; }
   },
   cmd: {
     tactical: "TAKTYKA", movement: "RUCH", build: "BUDOWA", special: "SPECJALNE",
@@ -537,6 +543,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
+    { v: "2.33.0", items: ["Kliknięcie planety z zaznaczonymi statkami wysyła je teraz na orbitę, a nie od razu do ataku. Małe menu przy kursorze pozwala wybrać ORBITA, ATAKUJ albo LĄDUJ.", "Statki mogą lądować na skalistych planetach: schodzą i zostają na powierzchni, obok twojej bazy, jeśli ją tam masz."] },
     { v: "2.32.13", items: ["Baza założona w laboratorium powierzchni jest teraz widoczna na tej planecie w grze: złoty romb na powierzchni i wiersz „Baza na powierzchni” w PLANET INFO."] },
     { v: "2.32.12", items: ["Laboratorium statków: przycisk zatrzymujący animacje statku razem z kołysaniem (światła dalej świecą) oraz zmiana nazwy statku (napis na kadłubie też się zmienia). W grze nic się nie zmienia."] },
     { v: "2.32.11", items: ["Za kulisami: lepszy podgląd obciążenia serwera. W grze nic się nie zmienia."] },

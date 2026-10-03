@@ -70,6 +70,22 @@ then read just that range.
   swarm. Clicking a planet with no selection now just shows a "select
   ships first" toast (`toast.noSelection`) instead of doing anything.
   RETURN TO BASE is the other order ("Fleet memory and RETURN TO BASE").
+- **What it does there: orbit, attack or land** (v2.33.0,
+  `ships/orders.js`, `sh.order`). A click is a course into **orbit** — it
+  never starts an attack by itself (the user's call); the order menu at the
+  pointer (`ui/hud/orderMenu.js`) picks ORBIT / ATTACK / LAND. A repeated
+  click on the same body keeps the ships' order.
+  - Orbit: a circle in the plane of arrival, `EAT_ORBIT_GAP·2` above the
+    surface, no beam.
+  - Attack: the old feeding orbit and the beam (`ships/swarm.js`).
+  - Land: only BodyKit's planet kind (`canLand`). The descent and the spot
+    are in the body's `surfaceRoot` (the base's lat/lon frame), so a landed
+    ship turns with the planet; next to your surface base if there is one
+    (a ring, one place per ship), else under where it arrived. Height:
+    the mountains' average lift, not the real terrain (the surface view
+    will sample it).
+  - Fleet memory saves the order kind (`roj-fleet-pos`, 6th field; older
+    saves restore as attacks).
 - **An ordered ship ignores gravity** (`solarGravity.js` skips it while
   `sh.commandedTarget` or `sh.returning`). Steering against real gravity
   was tried twice and measured: a ship sent 345 units never arrived in

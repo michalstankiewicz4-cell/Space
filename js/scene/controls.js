@@ -17,6 +17,8 @@ import { t } from "../i18n.js";
 import { settings } from "../settings.js";
 import { stopUnitProgram } from "../program/runner.js";
 import { camState, rotateCamera, zoomCamera, initCameraButtons } from "./camera.js";
+import { orderOf, resetOrder } from "../ships/orders.js";
+import { openOrderMenu } from "../ui/hud/orderMenu.js";
 
 let camDragging = false, camLastX = 0, camLastY = 0;
 
@@ -128,10 +130,18 @@ function selectSingleton(obj, setSelectedFn, openPanelFn){
 
 let cmdFlashEl = null;
 
-function commandTo(planet, list){
+// `order` (ships/orders.js): what the ships do there. Without one, ships
+// already sent to this body keep theirs and the others go into orbit — a
+// click never starts an attack by itself; the order menu picks one.
+function commandTo(planet, list, order){
   if(!planet || list.length===0) return;
   // an order takes a ship back from its program (ships/shipProgram.js)
-  list.forEach(function(sh){ if(sh.running) stopUnitProgram(sh); sh.commandedTarget = planet; sh.target = planet; });
+  list.forEach(function(sh, i){
+    if(sh.running) stopUnitProgram(sh);
+    if(order) resetOrder(sh, order, i);
+    else if(sh.commandedTarget !== planet || sh.returning) resetOrder(sh, "orbit", i);
+    sh.commandedTarget = planet; sh.target = planet;
+  });
   const sp = screenPos(planet.mesh.position);
   cmdFlashEl.style.left = sp.x+"px";
   cmdFlashEl.style.top = sp.y+"px";
@@ -143,9 +153,10 @@ function commandTo(planet, list){
 
 // A plain (non-drag) click on a planet — shared by the 3D view below and
 // the HUD minimap (ui/hud/minimap.js), so both behave exactly alike: with
-// ships selected it's a course order, otherwise it selects the planet;
-// shift+click toggles it in/out of the multi-select either way.
-export function clickPlanet(hitPlanet, shiftKey){
+// ships selected it's a course order (into orbit, with the order menu at
+// `at`, the click's {x, y} — ORBIT / ATTACK / LAND), otherwise it selects
+// the planet; shift+click toggles it in/out of the multi-select either way.
+export function clickPlanet(hitPlanet, shiftKey, at){
   if(shiftKey){
     // Shift+click a planet always toggles it in/out of the
     // multi-select (for Dev Tools' distance line) and never
@@ -168,6 +179,12 @@ export function clickPlanet(hitPlanet, shiftKey){
     const sel = selectedShips();
     if(sel.length>0){
       commandTo(hitPlanet, sel);
+      const p = at || screenPos(hitPlanet.mesh.position);
+      openOrderMenu(p.x, p.y, hitPlanet, orderOf(sel[0]), function(order){
+        const still = sel.filter(function(sh){ return ctx.ships.indexOf(sh) >= 0; });
+        commandTo(hitPlanet, still, order);
+        showToast(t("orders.given")(t("orders." + order), still.length));
+      });
     } else {
       clearSelection();
       setPlanetSelected(hitPlanet, true);
@@ -319,7 +336,7 @@ export function initControls(){
         const hitPlanet = pickPlanetAt(e);
         const hitBlackHole = hitPlanet ? null : pickBlackHoleAt(e);
         if(hitPlanet){
-          clickPlanet(hitPlanet, e.shiftKey);
+          clickPlanet(hitPlanet, e.shiftKey, { x: e.clientX, y: e.clientY });
         } else if(hitBlackHole){
           clickBlackHole(hitBlackHole);
         } else if(!e.shiftKey){

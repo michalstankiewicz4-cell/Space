@@ -1,4 +1,5 @@
 import { ctx } from "../../core/context.js";
+import { orderStatus } from "../../ships/orders.js";
 import { state, swarmStats } from "../../core/gameState.js";
 import { TREE } from "../../config.js";
 import { setShipSelected } from "../../ships/swarm.js";
@@ -91,7 +92,7 @@ function shipStatus(sh){
   if(sh.running) return t("hud.programRunning");
   if(isFeeding(sh)) return t("hud.feeding");
   if(sh.returning) return t("hud.returning");
-  return sh.commandedTarget ? t("hud.enRoute") : t("hud.idle");
+  return orderStatus(sh) || (sh.commandedTarget ? t("hud.enRoute") : t("hud.idle"));
 }
 
 function setBar(i, label, frac, text, matClass){
@@ -158,7 +159,7 @@ function render(u){
     setStats([
       [t("hud.selected"), ships.length + " / " + ctx.ships.length],
       [t("hud.target"), same ? bodyName(first) : t("hud.mixed")],
-      [t("hud.enRoute"), String(ships.filter(function(sh){ return (sh.commandedTarget || sh.returning) && !isFeeding(sh); }).length)],
+      [t("hud.enRoute"), String(ships.filter(function(sh){ return (sh.commandedTarget || sh.returning) && !isFeeding(sh) && !orderStatus(sh); }).length)],
       [t("hud.feeding"), String(ships.filter(isFeeding).length)]
     ]);
   } else {

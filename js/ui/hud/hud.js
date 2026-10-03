@@ -5,6 +5,7 @@ import { updateTelemetry, updateClock } from "./topBar.js";
 import { initNav, refreshNav } from "./nav.js";
 import { initCommandBar } from "./commandBar.js";
 import { initInfoPanel } from "./infoPanel.js";
+import { initOrderMenu } from "./orderMenu.js";
 import { refreshPlanetPanel } from "./planetPanel.js";
 import { refreshStationPanel } from "./stationPanel.js";
 import { refreshBlackHolePanel } from "./blackHolePanel.js";
@@ -28,6 +29,7 @@ export function initHudShell(){
   initNav();
   initCommandBar();
   initInfoPanel();
+  initOrderMenu();
   updateClock();
 }
 

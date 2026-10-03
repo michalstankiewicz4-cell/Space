@@ -1,4 +1,5 @@
 import { ctx } from "../../core/context.js";
+import { orderStatus } from "../../ships/orders.js";
 import { setShipCamTarget } from "../../scene/shipcam.js";
 import { setShipSelected } from "../../ships/swarm.js";
 import { clearSelection } from "../../scene/controls.js";
@@ -20,7 +21,7 @@ function statusText(sh){
   if(sh.running) return t("hud.programRunning");
   if(isBiting(sh)) return t("hud.feeding");
   if(sh.returning) return t("hud.returning");
-  return sh.commandedTarget ? t("hud.enRoute") : t("hud.idle");
+  return orderStatus(sh) || (sh.commandedTarget ? t("hud.enRoute") : t("hud.idle"));
 }
 
 function targetText(sh){

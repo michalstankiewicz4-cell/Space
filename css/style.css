@@ -81,6 +81,25 @@ canvas{ display:block; touch-action:none; cursor: grab; }
   100%{ opacity:0; transform:scale(1.6); }
 }
 
+/* The order menu after a course click (ui/hud/orderMenu.js). */
+#orderMenu{
+  position:fixed; z-index:8; display:flex; flex-direction:column; gap:4px;
+  padding: 6px; min-width: 112px;
+  background: rgb(0 2 12 / .92); border: 1.5px solid var(--uiFrame); border-radius: 8px;
+  box-shadow: 0 0 8px var(--uiFrameGlow);
+}
+#orderMenu button{
+  font-family: var(--uiFontLabel); font-size: 14px; letter-spacing: .6px;
+  padding: 5px 12px; text-align:left; cursor:pointer;
+  color: #c7d0ff; background: rgb(95 119 247 / .14);
+  border: 1px solid rgb(95 119 247 / .45); border-radius: 5px;
+}
+#orderMenu button:hover:not(:disabled){ background: rgb(95 119 247 / .35); color:#fff; }
+#orderMenu button.attack{ color:#f08995; border-color: rgb(208 91 105 / .55); background: rgb(208 91 105 / .12); }
+#orderMenu button.attack:hover{ background: rgb(208 91 105 / .32); color:#fff; }
+#orderMenu button.on{ border-color:#f8bb56; box-shadow: inset 3px 0 0 #f8bb56; }
+#orderMenu button:disabled{ opacity:.35; cursor:default; }
+
 /* Blocks all interaction, above every other overlay (windows included) —
    deliberately not dismissible except by reloading. */
 #outdatedOverlay{

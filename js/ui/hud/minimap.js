@@ -204,7 +204,7 @@ export function initMinimap(){
     const hit = pickAt(toViewBox(e));
     if(!hit) return;
     // a body: the same as clicking it in the world, and the camera flies to it
-    if(hit.kind === "planet"){ clickPlanet(hit.obj, e.shiftKey); focusCameraOn(hit.obj); }
+    if(hit.kind === "planet"){ clickPlanet(hit.obj, e.shiftKey, { x: e.clientX, y: e.clientY }); focusCameraOn(hit.obj); }
     else if(hit.kind === "blackhole"){ clickBlackHole(hit.obj); focusCameraOn(hit.obj); }
     else if(hit.kind === "remoteStation"){ clickRemoteStation(hit.obj); focusCameraOn(hit.obj); }
     else if(hit.kind === "station"){ clickStation(e.shiftKey); setCameraMode("base"); }   // the station's own view
