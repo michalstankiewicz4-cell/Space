@@ -14,7 +14,7 @@ import { DRONE_MAX_FUEL, DRONE_FUEL_PER_MOVE_UNIT, DRONE_MOVE_SPEED, DRONE_TURN_
 // turned to the game's +Z forward and scaled to DRONE_MODEL_LENGTH. It
 // lights itself with glow sprites, so no PointLight of its own anymore.
 export function buildDroneModel(detail){
-  const model = ShipKit.buildShipModel("scribe", { detail: detail, merge: true, fxRoot: ctx.scene });
+  const model = ShipKit.buildShipModel("scribe", { detail: detail * ShipKit.GAME_DETAIL.scribe, merge: true, fxRoot: ctx.scene });
   return { model: model, holder: ShipKit.makeGameHolder(model, DRONE_MODEL_LENGTH) };
 }
 

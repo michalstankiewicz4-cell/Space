@@ -51,6 +51,10 @@ ShipKit.disposeShipModel(model);
 | Member | Description |
 |---|---|
 | `buildShipModel(id, { detail, merge, fxRoot, envMap })` | Builds one ship and returns a model handle (below). `detail` is 0.2–2 and scales every segment count. `merge: true` merges static meshes (the game's build; the lab's GAME BUILD button). `fxRoot`: where effects that leave the ship go (the game passes the scene). `envMap`: a reflection map for its materials (not needed when `scene.environment` is set). |
+  GAME BUILD also builds at the game's detail for the model (`ShipKit.GAME_DETAIL`:
+  swarmer 0.5, haven 0.7, scribe 1). GAME LIGHTING (v2.34.1) swaps the studio
+  lights for the game's (ambient + two scene lights, no shadows) — see
+  docs/rendering.md, "Labs and the game: the same picture".
 | `makeGameHolder(model, length)` | Wraps a model for the game: turned to +Z forward and scaled to `length` units. Move/turn the holder. |
 | `prewarm(ids)` | Generates a type's textures/materials ahead of time (the first build costs ~1 s). |
 | `mergeStatic(group)` | What `merge: true` does (see below). |

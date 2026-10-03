@@ -317,9 +317,13 @@ game's main view.
 - **Building** as in the lab (free for now). The event log says what
   happened and why a module doesn't fit; the base markers follow at once
   (`refreshBaseMarkers`).
-- Rendering: `scene/viewRect.js#renderSceneInView` (the view rect, no
-  post-processing); `localClippingEnabled` is switched on for BaseKit's
-  construction cut on the first landing.
+- Rendering: through the same post-processing as the space view
+  (`post.js#renderPostScene`: bloom, edge smoothing, sharpening, filter;
+  no lensing, flare or depth of field), else
+  `scene/viewRect.js#renderSceneInView`. Setup's geometry detail, particles
+  and noise octaves reach the ground (`G.setGraphics`: the craft at the
+  detail as is, modules 0.8×, the far globe's octaves). `localClippingEnabled`
+  is switched on for BaseKit's construction cut on the first landing.
 
 ### The base marker (v2.32.13)
 

@@ -19,6 +19,19 @@ export function postActive(){
     || gfxLensing() || gfxFlare() || gfxFilter() || gfxSharpen() > 0 || gfxRays() || (gfxDof() && camState.mode === "focus") || dofAmount > 0.01;
 }
 
+// Another scene through the same pipeline (the ground, surface/groundView.js):
+// the picture's own settings only — no lensing, flare or depth of field.
+export function renderPostScene(r, scene, camera){
+  if(!pipe) pipe = PostKit.create(ctx.renderer);
+  const aspect = r.width / Math.max(1, r.height);
+  if(Math.abs(camera.aspect - aspect) > 1e-4){ camera.aspect = aspect; camera.updateProjectionMatrix(); }
+  pipe.render(scene, camera, {
+    rect: r, msaa: gfxMsaa(), fxaa: gfxFxaa(), sharpen: gfxSharpen(),
+    bloom: gfxBloom() ? { strength: gfxBloomStrength(), threshold: gfxBloomThreshold() } : null,
+    filter: gfxFilter() ? { vignette: gfxVignette(), grain: gfxGrain(), aberration: gfxAberration() } : null
+  });
+}
+
 // r: the view rect (CSS px, window coordinates).
 export function renderPost(r){
   if(!pipe) pipe = PostKit.create(ctx.renderer);

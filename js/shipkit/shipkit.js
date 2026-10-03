@@ -55,6 +55,8 @@
    -----------------------------------------------------------------------
    buildShipModel(id, { detail, merge: true, fxRoot: scene }) + makeGameHolder
    (model, length) — +Z forward, scaled; effects placed in the scene. The
+   game's detail is Setup's geometry detail × GAME_DETAIL[id] (a swarm ship
+   is a speck most of the time); the ship lab's GAME BUILD uses the same. The
    game renders like the labs (sRGB output, ACES, scene.environment from
    makeEnvironment()) and skips userData.shipkit objects in its color
    conversion. Mark animated/toggled parts userData.dynamic (mergeStatic).
@@ -1813,6 +1815,11 @@ function makeSpaceSky(w = 2048, h = 1024) {
 
 // A prefiltered environment map from makeSpaceSky(), for scene.environment
 // (or buildShipModel's envMap option).
+// The game builds each model at Setup's geometry detail × this (the ship
+// lab's GAME BUILD too, so the lab shows what the game shows). Other
+// players' units go lower still (the game's own code).
+const GAME_DETAIL = { swarmer: 0.5, haven: 0.7, scribe: 1 };
+
 function makeEnvironment(renderer) {
   const sky = makeSpaceSky(1024, 512);
   const pmrem = new THREE.PMREMGenerator(renderer);
@@ -1842,7 +1849,7 @@ function prewarm(ids) {
 return {
   // the internals the ship files build with (js/shipkit/ships/*.js) — not a public API
   _: { GOLD, BLUE, additiveSprite, buildShipModel, canvas, clamp, detailHelpers, fxHost, fxTextures, glowTextures, labelKey, makeBoltPool, makeBrushed, makeCoreMaterial, makeEngineSet, makeExhaust, makeGameHolder, makeNavLights, makeOnlineFader, makePlating, makePlumeMaterial, makeScanWave, makeShotQueue, makeSolarCells, mergeStatic, partsOf, rng, shadowed, sharedMaterials, strut, textTexture, trackTextures },
-  SHIP_DEFS, buildShipModel, disposeShipModel, modelStats, makeGameHolder, prewarm, mergeStatic,
+  SHIP_DEFS, GAME_DETAIL, buildShipModel, disposeShipModel, modelStats, makeGameHolder, prewarm, mergeStatic,
   makeSpaceSky, makeEnvironment,
   makeBoltPool, makeScanWave, textTexture, fxTextures, // action/effect helpers for ship defs
   // building blocks for ship definitions (see "SHIP BUILDING BLOCKS")

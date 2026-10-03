@@ -22,7 +22,8 @@ export function makeStationVisual(opts){
     // 0..1; kept across rebuilds (the model's ruin and smoke follow it)
     damage: STATION_START_DAMAGE,
     build: function(){
-      const detail = remote ? Math.min(gfxDetail(), 1) * 0.5 : gfxDetail() * 0.7;
+      // ShipKit.GAME_DETAIL (the ship lab's GAME BUILD uses it too); remote ones lower
+      const detail = remote ? Math.min(gfxDetail(), 1) * 0.5 : gfxDetail() * ShipKit.GAME_DETAIL.haven;
       v.model = ShipKit.buildShipModel("haven", { detail: Math.max(0.2, detail), merge: true, fxRoot: ctx.scene });
       v.holder = ShipKit.makeGameHolder(v.model, STATION_MODEL_LENGTH);
       v.root.add(v.holder);

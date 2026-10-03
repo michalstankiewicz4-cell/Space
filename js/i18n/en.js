@@ -555,6 +555,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.34.1", items: ["Your graphics settings now apply on a planet's surface too: the same detail, effects and smoothing as in space."] },
     { v: "2.34.0", items: ["Watch a ship (VIEW) and order it to LAND: the view goes down to the surface with it, through the atmosphere.", "On the ground you can drive around, hop to your base and build it, then take off back into orbit."] },
     { v: "2.33.0", items: ["Clicking a planet with ships selected now sends them into orbit, no longer straight into an attack. A small menu at the pointer lets you pick ORBIT, ATTACK or LAND.", "Ships can land on rocky planets: they come down and stay on the surface, next to your surface base if that planet has one."] },
     { v: "2.32.13", items: ["A base you found in the Surface lab now shows on that planet in the game: a gold diamond on its surface, and a \"Surface base\" line in PLANET INFO."] },

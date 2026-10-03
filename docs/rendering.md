@@ -160,6 +160,35 @@ then read just that range.
   brackets each frame with `perfFrameStart()` / `perfRenderStart()` /
   `perfFrameEnd()`; the toggle is remembered (`roj-devPerf`).
 
+## Labs and the game: the same picture (audit 2026-10-03, v2.34.1)
+
+What a lab shows must be what the game shows at the same settings. Checked
+setting by setting; where they differed, the lab or the game was changed.
+
+| Setting | Game | Labs | State |
+|---|---|---|---|
+| Output, tone mapping | sRGB, ACES | the same | same |
+| Exposure | 1.1 | 1.1 (the ship lab had 1.15) | fixed |
+| Environment map | `ShipKit.makeEnvironment` (sky 1024×512) | the ship lab made its own at 2048 | fixed: the same call |
+| Render quality → pixel ratio | `pixelRatioFor` 0.5 / 0.75 / 1 / device / 1.5× | the same table | same |
+| Particles | off at LOW | off at LOW | same |
+| Ship detail | Setup × `ShipKit.GAME_DETAIL[id]` (swarmer 0.5, haven 0.7, scribe 1) | GAME BUILD used 1× | fixed: GAME BUILD uses the table |
+| Body detail | × `BodyKit.GAME_DETAIL_SCALE` | GAME BUILD the same | same |
+| Noise octaves | `BodyKit.QUALITY_OCTAVES[quality]` | the same | same; the game's sky stayed at 6 — fixed |
+| Anisotropy | Setup: MIN 1×, NORMAL 4×, MAX 16× | the ship lab 1/2/4/8/16 by quality | fixed: 1/1/4/4/16 (the presets' qualities match) |
+| Image effects | PostKit, Setup's presets | PostKit, the same presets | same; sharpening per preset (0.5 / 0.3 / 0.2) fixed in the labs |
+| Lighting | ambient + two scene lights, no shadows | the ship lab: a studio key with shadows, rim, hemisphere | **by design**; the ship lab's GAME LIGHTING shows the game's |
+| The ground (game) | was fixed detail 1, particles on, octaves 6, no post | — | fixed: Setup's detail, particles, octaves (`G.setGraphics`) and the same post-processing (`post.js#renderPostScene`) |
+
+Rules:
+- A game-side detail factor lives in the kit (`ShipKit.GAME_DETAIL`,
+  `BodyKit.GAME_DETAIL_SCALE`), never as a bare number in game code, so the
+  lab's GAME BUILD can use it.
+- A new renderer setting in the game (exposure, environment, tone mapping)
+  goes into every lab the same day.
+- Anything the game renders outside the main view (the ground, a future
+  view) goes through `post.js` and follows Setup.
+
 ## Image quality (Setup → Graphics)
 
 v2.21.0, the user's request ("everything, each with on/off / adjust /

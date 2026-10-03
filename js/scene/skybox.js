@@ -1,4 +1,5 @@
 import { ctx } from "../core/context.js";
+import { gfxQuality, onGraphicsChange } from "./graphics.js";
 
 // The backdrop is BodyKit's sky (js/bodykit/bodykit.js, SKY group, kind
 // "sky" — the body lab's SKY tab edits it, and the lab shows it behind
@@ -17,6 +18,10 @@ export function addSkybox(scene){
   const ref = BodyKit.GAME_KINDS.sky;
   sky = BodyKit.buildBody(ref.groupId, ref.bodyId, { detail: 1 });
   sky.setRadius(SKY_RADIUS);
+  // noise octaves by render quality, like every other body (and the body
+  // lab's backdrop); a change re-bakes the nebulae once
+  sky.setOctaves(BodyKit.QUALITY_OCTAVES[gfxQuality()]);
+  onGraphicsChange(function(){ sky.setOctaves(BodyKit.QUALITY_OCTAVES[gfxQuality()]); });
   scene.add(sky.group);
   return sky;
 }

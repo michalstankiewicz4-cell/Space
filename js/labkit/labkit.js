@@ -131,7 +131,7 @@ function imageEffects({ renderer, scene, camera, panel, effects, setQuality }) {
         fxaa: o.fxaa,
         dof: dofOn ? { amount: 1, size: size.z, strength: 1 } : null,
         filter: o.filter ? { vignette: 0.4, grain: 0.25, aberration: 0.35 } : null,
-        sharpen: o.sharpen ? 0.3 : 0,
+        sharpen: o.sharpen ? o.sharpenAmount : 0,               // the game's per preset
       }, extra ? extra(o) : null));
     },
   };

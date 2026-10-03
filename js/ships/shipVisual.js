@@ -108,7 +108,8 @@ export function makeShipVisual(opts){
     // target 0..1 engine power; eased here
     power: 0,
     build: function(){
-      const detail = remote ? Math.min(gfxDetail(), 1) * 0.3 : gfxDetail() * 0.5;
+      // ShipKit.GAME_DETAIL (the ship lab's GAME BUILD uses it too); remote ones lower
+      const detail = remote ? Math.min(gfxDetail(), 1) * 0.3 : gfxDetail() * ShipKit.GAME_DETAIL.swarmer;
       v.model = ShipKit.buildShipModel("swarmer", { detail: Math.max(0.2, detail), merge: true, fxRoot: ctx.scene });
       v.holder = ShipKit.makeGameHolder(v.model, SHIP_MODEL_LENGTH);
       root.add(v.holder);

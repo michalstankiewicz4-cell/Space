@@ -195,9 +195,10 @@ const LENS_E = 1.6;   // Einstein radius in horizon radii
 // Effect sets for the presets (the game adds resolution and detail to
 // these; the labs their render-quality level).
 const PRESETS = {
-  min:    { msaa: 0, fxaa: true,  bloom: false, lens: false, flare: false, filter: false, dof: false, sharpen: true, rays: false },
-  normal: { msaa: 4, fxaa: false, bloom: true,  lens: true,  flare: true,  filter: false, dof: false, sharpen: true, rays: true },
-  max:    { msaa: 8, fxaa: true,  bloom: true,  lens: true,  flare: true,  filter: true,  dof: true,  sharpen: true, rays: true },
+  // sharpenAmount: the game's per preset (scene/graphics.js TIERS gfxSharpen)
+  min:    { msaa: 0, fxaa: true,  bloom: false, lens: false, flare: false, filter: false, dof: false, sharpen: true, rays: false, sharpenAmount: 0.5 },
+  normal: { msaa: 4, fxaa: false, bloom: true,  lens: true,  flare: true,  filter: false, dof: false, sharpen: true, rays: true,  sharpenAmount: 0.3 },
+  max:    { msaa: 8, fxaa: true,  bloom: true,  lens: true,  flare: true,  filter: true,  dof: true,  sharpen: true, rays: true,  sharpenAmount: 0.2 },
 };
 
 function plainTarget(depth){
@@ -379,7 +380,7 @@ function create(renderer){
 // AUTO starts at NORMAL and steps a tier down while the lab runs below
 // 45 fps, up after a while above 100. Touching anything makes it custom.
 //   const fx = PostKit.labPanel(parentEl, { effects: ["bloom", …], setQuality(level) });
-//   fx.options()  -> { msaa, bloom, fxaa, filter, dof, flare, lens } (flags)
+//   fx.options()  -> { msaa, bloom, fxaa, filter, dof, flare, lens } (flags), sharpenAmount (the preset's)
 //   fx.tick(now)  -> once per frame (AUTO's frame-rate watch)
 //   fx.markCustom() — the lab's own quality slider moved
 // ---------------------------------------------------------------------
@@ -467,7 +468,7 @@ function labPanel(parent, cfg){
   }
   applyPreset("auto");
   return {
-    options: function(){ const o = { msaa: st.msaa }; effects.forEach(function(k){ o[k] = !!st[k]; }); return o; },
+    options: function(){ const o = { msaa: st.msaa, sharpenAmount: PRESETS[st.tier].sharpenAmount }; effects.forEach(function(k){ o[k] = !!st[k]; }); return o; },
     tick: tick,
     markCustom: function(){ st.preset = "custom"; paint(); }
   };

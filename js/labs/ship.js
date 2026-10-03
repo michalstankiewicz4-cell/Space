@@ -20,7 +20,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
+renderer.toneMappingExposure = 1.1;                 // the game's (scene/setup.js)
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -45,11 +45,8 @@ const skyDome = new THREE.Mesh(
 );
 skyTex.mapping = THREE.UVMapping; // dome uses plain UVs…
 scene.add(skyDome);
-const envTex = skyTex.clone(); // …the PMREM input uses equirect mapping
-envTex.mapping = THREE.EquirectangularReflectionMapping;
-envTex.needsUpdate = true;
-const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromEquirectangular(envTex).texture;
+// reflections: exactly the game's environment map (the same sky, the same size)
+scene.environment = ShipKit.makeEnvironment(renderer);
 
 // Lights: warm key (casts shadows), cool rim, soft hemisphere fill.
 const key = new THREE.DirectionalLight(0xffe2b8, 2.6);
@@ -63,12 +60,23 @@ scene.add(key);
 const rim = new THREE.DirectionalLight(0x7f95ff, 1.6);
 rim.position.set(7, -2, -9);
 scene.add(rim);
-scene.add(new THREE.HemisphereLight(0x9fb2ff, 0x1a1020, 0.35));
+const hemi = new THREE.HemisphereLight(0x9fb2ff, 0x1a1020, 0.35);
+scene.add(hemi);
+// GAME LIGHTING: the game's own scene lights instead of the studio's
+// (scene/setup.js: an ambient, a cool light from above, a warm rim; no
+// shadows — the Sun body's light doesn't reach past the inner orbits). The
+// game turns their colours sRGB -> linear (scene/colorManagement.js), so
+// they're converted here too.
+const gameSun = new THREE.DirectionalLight(0xbfe9ff, 1.3), gameRim = new THREE.DirectionalLight(0xff7a45, 0.5);
+gameSun.position.set(40, 60, 30); gameRim.position.set(-60, -30, -40);
+const gameLights = [new THREE.AmbientLight(0x8892b0, 0.55), gameSun, gameRim];
+gameLights.forEach((l) => { l.color.convertSRGBToLinear(); l.visible = false; scene.add(l); });
+const studioLights = [key, rim, hemi];
 
 // =====================================================================
 // Viewer: current ship, rebuild on detail change, disposal
 // =====================================================================
-const state = { rotate: true, freeze: false, engines: true, lights: true, wire: false, merge: false, quality: 3, detail: 1, round: 0, seal: 0, sealStyle: "fillet", shipIndex: 0,
+const state = { rotate: true, freeze: false, engines: true, lights: true, wire: false, merge: false, gameLight: false, quality: 3, detail: 1, round: 0, seal: 0, sealStyle: "fillet", shipIndex: 0,
                 toggles: {}, damage: 0 };
 let current = null;      // ShipKit model handle
 let partTipClear = () => {};   // PART NAMES (below) puts its own here
@@ -86,7 +94,9 @@ function loadShip(index, keepCamera) {
   if (current) ShipKit.disposeShipModel(current);
   const def = ShipKit.SHIP_DEFS[index];
   const tb = performance.now();
-  current = ShipKit.buildShipModel(def.id, { detail: state.detail, merge: state.merge, round: state.round, seal: state.seal, sealStyle: state.sealStyle,
+  // GAME BUILD: merged, and at the game's detail for this model (ShipKit.GAME_DETAIL)
+  const detail = state.merge ? state.detail * (ShipKit.GAME_DETAIL[def.id] || 1) : state.detail;
+  current = ShipKit.buildShipModel(def.id, { detail, merge: state.merge, round: state.round, seal: state.seal, sealStyle: state.sealStyle,
     labels: shipLabels(def.id) });   // the hull's lettering follows the renamed name / caption
   const buildMs = performance.now() - tb;
   holder.add(current.group);
@@ -177,16 +187,16 @@ const dpr = window.devicePixelRatio || 1;
 const maxAniso = renderer.capabilities.getMaxAnisotropy();
 const QUALITY = [
   { name: "LOW",    pr: 0.5,                          shadow: 0,    aniso: 1,  particles: false },
-  { name: "MEDIUM", pr: 0.75,                         shadow: 1024, aniso: 2,  particles: true },
+  { name: "MEDIUM", pr: 0.75,                         shadow: 1024, aniso: 1,  particles: true },
   { name: "HIGH",   pr: 1,                            shadow: 2048, aniso: 4,  particles: true },
-  { name: "ULTRA",  pr: Math.max(1, Math.min(dpr, 2)), shadow: 2048, aniso: 8,  particles: true },
+  { name: "ULTRA",  pr: Math.max(1, Math.min(dpr, 2)), shadow: 2048, aniso: 4,  particles: true },
   { name: "MAX",    pr: Math.min(Math.max(1, dpr) * 1.5, 3), shadow: 4096, aniso: 16, particles: true },
 ];
 function applyQuality(level) {
   const q = QUALITY[level];
   renderer.setPixelRatio(q.pr);
   renderer.setSize(window.innerWidth, window.innerHeight, false);
-  const shadowsOn = q.shadow > 0;
+  const shadowsOn = q.shadow > 0 && !state.gameLight;          // the game has no shadows
   if (renderer.shadowMap.enabled !== shadowsOn) {
     renderer.shadowMap.enabled = shadowsOn;
     scene.traverse((o) => { if (o.material) o.material.needsUpdate = true; }); // recompile with/without shadows
@@ -212,6 +222,11 @@ toggle("btnLights", "lights", (on) => current && current.setLights(on));
 toggle("btnWire", "wire", applyWire);
 toggle("btnFreeze", "freeze", () => {});   // the frame loop gives the model no time to move (see current.update)
 toggle("btnMerge", "merge", () => loadShip(state.shipIndex, true));
+toggle("btnGameLight", "gameLight", (on) => {
+  studioLights.forEach((l) => { l.visible = !on; });
+  gameLights.forEach((l) => { l.visible = on; });
+  applyQuality(state.quality);                                  // shadows off / back on
+});
 
 const qSlider = document.getElementById("qSlider"), dSlider = document.getElementById("dSlider");
 const paintSlider = LabKit.paintSlider;

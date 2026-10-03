@@ -7,6 +7,8 @@ import { getViewRect, isInViewRect, renderSceneInView } from "../scene/viewRect.
 import { bodyLookRef } from "../world/bodyVisual.js";
 import { refreshBaseMarkers } from "../world/baseMarkers.js";
 import { resetOrder } from "../ships/orders.js";
+import { gfxDetail, gfxParticles, gfxQuality, onGraphicsChange } from "../scene/graphics.js";
+import { postActive, renderPostScene } from "../scene/post.js";
 
 // On the ground: when the camera follows one of your ships (VIEW — not the
 // cockpit cam) and that ship lands (the LAND order, ships/orders.js), the
@@ -68,6 +70,11 @@ function ensureGround(){
   if(G) return;
   ctx.renderer.localClippingEnabled = true;           // BaseKit's construction cut
   G = SurfaceKit.createGround(ctx.renderer, { env: ctx.scene.environment, onEvent: onGroundEvent });
+  applyGraphics();
+}
+// Setup -> Graphics, as everywhere else in the game
+function applyGraphics(){
+  if(G) G.setGraphics({ detail: gfxDetail(), particles: gfxParticles(), octaves: BodyKit.QUALITY_OCTAVES[gfxQuality()] });
 }
 
 function onGroundEvent(name, data){
@@ -176,7 +183,13 @@ export function updateGroundView(dt){
   $("gTakeOffBtn").disabled = !driving; $("gHopBtn").disabled = !driving;
 }
 
-export function renderGroundView(){ renderSceneInView(G.scene, G.camera); }
+// The same post-processing as the space view (Setup's bloom, edge smoothing,
+// sharpening, filter), without what belongs to space (lensing, the Sun's
+// flare, depth of field).
+export function renderGroundView(){
+  if(postActive()) renderPostScene(getViewRect(), G.scene, G.camera);
+  else renderSceneInView(G.scene, G.camera);
+}
 
 // The ground itself, for scripts and tests (null before the first landing).
 export function groundKit(){ return G; }
@@ -188,6 +201,7 @@ function toPointer(e){
 }
 
 export function initGroundView(){
+  onGraphicsChange(applyGraphics);
   // the module buttons: BaseKit's modules
   BaseKit.MODULES.forEach(function(d){
     const b = document.createElement("button");

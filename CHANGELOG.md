@@ -4,6 +4,24 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.34.1]
+
+### Fixed
+- Graphics settings on a planet's surface: the ground now follows Setup ->
+  Graphics (geometry detail, particles, noise octaves) and goes through the
+  same post-processing as the space view (bloom, edge smoothing,
+  sharpening, filter) — it looked softer than space before.
+- The sky backdrop follows the render quality's noise octaves (it stayed
+  at 6), like every body and the body lab.
+
+### Changed
+- `ShipKit.GAME_DETAIL` (swarmer 0.5, haven 0.7, scribe 1): the game's
+  detail factors, read by the game and the ship lab's GAME BUILD.
+- Labs matched to the game (no game change): the ship lab's exposure
+  (1.15 -> 1.1), environment map (the game's), anisotropy per quality,
+  GAME BUILD's detail, a GAME LIGHTING toggle; sharpening per preset in
+  every lab. docs/rendering.md has the full audit.
+
 ## [2.34.0]
 
 ### Added

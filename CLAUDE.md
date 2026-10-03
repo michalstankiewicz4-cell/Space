@@ -153,6 +153,10 @@ the player's own progress stays in `localStorage`.
   (rules in `docs/ship.md` / `docs/bodies.md`). Mark animated parts
   `userData.dynamic` or merging bakes them. **The ship lab is the
   reference lab** — new model ideas start there as ShipKit blocks.
+  **Labs and the game render the same picture** (docs/rendering.md, "Labs
+  and the game"): game-side detail factors live in the kits
+  (`ShipKit.GAME_DETAIL`, `BodyKit.GAME_DETAIL_SCALE`), renderer settings
+  match in every lab, every extra view follows Setup and `post.js`.
   ShipKit SHAPING (rounded edges, joints as fillet / sealant) is **off in
   the game** until values are chosen and measured; **running lights never
   vanish — switched off they only go dark** (user's calls, 2026-10-03). **PostKit**

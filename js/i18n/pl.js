@@ -556,6 +556,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
+    { v: "2.34.1", items: ["Ustawienia grafiki działają teraz także na powierzchni planety: ten sam detal, efekty i wygładzanie co w kosmosie."] },
     { v: "2.34.0", items: ["Obserwuj statek (VIEW) i wydaj mu rozkaz LĄDUJ: widok schodzi z nim na powierzchnię, przez atmosferę.", "Na powierzchni możesz jeździć, skoczyć do bazy i ją budować, a potem wystartować z powrotem na orbitę."] },
     { v: "2.33.0", items: ["Kliknięcie planety z zaznaczonymi statkami wysyła je teraz na orbitę, a nie od razu do ataku. Małe menu przy kursorze pozwala wybrać ORBITA, ATAKUJ albo LĄDUJ.", "Statki mogą lądować na skalistych planetach: schodzą i zostają na powierzchni, obok twojej bazy, jeśli ją tam masz."] },
     { v: "2.32.13", items: ["Baza założona w laboratorium powierzchni jest teraz widoczna na tej planecie w grze: złoty romb na powierzchni i wiersz „Baza na powierzchni” w PLANET INFO."] },

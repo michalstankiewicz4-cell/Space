@@ -34,6 +34,8 @@
        G.drag(dx, dy), G.zoom(deltaY), G.setAspect(a)
        G.weatherList(), G.setWeather(id, strength)
        G.setHour(h, at?), G.hourAt(dir), G.daySecs (0: paused), G.dayPaused
+       G.setGraphics({ detail, particles, octaves })   the caller's graphics
+                                settings (the game's Setup; the lab: 1, on, 6)
        G.leave(), G.dispose()
      onEvent(name, data): "landed", "founded", "placed", "removed"
      validate codes: "far" (BASE_RADIUS), "unloaded", "wet", "steep", "close" (+ name)
@@ -214,10 +216,17 @@ function createGround(renderer, opts = {}) {
   scene.add(sunLight, sunLight.target, hemi, sunLight2, sunLight2.target, lamp, lamp.target);
   const sky = SK.createSky(renderer), weather = SK.createWeather();
   scene.add(sky.root, weather.root);
-  // the craft: ShipKit's swarm ship as a 7 m hover craft (VehicleKit's rover later)
-  const craftModel = ShipKit.buildShipModel("swarmer", { detail: 1, envMap: env });
-  const craft = ShipKit.makeGameHolder(craftModel, 7);
-  scene.add(craft);
+  // the craft: ShipKit's swarm ship as a 7 m hover craft (VehicleKit's rover
+  // later), always close to the camera: Setup's detail as is (like the drone)
+  const gfx = { detail: 1, particles: true, octaves: 6 };
+  let craftModel = null, craft = null;
+  function buildCraft() {
+    if (craft) { scene.remove(craft); ShipKit.disposeShipModel(craftModel); }
+    craftModel = ShipKit.buildShipModel("swarmer", { detail: gfx.detail, envMap: env });
+    craft = ShipKit.makeGameHolder(craftModel, 7);
+    scene.add(craft);
+  }
+  buildCraft();
   const puff = softSprite(), fx = makeEntryFx(), clouds = makeCloudLayer(puff), dust = makeDust(puff);
   scene.add(fx.root, clouds.root, dust.root);
 
@@ -233,7 +242,7 @@ function createGround(renderer, opts = {}) {
   let down = 0;
 
   const G = {
-    scene, camera, P, craft, daySecs: 120, dayPaused: false,
+    scene, camera, P, get craft() { return craft; }, daySecs: 120, dayPaused: false,
     get full() { return W.full; }, get skyData() { return W.skyData; }, get theta() { return theta; }, set theta(v) { theta = v; },
     get surf() { return surf; }, get building() { return building; }, get phase() { return phase; }, get light() { return light; },
   };
@@ -244,6 +253,12 @@ function createGround(renderer, opts = {}) {
     W.full = tt.values; W.R = Math.max(0.15, tt.values.size) * SK.M_PER_SIZE; tt.dispose();
   };
   G.groundRadiusM = () => W.R;
+  G.setGraphics = function (o) {
+    const detailChanged = o.detail != null && o.detail !== gfx.detail;
+    Object.assign(gfx, o);
+    if (far) far.setOctaves(gfx.octaves);
+    if (detailChanged) { buildCraft(); if (surf) buildBase(); }
+  };
   G.hourAt = (dir) => SK.hourAt(W.skyData, W.full, dir, theta);
   G.setHour = (h, at) => { theta = SK.thetaFor(W.skyData, W.full, at || P.dir, h); };
   G.advanceDay = (dt, at) => { if (G.daySecs && !G.dayPaused) G.setHour((G.hourAt(at || P.dir) + 24 * dt / G.daySecs) % 24, at); };
@@ -275,7 +290,7 @@ function createGround(renderer, opts = {}) {
     if (!base) return;
     const c = SK.latLonToDir(base.lat, base.lon);
     for (const m of base.modules) {
-      const mod = BaseKit.buildModule(m.type, { detail: 0.8 });
+      const mod = BaseKit.buildModule(m.type, { detail: 0.8 * gfx.detail });
       const d = SK.offsetDir(c, m.e, m.n, surf.R);
       surf.ensure(d);
       placeOnGround(mod.group, d, m.rot);
@@ -305,6 +320,7 @@ function createGround(renderer, opts = {}) {
       const [g, b] = W.ref.split("/");
       far = BodyKit.buildBody(g, b, { detail: 1, values: Object.assign({}, W.values, { spin: 0, tilt: 0 }) });
       far.setRadius(surf.R * FAR_SINK);
+      far.setOctaves(gfx.octaves);
       far.group.traverse((o) => { if (o.isMesh && o.geometry.parameters && o.geometry.parameters.radius > 1.001) o.visible = false; });
       scene.add(far.group);
     }
@@ -348,7 +364,7 @@ function createGround(renderer, opts = {}) {
   // ---------- building ----------
   function startBuild(id) {
     cancelBuild();
-    const mod = BaseKit.buildModule(id, { detail: 0.8 });
+    const mod = BaseKit.buildModule(id, { detail: 0.8 * gfx.detail });
     mod.setGhostState("ok");
     scene.add(mod.group);
     building = { id, mod, ok: false, dir: null, why: "", name: "" };
@@ -489,7 +505,7 @@ function createGround(renderer, opts = {}) {
     const right = tmp.crossVectors(P.dir, P.fwd).normalize();
     craft.quaternion.setFromRotationMatrix(basis.makeBasis(right, P.dir, P.fwd));
     const power = phase === "driving" ? 0.2 + Math.abs(P.speed) / 180 : phase === "entry" ? 0.15 : 1;
-    craftModel.update(t, dt, { power });
+    craftModel.update(t, dt, { power, particles: gfx.particles });
     fx.root.position.copy(craft.position); fx.root.quaternion.copy(craft.quaternion);
     // the chase camera, in the local frame; the descent's view is higher and wider
     const pitch = P.camPitch + (0.85 - P.camPitch) * cine, dist = P.camDist + (55 - P.camDist) * cine;
