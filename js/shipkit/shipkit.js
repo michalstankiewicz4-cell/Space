@@ -2216,23 +2216,28 @@ SHIP_DEFS.push({
 
     // ---- animation
     let fuel = 1, eyeYaw = 0, eyePitch = 0;
+    // moving parts run on the model's own motion clock (mt, advanced by dt),
+    // lights and shaders on t: with dt 0 (the ship lab's STOP ANIMATIONS)
+    // the drone stands still while its lights keep going
+    let mt = 0;
     function update(t, dt, { power: throttle = 1, particles: particlesOn = true } = {}) {
       const online = power.update(dt), offline = power.offline;
+      mt += dt;
       U.uTime.value = t;
       U.uPower.value = throttle * (0.9 + 0.1 * Math.sin(t * 33.0) * Math.sin(t * 13.0));
-      body.position.y = Math.sin(t * 1.3) * 0.08 * online - 0.3 * (1 - online);   // hover bob / sink
-      body.rotation.x = Math.sin(t * 0.9) * 0.03 * online;
-      body.rotation.z = Math.sin(t * 0.7) * 0.02 * online + 0.14 * (1 - online);  // lists when dead
+      body.position.y = Math.sin(mt * 1.3) * 0.08 * online - 0.3 * (1 - online);   // hover bob / sink
+      body.rotation.x = Math.sin(mt * 0.9) * 0.03 * online;
+      body.rotation.z = Math.sin(mt * 0.7) * 0.02 * online + 0.14 * (1 - online);  // lists when dead
 
       for (const p of pods) {                                   // thrust vectoring
-        p.gimbal.rotation.y = Math.sin(t * 0.8 + p.phase) * 0.18 * throttle;
-        p.gimbal.rotation.z = Math.sin(t * 1.1 + p.phase) * 0.08 * online;
+        p.gimbal.rotation.y = Math.sin(mt * 0.8 + p.phase) * 0.18 * throttle;
+        p.gimbal.rotation.z = Math.sin(mt * 1.1 + p.phase) * 0.08 * online;
       }
       engines.update(t, throttle);
 
       // eye: short glances to new targets every ~1.3 s, eased (frozen offline)
       if (!offline) {
-        const k = Math.floor(t / 1.3), h1 = Math.sin(k * 12.9898) * 43758.5453, h2 = Math.sin(k * 78.233) * 12543.123;
+        const k = Math.floor(mt / 1.3), h1 = Math.sin(k * 12.9898) * 43758.5453, h2 = Math.sin(k * 78.233) * 12543.123;
         eyeYaw += ((h1 - Math.floor(h1) - 0.5) * 0.9 - eyeYaw) * Math.min(1, dt * 8);
         eyePitch += ((h2 - Math.floor(h2) - 0.5) * 0.5 - eyePitch) * Math.min(1, dt * 8);
       }
@@ -2252,7 +2257,7 @@ SHIP_DEFS.push({
       crownGlow.material.opacity = (0.6 + 0.3 * Math.sin(t * 2.1)) * online;
       gaugeMat.emissiveIntensity = 2.2 * online;
 
-      hinge.rotation.z = Math.sin(t * 0.25) * 0.35 * online;   // solar tracking
+      hinge.rotation.z = Math.sin(mt * 0.25) * 0.35 * online;   // solar tracking
       sweep.rotation.y += dt * (scanT > 0 ? 3.5 : 0.4);
 
       fuel = clamp(fuel + (throttle > 0.5 ? -0.04 : 0.12 * online) * dt, 0.12, 1);
@@ -2268,7 +2273,7 @@ SHIP_DEFS.push({
 
       // print: the beam writes for 2.4 s, the word stays in its gas cloud, then fades
       const writing = printT >= 0 && printT < 2.4 && !offline;
-      emitter.rotation.set(writing ? Math.sin(t * 2.2) * 0.35 : 0, 0, aimDown + (writing ? Math.sin(t * 1.4) * 0.12 : 0));
+      emitter.rotation.set(writing ? Math.sin(mt * 2.2) * 0.35 : 0, 0, aimDown + (writing ? Math.sin(mt * 1.4) * 0.12 : 0));
       if (printT >= 0) {
         if (!placed) {
           ship.updateMatrixWorld(true);
@@ -2743,16 +2748,18 @@ SHIP_DEFS.push({
       if (power.offline) return;
       if (id === "scan") { wave.start(dishTip.clone(), 14); scanT = 2.5; }
     }
+    let mt = 0;                                                     // the motion clock (see the drone)
     function update(t, dt) {
       const online = power.update(dt);
+      mt += dt;
       U.uTime.value = t;
       spin.rotation.y += dt * 0.06 * online;                        // the habitat ring turns (gravity)
       for (const p of debrisParts) {                                 // debris tumbles slowly in the gap
-        p.d.position.copy(p.base).addScaledVector(p.spin, Math.sin(t * 0.3 + p.ph) * 0.15);
+        p.d.position.copy(p.base).addScaledVector(p.spin, Math.sin(mt * 0.3 + p.ph) * 0.15);
         p.d.rotation.x += dt * p.spin.x * 0.5; p.d.rotation.y += dt * p.spin.y * 0.5;
       }
       scanT = Math.max(0, scanT - dt);
-      dish.rotation.y = Math.sin(t * 0.15) * 0.8 + (scanT > 0 ? (2.5 - scanT) * 2.5 : 0);
+      dish.rotation.y = Math.sin(mt * 0.15) * 0.8 + (scanT > 0 ? (2.5 - scanT) * 2.5 : 0);
       windowMat.emissiveIntensity = 1.8 * online;
       gardenMat.emissiveIntensity = 1.4 * (0.3 + 0.7 * online) * (0.95 + 0.05 * Math.sin(t * 0.7)); // the garden keeps a little light
       glowMat.emissiveIntensity = 2.2 * online * (0.8 + 0.2 * Math.sin(t * 2));

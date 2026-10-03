@@ -65,6 +65,7 @@ input[type=range]:disabled{ opacity:.35; cursor:not-allowed; }
       <button class="tBtn on" id="btnLights">RUNNING LIGHTS</button>
       <button class="tBtn" id="btnWire">WIREFRAME</button>
       <button class="tBtn on" id="btnBob" title="The ship's idle drift: rising, falling and rocking a little (the lab only)">BOBBING</button>
+      <button class="tBtn tgl off" id="btnFreeze" title="Stop the ship's moving parts (spinners, rings, turrets, particles); lights and engines stay on. OFFLINE switches everything off">STOP ANIMATIONS</button>
       <button class="tBtn" id="btnMerge" title="Build the way the game does: static meshes merged per material (far fewer draw calls)">GAME BUILD</button>
     </div>
     <div class="secHd">SHAPING</div>
@@ -188,7 +189,7 @@ scene.add(new THREE.HemisphereLight(0x9fb2ff, 0x1a1020, 0.35));
 // =====================================================================
 // Viewer: current ship, rebuild on detail change, disposal
 // =====================================================================
-const state = { rotate: true, bob: true, engines: true, lights: true, wire: false, merge: false, quality: 3, detail: 1, round: 0, seal: 0, sealStyle: "fillet", shipIndex: 0,
+const state = { rotate: true, bob: true, freeze: false, engines: true, lights: true, wire: false, merge: false, quality: 3, detail: 1, round: 0, seal: 0, sealStyle: "fillet", shipIndex: 0,
                 toggles: {}, damage: 0 };
 let current = null;      // ShipKit model handle
 const holder = new THREE.Group();
@@ -328,6 +329,7 @@ toggle("btnEngines", "engines", () => {});
 toggle("btnLights", "lights", (on) => current && current.setLights(on));
 toggle("btnWire", "wire", applyWire);
 toggle("btnBob", "bob", () => {});   // the frame loop eases it (see "idle drift")
+toggle("btnFreeze", "freeze", () => {});   // the frame loop gives the model no time to move (see current.update)
 toggle("btnMerge", "merge", () => loadShip(state.shipIndex, true));
 
 const qSlider = document.getElementById("qSlider"), dSlider = document.getElementById("dSlider");
@@ -406,7 +408,10 @@ function frame() {
   holder.position.y = Math.sin(t * 0.7) * 0.12 * bob;
   holder.rotation.x = Math.sin(t * 0.5) * 0.035 * bob;
   holder.rotation.z = Math.sin(t * 0.37) * 0.02 * bob;
-  current.update(t, dt, { power, particles: QUALITY[state.quality].particles });
+  // STOP ANIMATIONS: the model gets no frame time (dt 0), so whatever moves
+  // by dt — spinners, rings, turrets, particles — stands still, while what
+  // runs on the clock (t) — blinking lights, engine flames — goes on
+  current.update(t, state.freeze ? 0 : dt, { power, particles: QUALITY[state.quality].particles });
 
   controls.update();
   renderer.info.reset();

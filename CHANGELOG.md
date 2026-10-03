@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.32.12]
+
+### Changed
+- ShipKit: the drone's and the station's moving parts run on the model's
+  own motion clock (advanced by `dt`) instead of the wall clock. They look
+  the same; the ship lab's new STOP ANIMATIONS (and a BOBBING toggle) can
+  now freeze every moving part while the lights keep going.
+
 ## [2.32.11]
 
 ### Changed

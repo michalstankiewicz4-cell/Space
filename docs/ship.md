@@ -279,9 +279,16 @@ shots along).
 - **Left panel**: ship name and prev/next navigation over `SHIP_DEFS`,
   the MODEL statistics, a per-type FIGURES list, toggles for
   auto-rotate, engines (the throttle eases in and out), running lights,
-  wireframe and BOBBING (the ship's idle drift in the lab: ±12 cm up and
-  down and a slight rock; off, it eases to rest — it's the ship moving,
-  not the camera), SHAPING (Rounded edges, Sealed joints: rebuild live, like
+  wireframe, BOBBING and STOP ANIMATIONS.
+  - BOBBING is the ship's idle drift in the lab: ±12 cm up and down and a
+    slight rock. Off, it eases to rest. It's the ship moving, not the
+    camera.
+  - STOP ANIMATIONS (red when on, like OFFLINE) gives the model `dt = 0`.
+    Every moving part stands still: spinners, rings, the drone's hover
+    and gimbals, the station's dish and debris, particles. Lights and
+    engine flames keep running, because they go by the clock `t`. OFFLINE
+    still switches everything off.
+- After the toggles, SHAPING (Rounded edges, Sealed joints: rebuild live, like
   Geometry detail), then ACTIONS — one button per `model.actions` entry
   (disabled ones greyed out, triggers flash, toggles stay lit, OFFLINE in
   red) — and a Damage slider. Toggles and damage survive a detail
@@ -489,7 +496,13 @@ Before turning either on in the game, decide the values and measure
     decision with numbers. Take them from the cost table in "Shaping",
     then measure frames with many ships on screen. `GAME BUILD` in the lab
     shows the merged result.
-12. **A change to ShipKit is a change to the game**: version bump, a
+12. **Moving parts move by `dt`, lights by `t`.** Turn things with
+    `+= dt * speed`. For an oscillation, use the model's own motion clock
+    (`let mt = 0; … mt += dt; Math.sin(mt * k)`), never `Math.sin(t * k)`.
+    Lights, glows and shader time use `t`. That split is what lets the
+    lab's STOP ANIMATIONS freeze the motion and keep the lights on. The
+    drone and the station were moved to `mt` for it (they look the same).
+13. **A change to ShipKit is a change to the game**: version bump, a
     CHANGELOG entry and a WHAT'S NEW line, even when the game looks the
     same (say so in the line).
 
