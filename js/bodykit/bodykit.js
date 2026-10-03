@@ -749,7 +749,7 @@ function buildPlanet(values, detail) {
 // =====================================================================
 const GLSL_GIANT = `
 uniform float uBandCount, uTurb, uContrast, uWarm, uStorm, uStormLat, uOvals, uPolar, uWind, uSheen;
-uniform float uRings, uOblate, uHexagon, uPolarBlue, uGold, uIceTint, uIceHue, uRingStyle;
+uniform float uRings, uOblate, uHexagon, uPolarBlue, uGold, uIceTint, uIceHue, uRingStyle, uNoBody;
 // a pure hue (0..1) as RGB, for the ice giants' palette
 vec3 hueRGB(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0); }
 vec3 iceZone(){ return mix(vec3(0.84), hueRGB(uIceHue / 360.0), 0.42) * 0.95; }
@@ -768,6 +768,10 @@ float narrowRings(float r){
   return clamp(n, 0.0, 1.0);
 }
 float ringDensity(float r){
+  if (uRingStyle > 2.5)                                                          // debris of a broken moon (clumps: ringClumps)
+    return smoothstep(1.45, 1.6, r) * (1.0 - smoothstep(1.95, 2.15, r)) * (0.55 + 0.25 * snoise(vec3(r * 30.0, 3.5, 0.5)));
+  if (uRingStyle > 1.5)                                                          // a faint, wide dust ring
+    return smoothstep(1.22, 1.7, r) * (1.0 - smoothstep(1.9, 2.36, r)) * (0.38 + 0.1 * snoise(vec3(r * 25.0, 1.5, 0.5)));
   if (uRingStyle > 0.5) return narrowRings(r);
   if (r < 1.22 || r > 2.36) return 0.0;
   float c = smoothstep(1.22, 1.26, r) * (1.0 - smoothstep(1.51, 1.53, r)) * 0.3;
@@ -779,6 +783,8 @@ float ringDensity(float r){
   return clamp((c + b + cassini + a) * ringlets + f, 0.0, 1.0);
 }
 vec3 ringColor(float r){
+  if (uRingStyle > 2.5) return vec3(0.52, 0.49, 0.46);                                     // rock and ice rubble
+  if (uRingStyle > 1.5) return vec3(0.78, 0.60, 0.46);                                     // reddish dust
   if (uRingStyle > 0.5) return vec3(0.24, 0.24, 0.26);                                     // dark, carbon-rich narrow rings
   vec3 col = mix(vec3(0.55, 0.50, 0.45), vec3(0.93, 0.87, 0.77), smoothstep(1.5, 1.6, r));   // C dusky, B creamy
   col = mix(col, vec3(0.80, 0.78, 0.74), smoothstep(2.0, 2.05, r));                           // A greyer
@@ -792,6 +798,7 @@ float ringShadow(vec3 pp){
 }
 // the body's shadow on a point of the rings: 0 = in shadow
 float bodyShadow(vec3 pp){
+  if (uNoBody > 0.5) return 1.0;                     // a ring system on its own
   float k = 1.0 - uOblate;
   vec3 o = vec3(pp.x, pp.y / k, pp.z), d = normalize(vec3(uSunObj.x, uSunObj.y / k, uSunObj.z));
   float b = dot(o, d), c = dot(o, o) - 1.0, disc = b * b - c;
@@ -950,9 +957,21 @@ function giantRingMaterial(U) {
       void main(){
         float r = length(vP.xz);
         float dens = ringDensity(r);
+        vec3 tint = vec3(1.0);
+        if (uRingStyle > 2.5) {
+          // debris: clumps along the orbit, glinting chunks of ice
+          float a = atan(vP.z, vP.x);
+          float clump = fbm(vec3(cos(a) * 2.2, sin(a) * 2.2, r * 5.0) + uSeed, 4, 0.5);
+          dens *= smoothstep(-0.25, 0.25, clump) * 1.3;
+          vec2 cell = floor(vec2(a * 140.0, r * 90.0));
+          vec3 hc = hash33(vec3(cell, uSeed.x));
+          float chunk = step(0.94, hc.x) * smoothstep(0.35, 0.0, length(fract(vec2(a * 140.0, r * 90.0)) - 0.5 - (hc.yz - 0.5) * 0.4));
+          dens = max(dens, chunk * 0.9 * step(0.05, ringDensity(r)));   // chunks only inside the belt
+          tint = mix(vec3(1.0), vec3(1.6, 1.65, 1.75), chunk * step(0.05, ringDensity(r)));
+        }
         if (dens < 0.004) discard;
         float lit = 0.75 + 0.25 * smoothstep(0.0, 0.2, abs(uSunObj.y));     // ice scatters: bright even with the light low
-        vec3 col = ringColor(r) * lit * bodyShadow(vP) * 1.3;
+        vec3 col = ringColor(r) * tint * lit * bodyShadow(vP) * 1.3;
         gl_FragColor = vec4(col, clamp(dens * uRings, 0.0, 1.0));
       }`,
   });
@@ -963,7 +982,7 @@ function buildGiant(values, detail) {
   const U = Object.assign(bodyUniforms(v), {
     uBandCount: { value: 0 }, uTurb: { value: 0 }, uContrast: { value: 0 }, uWarm: { value: 0 }, uStorm: { value: 0 },
     uStormLat: { value: 0 }, uOvals: { value: 0 }, uPolar: { value: 0 }, uWind: { value: 0 }, uSheen: { value: 0 },
-    uRings: { value: 0 }, uOblate: { value: 0 }, uHexagon: { value: 0 }, uPolarBlue: { value: 0 }, uGold: { value: 0 }, uIceTint: { value: 0 }, uIceHue: { value: 200 }, uRingStyle: { value: 0 }, uSunObj: { value: new THREE.Vector3(1, 0, 0) },
+    uRings: { value: 0 }, uOblate: { value: 0 }, uHexagon: { value: 0 }, uPolarBlue: { value: 0 }, uGold: { value: 0 }, uIceTint: { value: 0 }, uIceHue: { value: 200 }, uRingStyle: { value: 0 }, uNoBody: { value: 0 }, uSunObj: { value: new THREE.Vector3(1, 0, 0) },
     uAtmo: { value: 0 }, uAtmoColor: { value: new THREE.Color() },
   });
   const seg = (n, min) => Math.max(min, Math.round(n * detail));
@@ -1001,6 +1020,201 @@ function buildGiant(values, detail) {
       if (v.rings > 0.001) rows.push(["Rings (outer edge)", km(2.33)]);
       if (v.oblate > 0.001) rows.push(["Flattening", Math.round(v.oblate * 1000) / 10 + "%"]);
       return rows;
+    },
+  });
+}
+
+// A ring system on its own (the RINGS group): the giants' ring material
+// with no body in the middle, so no shadow from one.
+function buildRingSystem(values, detail) {
+  const v = { ...values };
+  const U = Object.assign(bodyUniforms(v), {
+    uRings: { value: 0 }, uRingStyle: { value: 0 }, uNoBody: { value: 1 }, uOblate: { value: 0 },
+    uSunObj: { value: new THREE.Vector3(1, 0, 0) },
+  });
+  const group = new THREE.Group(), spin = new THREE.Group();
+  group.add(spin);
+  const geo = new THREE.RingGeometry(1.2, 2.38, Math.max(64, Math.round(512 * detail)), 1);
+  geo.rotateX(-Math.PI / 2);
+  const rings = new THREE.Mesh(geo, giantRingMaterial(U));
+  spin.add(rings);
+  const qInv = new THREE.Quaternion();
+  const STYLES = ["broad and icy", "narrow and dark", "faint dust", "debris of a broken moon"];
+  return makeBodyHandle({
+    v, U, group, spin, pickMesh: rings,
+    apply() { U.uRings.value = v.rings; U.uRingStyle.value = v.ringStyle; },
+    onUpdate() { U.uSunObj.value.copy(U.uSunDir.value).applyQuaternion(spin.getWorldQuaternion(qInv).invert()).normalize(); },
+    describe() {
+      const km = (x) => Math.round(x * v.size * 60268).toLocaleString("en-US") + " km";
+      return [["Style", STYLES[Math.round(v.ringStyle)]], ["Inner edge", km(1.24)], ["Outer edge", km(2.33)]];
+    },
+  });
+}
+
+// =====================================================================
+// PULSARS
+// A neutron star: a tiny white-hot sphere with hot spots at its magnetic
+// poles, two radiation beams along the magnetic axis — tilted from the
+// spin axis, so they sweep around like a lighthouse — dipole field lines,
+// a glow that flashes when a beam points at the camera. Self-lit.
+// =====================================================================
+const GLSL_PULSAR = `
+uniform vec3 uStarColor, uBeamColor;
+uniform float uFlash, uGlow, uBeamWidth, uField;
+`;
+
+function pulsarMaterials(U) {
+  const star = new THREE.ShaderMaterial({
+    uniforms: U,
+    vertexShader: GLSL_SPHERE_VERTEX,
+    fragmentShader: GLSL_NOISE + GLSL_BODY + GLSL_PULSAR + `
+      uniform vec3 uMagAxis;     // the magnetic axis in the star's own frame
+      varying vec3 vDir; varying vec3 vWorldPos; varying vec3 vNormalW;
+      void main(){
+        vec3 p = normalize(vDir);
+        float pole = pow(abs(dot(p, uMagAxis)), 18.0);                         // hot spots at the magnetic poles
+        float grain = snoise(p * 9.0 + uSeed + vec3(0.0, uTime * 0.6, 0.0)) * 0.5 + 0.5;
+        vec3 col = uStarColor * (1.4 + 0.5 * grain) + vec3(0.9, 0.95, 1.0) * pole * 3.0;
+        float mu = max(dot(normalize(vNormalW), normalize(cameraPosition - vWorldPos)), 0.0);
+        col *= 0.75 + 0.25 * mu;
+        col *= 1.0 + uFlash * 3.0;
+        float crack = crackAt(p);
+        gl_FragColor = vec4(col + vec3(1.0, 0.45, 0.12) * crack * (0.7 + 0.9 * uDamage), 1.0);
+      }`,
+  });
+  // a beam: an open cone along +Y from the star; brightest along its axis
+  // and near the star, flickering
+  const beam = new THREE.ShaderMaterial({
+    uniforms: U, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
+    vertexShader: `
+      uniform float uBeamLen;
+      varying float vT; varying vec3 vWorldPos; varying vec3 vNormalW; varying vec3 vLocal;
+      void main(){
+        vT = position.y / uBeamLen; vLocal = position;
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorldPos = wp.xyz; vNormalW = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }`,
+    fragmentShader: GLSL_NOISE + GLSL_BODY + GLSL_PULSAR + `
+      varying float vT; varying vec3 vWorldPos; varying vec3 vNormalW; varying vec3 vLocal;
+      void main(){
+        float facing = abs(dot(normalize(vNormalW), normalize(cameraPosition - vWorldPos)));
+        float core = pow(facing, 2.5);                                       // seen through its middle
+        float along = pow(1.0 - clamp(vT, 0.0, 1.0), 1.6) * smoothstep(0.0, 0.04, vT);
+        float flick = 0.75 + 0.25 * snoise(vec3(vT * 9.0 - uTime * 6.0, atan(vLocal.z, vLocal.x) * 2.0, uSeed.x));
+        float a = core * along * flick * (1.3 + uFlash * 1.5);
+        gl_FragColor = vec4(uBeamColor * a, 1.0);
+      }`,
+  });
+  // field lines: thin additive lines, shimmering
+  const field = new THREE.ShaderMaterial({
+    uniforms: U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: `
+      attribute float aT;
+      varying float vT;
+      void main(){ vT = aT; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: GLSL_PULSAR + `
+      uniform float uTime;
+      varying float vT;
+      void main(){
+        float run = 0.5 + 0.5 * sin(vT * 40.0 - uTime * 3.0);                  // charges running along the line
+        gl_FragColor = vec4(uBeamColor * uField * (0.12 + 0.18 * run) * sin(vT * 3.14159), 1.0);
+      }`,
+  });
+  return { star, beam, field };
+}
+
+// dipole field lines r = L sin^2(theta) around the magnetic axis (+Y)
+function pulsarFieldGeometry() {
+  const pos = [], ts = [];
+  for (const L of [2.2, 3.4, 5.0]) for (let k = 0; k < 6; k++) {
+    const phi = k / 6 * Math.PI * 2 + L;
+    const th0 = Math.asin(Math.sqrt(1.05 / L));         // where the line leaves the star (r = 1.05)
+    let prev = null;
+    const N = 48;
+    for (let i = 0; i <= N; i++) {
+      const th = th0 + (Math.PI - 2 * th0) * i / N, r = L * Math.sin(th) ** 2;
+      const pt = [r * Math.sin(th) * Math.cos(phi), r * Math.cos(th), r * Math.sin(th) * Math.sin(phi)];
+      if (prev) { pos.push(...prev[0], ...pt); ts.push(prev[1], i / N); }
+      prev = [pt, i / N];
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("aT", new THREE.Float32BufferAttribute(ts, 1));
+  return g;
+}
+
+function buildPulsar(values, detail) {
+  const v = { ...values };
+  const U = Object.assign(bodyUniforms(v), {
+    uStarColor: { value: new THREE.Color() }, uBeamColor: { value: new THREE.Color() }, uFlash: { value: 0 }, uGlow: { value: 0 },
+    uBeamWidth: { value: 0 }, uField: { value: 0 }, uBeamLen: { value: 1 }, uMagAxis: { value: new THREE.Vector3(0, 1, 0) },
+  });
+  const seg = (n, min) => Math.max(min, Math.round(n * detail));
+  const mats = pulsarMaterials(U);
+  const group = new THREE.Group(), spin = new THREE.Group(), magnet = new THREE.Group();
+  group.add(spin); spin.add(magnet);
+  const star = new THREE.Mesh(new THREE.SphereGeometry(1, seg(64, 12), seg(32, 8)), mats.star);
+  spin.add(star);
+  let beams = [];
+  function makeBeams() {
+    beams.forEach((b) => { magnet.remove(b); b.geometry.dispose(); });
+    beams = [1, -1].map((dir) => {
+      const g = new THREE.CylinderGeometry(v.beamWidth * v.beamLength, 0.15, v.beamLength, seg(32, 12), 1, true);
+      g.translate(0, v.beamLength / 2 + 0.9, 0);
+      const m = new THREE.Mesh(g, mats.beam);
+      if (dir < 0) m.rotation.x = Math.PI;
+      m.raycast = () => {};
+      magnet.add(m);
+      return m;
+    });
+  }
+  const field = new THREE.LineSegments(pulsarFieldGeometry(), mats.field);
+  field.raycast = () => {};
+  magnet.add(field);
+  // the glow around the star: a billboard, flashing with the beams
+  const glow = makeBillboard(U, 9, `
+    uniform vec3 uBeamColor; uniform float uFlash, uGlow;
+    void main(){
+      float r = length(vQ);
+      float g = exp(-r * 1.3) * 0.9 + exp(-r * 0.35) * 0.18;
+      float rays = pow(max(0.0, 1.0 - abs(vQ.y) * 0.6), 6.0) * exp(-abs(vQ.x) * 0.25) + pow(max(0.0, 1.0 - abs(vQ.x) * 0.6), 6.0) * exp(-abs(vQ.y) * 0.25);
+      gl_FragColor = vec4(uBeamColor * (g + rays * 0.15 * uFlash) * uGlow * (1.1 + uFlash * 2.5), 1.0);
+    }`);
+  group.add(glow);
+
+  const tmp = new THREE.Vector3(), axis = new THREE.Vector3(), here = new THREE.Vector3();
+  let turn = 0;
+  return makeBodyHandle({
+    v, U, group, spin, pickMesh: star,
+    apply() {
+      blackbody(v.temperature, U.uStarColor.value);
+      U.uBeamColor.value.setHSL(v.beamHue / 360, 0.65, 0.66);
+      U.uGlow.value = v.glow; U.uBeamWidth.value = v.beamWidth; U.uField.value = v.field; U.uBeamLen.value = v.beamLength;
+      magnet.rotation.z = THREE.MathUtils.degToRad(v.magTilt);
+      U.uMagAxis.value.set(-Math.sin(magnet.rotation.z), Math.cos(magnet.rotation.z), 0);
+      makeBeams();
+    },
+    // the lighthouse: the magnet turns with the star at `rate`; the glow
+    // flashes as a beam sweeps past the camera (opts.center = its position)
+    onUpdate(t, dt, opts) {
+      turn += dt * v.rate * Math.PI * 2;
+      magnet.rotation.y = turn;
+      if (opts.center) {
+        axis.set(0, 1, 0).applyQuaternion(magnet.getWorldQuaternion(new THREE.Quaternion())).normalize();
+        tmp.copy(opts.center).sub(group.getWorldPosition(here)).normalize();
+        const align = Math.abs(axis.dot(tmp));
+        U.uFlash.value = Math.pow(align, 60 / Math.max(0.05, v.beamWidth * 4));
+      } else U.uFlash.value = 0;
+    },
+    layers: {
+      atmosphere: { objects: [glow, field], when: () => true },          // the lab's layer button: GLOW & FIELD
+    },
+    dispose() { beams.forEach((b) => b.geometry.dispose()); },
+    describe() {
+      return [["Spin period (real)", v.periodMs + " ms"], ["Shown slowed to", v.rate.toFixed(2) + " turns/s"],
+        ["Surface", Math.round(v.temperature / 1000) * 1000 + " K"], ["Magnetic tilt", Math.round(v.magTilt) + "°"]];
     },
   });
 }
@@ -1749,7 +1963,7 @@ const GROUPS = [
       ["airless", { label: "Craters", value: 1 }], ["maria", { value: 0.6 }], ["rays", { value: 0.5 }]]),
     fixed: { sea: -0.6, ice: 0, clouds: 0, atmosphere: 0, climate: 0.5 },
     bodies: [
-      { id: "luna", name: "LUNA", values: { seed: 13, size: 0.27, tilt: 7, spin: 0.1, continents: 1.3, roughness: 0.55 } },
+      { id: "luna", name: "LUNA", view: 1.6, values: { seed: 13, size: 0.27, tilt: 7, spin: 0.1, continents: 1.3, roughness: 0.55 } },
     ],
     build: buildPlanet,
   },
@@ -1793,14 +2007,51 @@ const GROUPS = [
       { id: "saturn",  name: "SATURN",  view: 8.5, values: { seed: 11, size: 0.84, tilt: 27, spin: 1, bandCount: 24, turbulence: 0.12, contrast: 0.2,
         warm: 0.6, gold: 0.65, storm: 0, ovals: 0, polar: 0.55, polarBlue: 0.7, wind: 0.35, sheen: 0.15, rings: 1, oblate: 0.1, hexagon: 1,
         atmosphere: 0.22, atmoHue: 40 } },
-      { id: "uranus",  name: "URANUS",  view: 7.5, values: { seed: 21, size: 0.37, tilt: 98, spin: 0.7, bandCount: 10, turbulence: 0.05,
+      { id: "uranus",  name: "URANUS",  view: 3.2, values: { seed: 21, size: 0.37, tilt: 98, spin: 0.7, bandCount: 10, turbulence: 0.05,
         contrast: 0.06, warm: 0, storm: 0, ovals: 0, polar: 0.6, wind: 0.2, sheen: 0.1, rings: 0.8, ringStyle: 1, oblate: 0.023,
         iceTint: 1, iceHue: 184, atmosphere: 0.4, atmoHue: 185 } },
-      { id: "neptune", name: "NEPTUNE", values: { seed: 29, size: 0.35, tilt: 28, spin: 0.75, bandCount: 12, turbulence: 0.25,
+      { id: "neptune", name: "NEPTUNE", view: 2.6, values: { seed: 29, size: 0.35, tilt: 28, spin: 0.75, bandCount: 12, turbulence: 0.25,
         contrast: 0.35, warm: 0, storm: 0.6, stormLat: -20, ovals: 0.35, polar: 0.3, wind: 0.8, sheen: 0.1, rings: 0.3, ringStyle: 1,
         oblate: 0.017, iceTint: 1, iceHue: 222, atmosphere: 0.45, atmoHue: 220 } },
     ],
     build: buildGiant,
+  },
+  {
+    id: "rings", name: "RINGS", kmPerSize: 60268, view: 7, layers: {},
+    params: [
+      { key: "size",      label: "Size (planet radii)",    min: 0.3, max: 2,   step: 0.05, value: 1,  fmt: f2 },
+      { key: "rings",     label: "Density",                min: 0,   max: 1,   step: 0.01, value: 1,  fmt: pct },
+      { key: "ringStyle", label: "Style",                  min: 0,   max: 3,   step: 1,    value: 0,
+        fmt: (x) => ["broad", "narrow", "dust", "debris"][Math.round(x)] },
+    ],
+    bodies: [
+      { id: "halo",      name: "HALO",      values: { seed: 3, tilt: 25, spin: 0.15, ringStyle: 0 } },
+      { id: "filament",  name: "FILAMENT",  values: { seed: 7, tilt: 25, spin: 0.15, ringStyle: 1 } },
+      { id: "gossamer",  name: "GOSSAMER",  values: { seed: 9, tilt: 25, spin: 0.15, ringStyle: 2 } },
+      { id: "shards",    name: "SHARD BELT", values: { seed: 15, tilt: 25, spin: 0.15, ringStyle: 3 } },
+    ],
+    build: buildRingSystem,
+  },
+  {
+    id: "pulsars", name: "PULSARS", kmPerSize: 12, view: 22, layers: { atmosphere: "GLOW & FIELD" },
+    params: [
+      { key: "size",        label: "Size (neutron star radii)", min: 0.5, max: 2, step: 0.05, value: 1,   fmt: f2 },
+      { key: "rate",        label: "Sweep (turns/s, slowed)", min: 0.05, max: 3, step: 0.01, value: 0.6,  fmt: (x) => x.toFixed(2) },
+      { key: "magTilt",     label: "Magnetic tilt",          min: 0,   max: 90,  step: 1,    value: 40,   fmt: (x) => Math.round(x) + "°" },
+      { key: "beamLength",  label: "Beam length",            min: 2,   max: 16,  step: 0.5,  value: 10,   fmt: f2 },
+      { key: "beamWidth",   label: "Beam width",             min: 0.03, max: 0.4, step: 0.01, value: 0.12, fmt: f2 },
+      { key: "beamHue",     label: "Beam hue",               min: 180, max: 320, step: 1,    value: 225,  fmt: (x) => Math.round(x) + "°" },
+      { key: "temperature", label: "Surface temperature",    min: 100000, max: 3000000, step: 10000, value: 1000000, fmt: (x) => (x / 1e6).toFixed(2) + " MK" },
+      { key: "glow",        label: "Glow",                   min: 0,   max: 1,   step: 0.01, value: 0.7,  fmt: pct },
+      { key: "field",       label: "Field lines",            min: 0,   max: 1,   step: 0.01, value: 0.6,  fmt: pct },
+      { key: "periodMs",    label: "Real spin period (ms)",  min: 1.4, max: 4000, step: 0.1, value: 89,   fmt: (x) => x + " ms" },
+    ],
+    bodies: [
+      // invented: a lone, old pulsar ticking with a clock's regularity
+      { id: "metronome", name: "METRONOME · PSR J0731+1337", values: { seed: 31, tilt: 12, spin: 0, rate: 0.6, magTilt: 42, beamHue: 228,
+        temperature: 900000, periodMs: 89.3 } },
+    ],
+    build: buildPulsar,
   },
   {
     id: "suns", name: "SUNS", kmPerSize: 696000, view: 7, layers: { atmosphere: "CORONA" },

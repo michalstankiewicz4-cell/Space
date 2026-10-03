@@ -36,8 +36,11 @@ from its schema.
 | ICE WORLDS | size, frozen-sea level, continents, mountains, roughness, ice caps, frozen seas, clouds, drift, atmosphere, hue | RIME (6), GLACIES (7) | the same |
 | DESERT WORLDS | size, terrain scale, mountains, roughness, rust, craters, polar caps, thin clouds, drift, atmosphere, hue | MARS (lab only) | the same |
 | CLOUD WORLDS | size, cloud deck, band contrast, haze colour, wind speed, atmosphere, hue | VENUS (lab only) | the same (clouds 100%) |
+| MOONS | size, terrain scale, relief height, roughness, craters, maria, ray craters | LUNA (lab only) | the same |
 | AIRLESS | size, terrain scale, relief height, roughness, craters, ray craters | MERCURY (lab only) | the same |
-| GAS GIANTS | size, bands, turbulence, band contrast, colour, great storm (size, latitude), white ovals, polar haze, wind speed, polish, rings, flattening, polar hexagon, polar haze colour, golden tint, atmosphere, hue | JUPITER, SATURN (lab only) | belts / zones, the storm's width, the rings' outer edge, flattening |
+| RINGS | size, density, style (broad / narrow / dust / debris) | HALO, FILAMENT, GOSSAMER, SHARD BELT (lab only) | style, inner and outer edge |
+| PULSARS | size, sweep rate (slowed), magnetic tilt, beam length / width / hue, surface temperature, glow, field lines, real spin period | METRONOME · PSR J0731+1337 (invented, lab only) | the real period, the shown rate, temperature, magnetic tilt |
+| GAS GIANTS | size, bands, turbulence, band contrast, colour, great storm (size, latitude), white ovals, polar haze, wind speed, polish, rings, flattening, polar hexagon, polar haze colour, golden tint, ice giant tint and hue, ring style, atmosphere, hue | JUPITER, SATURN, URANUS, NEPTUNE (lab only) | belts / zones, the storm's width, the rings' outer edge, flattening |
 | SUNS | size, temperature, granulation, sunspots, activity, corona, brightness | SOL (slot 0) | temperature, spectral class, luminosity |
 | COMETS | the rock parameters + coma, tail length, dust tail, ion tail hue | COMET (kind `comet`: every comet) | shape in km |
 | ROCKS | the rock parameters: size, lumpiness, elongation, craters, albedo, color, ice, metal veins | FERRUM (slot 8, the meteoroid) | shape in km, albedo |
@@ -82,6 +85,7 @@ FERRUM (8), ABYSS (9) and COMET.
 | `pelagia` PELAGIA | 5 | neutral | ocean world (≈83% water), cloudy |
 | `rime` RIME | 6 | ice | frozen seas, tundra continents (≈78% ice & snow) |
 | `glacies` GLACIES | 7 | ice | almost fully frozen (≈95%) |
+| `luna` LUNA | — | (lab only) | the Moon: cratered highlands, dark maria with fewer craters, a few ray craters (`maria`) |
 | `mars` MARS | — | (lab only) | rust-red dust, dark basalt regions, cratered highlands, a polar cap, thin air (`rust`, `craters`) |
 | `venus` VENUS | — | (lab only) | wrapped in a closed cream-to-ochre cloud deck with wind streaks (`overcast`, `bands`, `haze`); modelled on a real photo of Venus |
 | `mercury` MERCURY | — | (lab only) | airless and cratered, bright ray craters (`airless`, `rays`); modelled on a real photo of Mercury |
@@ -110,6 +114,7 @@ the game sizes each body to its own radius.
 | `rays` | Ray craters: a few young craters with bright radial rays | 0–1.5 | 0 |
 | `rust` | Rust: oxidised red dust with dark basalt regions and paler highlands; no snow on the peaks | 0–1 | 0 |
 | `craters` | Craters on any planet (relief + darker floors), fewer on the low plains; `airless` implies them | 0–1 | 0 |
+| `maria` | Maria: dark, smooth basalt plains (a moon's "seas"), with 80% fewer craters | 0–1 | 0 |
 | `overcast` | Cloud deck: the cloud shell closes into an opaque, banded deck (counted as 100% clouds) | 0–1 | 0 |
 | `bands` | Band contrast of the deck | 0–1 | 0.6 |
 | `haze` | The deck's colour, white → ochre | 0–1 | 0.5 |
@@ -233,6 +238,33 @@ the game sizes each body to its own radius.
   (`ringShadow`: from the surface point to the ring plane, the density
   there) and the planet on the rings (`bodyShadow`: a ray to the light
   against the flattened sphere). The lab's second layer button is RINGS.
+- **Ice giants** (URANUS, NEPTUNE: the giant with `iceTint`): zones and
+  belts from a methane-blue palette (`iceHue`: 184° cyan Uranus, 222° deep
+  blue Neptune), nearly featureless when calm (the belt colour moves
+  toward the zone's at low contrast), a pale polar cap, and a storm drawn
+  as a *dark* spot (Neptune's). `ringStyle` 1 swaps Saturn's broad rings
+  for Uranus's narrow dark ones (9 ringlets in planet radii, epsilon the
+  widest). The tilt slider goes to 180° (Uranus lies on its side, 98°).
+- **Ring systems** (`buildRingSystem`, the RINGS group): the giants' ring
+  material with no body in the middle (`uNoBody`: no shadow). Four
+  styles — broad and icy, narrow and dark, a faint reddish dust ring, and
+  the debris of a broken moon: clumps along the orbit (fBm of the angle)
+  and glinting chunks of ice (a cell hash in angle × radius, only inside
+  the belt).
+- **Pulsar** (`buildPulsar`, the PULSARS group): a tiny self-lit sphere
+  coloured by its temperature (`blackbody`, ~1 MK: blue-white) with hot
+  spots at the magnetic poles; the magnet frame is tilted (`magTilt`) and
+  turns at `rate` (slowed for the eye; `periodMs` is the real period, for
+  the statistics), carrying two open cones (the beams: brightest along
+  their axis and near the star, flickering, additive) and dipole field
+  lines (`r = L·sin²θ`, charges running along them). A billboard glow
+  flashes when a beam sweeps past the camera (`opts.center`; in the game
+  without it, no flash). The invented METRONOME is an old, lone pulsar
+  ticking every 89.3 ms.
+- **Seamless craters** (`craterField`, 2026-10): every crater in the 27
+  neighbouring cells is added up and faded in by its share, and a world
+  without seas doesn't clamp its relief at sea level — taking the nearest
+  cell, a hard cut-off and the clamp drew straight seams and contour lines.
 - **Black hole** (`buildBlackHole`, `GLSL_HOLE`): a black horizon sphere,
   an **accretion disk** (a ring whose radius is remapped in the vertex
   shader to `disk`, turbulent noise turning with the disk, hotter and

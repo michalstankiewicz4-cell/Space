@@ -4,6 +4,28 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.32.0]
+
+### Added
+- Body lab: **URANUS** and **NEPTUNE**, ice giants among the gas giants —
+  a methane-blue palette, Uranus calm, cyan and on its side with narrow
+  dark rings, Neptune deep blue with a dark storm and white clouds.
+- Body lab: a **MOONS** group with **LUNA**: cratered highlands and dark
+  maria (`maria`).
+- Body lab: a **RINGS** group — ring systems on their own in four styles:
+  HALO (broad, icy), FILAMENT (narrow, dark), GOSSAMER (dust) and SHARD
+  BELT (the clumpy debris of a broken moon, glinting chunks).
+- Body lab: a **PULSARS** group with an invented one, **METRONOME** (PSR
+  J0731+1337): a white-hot neutron star, two lighthouse beams along a
+  tilted magnetic axis, dipole field lines, a glow that flashes as a beam
+  sweeps past.
+
+### Fixed
+- BodyKit's craters had straight seams and contour lines on some bodies
+  (cell switches, a hard cut-off, the relief clamped at sea level on
+  sealess worlds). This also touches the game's meteoroid and comets
+  (BodyKit is shared, hence the version).
+
 ## [2.31.1]
 
 ### Added
