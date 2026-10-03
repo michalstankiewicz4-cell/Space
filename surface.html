@@ -141,11 +141,11 @@ const skyRef = BK.GAME_KINDS.sky;
 const backdrop = BK.buildBody(skyRef.groupId, skyRef.bodyId, { detail: 1 });
 backdrop.setRadius(300); orbit.scene.add(backdrop.group);
 const SUN = new THREE.Vector3(-1, 0.35, 0.6).normalize();
-let globe = null, pin = SK.makeMarker(0x4fe3c6, 0.04), baseMark = SK.makeMarker(0xf8bb56, 0.045);
+let globe = null, pin = SK.makeMarker(0x4fe3c6, 0.018), baseMark = SK.makeMarker(0xf8bb56, 0.02);
 function loadGlobe() {
   if (globe) BK.disposeBody(globe);
   const [g, b] = state.ref.split("/");
-  globe = BK.buildBody(g, b, { detail: 1 });
+  globe = BK.buildBody(g, b, { detail: 1, values: { spin: 0 } });   // held still: you pick a spot on it, the base stays put
   globe.setRadius(3);
   orbit.scene.add(globe.group);
   globe.surfaceRoot.add(pin, baseMark);
@@ -322,7 +322,12 @@ function backToOrbit() {
     $("orbitUi").classList.remove("hidden"); $("groundUi").classList.add("hidden");
     $("compass").classList.add("hidden"); $("readout").classList.add("hidden");
     cancelBuild();
-    const at = globe.surfaceRoot.localToWorld(P.dir.clone().multiplyScalar(3));   // the base in the middle of the view
+    // above the spot we left, turned at most 20° toward the sun (more daylight,
+    // the base still well inside the disc)
+    const w = globe.surfaceRoot.localToWorld(P.dir.clone()).sub(globe.group.position).normalize();
+    const axis = new THREE.Vector3().crossVectors(w, SUN);
+    if (axis.lengthSq() > 1e-6) w.applyAxisAngle(axis.normalize(), Math.min(0.35, w.angleTo(SUN)));
+    const at = w.multiplyScalar(12).add(globe.group.position);
     orbit.camera.position.copy(at); oc.target.set(0, 0, 0);
     refreshBase();
     setTimeout(() => fade(false), 80);
@@ -536,7 +541,7 @@ function frame() {
 }
 LabKit.paintSlider($("qSlider"));
 resize(); loadGlobe(); frame();
-window.surfaceLab = { get sky() { return sky; }, state, P, land, enterGround, startBuild, place, validate, get surf() { return surf; }, get globe() { return globe; }, toast };
+window.surfaceLab = { get sky() { return sky; }, state, P, land, enterGround, startBuild, place, validate, get surf() { return surf; }, get globe() { return globe; }, toast, camera: ground.camera };
 })();
 </script>
 </body>
