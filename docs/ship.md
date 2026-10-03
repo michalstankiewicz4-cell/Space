@@ -340,6 +340,17 @@ together. Both are off by default (`round: 0, seal: 0`), so the game's
 ships are built exactly as before; the ship lab's SHAPING sliders turn
 them on.
 
+**Rounded edges** keep the texture where it was:
+- The rounded cylinder is a lathe, which spreads v over its whole profile,
+  caps included. That squeezed and merged the bands painted on engine
+  housings (the user saw it). So its v is set by height, as on a
+  CylinderGeometry's side.
+- The rounded box moves its vertices toward the edges, so its UVs are
+  recomputed from the new flat positions, with BoxGeometry's own
+  per-face mapping.
+- A rounded cylinder's caps take the texture's end rows (no planar cap
+  mapping).
+
 **Sealed joints** (`sealJoints`):
 - **Finding the line.** For each pair of solid parts whose boxes overlap,
   in the same moving unit (`userData.dynamic`), each mesh's edges are tested

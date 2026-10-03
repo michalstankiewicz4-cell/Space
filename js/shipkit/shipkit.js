@@ -960,8 +960,18 @@ function roundedBoxGeometry(w, h, d, r, k) {
     return 0;
   };
   const q = new THREE.Vector3(), v = new THREE.Vector3(), o = new THREE.Vector3();
+  const uv = g.attributes.uv, size = [w, h, d], half = [hx, hy, hz];
+  // a face's texture axes, as BoxGeometry lays them: [u axis, v axis] by the face's normal axis
+  const AX = [[2, 1], [0, 2], [0, 1]];
   for (let i = 0; i < p.count; i++) {
-    v.set(remap(p.getX(i), hx), remap(p.getY(i), hy), remap(p.getZ(i), hz));
+    const old = [p.getX(i), p.getY(i), p.getZ(i)];
+    v.set(remap(old[0], hx), remap(old[1], hy), remap(old[2], hz));
+    // the texture follows the moved vertices (else it bunches up in bands near the edges):
+    // the same mapping BoxGeometry used, on the new flat position
+    const nAxis = Math.abs(nr.getX(i)) > 0.5 ? 0 : Math.abs(nr.getY(i)) > 0.5 ? 1 : 2, [ua, va] = AX[nAxis], flat = [v.x, v.y, v.z];
+    const su = Math.abs((old[ua] + half[ua]) / size[ua] - uv.getX(i)) < 1e-4 ? 1 : -1;
+    const sv = Math.abs(1 - (old[va] + half[va]) / size[va] - uv.getY(i)) < 1e-4 ? 1 : -1;
+    uv.setXY(i, (flat[ua] * su + half[ua]) / size[ua], 1 - (flat[va] * sv + half[va]) / size[va]);
     q.set(Math.max(-hx + r, Math.min(hx - r, v.x)), Math.max(-hy + r, Math.min(hy - r, v.y)), Math.max(-hz + r, Math.min(hz - r, v.z)));
     o.subVectors(v, q);
     if (o.lengthSq() > 1e-12) { o.normalize(); v.copy(q).addScaledVector(o, r); nr.setXYZ(i, o.x, o.y, o.z); }
@@ -979,6 +989,10 @@ function roundedCylinderGeometry(rt, rb, h, radial, r, k) {
   pts.push(new THREE.Vector2(0, hy));
   const g = new THREE.LatheGeometry(pts, radial);
   g.computeVertexNormals();
+  // the texture as on a CylinderGeometry's side: v by height (a lathe spreads it
+  // over the whole profile, caps included — painted bands squeezed and merged)
+  const pa = g.attributes.position, uv = g.attributes.uv;
+  for (let i = 0; i < pa.count; i++) uv.setY(i, (pa.getY(i) + hy) / h);
   g.userData.shape = { kind: "cylinder", rt, rb, h };
   return g;
 }
