@@ -208,23 +208,23 @@ vec3 hash33(vec3 p){
   p += dot(p, p.yxz + 33.33);
   return fract((p.xxy + p.yxx) * p.zyx);
 }
-// the nearest crater per cell (only a \`share\` of cells has one): a bowl
-// below 0, a raised rim, 0 elsewhere. Rocks and airless planets.
+// craters: at most one per cell (a \`share\` of cells has one), each a bowl
+// below 0 with a raised rim. Every crater in the 27 neighbouring cells is
+// added up, so the field is continuous (taking only the nearest cell left
+// straight seams where it switched cells). Rocks and airless planets.
 float craterField(vec3 p, float freq, float share){
   vec3 q = p * freq + uSeed;
   vec3 i = floor(q), f = fract(q);
-  float best = 9.0; vec3 hb = vec3(1.0);
+  float sum = 0.0;
   for (int x = -1; x <= 1; x++) for (int y = -1; y <= 1; y++) for (int z = -1; z <= 1; z++){
     vec3 o = vec3(float(x), float(y), float(z));
     vec3 h = hash33(i + o);
-    vec3 d = o + h - f;
-    float dd = dot(d, d);
-    if (dd < best){ best = dd; hb = h; }
+    float w = clamp((share - h.y) / 0.06, 0.0, 1.0);   // fades in: \`share\` varies over a surface
+    if (w <= 0.0) continue;
+    float k = length(o + h - f) / (0.25 + 0.3 * h.z);   // distance in crater radii
+    sum += w * ((k < 1.0 ? k * k - 1.0 : 0.0) + exp(-pow((k - 1.0) * 3.5, 2.0)) * 0.3);
   }
-  if (hb.y > share) return 0.0;
-  float k = sqrt(best) / (0.25 + 0.3 * hb.z);          // distance in crater radii
-  float bowl = k < 1.0 ? k * k - 1.0 : 0.0;
-  return bowl + exp(-pow((k - 1.0) * 3.5, 2.0)) * 0.3;
+  return sum;
 }
 `;
 
@@ -365,7 +365,9 @@ void main(){
 // =====================================================================
 const GLSL_PLANET = `
 uniform float uFreq, uSea, uRough, uIce, uClimate, uClouds, uCloudDrift;
-uniform float uAirless, uRays, uCraters, uRust;
+uniform float uAirless, uRays, uCraters, uRust, uMaria;
+// maria: dark, smooth basalt plains (an airless moon's "seas"), 0..1
+float mariaAt(vec3 p){ return uMaria <= 0.001 ? 0.0 : uMaria * smoothstep(0.02, 0.12, fbm(p * 1.3 + uSeed.yzx, 4, 0.5)); }
 
 // craters of three sizes, fewer on the low plains: airless worlds, or any
 // planet with "craters" (a desert world's old highlands)
@@ -373,7 +375,7 @@ float craterAmount(){ return max(uAirless, uCraters); }
 float craterRelief(vec3 p, float base){
   float amt = craterAmount();
   if (amt <= 0.001) return 0.0;
-  float share = amt * mix(0.18, 0.7, smoothstep(-0.25, 0.25, base));
+  float share = amt * mix(0.18, 0.7, smoothstep(-0.25, 0.25, base)) * (1.0 - 0.8 * mariaAt(p));   // lava filled the maria's craters
   return craterField(p, 5.0, share) * 0.10 + craterField(p, 11.0, share) * 0.05 + craterField(p, 24.0, share * 0.9) * 0.022;
 }
 // continents: domain-warped fBm, ~ -1..1
@@ -514,7 +516,8 @@ function planetSurfaceMaterial(U) {
           // craters: darker floors, bright rims, the youngest small ones bright inside
           float c1 = craterField(p, 11.0, uAirless * 0.8), c2 = craterField(p, 24.0, uAirless * 0.75);
           regolith *= 1.0 + min(c1, 0.0) * 0.35 + max(c1, 0.0) * 0.6 + max(c2, 0.0) * 0.5;
-          regolith = mix(regolith, vec3(0.72, 0.71, 0.69), step(0.92, fract(c2 * 37.0 + m * 5.0)) * step(c2, -0.2) * 0.6);
+          float mare = mariaAt(p);
+          regolith = mix(regolith, mix(vec3(0.11, 0.11, 0.12), vec3(0.17, 0.165, 0.165), tone), mare * 0.92);   // the maria
           regolith = mix(regolith, vec3(0.86, 0.85, 0.83), clamp(rayAt(p) * 1.3, 0.0, 1.0));
           land = mix(land, regolith, uAirless);
         }
@@ -558,7 +561,10 @@ function planetSurfaceMaterial(U) {
           vec3 px = normalize(p + t1 * eps), py = normalize(p + t2 * eps);
           float b0 = baseOct(p, o), bx = baseOct(px, o), by = baseOct(py, o);
           float c0 = craterRelief(p, b0), cx = craterRelief(px, bx), cy = craterRelief(py, by);
-          float h0 = max(b0 + c0, uSea), hx = max(bx + cx, uSea), hy = max(by + cy, uSea);
+          // seas are flat (clamped to the sea level); a world without seas isn't
+          // clamped, or crater floors below that level drew contour lines
+          float seaLevel = (uSea <= -0.599 || uAirless >= 0.5) ? -10.0 : uSea;
+          float h0 = max(b0 + c0, seaLevel), hx = max(bx + cx, seaLevel), hy = max(by + cy, seaLevel);
           float k = 0.012 + uMountain * 0.25;                    // relief strength
           float kc = craterAmount() * 0.3;                       // crater walls: much stronger than the terrain
           vec3 g = k * ((hx - h0) * t1 + (hy - h0) * t2) + kc * ((cx - c0) * t1 + (cy - c0) * t2);
@@ -657,7 +663,7 @@ function buildPlanet(values, detail) {
     uFreq: { value: 0 }, uSea: { value: 0 }, uRough: { value: 0 }, uIce: { value: 0 }, uClimate: { value: 0 },
     uClouds: { value: 0 }, uCloudDrift: { value: 0 }, uMountain: { value: 0 }, uAtmo: { value: 0 },
     uAtmoColor: { value: new THREE.Color() }, uLava: { value: 0 }, uFrozen: { value: 0 },
-    uAirless: { value: 0 }, uRays: { value: 0 }, uCraters: { value: 0 }, uRust: { value: 0 }, uOvercast: { value: 0 }, uBands: { value: 0 }, uHaze: { value: 0 },
+    uAirless: { value: 0 }, uRays: { value: 0 }, uCraters: { value: 0 }, uRust: { value: 0 }, uMaria: { value: 0 }, uOvercast: { value: 0 }, uBands: { value: 0 }, uHaze: { value: 0 },
   });
   const seg = (n, min) => Math.max(min, Math.round(n * detail));
   const group = new THREE.Group();      // tilt goes here…
@@ -713,7 +719,7 @@ function buildPlanet(values, detail) {
       U.uCloudDrift.value = v.cloudDrift; U.uMountain.value = v.mountains;
       U.uAtmo.value = v.atmosphere; U.uAtmoColor.value.copy(hueColor(v.atmoHue));
       U.uLava.value = v.lava; U.uFrozen.value = v.frozen;
-      U.uAirless.value = v.airless; U.uRays.value = v.rays; U.uCraters.value = v.craters; U.uRust.value = v.rust;
+      U.uAirless.value = v.airless; U.uRays.value = v.rays; U.uCraters.value = v.craters; U.uRust.value = v.rust; U.uMaria.value = v.maria;
       U.uOvercast.value = v.overcast; U.uBands.value = v.bands; U.uHaze.value = v.haze;
     },
     layers: {
@@ -743,12 +749,26 @@ function buildPlanet(values, detail) {
 // =====================================================================
 const GLSL_GIANT = `
 uniform float uBandCount, uTurb, uContrast, uWarm, uStorm, uStormLat, uOvals, uPolar, uWind, uSheen;
-uniform float uRings, uOblate, uHexagon, uPolarBlue, uGold;
+uniform float uRings, uOblate, uHexagon, uPolarBlue, uGold, uIceTint, uIceHue, uRingStyle;
+// a pure hue (0..1) as RGB, for the ice giants' palette
+vec3 hueRGB(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0); }
+vec3 iceZone(){ return mix(vec3(0.84), hueRGB(uIceHue / 360.0), 0.42) * 0.95; }
+vec3 iceBelt(){ return mix(vec3(0.55), hueRGB(uIceHue / 360.0), 0.62) * 0.78; }
 uniform vec3 uSunObj;   // the light direction in the spinning body's own frame (rings, shadows)
 // The rings, by radius in body radii (Saturn's): C 1.24-1.53 faint, B
 // 1.53-1.95 the densest, the Cassini division, A 2.03-2.27 with the Encke
 // gap, the thin F ring; fine ringlets everywhere. 0..1
+float narrowRings(float r){
+  // Uranus's rings in planet radii: 6, 5, 4, alpha, beta, eta, gamma, delta, epsilon (the widest)
+  float n = 0.0;
+  n += exp(-pow((r - 1.64) / 0.003, 2.0)) * 0.55 + exp(-pow((r - 1.66) / 0.003, 2.0)) * 0.5 + exp(-pow((r - 1.68) / 0.003, 2.0)) * 0.55;
+  n += exp(-pow((r - 1.75) / 0.004, 2.0)) * 0.7 + exp(-pow((r - 1.79) / 0.004, 2.0)) * 0.7 + exp(-pow((r - 1.84) / 0.003, 2.0)) * 0.45;
+  n += exp(-pow((r - 1.86) / 0.003, 2.0)) * 0.7 + exp(-pow((r - 1.91) / 0.004, 2.0)) * 0.75 + exp(-pow((r - 2.0) / 0.012, 2.0)) * 0.95;
+  n += smoothstep(1.55, 1.6, r) * (1.0 - smoothstep(2.05, 2.1, r)) * 0.03;          // faint dust between
+  return clamp(n, 0.0, 1.0);
+}
 float ringDensity(float r){
+  if (uRingStyle > 0.5) return narrowRings(r);
   if (r < 1.22 || r > 2.36) return 0.0;
   float c = smoothstep(1.22, 1.26, r) * (1.0 - smoothstep(1.51, 1.53, r)) * 0.3;
   float b = smoothstep(1.52, 1.56, r) * (1.0 - smoothstep(1.93, 1.95, r)) * (0.82 + 0.18 * smoothstep(1.6, 1.8, r));
@@ -759,6 +779,7 @@ float ringDensity(float r){
   return clamp((c + b + cassini + a) * ringlets + f, 0.0, 1.0);
 }
 vec3 ringColor(float r){
+  if (uRingStyle > 0.5) return vec3(0.24, 0.24, 0.26);                                     // dark, carbon-rich narrow rings
   vec3 col = mix(vec3(0.55, 0.50, 0.45), vec3(0.93, 0.87, 0.77), smoothstep(1.5, 1.6, r));   // C dusky, B creamy
   col = mix(col, vec3(0.80, 0.78, 0.74), smoothstep(2.0, 2.05, r));                           // A greyer
   return col * (0.92 + 0.16 * snoise(vec3(r * 140.0, 2.5, 0.5)));
@@ -826,6 +847,8 @@ vec3 giantColor(vec3 p){
   float fine = fbm(vec3(0.0, yb * 55.0, 0.0) + uSeed.zxy, 4, 0.6);     // thin sub-bands
   vec3 zone = mix(vec3(0.86, 0.85, 0.80), vec3(0.90, 0.80, 0.60), uGold);   // white or golden zones
   vec3 belt = mix(mix(vec3(0.62, 0.58, 0.53), vec3(0.78, 0.60, 0.45), uWarm), vec3(0.80, 0.66, 0.46), uGold * 0.6);
+  zone = mix(zone, iceZone(), uIceTint);              // ice giants: cyan to deep blue (methane)
+  belt = mix(belt, mix(iceZone(), iceBelt(), 0.15 + 0.85 * uContrast), uIceTint);   // a calm ice giant is nearly featureless
   float k = smoothstep(-0.7, 0.7, band * (0.3 + 0.7 * uContrast) + fine * 0.4);
   vec3 col = mix(belt, zone, k);
   col *= 1.0 + fine * 0.1;
@@ -844,7 +867,8 @@ vec3 giantColor(vec3 p){
   col = mix(col, vec3(0.74, 0.44, 0.32), streak * 0.6 * uWarm);
   // poles: muted grey-ochre (or blue), mottled
   float pol = smoothstep(0.62, 0.95, abs(p.y)) * uPolar;
-  col = mix(col, mix(vec3(0.72, 0.68, 0.60), vec3(0.56, 0.66, 0.80), uPolarBlue) * (0.85 + 0.3 * flow), pol);
+  vec3 polCol = mix(mix(vec3(0.72, 0.68, 0.60), vec3(0.56, 0.66, 0.80), uPolarBlue), iceZone() * 1.12, uIceTint);   // an ice giant's pale polar cap
+  col = mix(col, polCol * (0.85 + 0.3 * flow), pol);
   // the north polar hexagon: a six-sided jet stream around a blue vortex
   if (uHexagon > 0.001 && p.y > 0.7) {
     vec3 qh = bandDrift(p, 1.35);
@@ -866,6 +890,7 @@ vec3 giantColor(vec3 p){
     float sw, d;
     float core = vortex(qs, lat, lat0, 1.57, 0.13 * uStorm, 0.08 * uStorm, sw, d);
     vec3 red = mix(vec3(0.86, 0.52, 0.24), vec3(0.70, 0.32, 0.15), (1.0 - smoothstep(0.0, 0.6, d)) * 0.7 + (sw - 0.5) * 0.4);   // darker centre, spiral
+    red = mix(red, mix(vec3(0.10, 0.15, 0.36), vec3(0.06, 0.09, 0.24), 1.0 - d), uIceTint);   // an ice giant's storm is a dark spot
     red = mix(red, vec3(0.62, 0.28, 0.14), smoothstep(0.78, 0.92, d) * (1.0 - smoothstep(0.92, 1.0, d)) * 0.8);   // the rim
     float collar = smoothstep(0.97, 1.08, d) * (1.0 - smoothstep(1.08, 1.55, d));   // pale ring just outside
     col = mix(col, red, core);
@@ -938,7 +963,7 @@ function buildGiant(values, detail) {
   const U = Object.assign(bodyUniforms(v), {
     uBandCount: { value: 0 }, uTurb: { value: 0 }, uContrast: { value: 0 }, uWarm: { value: 0 }, uStorm: { value: 0 },
     uStormLat: { value: 0 }, uOvals: { value: 0 }, uPolar: { value: 0 }, uWind: { value: 0 }, uSheen: { value: 0 },
-    uRings: { value: 0 }, uOblate: { value: 0 }, uHexagon: { value: 0 }, uPolarBlue: { value: 0 }, uGold: { value: 0 }, uSunObj: { value: new THREE.Vector3(1, 0, 0) },
+    uRings: { value: 0 }, uOblate: { value: 0 }, uHexagon: { value: 0 }, uPolarBlue: { value: 0 }, uGold: { value: 0 }, uIceTint: { value: 0 }, uIceHue: { value: 200 }, uRingStyle: { value: 0 }, uSunObj: { value: new THREE.Vector3(1, 0, 0) },
     uAtmo: { value: 0 }, uAtmoColor: { value: new THREE.Color() },
   });
   const seg = (n, min) => Math.max(min, Math.round(n * detail));
@@ -948,7 +973,7 @@ function buildGiant(values, detail) {
   spin.add(surface);
   const atmo = new THREE.Mesh(new THREE.SphereGeometry(1.06, seg(96, 12), seg(48, 6)), atmosphereMaterial(U));
   group.add(atmo);
-  const ringGeo = new THREE.RingGeometry(1.2, 2.38, seg(256, 48), 1);
+  const ringGeo = new THREE.RingGeometry(1.2, 2.38, seg(512, 64), 1);   // fine: narrow rings are a few pixels wide
   ringGeo.rotateX(-Math.PI / 2);                     // into the equatorial (XZ) plane, baked
   const rings = new THREE.Mesh(ringGeo, giantRingMaterial(U));
   spin.add(rings);
@@ -961,6 +986,7 @@ function buildGiant(values, detail) {
       U.uStorm.value = v.storm; U.uStormLat.value = v.stormLat; U.uOvals.value = v.ovals; U.uPolar.value = v.polar;
       U.uWind.value = v.wind; U.uSheen.value = v.sheen; U.uAtmo.value = v.atmosphere; U.uAtmoColor.value.copy(hueColor(v.atmoHue));
       U.uRings.value = v.rings; U.uOblate.value = v.oblate; U.uHexagon.value = v.hexagon; U.uPolarBlue.value = v.polarBlue; U.uGold.value = v.gold;
+      U.uIceTint.value = v.iceTint; U.uIceHue.value = v.iceHue; U.uRingStyle.value = v.ringStyle;
       surface.scale.set(1, 1 - v.oblate, 1);         // flattened at the poles
     },
     // the light in the spin frame, for the rings and their shadows
@@ -1642,6 +1668,7 @@ const PLANET_PARAMS = [
       { key: "frozen",     label: "Frozen seas",            min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "airless",    label: "Airless, cratered",      min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "rays",       label: "Ray craters",            min: 0,   max: 1.5, step: 0.01, value: 0,    fmt: pct },
+      { key: "maria",      label: "Maria (dark basalt plains)", min: 0, max: 1, step: 0.01, value: 0,  fmt: pct },
       { key: "rust",       label: "Rust (oxidised dust)",   min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "craters",    label: "Craters",                min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "overcast",   label: "Cloud deck (closed)",    min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
@@ -1717,6 +1744,16 @@ const GROUPS = [
     build: buildPlanet,
   },
   {
+    id: "moons", name: "MOONS", kmPerSize: 6371, view: 4.4, layers: {},
+    params: planetParams(["size", ["continents", { label: "Terrain scale" }], ["mountains", { label: "Relief height", value: 0.006 }], "roughness",
+      ["airless", { label: "Craters", value: 1 }], ["maria", { value: 0.6 }], ["rays", { value: 0.5 }]]),
+    fixed: { sea: -0.6, ice: 0, clouds: 0, atmosphere: 0, climate: 0.5 },
+    bodies: [
+      { id: "luna", name: "LUNA", values: { seed: 13, size: 0.27, tilt: 7, spin: 0.1, continents: 1.3, roughness: 0.55 } },
+    ],
+    build: buildPlanet,
+  },
+  {
     id: "airless", name: "AIRLESS", kmPerSize: 6371, view: 4.4, layers: {},
     params: planetParams(["size", ["continents", { label: "Terrain scale" }], ["mountains", { label: "Relief height", value: 0.006 }], "roughness",
       ["airless", { label: "Craters", value: 1 }], ["rays", { value: 0.9 }]]),
@@ -1745,6 +1782,9 @@ const GROUPS = [
       { key: "hexagon",    label: "Polar hexagon",          min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "polarBlue",  label: "Polar haze (grey → blue)", min: 0, max: 1,   step: 0.01, value: 0,    fmt: pct },
       { key: "gold",       label: "Golden tint",            min: 0,   max: 1,   step: 0.01, value: 0,    fmt: pct },
+      { key: "iceTint",    label: "Ice giant (methane blue)", min: 0, max: 1,   step: 0.01, value: 0,    fmt: pct },
+      { key: "iceHue",     label: "Ice giant hue",          min: 160, max: 250, step: 1,    value: 200,  fmt: (x) => Math.round(x) + "°" },
+      { key: "ringStyle",  label: "Ring style (broad / narrow)", min: 0, max: 1, step: 1,   value: 0,    fmt: (x) => (x > 0.5 ? "narrow" : "broad") },
       { key: "atmosphere", label: "Atmosphere",             min: 0,   max: 1,   step: 0.01, value: 0.3,  fmt: pct },
       { key: "atmoHue",    label: "Atmosphere hue",         min: 0,   max: 360, step: 1,    value: 35,   fmt: (x) => Math.round(x) + "°" },
     ],
@@ -1753,6 +1793,12 @@ const GROUPS = [
       { id: "saturn",  name: "SATURN",  view: 8.5, values: { seed: 11, size: 0.84, tilt: 27, spin: 1, bandCount: 24, turbulence: 0.12, contrast: 0.2,
         warm: 0.6, gold: 0.65, storm: 0, ovals: 0, polar: 0.55, polarBlue: 0.7, wind: 0.35, sheen: 0.15, rings: 1, oblate: 0.1, hexagon: 1,
         atmosphere: 0.22, atmoHue: 40 } },
+      { id: "uranus",  name: "URANUS",  view: 7.5, values: { seed: 21, size: 0.37, tilt: 98, spin: 0.7, bandCount: 10, turbulence: 0.05,
+        contrast: 0.06, warm: 0, storm: 0, ovals: 0, polar: 0.6, wind: 0.2, sheen: 0.1, rings: 0.8, ringStyle: 1, oblate: 0.023,
+        iceTint: 1, iceHue: 184, atmosphere: 0.4, atmoHue: 185 } },
+      { id: "neptune", name: "NEPTUNE", values: { seed: 29, size: 0.35, tilt: 28, spin: 0.75, bandCount: 12, turbulence: 0.25,
+        contrast: 0.35, warm: 0, storm: 0.6, stormLat: -20, ovals: 0.35, polar: 0.3, wind: 0.8, sheen: 0.1, rings: 0.3, ringStyle: 1,
+        oblate: 0.017, iceTint: 1, iceHue: 222, atmosphere: 0.45, atmoHue: 220 } },
     ],
     build: buildGiant,
   },
@@ -1838,7 +1884,7 @@ const GROUPS = [
 // Parameters every body has, whatever its group (the "classic" controls).
 const COMMON_PARAMS = [
   { key: "spin", label: "Rotation speed", min: 0, max: 2,  step: 0.01, value: 0.25, fmt: (x) => x.toFixed(2) + "×" },
-  { key: "tilt", label: "Axial tilt",     min: 0, max: 90, step: 1,    value: 23,   fmt: (x) => Math.round(x) + "°" },
+  { key: "tilt", label: "Axial tilt",     min: 0, max: 180, step: 1,   value: 23,   fmt: (x) => Math.round(x) + "°" },
   // a preview of the game's health: 1 - health / maxHealth (setDamage)
   { key: "damage", label: "Damage (game health)", min: 0, max: 1, step: 0.01, value: 0, fmt: pct },
 ];
