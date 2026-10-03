@@ -1,8 +1,16 @@
-/* The part of the top bar shared by the start screen and the in-game HUD:
-   left bracket, logo, title, the four short segments under it, the gold
-   swoosh, and the right end cap. Everything between the swoosh and the cap
-   differs per screen (startScreen.css, hud.css). Positions are design
-   pixels inside a .uiBar/.uiScreen; the cap is anchored to the right edge. */
+/* The top bar shared by the start screen and the in-game HUD: on the left
+   the bracket, logo, title, four short segments and the gold swoosh; on the
+   right the right group — the gold rail running into a rounded gold block,
+   the lilac bracket, the black box between two blue strips and the end cap
+   (the user's drawing, 2026-10-03). The box's strips sit at the same heights
+   as the rails on the left (top 8–16, bottom 66–75), as if continuing them;
+   the block's right edge is under the lilac's body. Every gold piece paints
+   over the same height as the left swoosh (top 8, 67 px) and is cut to its
+   shape with clip-path, so the material's gradient — and the colour — is
+   the same everywhere and the rail flows into the block. Only the middle
+   and what sits in the black box differ per screen. Positions are design
+   pixels inside a .uiBar/.uiScreen; the right group is anchored to the
+   right edge. */
 .tbBracket{ left:8px; top:9px; width:38px; height:66px;
   clip-path:path("M38 0 H32 C12 0 0 16 0 34 C0 52 10 66 30 66 H38 Z"); }
 .tbInsignia{ left:59px; top:12px; width:46px; height:42.5px; filter:drop-shadow(0 0 4px rgb(255 190 90 / .35)); }
@@ -17,5 +25,17 @@
 .tb4{ left:226px; top:63px; width:95px; height:11px; }
 .tbGold{ left:326px; top:8px; width:135px; height:67px;
   clip-path:path("M0 51 H46 C64 51 72 44 78 30 C85 12 93 0 112 0 H124 Q135 0 135 10 L128 67 H0 Z"); }
-.tbCap{ right:16px; top:9px; width:42px; height:65px;
-  clip-path:path("M0 0 H14 C32 0 42 14 42 32 C42 52 32 65 14 65 H0 Z"); }
+.tbCap{ right:16px; top:8px; width:42px; height:67px;
+  clip-path:path("M0 0 H14 C32 0 42 15 42 33 C42 53 32 67 14 67 H0 Z"); }
+/* the gold rail (bottom, 66–75) — left set per screen, it stretches to the block */
+.tbGoldRail{ right:435px; top:8px; height:67px; clip-path:inset(58px 0 0 0); }
+/* the rounded gold block the rail rises into; its right edge under the lilac's body */
+.tbGoldBlock{ right:344px; top:8px; width:100px; height:67px;
+  clip-path:path("M0 58 C9 58 14 53 14 45 V40 Q14 36 18 36 H92 Q100 36 100 44 V59 Q100 67 92 67 H0 Z"); }
+/* the lilac bracket: a cap along the top, a body below, cut concave where the box is */
+.tbLilac{ right:328px; top:8px; width:50px; height:30px;
+  clip-path:path("M14 0 H50 V5 C42 6 35 9 34 14 V30 H1 C1 17 5 4 14 0 Z"); }
+.tbBoxTop{ right:52px; top:8px; width:268px; height:8px; }
+.tbBoxBottom{ right:52px; top:66px; width:268px; height:9px; }
+.tbBox{ right:56px; top:16px; width:276px; height:50px; background:#000; border-radius:18px 0 0 18px; }
+.tbBox > *{ position:absolute; }

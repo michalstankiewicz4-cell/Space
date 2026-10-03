@@ -75,7 +75,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.32.1">
+<link rel="stylesheet" href="css/style.css?v=2.32.2">
 </head>
 <body>
 
@@ -138,11 +138,13 @@
     <div class="mat blue tb4"></div>
     <div class="mat gold tbGold"></div>
     <div class="mat blue" id="topRail"></div>
-    <div class="mat gold" id="bottomRail"></div>
-    <div class="mat lilac" id="lilacSwoosh"></div>
-    <div class="mat blue" id="sdTop"></div>
-    <div class="mat blue" id="sdBottom"></div>
-    <div id="sdBox"></div>
+    <!-- the right group, the same as the HUD's (css/ui/topBar.css) -->
+    <div class="mat gold tbGoldRail" id="bottomRail"></div>
+    <div class="mat gold tbGoldBlock"></div>
+    <div class="mat lilac tbLilac"></div>
+    <div class="mat blue tbBoxTop"></div>
+    <div class="mat blue tbBoxBottom"></div>
+    <div class="tbBox"></div>
     <a id="devBlogBtn" href="https://swarmprotocol.blogspot.com/" target="_blank" rel="noopener noreferrer">DEV Blog.PL</a>
     <!-- Community: GitHub Discussions now; Discord and YouTube coming (ui/soonTip.js) -->
     <div id="communityLinks">
@@ -428,8 +430,8 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
   <div class="mat gold tbGold"></div>
 
   <div class="mat blue" id="resFrame"></div>
-  <div class="mat gold" id="resGoldLine"></div>
-  <div class="mat gold" id="resGoldBlock"></div>
+  <div class="mat gold tbGoldRail" id="resGoldLine"></div>
+  <div class="mat gold tbGoldBlock"></div>
   <div id="resBox">
     <div class="res" style="left:10px"><span class="resIcon" data-icon="points"></span><span class="rl" id="labelPoints" data-i18n="topbar.points">Points</span><span class="rv" id="statPoints">0</span></div>
     <div class="resSep" style="left:146px"></div>
@@ -440,10 +442,11 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
     <div class="res" style="left:458px"><span class="resIcon" data-icon="players"></span><span class="rl" id="labelPlayers" data-i18n="topbar.players">Online</span><span class="rv" id="statPlayers">1</span></div>
   </div>
 
-  <div class="mat lilac" id="hudLilac"></div>
-  <div class="mat blue" id="hudSdTop"></div>
-  <div class="mat blue" id="hudSdBottom"></div>
-  <div id="hudSdBox">
+  <!-- the right group, the same as the start screen's (css/ui/topBar.css) -->
+  <div class="mat lilac tbLilac"></div>
+  <div class="mat blue tbBoxTop"></div>
+  <div class="mat blue tbBoxBottom"></div>
+  <div class="tbBox" id="hudSdBox">
     <div id="sdDate"><span id="sdCycleLabel" data-i18n="topbar.cycle">Cycle</span> <span id="sdCycleVal">0.0</span></div>
     <div id="sdTime">00:00</div>
     <!-- Decorative: game time can't be paused/sped up in multiplayer. -->
@@ -873,7 +876,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.32.1"></script>
+<script type="module" src="js/main.js?v=2.32.2"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

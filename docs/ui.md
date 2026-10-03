@@ -93,13 +93,26 @@ then read just that range.
   less than 1536x1024), so each element anchors to the edge it sits
   against (css/ui/hud/): left column left, right column right, bottom
   row bottom, and the viewport, fleet list and event log stretch.
-  Shared top-bar pieces (logo, title, end cap) are classes in
+  Shared top-bar pieces (logo, title, the right group) are classes in
   css/ui/topBar.css used by both the start screen and the HUD; SVG
   gradients live in one always-rendered `#uiDefs` block in index.html
   (a `url(#id)` paint server inside a `display:none` subtree stops
   rendering). Windows opened from the HUD (Research, Fleet,
   Diplomacy, Wiki, drone script, drone blocks) share `.uiWindow`
   (css/ui/windows/).
+- **The top bar's right group is shared** (v2.32.2, from the user's own
+  drawing over the HUD): the gold rail rising into a rounded gold block
+  (`.tbGoldRail`, `.tbGoldBlock`; the block's right edge under the lilac's
+  body), the lilac bracket (`.tbLilac`), the black box with its blue
+  strips at the same heights as the rails on the left (`.tbBoxTop/Bottom`,
+  `.tbBox`) and the end cap (`.tbCap`), all in css/ui/topBar.css. Every
+  gold piece paints over the left swoosh's height (top 8, 67 px) and is cut
+  with clip-path, so the `.mat` gradient — the colour — matches the swoosh
+  and the rail flows into the block without a seam. Each screen fills only
+  the box (the HUD: cycle, clock, speed buttons; the start screen:
+  community links, DEV Blog) and its middle. A try that copied the
+  original concept art exactly was dropped: "too exact — now I see the
+  original's flaws".
 - **File layout mirrors the UI**: `js/ui/hud/` has one module per HUD
   panel (topBar, nav, fleetList, unitPanel, infoPanel + planetPanel/
   blackHolePanel/stationPanel/remoteStationPanel, eventLog,

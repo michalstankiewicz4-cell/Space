@@ -4,6 +4,16 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.32.2]
+
+### Changed
+- The top bar's right group, after the user's drawing, is one shape for
+  the start screen and the game: the blue strips of the black box continue
+  the rails on the left at the same heights, the gold line flows into a
+  rounded gold block under the lilac bracket, and every gold piece has the
+  same colour as the gold swoosh by the title. Shared classes instead of
+  two near-copies.
+
 ## [2.32.1]
 
 ### Added
