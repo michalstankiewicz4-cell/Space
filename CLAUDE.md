@@ -46,7 +46,7 @@ the player's own progress stays in `localStorage`.
   screen `labs.html` stays in the root; new devlog links point to
   `labs/…`) with the menu bar
   `js/labkit/menubar.js` on every lab and tool page (a new lab or tool
-  goes into its lists; Dev Tools → LABS in the game has one button, to
+  goes into its lists and, if public, `sitemap.xml`; Dev Tools → LABS in the game has one button, to
   `labs.html`), the labs `ship.html` /
   `bodies.html` / `scale.html` (+ `js/scalelab/`) / `skins.html` /
   `systems.html` (+ `js/systemkit/`, not in the game yet) / `surface.html` /

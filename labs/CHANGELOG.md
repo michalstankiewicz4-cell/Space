@@ -9,6 +9,13 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.1.1] — 2026-10-05
+
+### Changed
+- The start screen has a description and a link preview for search
+  engines and shared links; the tools (model doctor, kit check, grain
+  texture) stay out of search results.
+
 ## [1.1.0] — 2026-10-05
 
 The system lab: shape the orbits by hand.

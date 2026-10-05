@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The pages for search engines (submitted in Google Search Console). A new lab or public page goes in here. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://michalstankiewicz4-cell.github.io/Space/</loc><lastmod>2026-10-05</lastmod><priority>1.0</priority></url>
+  <url><loc>https://michalstankiewicz4-cell.github.io/Space/labs.html</loc><lastmod>2026-10-05</lastmod><priority>0.6</priority></url>
+  <url><loc>https://michalstankiewicz4-cell.github.io/Space/privacy.html</loc><lastmod>2026-10-05</lastmod><priority>0.2</priority></url>
+  <url><loc>https://michalstankiewicz4-cell.github.io/Space/labs/ship.html</loc><lastmod>2026-10-05</lastmod><priority>0.4</priority></url>
+  <url><loc>https://michalstankiewicz4-cell.github.io/Space/labs/bodies.html</loc><lastmod>2026-10-05</lastmod><priority>0.4</priority></url>
+  <url><loc>https://michalstankiewicz4-cell.github.io/Space/labs/systems.html</loc><lastmod>2026-10-05</lastmod><priority>0.4</priority></url>
+  <url><loc>https://michalstankiewicz4-cell.github.io/Space/labs/scale.html</loc><lastmod>2026-10-05</lastmod><priority>0.4</priority></url>
+  <url><loc>https://michalstankiewicz4-cell.github.io/Space/labs/skins.html</loc><lastmod>2026-10-05</lastmod><priority>0.4</priority></url>
+  <url><loc>https://michalstankiewicz4-cell.github.io/Space/labs/surface.html</loc><lastmod>2026-10-05</lastmod><priority>0.4</priority></url>
+  <url><loc>https://michalstankiewicz4-cell.github.io/Space/labs/buildings.html</loc><lastmod>2026-10-05</lastmod><priority>0.4</priority></url>
+  <url><loc>https://michalstankiewicz4-cell.github.io/Space/labs/vehicles.html</loc><lastmod>2026-10-05</lastmod><priority>0.4</priority></url>
+  <url><loc>https://michalstankiewicz4-cell.github.io/Space/labs/marine.html</loc><lastmod>2026-10-05</lastmod><priority>0.4</priority></url>
+</urlset>

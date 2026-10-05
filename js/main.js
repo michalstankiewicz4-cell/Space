@@ -62,7 +62,9 @@ import { gfxFpsCap } from "./scene/graphics.js";
 load();
 
 document.getElementById("versionTag").textContent = "v" + VERSION;
-document.title = document.title + " — v" + VERSION;
+// short for the tab, with a phrase for search engines (they read it after the
+// scripts run); index.html's own <title> is the long one
+document.title = "Swarm Protocol: space MMO — v" + VERSION;
 
 // The start screen comes first and gets painted before anything else:
 // initScene() (WebGL context + first shader compiles) blocks the main

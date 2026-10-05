@@ -222,6 +222,19 @@ script written in the drone's own DSL, not a fully custom client.
 all — view it via the [Admin panel](#admin-panel) above, the Supabase SQL
 Editor, or the Management API.
 
+## Search engines
+
+- `index.html` and `labs.html` carry a description, keywords, Open Graph /
+  Twitter cards (`og-image.jpg`, 1200×630: a real frame from the system lab
+  with the title) and a canonical address; `index.html` also schema.org
+  VideoGame data. `sitemap.xml` lists the public pages (a new lab goes in
+  there). `admin.html`, the archived policy and `tools/` carry `noindex`.
+- `robots.txt` can't help: for a GitHub Pages project site crawlers read
+  it from the host's root, not `/Space/`.
+- Google Search Console: the property is the URL prefix
+  `https://michalstankiewicz4-cell.github.io/Space/`, verified by an HTML
+  tag in `index.html`'s head; the sitemap is submitted there.
+
 ## Devlog
 
 There's a companion devlog at

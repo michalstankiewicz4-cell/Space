@@ -4,6 +4,19 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.36.4]
+
+### Added
+- Ready for search engines and shared links: a description, keywords
+  (space MMO, browser MMO, programming game…), Open Graph and Twitter
+  cards with a picture (`og-image.jpg`, a real frame from the system lab
+  with the title), structured data (schema.org VideoGame), a canonical
+  address and `sitemap.xml`. The admin page, the archived policy and the
+  dev tools are kept out of search results (`noindex`).
+
+### Changed
+- The tab title: "Swarm Protocol: space MMO — v…".
+
 ## [2.36.3]
 
 ### Changed

@@ -567,6 +567,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
+    { v: "2.36.4", items: ["Grę łatwiej znaleźć w wyszukiwarkach, a jej link pokazuje obrazek, kiedy go udostępniasz."] },
     { v: "2.36.3", items: ["Laboratoria mają własny dom: ekran startowy ze wszystkimi naraz (Dev Tools → LABS → Otwórz laboratoria)."] },
     { v: "2.36.2", items: ["Poprawki i stabilność: po resecie serwera gra sama połączy cię ponownie, bez odświeżania strony."] },
     { v: "2.36.1", items: ["Zaktualizowana polityka prywatności: czytelniejsza i napisana tak, żeby nowe funkcje gry nie wymagały jej zmian. To, co gra przechowuje, się nie zmieniło."] },

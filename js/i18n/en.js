@@ -566,6 +566,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.36.4", items: ["The game is easier to find in search engines, and its link shows a picture when you share it."] },
     { v: "2.36.3", items: ["The labs have a home of their own: a start screen with all of them (Dev Tools → LABS → Open the labs)."] },
     { v: "2.36.2", items: ["Fixes and stability: after a server reset the game reconnects you by itself, with no need to reload."] },
     { v: "2.36.1", items: ["Updated privacy policy: clearer, and written so new game features don't need it rewritten. Nothing the game stores has changed."] },
