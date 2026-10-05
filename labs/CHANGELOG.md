@@ -9,6 +9,16 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.7.0] — 2026-10-05
+
+### Added
+- **EXPORT MIDI** in the sound lab (under RECORD): the chosen song as a
+  `.mid` file — the same form, chords and composed melody as heard (the
+  same seed gives the same file), a track per part (melody, pads, bass,
+  arp, bells, drums on channel 10) with General MIDI instruments close to
+  the sounds. Open it in any music program and give it real instruments.
+  `MusicKit.songMidi(params)`, `player.midi()`.
+
 ## [1.6.0] — 2026-10-05
 
 ### Added

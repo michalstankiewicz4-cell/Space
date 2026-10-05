@@ -121,6 +121,16 @@ function startRec(limit) {
 function stopRec() { clearInterval(recTimer); if (rec && rec.state !== "inactive") rec.stop(); }
 $("btnRec").addEventListener("click", () => { if (rec) stopRec(); else startRec(0); });
 $("btnRec60").addEventListener("click", () => { if (!rec) { startRec(60); $("btnRec60").classList.add("on"); } });
+// MIDI: the chosen song's notes (MusicKit.songMidi) — the same melody for the same seed
+$("btnMidi").addEventListener("click", () => {
+  const bytes = P.song ? player.midi() : null;
+  if (!bytes) { $("recState").textContent = "MIDI is for songs: pick one in MUSIC first."; return; }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([bytes], { type: "audio/midi" }));
+  a.download = "swarm-" + P.song + "-seed" + P.seed + ".mid"; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  $("recState").textContent = "Saved: " + a.download + " — a track per part (melody, pads, bass, drums…).";
+});
 
 // ---------- the picture: stars, a ring of the spectrum, the wave inside ----------
 const cv = $("viz"), g = cv.getContext("2d");

@@ -83,6 +83,17 @@ sound plus:
   `leadVoice`: synth (saw + square, glide, late vibrato), soft (sine +
   breath, flute-like), piano.
 - `player.song` → `{ id, name, section, bar, bars, part, parts }`.
+- **MIDI** (labs 1.7.0): `MusicKit.songMidi(params)` / `player.midi()` →
+  a Standard MIDI File (format 1, 480 ticks a beat) of the song with
+  these params — the lab's EXPORT MIDI. It walks the same form, chords
+  and melody (`composeMelody` with the same seed rule, `songRng`) without
+  audio; a track per part with a General MIDI program (`GM`: lead saw /
+  flute / piano, pads polysynth / synth brass / church organ / bowed,
+  synth bass, harp / square lead for the arp, tubular bells or piano),
+  drums on channel 10 (kick 36, snare 38, closed hat 42, crash 49).
+  Layers at 0 are left out; chance (bells, the arp's gaps, pickup kicks)
+  is rolled again, so those may differ from what was heard; the tempo,
+  key and instruments are the lab's current ones.
 
 | Song | Style | Key, tempo | Sound |
 |---|---|---|---|

@@ -39,6 +39,7 @@ textarea.lab{ height:96px; width:100%; padding:6px; resize:vertical; line-height
 .irow{ display:grid; grid-template-columns:76px 1fr; gap:8px; align-items:center; margin-top:4px; font-size:13.5px; color:#c7d0ff; }
 .twoBtns{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
 .twoBtns .tBtn{ height:28px; font-size:12.5px; }
+#btnMidi{ width:100%; height:28px; font-size:12.5px; margin-top:6px; }
 #recState{ font-size:12.5px; color:#7f92e8; margin-top:6px; min-height:16px; }
 #tapHint{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:1; pointer-events:none; text-align:center;
   font-family:var(--fontLabel); letter-spacing:3px; color:#8fa4ff; font-size:15px; opacity:.85; transition:opacity .6s; }
@@ -115,6 +116,7 @@ textarea.lab{ height:96px; width:100%; padding:6px; resize:vertical; line-height
       <button class="tBtn" id="btnRec">● RECORD</button>
       <button class="tBtn" id="btnRec60">● 60 SECONDS</button>
     </div>
+    <button class="tBtn" id="btnMidi" title="The chosen song's notes as a .mid file: open it in any music program and give it real instruments">♫ EXPORT MIDI (SONGS)</button>
     <div id="recState">A .webm file of the music (the robot's voice isn't in it).</div>
   </div>
 </div>
