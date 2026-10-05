@@ -40,7 +40,7 @@ const PARAMS = () => [
 // head. Two low-poly humans, the same body:
 // Human I — the head and the neck after a low-poly bust (data/bust-head.js)
 LK.register({
-  id: "humanBust", name: "Human I", group: "Animals", media: ["land"], moves: ["walk"],
+  id: "humanBust", name: "Human I", group: "Humanoids", media: ["land"], moves: ["walk"],
   blurb: "A low-poly head and neck after a bust — our eyes, mouth and expressions in it. " + ((LK.data && LK.data.bustHead && LK.data.bustHead.credit) || ""),
   params: PARAMS().map((q) => (q.key === "style" ? Object.assign(q, { value: 1 }) : q))
     .concat([{ key: "headMode", name: "Head", choices: ["The bust's own (1:1)", "Fitted to our grid"], value: 0 }]),
@@ -48,7 +48,7 @@ LK.register({
 });
 // Human II — a made low-poly head (data/human-head.js)
 LK.register({
-  id: "humanHead", name: "Human II", group: "Animals", media: ["land"], moves: ["walk"],
+  id: "humanHead", name: "Human II", group: "Humanoids", media: ["land"], moves: ["walk"],
   blurb: "A low-poly head, as it was made — our eyes, mouth and expressions in it. " + ((LK.data && LK.data.humanHead && LK.data.humanHead.credit) || ""),
   params: PARAMS().map((q) => (q.key === "style" ? Object.assign(q, { value: 1 }) : q)),
   build: (P, o) => build(P, o, "made"),

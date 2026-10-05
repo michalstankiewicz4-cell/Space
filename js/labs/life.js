@@ -78,6 +78,7 @@ function load() {
   applyView();
   showStats();
   buildFace();
+  buildMoves();
 }
 // ---------- the face: expressions (morph targets), presets, LIVELY / TALK ----------
 const FACE_PRESETS = {
@@ -123,7 +124,7 @@ $("btnClose").addEventListener("click", () => {
 function showStats() {
   const st = ShipKit.modelStats(cre.group);
   let bones = 0; cre.group.traverse((o) => { if (o.isBone) bones++; });
-  const rows = [["Height", cre.params.height ? cre.params.height.toFixed(2) + " m" : "–"], ["Triangles", st.triangles.toLocaleString("en-US")], ["Meshes", st.meshes], ["Bones", bones], ["Materials", st.materials.size]];
+  const rows = [[cre.params.size ? "Shoulder height" : "Height", (cre.params.height || cre.params.size) ? (cre.params.height || cre.params.size).toFixed(2) + " m" : "–"], ["Triangles", st.triangles.toLocaleString("en-US")], ["Meshes", st.meshes], ["Bones", bones], ["Materials", st.materials.size]];
   $("stats").textContent = "";
   rows.forEach(([k, v]) => { const r = document.createElement("div"); r.className = "row"; const a = document.createElement("span"); a.textContent = k; const b = document.createElement("b"); b.textContent = v; r.append(a, b); $("stats").appendChild(r); });
 }
@@ -138,10 +139,14 @@ function applyView() {
 }
 
 // ---------- the panels ----------
-LK.CREATURES.forEach((d) => {
-  const b = document.createElement("button"); b.className = "tBtn"; b.textContent = d.name.toUpperCase(); b.dataset.id = d.id;
-  b.addEventListener("click", () => { state.id = d.id; state.params = {}; buildParams(); load(); });
-  $("creTabs").appendChild(b);
+// the creatures by group (each group has its own sliders and gaits)
+[...new Set(LK.CREATURES.map((d) => d.group))].forEach((grp) => {
+  const h = document.createElement("div"); h.className = "creGroup"; h.textContent = grp; $("creTabs").appendChild(h);
+  LK.CREATURES.filter((d) => d.group === grp).forEach((d) => {
+    const b = document.createElement("button"); b.className = "tBtn"; b.textContent = d.name.toUpperCase(); b.dataset.id = d.id;
+    b.addEventListener("click", () => { state.id = d.id; state.params = {}; state.layers = {}; buildParams(); load(); });
+    $("creTabs").appendChild(b);
+  });
 });
 let rebuildTimer = 0;
 const rebuildSoon = () => { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(load, 60); };
@@ -190,12 +195,25 @@ $("tsSlider").addEventListener("input", () => { state.timeScale = +$("tsSlider")
 LabKit.paintSlider($("tsSlider"));
 // the layers (move/walk.js LAYERS): added on top of the gait, each with a weight
 const LAYER_NAMES = { sneak: "Sneak", sad: "Sad", angry: "Angry", nod: "Nod", shake: "Shake the head", wave: "Wave", look: "Look around" };
-(LK.MOVES.walk.LAYERS || []).forEach((k) => {
-  const l = document.createElement("label"); l.className = "sl"; l.innerHTML = "<span></span><b>0%</b>"; l.firstChild.textContent = LAYER_NAMES[k] || k;
-  const sl = document.createElement("input"); sl.type = "range"; sl.min = 0; sl.max = 1; sl.step = 0.01; sl.value = 0;
-  sl.addEventListener("input", () => { state.layers[k] = +sl.value; l.lastChild.textContent = Math.round(sl.value * 100) + "%"; LabKit.paintSlider(sl); });
-  LabKit.paintSlider(sl); $("layerSliders").append(l, sl);
-});
+Object.assign(LAYER_NAMES, { graze: "Graze", alert: "Alert" });
+// the layers and the gaits of the creature's own movement (its move file)
+function buildMoves() {
+  const def = LK.CREATURES.find((d) => d.id === state.id), mv = LK.MOVES[(def.moves || [])[0]] || {};
+  $("layerSliders").textContent = "";
+  (mv.LAYERS || []).forEach((k) => {
+    const l = document.createElement("label"); l.className = "sl"; l.innerHTML = "<span></span><b></b>"; l.firstChild.textContent = LAYER_NAMES[k] || k;
+    const sl = document.createElement("input"); sl.type = "range"; sl.min = 0; sl.max = 1; sl.step = 0.01; sl.value = state.layers[k] || 0;
+    const show = () => { l.lastChild.textContent = Math.round(sl.value * 100) + "%"; LabKit.paintSlider(sl); };
+    sl.addEventListener("input", () => { state.layers[k] = +sl.value; show(); });
+    show(); $("layerSliders").append(l, sl);
+  });
+  // gaits it doesn't have are hidden (a quadruped: no T-pose); RUN is a trot for four legs
+  [...$("gaits").children].forEach((b) => {
+    b.style.display = !mv.GAITS || mv.GAITS[b.dataset.g] ? "" : "none";
+    if (b.dataset.g === "run") b.textContent = def.moves[0] === "quad" ? "TROT" : "RUN";
+  });
+  if (mv.GAITS && !mv.GAITS[state.gait]) $("gaits").querySelector('[data-g="idle"]').click();
+}
 const setPath = (p) => { state.path = p; $("pInPlace").classList.toggle("on", p === "inplace"); $("pCircle").classList.toggle("on", p === "circle"); if (p === "inplace") { stage.position.set(0, 0, 0); stage.rotation.y = 0; } applyView(); };
 $("pInPlace").addEventListener("click", () => setPath("inplace"));
 $("pCircle").addEventListener("click", () => setPath("circle"));

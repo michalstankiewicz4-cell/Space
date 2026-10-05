@@ -575,6 +575,18 @@
    0.318
   ]
  },
+ "life/strider": {
+  "tris": 14456,
+  "verts": 8321,
+  "meshes": 33,
+  "materials": 6,
+  "textures": 6,
+  "size": [
+   0.471,
+   2.17,
+   2.946
+  ]
+ },
  "system/game": {
   "bodies": 9,
   "roles": "cpppppppp"

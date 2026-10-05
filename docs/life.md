@@ -12,6 +12,8 @@ the game yet. The plan and its reasons: IDEAS.md, "Life forms".
 |---|---|
 | `js/lifekit/lifekit.js` | The core (`window.LifeKit`): the registry (`CREATURES`, `register`, `MOVES`, `registerMove`), `build(id, params, opts)`, and `util` — `skeleton`, `sweep`, `merge`, `materials`, `skinned`, `rigid`, `rng`. |
 | `js/lifekit/move/walk.js` | Moving on land: a biped's gaits (stand, walk, run, T-pose). Swimming, flying and space come as `move/<medium>.js`. |
+| `js/lifekit/move/quad.js` | Four legs on land: walk and trot, feet planted by IK; graze, alert, look. |
+| `js/lifekit/creatures/strider.js` | The plains strider, an invented grazer — the first land animal. |
 | `js/lifekit/parts/face.js` | A humanoid head with a face that moves (`LifeKit.face`): openings for the eyes and the mouth, teeth, a tongue, 14 expressions as morph targets. Used by the human; meant for androids and other humanoids too. |
 | `js/lifekit/creatures/human.js` | The humans: "Human I" (a bust's head and neck) and "Human II" (a made low-poly head); our own round sculpt isn't listed. One file per creature. |
 | `js/lifekit/data/bust-head.js` | Human I's head and neck: "Lowpoly face model" by void (sketchfab.com/void22), CC BY 4.0, changed — 187 points, 360 triangles. |
@@ -230,6 +232,43 @@ our lids and lips can move in its skin, each keeping its parent's normal.
 Its eyes and mouth are ours, cut into its surface (it has none open);
 the smile's and the jaw's pull is wider on it (`SOFT`), fading in under
 the mouth line so its few long lip triangles don't crease.
+
+## Four legs: the plains strider (labs 1.16.0)
+
+The user's brief (2026-10-06): a land animal, any technique, real or
+stylised but **not fairy-tale, cartoonish or comic**; its own sliders, so
+its own group. It's an invented grazer, built to be believable.
+
+- **Groups**: a creature's `group` is a heading in the lab (HUMANOIDS,
+  LAND ANIMALS); the lab builds each creature's gait buttons and layer
+  sliders from its move file (`GAITS`, `LAYERS`) — no T-pose on four
+  legs, RUN is a trot.
+- **The body** (`creatures/strider.js`): 25 bones (root, spine, chest,
+  two neck bones, head, three tail bones, four legs of four bones: hip,
+  knee, hock / carpus, fetlock). One sweep runs from the rump through the
+  chest and the neck to the muzzle; one per leg (its top tucked into the
+  body, shaped like a shoulder blade or a haunch, closed); one for the
+  tail. Rigid: hooves, horns (a swept, curling sweep), ridge plates or
+  spines, ears (cupped, an inner face), eyes with a lid ring, nostrils.
+- **The hide** (`hideCanvases`): painted per individual on a canvas whose
+  u runs around the body (the belly at 0 and 1, the back at ½) and v
+  along it — countershading, the pattern (stripes fading toward the
+  belly, rosette-like spots, rings that show on the legs), mottling, a
+  dark spine line; a bump of short hair along the body and soft folds.
+  Horns: a dark tip and growth rings in the bump. `materials().own(key,
+  skinned, make)` lets a creature make its own materials (disposed with
+  it).
+- **Four legs** (`move/quad.js`): a phase per foot (walk: LH 0, LF ¼,
+  RH ½, RF ¾; trot: diagonal pairs), a duty factor (0.68 / 0.45); the
+  offsets, the duty, the lift and the bob glide between the gaits; the
+  speed eases at 4 m/s². In stance a foot moves back exactly at the body's
+  speed (the stride is speed × duty × period); in the air it arcs forward.
+  Each leg: the hoof's and the cannon's angles come from the phase (a fold
+  in the swing), then the hip and knee are solved (2-bone IK, the law of
+  cosines) from the hip — its position read from the skeleton each frame —
+  to the hock, the knee bending forward on the hind legs, back on the
+  front ones; the bones' local angles subtract their parents' pitch.
+  Layers: graze (neck and head down), alert (up, ears forward), look.
 
 ## Limits (honest)
 

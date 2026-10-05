@@ -388,6 +388,9 @@ function materials(opts) {
       return get("flat" + hex + rough + (o.side || "") + (o.morph ? "/m" : ""), false, () => new THREE.MeshStandardMaterial({ color: color(hex), roughness: rough, metalness: 0, envMapIntensity: 0.5,
         side: o.side || THREE.FrontSide, morphTargets: !!o.morph }));
     },
+    // a creature's own material: make(T) builds it, T(texture) registers a
+    // texture for disposal; cached by key (skinned and rigid copies apart)
+    own(key, skinned, make) { return get("own:" + key, skinned, () => make(T)); },
     dispose() { made.forEach((m) => m.dispose()); textures.forEach((t) => t.dispose()); },
   };
 }
@@ -457,6 +460,6 @@ function build(id, params, opts) {
 
 return {
   CREATURES, MOVES, register, registerMove, build,
-  util: { rng, V3, smooth, lerp, skeleton, sweep, merge, materials, skinned, rigid, plain, weld, decimate },
+  util: { rng, V3, smooth, lerp, skeleton, sweep, merge, materials, skinned, rigid, plain, weld, decimate, canvas, tex },
 };
 })();

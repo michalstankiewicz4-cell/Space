@@ -9,6 +9,22 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.16.0] — 2026-10-06
+
+### Added
+- **The life lab: the first land animal — the plains strider**, an
+  invented grazer (long legs on hooves, a long neck, horns swept back, a
+  ridge of horn plates), in a group of its own (LAND ANIMALS; the humans
+  are HUMANOIDS) with its own sliders: shoulder height, legs, neck, build,
+  horns, back ridge, pattern (plain, stripes, spots, banded legs), colour,
+  individual. One skin over 25 bones; the hide painted per individual
+  (countershading, pattern, mottling, a hair bump), ridged horns.
+- **Four legs** (`move/quad.js`): a walk (lateral sequence) and a trot
+  (diagonal pairs) gliding into each other; each foot planted while on
+  the ground (it never slides) and lifted in an arc; the legs reach their
+  feet by inverse kinematics; a nod with every step; layers: graze,
+  alert, look around. The lab shows each creature's own gaits and layers.
+
 ## [1.15.0] — 2026-10-06
 
 ### Changed
