@@ -24,6 +24,7 @@
                gliding between notes, a late vibrato, rests between
      beat      drums: a kick, a snare in a big room, hi-hats
      metal     a derelict's sounds: inharmonic metal clangs, a hull's groan
+     bass      a bass line (songs only): 8ths, 16ths or half notes on the chord
    Everything goes through one reverb (an impulse generated from SPACE)
    and an echo; the seed decides the progression, the notes, the phrases —
    the same seed and parameters play the same piece. A fixed progression
@@ -32,6 +33,12 @@
    The moods are inspired by kinds of film and game music (80s sci-fi
    synths, a church organ's ostinato, ambient piano, synthwave, space
    horror) — the character, never anyone's melody.
+
+   SONGS are the other way to play: real pieces with a form (intro, verse,
+   chorus, bridge, outro), a chord every bar or two, a melody composed from
+   the seed when the song starts — motifs that come back, phrases that end
+   on the chord — a bass line, drums with fills into the next section, a
+   crash on the chorus. One song ends, the next begins.
 
    API
      MusicKit.create({ params }) → player
@@ -46,8 +53,11 @@
        player.analyser            an AnalyserNode (or null before start)
        player.stream              a MediaStream of the music (recording)
        player.say(text)           the robot voice, now
+       player.setParams({ song: id })  a song (from its start); song: null = the moods
+       player.song                { id, name, section, bar, bars, part } or null
        player.dispose()
      MusicKit.PRESETS             { id: { name, params } }
+     MusicKit.SONGS               { id: { name, style, params, chordBars, prog, form, arrange } }
      MusicKit.VOICES              { param: { value: label } } — the instruments
      MusicKit.LAYERS, SCALES, NOTES
    ======================================================================= */
@@ -62,8 +72,10 @@ const SCALES = {
   phrygian: { name: "Phrygian (dark)", steps: [0, 1, 3, 5, 7, 8, 10] },
   suspended: { name: "Suspended (pentatonic)", steps: [0, 2, 5, 7, 10] },
   hirajoshi: { name: "Hirajoshi (strange)", steps: [0, 2, 3, 7, 8] },
+  ionian: { name: "Major (ionian)", steps: [0, 2, 4, 5, 7, 9, 11] },
+  mixolydian: { name: "Mixolydian", steps: [0, 2, 4, 5, 7, 9, 10] },
 };
-const LAYERS = ["drone", "pads", "bells", "pulse", "arp", "texture", "whispers", "voice", "lead", "beat", "metal"];
+const LAYERS = ["drone", "pads", "bells", "pulse", "arp", "texture", "whispers", "voice", "lead", "beat", "metal", "bass"];
 // the instruments: what a layer sounds like
 const VOICES = {
   padVoice: { saw: "Soft saws", brass: "Brass (80s)", organ: "Organ", glass: "Glass" },
@@ -71,18 +83,19 @@ const VOICES = {
   arpMode: { chord: "Plucks", ostinato: "Ostinato", bass16: "Bass, 16ths" },
   textureKind: { radio: "Radio static", rain: "Rain" },
   droneVoice: { warm: "Warm", dissonant: "Dissonant" },
+  leadVoice: { synth: "Synth", soft: "Soft (flute)", piano: "Piano" },
 };
-const INSTRUMENTS = { padVoice: "saw", bellVoice: "fm", arpMode: "chord", textureKind: "radio", droneVoice: "warm", progression: null };
+const INSTRUMENTS = { padVoice: "saw", bellVoice: "fm", arpMode: "chord", textureKind: "radio", droneVoice: "warm", leadVoice: "synth", progression: null, song: null };
 const DEFAULTS = Object.assign({
   volume: 0.7, tempo: 60, density: 0.5, brightness: 0.45, space: 0.7, root: 2, scale: "aeolian", seed: 1,
-  levels: { drone: 0.6, pads: 0.7, bells: 0.5, pulse: 0.25, arp: 0.25, texture: 0.3, whispers: 0.35, voice: 0.6, lead: 0, beat: 0, metal: 0 },
+  levels: { drone: 0.6, pads: 0.7, bells: 0.5, pulse: 0.25, arp: 0.25, texture: 0.3, whispers: 0.35, voice: 0.6, lead: 0, beat: 0, metal: 0, bass: 0 },
   voiceLines: ["Procedure ready.", "Life detected.", "Orbit stable.", "Swarm online.", "Signal lost.", "Memory: eleven percent."],
   voiceEvery: 45,
 }, INSTRUMENTS);
 // a mood sets everything but the volume, the seed and the robot's lines
 function mood(name, p) {
   const params = Object.assign({}, INSTRUMENTS, p);
-  params.levels = Object.assign({ lead: 0, beat: 0, metal: 0 }, p.levels);
+  params.levels = Object.assign({ lead: 0, beat: 0, metal: 0, bass: 0 }, p.levels);
   return { name, params };
 }
 const PRESETS = {
@@ -115,6 +128,63 @@ const PRESETS = {
     droneVoice: "dissonant",
     levels: { drone: 0.8, pads: 0, bells: 0.1, pulse: 0.15, arp: 0, texture: 0.6, whispers: 0.55, voice: 0.35, metal: 0.6 } }),
 };
+// ---------- SONGS ----------
+// What plays in each kind of section (a song's `arrange` overrides it):
+//   pads, arp, bells: on / off;  bass: "root8" | "pulse16" | "half" | "";
+//   drums: "full" | "full16" | "half" | "light" | "";  lead: "verse" | "chorus" | "";
+//   crash: a cymbal on the section's first beat
+const ARRANGE = {
+  intro: { pads: 1, arp: 1, bells: 1, bass: "half", drums: "", lead: "" },
+  verse: { pads: 1, arp: 0, bells: 0, bass: "root8", drums: "light", lead: "verse" },
+  chorus: { pads: 1, arp: 1, bells: 0, bass: "root8", drums: "full", lead: "chorus", crash: 1 },
+  bridge: { pads: 1, arp: 1, bells: 1, bass: "half", drums: "half", lead: "" },
+  outro: { pads: 1, arp: 1, bells: 1, bass: "half", drums: "", lead: "" },
+};
+const FORM = [["intro", 4], ["verse", 8], ["chorus", 8], ["verse", 8], ["chorus", 8], ["bridge", 8], ["chorus", 8], ["outro", 4]];
+// a song: a mood's sound + the progressions per section (scale degrees, a
+// chord every chordBars bars; intro and outro play the verse's) + the form
+function song(name, style, p, def) {
+  return Object.assign({ name, style, params: mood(name, p).params, chordBars: 1, form: FORM, arrange: {} }, def);
+}
+const SONGS = {
+  firstlight: song("First light", "Synth-pop", { tempo: 112, density: 0.6, brightness: 0.6, space: 0.55, root: 7, scale: "ionian",
+    padVoice: "brass", leadVoice: "synth",
+    levels: { drone: 0, pads: 0.65, bells: 0.3, pulse: 0, arp: 0.45, texture: 0.05, whispers: 0, voice: 0, lead: 0.6, beat: 0.6, bass: 0.6 } },
+  { prog: { verse: [0, 4, 5, 3], chorus: [3, 4, 0, 5], bridge: [5, 3, 0, 4] } }),
+  neonheart: song("Neon heart", "80s ballad", { tempo: 76, density: 0.45, brightness: 0.5, space: 0.9, root: 5, scale: "aeolian",
+    padVoice: "brass", leadVoice: "piano", textureKind: "rain",
+    levels: { drone: 0.2, pads: 0.65, bells: 0.2, pulse: 0, arp: 0, texture: 0.3, whispers: 0, voice: 0, lead: 0.8, beat: 0.5, bass: 0.5 } },
+  { chordBars: 2, prog: { verse: [0, 5, 3, 4], chorus: [3, 4, 0, 5], bridge: [5, 6, 3, 4] },
+    arrange: { verse: { drums: "half", bass: "half" }, chorus: { drums: "half" } } }),
+  highway: song("Midnight highway", "Synthwave", { tempo: 104, density: 0.6, brightness: 0.65, space: 0.6, root: 4, scale: "aeolian",
+    padVoice: "brass", leadVoice: "synth",
+    levels: { drone: 0, pads: 0.45, bells: 0.15, pulse: 0, arp: 0.35, texture: 0.05, whispers: 0, voice: 0, lead: 0.6, beat: 0.7, bass: 0.65 } },
+  { chordBars: 2, prog: { verse: [0, 5, 3, 6], chorus: [5, 2, 6, 0], bridge: [3, 4, 5, 6] },
+    arrange: { intro: { bass: "pulse16" }, verse: { bass: "pulse16", drums: "full" }, chorus: { bass: "pulse16", drums: "full16" }, bridge: { bass: "pulse16" } } }),
+  lullaby: song("Orbit lullaby", "Piano", { tempo: 80, density: 0.4, brightness: 0.45, space: 0.85, root: 2, scale: "ionian",
+    padVoice: "glass", bellVoice: "piano", leadVoice: "piano",
+    levels: { drone: 0.15, pads: 0.5, bells: 0.35, pulse: 0, arp: 0, texture: 0.05, whispers: 0, voice: 0, lead: 0.95, beat: 0, bass: 0.4 } },
+  { prog: { verse: [0, 5, 3, 4], chorus: [3, 0, 4, 5], bridge: [5, 3, 1, 4] },
+    arrange: { verse: { bass: "half", drums: "" }, chorus: { bass: "half", drums: "", crash: 0 }, bridge: { drums: "" } } }),
+  cathedral: song("Cathedral", "Organ", { tempo: 84, density: 0.6, brightness: 0.5, space: 0.9, root: 9, scale: "aeolian",
+    padVoice: "organ", leadVoice: "soft", arpMode: "ostinato",
+    levels: { drone: 0.2, pads: 0.7, bells: 0.1, pulse: 0, arp: 0.5, texture: 0.05, whispers: 0, voice: 0, lead: 0.6, beat: 0.35, bass: 0.45 } },
+  { prog: { verse: [0, 5, 2, 6], chorus: [3, 0, 4, 0], bridge: [5, 6, 0, 4] },
+    arrange: { verse: { arp: 1, drums: "", bass: "half" }, chorus: { drums: "half", bass: "half" } } }),
+  escape: song("Escape velocity", "Drive", { tempo: 120, density: 0.65, brightness: 0.7, space: 0.5, root: 2, scale: "aeolian",
+    padVoice: "saw", leadVoice: "synth",
+    levels: { drone: 0, pads: 0.6, bells: 0.15, pulse: 0, arp: 0.5, texture: 0.05, whispers: 0, voice: 0, lead: 0.6, beat: 0.75, bass: 0.65 } },
+  { prog: { verse: [0, 6, 5, 6], chorus: [5, 6, 0, 4], bridge: [3, 3, 5, 6] },
+    arrange: { verse: { drums: "full" }, chorus: { drums: "full16" } } }),
+};
+// a melody's rhythms, one bar each: [start, length] in beats
+const RHYTHMS = {
+  verse: [[[0, 1], [1, 0.5], [1.5, 0.5], [2, 1], [3, 0.5], [3.5, 0.5]], [[0, 0.5], [0.5, 0.5], [1, 1], [2.5, 0.5], [3, 1]],
+    [[0.5, 0.5], [1, 0.5], [1.5, 1], [2.5, 0.5], [3, 1]], [[0, 0.75], [0.75, 0.75], [1.5, 0.5], [2, 1], [3, 1]], [[0, 1], [1, 1], [2, 0.5], [2.5, 1.5]]],
+  chorus: [[[0, 1.5], [1.5, 0.5], [2, 2]], [[0, 1], [1, 1], [2, 2]], [[0, 2], [2, 1], [3, 1]], [[0, 0.75], [0.75, 0.75], [1.5, 2.5]], [[0, 1], [1, 0.5], [1.5, 2.5]]],
+  end: [[[0, 1], [1, 3]], [[0, 4]], [[0, 0.5], [0.5, 0.5], [1, 3]], [[0, 2], [2, 2]]],
+};
+
 // the vowels' formants (F1, F2, F3 in Hz), a lightish voice
 const VOWELS = [[850, 1220, 2810], [610, 2330, 2990], [350, 2700, 3300], [590, 920, 2710], [400, 1000, 2600], [700, 1500, 2600]];
 // how much of a layer goes to the reverb (the rest: 1) — a kick in a cathedral is mush
@@ -137,7 +207,7 @@ function create(opts = {}) {
   const live = { pads: [], drone: null, texture: null };
   let timer = null, playing = false, chordName = "";
   const clock = { nextChord: 0, chord: [], chordIdx: 0, progStep: 0, nextBeat: 0, beat: 0, arpOn: false, motif: MOTIFS[0],
-    nextWhisper: 0, nextVoice: 0, nextCrackle: 0, nextLead: 0, leadLast: null };
+    nextWhisper: 0, nextVoice: 0, nextCrackle: 0, nextLead: 0, leadLast: null, s: null };
 
   function merge(dst, src) {
     for (const k in src) {
@@ -321,7 +391,7 @@ function create(opts = {}) {
     car.stop(t + 3.6); mod.stop(t + 3.6);
   }
   // a piano-like note: decaying partials (the high ones die first) and a soft hammer
-  function piano(t, m, vel) {
+  function piano(t, m, vel, bus) {
     const f = hz(m), len = 2.5 + Math.max(0, (72 - m) / 12) * 1.5;
     const lp = filter("lowpass", 1800 + params.brightness * 4000), g = gain(0), pan = panner(Math.max(-0.7, Math.min(0.7, (m - 66) / 24)));
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.11 * vel, t + 0.006); g.gain.setTargetAtTime(0, t + 0.006, len / 3.5);
@@ -333,7 +403,7 @@ function create(opts = {}) {
     const ham = noise(t, 0.03), hf = filter("bandpass", f * 4, 1), hg = gain(0.05 * vel);
     hg.gain.setValueAtTime(0.05 * vel, t); hg.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
     ham.connect(hf); hf.connect(hg); hg.connect(lp);
-    lp.connect(g); g.connect(pan); pan.connect(N.bus.bells);
+    lp.connect(g); g.connect(pan); pan.connect(bus || N.bus.bells);
     const d = gain(0.35); pan.connect(d); d.connect(N.delIn);
   }
   function thump(t, amp) {
@@ -351,12 +421,12 @@ function create(opts = {}) {
     o.stop(t + decay + 0.05);
   }
   // a synth bass note: a saw and a square an octave down, a snappy filter
-  function bassNote(t, m, len) {
+  function bassNote(t, m, len, bus) {
     const f = hz(m), lp = filter("lowpass", 200, 5), g = gain(0);
     lp.frequency.setValueAtTime(300 + params.brightness * 1700, t); lp.frequency.exponentialRampToValueAtTime(140, t + Math.max(0.06, len));
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.13, t + 0.004); g.gain.setTargetAtTime(0, t + len * 0.7, 0.03);
     const a = osc("sawtooth", f, t), b = osc("square", f / 2, t), bg = gain(0.5);
-    a.connect(lp); b.connect(bg); bg.connect(lp); lp.connect(g); g.connect(N.bus.arp);
+    a.connect(lp); b.connect(bg); bg.connect(lp); lp.connect(g); g.connect(bus || N.bus.arp);
     a.stop(t + len + 0.2); b.stop(t + len + 0.2);
   }
   // the arp layer, one beat of it
@@ -409,19 +479,149 @@ function create(opts = {}) {
     clock.leadLast = prev;
     return at;
   }
+  // a soft lead: sine and a little triangle, breathy, a slow vibrato (a flute, roughly)
+  function softNote(t, m, len) {
+    const f = hz(m), g = gain(0), pan = panner((rand() - 0.5) * 0.3);
+    const a = osc("sine", f, t), b = osc("triangle", f * 2, t), bg = gain(0.12);
+    const vib = osc("sine", 4.6, t), vg = gain(0);
+    vg.gain.setValueAtTime(0, t + 0.3); vg.gain.linearRampToValueAtTime(10, t + Math.max(0.4, len));
+    vib.connect(vg); vg.connect(a.detune); vg.connect(b.detune);
+    const br = noise(t, len + 0.3), bf = filter("bandpass", f * 2, 2), brg = gain(0.04);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.09, t + 0.08); g.gain.setValueAtTime(0.09, t + len); g.gain.setTargetAtTime(0, t + len, 0.1);
+    a.connect(g); b.connect(bg); bg.connect(g); br.connect(bf); bf.connect(brg); brg.connect(g);
+    g.connect(pan); pan.connect(N.bus.lead); pan.connect(N.delIn);
+    [a, b, vib].forEach((o) => o.stop(t + len + 0.6));
+  }
+  // a song's melody note, in the song's lead voice
+  function leadPlay(t, m, len) {
+    if (params.leadVoice === "piano") piano(t, m, 0.85, N.bus.lead);
+    else if (params.leadVoice === "soft") softNote(t, m, len);
+    else leadNote(t, m, len, clock.leadLast);
+    clock.leadLast = m;
+  }
+
+  // ---------- composing a song's melody ----------
+  // One cycle of a section's progression, bar by bar: [{ s, l, d }] (start
+  // and length in beats, a scale degree above the lead's base). Bars follow a
+  // plan — A B A E (or A B A C A B A E over 8 bars): an A bar's rhythm and
+  // shape come back on the next A, moved to fit its chord; strong beats sit
+  // on chord tones; the E bar ends on the last chord's root.
+  function compose(kind, prog, chordBars, r) {
+    const n = steps().length, C = prog.length * chordBars, center = kind === "chorus" ? Math.round(n * 0.7) : Math.round(n * 0.3);
+    const pick = (a) => a[Math.floor(r() * a.length)];
+    const chordAt = (bar) => prog[Math.floor(bar / chordBars) % prog.length] % n;
+    const tones = (c) => { const out = []; for (let o = -1; o <= 2; o++) [0, 2, 4].forEach((k) => out.push(c + k + o * n)); return out; };
+    const near = (list, x) => list.reduce((b, d) => (Math.abs(d - x) < Math.abs(b - x) ? d : b), list[0]);
+    const motifs = {}, bars = [];
+    let prev = center;
+    for (let i = 0; i < C; i++) {
+      const role = i === C - 1 ? "E" : i % 2 === 0 ? "A" : C >= 8 && i === 3 ? "C" : "B", c = chordAt(i);
+      let notes;
+      if (role === "E") {
+        const rh = motifs.E || (motifs.E = pick(RHYTHMS.end));
+        const fin = near([c - n, c, c + n, c + 2 * n], center + (prev - center) * 0.5), side = prev >= fin ? 1 : -1;
+        notes = rh.map(([s, l], j) => ({ s, l, d: fin + (rh.length - 1 - j) * side }));
+      } else if (motifs[role]) {
+        const m = motifs[role], start = near(tones(c), prev);
+        notes = m.rh.map(([s, l], j) => ({ s, l, d: start + m.steps[j] }));
+      } else {
+        const rh = pick(RHYTHMS[kind] || RHYTHMS.verse);
+        let x = near(tones(c), prev + (r() < 0.5 ? 1 : -1)), dir = x > center ? -1 : 1;
+        const first = x, st = [];
+        notes = rh.map(([s, l], j) => {
+          if (j > 0) {
+            if (r() < 0.3) dir = -dir;
+            const strong = s % 2 === 0;
+            x = strong ? near(tones(c), x + dir) : x + dir * (r() < 0.75 ? 1 : 2);
+            if (x > center + 5) { x -= 2; dir = -1; }
+            if (x < center - 4) { x += 2; dir = 1; }
+          }
+          st.push(x - first);
+          return { s, l, d: x };
+        });
+        motifs[role] = { rh, steps: st };
+      }
+      // keep it in range: a whole bar moves by an octave
+      const hi = Math.max(...notes.map((q) => q.d)), lo = Math.min(...notes.map((q) => q.d));
+      if (hi > center + n) notes.forEach((q) => { q.d -= n; });
+      else if (lo < center - n) notes.forEach((q) => { q.d += n; });
+      prev = notes[notes.length - 1].d;
+      bars.push(notes);
+    }
+    return bars;
+  }
+
+  // ---------- playing a song ----------
+  const songDef = () => (params.song && SONGS[params.song]) || null;
+  const arrangeOf = (def, sec) => (sec ? Object.assign({}, ARRANGE[sec], def.arrange[sec]) : null);
+  const progOf = (def, sec) => def.prog[sec] || def.prog.verse;
+  function beginSong(t) {
+    const def = songDef(), idx = Object.keys(SONGS).indexOf(params.song);
+    const r = rng(params.seed * 7919 + idx * 101 + 1);
+    clock.s = { sec: 0, beat: 0, next: t, done: false,
+      mel: { verse: compose("verse", def.prog.verse, def.chordBars, r), chorus: compose("chorus", def.prog.chorus, def.chordBars, r) } };
+    clock.leadLast = null; clock.progStep = 0;
+  }
+  function songTick(now, ahead) {
+    const def = songDef(), S = clock.s, beat = 60 / params.tempo, lv = params.levels;
+    while (S.next <= ahead) {
+      const t = Math.max(now, S.next);
+      if (S.done) {
+        // the next song, from its start (its own tempo, key and sound)
+        const ids = Object.keys(SONGS), nextId = ids[(ids.indexOf(params.song) + 1) % ids.length];
+        player.setParams(Object.assign(clone(SONGS[nextId].params), { song: nextId }));
+        return;
+      }
+      const [sec, bars] = def.form[S.sec], arr = arrangeOf(def, sec), prog = progOf(def, sec);
+      const p = S.beat % 4, bar = Math.floor(S.beat / 4);
+      if (p === 0 && bar % def.chordBars === 0) {
+        const n = steps().length, d = prog[Math.floor(bar / def.chordBars) % prog.length] % n, tones = [d, d + 2, d + 4];
+        if (def.sevenths) tones.push(d + 6);
+        clock.chordIdx = d; clock.chord = tones.map((x) => degree(x, rootMidi() + 12)); clock.arpOn = true; clock.progStep++;
+        chordName = NOTES[clock.chord[0] % 12];
+        if (arr.pads && lv.pads > 0.01) padChord(t, def.chordBars * 4 * beat);
+      }
+      if (p === 0) {
+        if (arr.crash && bar === 0 && lv.beat > 0.01) crash(t);
+        if (arr.lead && lv.lead > 0.01) {
+          const mel = S.mel[arr.lead], base = rootMidi() + 24;
+          mel[bar % mel.length].forEach((q) => leadPlay(t + q.s * beat, degree(q.d, base), q.l * beat * 0.92));
+        }
+      }
+      // drums, with a roll into a section that has them
+      const nx = def.form[S.sec + 1], nextArr = nx ? arrangeOf(def, nx[0]) : null;
+      const rollIn = bar === bars - 1 && p >= 2 && nextArr && nextArr.drums && lv.beat > 0.01;
+      if (rollIn) fill(t, p, beat);
+      else if (arr.drums && lv.beat > 0.01) drumBeat(arr.drums, t, S.beat, beat);
+      if (arr.bass && lv.bass > 0.01) bassBeat(arr.bass, t, p, beat);
+      if (arr.arp && lv.arp > 0.01) arp(t, S.beat, beat);
+      if (arr.bells && lv.bells > 0.01 && rand() < 0.15) bell(t + rand() * beat * 0.5);
+      S.beat++; S.next = t + beat;
+      if (S.beat >= bars * 4) {
+        S.sec++; S.beat = 0;
+        if (S.sec >= def.form.length) {
+          // the end: the last chord rings out, then a breath
+          live.pads.forEach((v) => { v.g.gain.setTargetAtTime(0, S.next + beat, 1.2); v.stopAt = S.next + 8; });
+          S.done = true; S.next = t + beat * 7;
+        }
+      }
+    }
+  }
+
   // the drums
-  function kick(t) {
+  function kick(t, amp) {
     const o = osc("sine", 140, t), g = gain(0);
     o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.12);
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.9, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.9 * (amp == null ? 1 : amp), t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
     o.connect(g); g.connect(N.bus.beat); o.stop(t + 0.4);
   }
-  function snare(t) {
+  function snare(t, amp) {
+    amp = amp == null ? 1 : amp;
     const n = noise(t, 0.3), bp = filter("bandpass", 1900, 0.8), g = gain(0);
-    g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+    g.gain.setValueAtTime(0.5 * amp, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
     const o = osc("triangle", 190, t), og = gain(0);
     o.frequency.exponentialRampToValueAtTime(150, t + 0.08);
-    og.gain.setValueAtTime(0.3, t); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.1); o.stop(t + 0.12);
+    og.gain.setValueAtTime(0.3 * amp, t); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.1); o.stop(t + 0.12);
     n.connect(bp); bp.connect(g); o.connect(og);
     // the snare alone gets the big room
     const room = gain(1.2); g.connect(room); room.connect(N.revIn);
@@ -432,13 +632,50 @@ function create(opts = {}) {
     g.gain.setValueAtTime(0.13 * amp, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
     n.connect(hp); hp.connect(g); g.connect(N.bus.beat);
   }
-  function drums(t, b, beat) {
+  // a cymbal: long bright noise, into the room
+  function crash(t) {
+    const n = noise(t, 2.2), hp = filter("highpass", 4500), g = gain(0);
+    g.gain.setValueAtTime(0.22, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 2);
+    n.connect(hp); hp.connect(g); g.connect(N.bus.beat);
+    const room = gain(0.6); g.connect(room); room.connect(N.revIn);
+  }
+  // one beat of a drum pattern: full (8th hats), full16, half (half time), light
+  function drumBeat(style, t, b, beat) {
     const p = b % 4;
+    if (style === "half") {
+      if (p === 0) kick(t);
+      if (p === 2) snare(t);
+      hat(t, 0.3); hat(t + beat / 2, 0.6);
+      return;
+    }
+    if (style === "light") {
+      if (p === 0) kick(t, 0.8);
+      if (p === 2) kick(t, 0.55);
+      hat(t + beat / 2, 0.7);
+      return;
+    }
     if (p === 0 || p === 2) kick(t);
     if (p === 2 && rand() < params.density * 0.35) kick(t + beat * 0.5);
     if (p === 1 || p === 3) snare(t);
     hat(t, 0.5); hat(t + beat / 2, 1);
-    if (params.density > 0.5) { hat(t + beat / 4, 0.3); hat(t + beat * 0.75, 0.3); }
+    if (style === "full16") { hat(t + beat / 4, 0.3); hat(t + beat * 0.75, 0.3); }
+  }
+  function drums(t, b, beat) { drumBeat(params.density > 0.5 ? "full16" : "full", t, b, beat); }
+  // the last two beats of a section: a snare roll, louder and louder
+  function fill(t, p, beat) {
+    if (p === 2) kick(t);
+    for (let s = 0; s < 4; s++) snare(t + s * beat / 4, 0.3 + 0.08 * ((p - 2) * 4 + s));
+  }
+  // one beat of a bass line on the chord: root8 (8ths), pulse16 (16ths, octaves), half (root, then the fifth)
+  function bassBeat(style, t, p, beat) {
+    const r = clock.chord[0] - 12, bus = N.bus.bass;
+    if (style === "pulse16") { [0, 0, 12, 0].forEach((o, s) => bassNote(t + s * beat / 4, r + o, beat / 4 * 0.85, bus)); return; }
+    if (style === "half") {
+      if (p === 0) bassNote(t, r, beat * 1.9, bus);
+      if (p === 2) bassNote(t, clock.chord[2] - 12, beat * 1.9, bus);
+      return;
+    }
+    bassNote(t, r, beat * 0.42, bus); bassNote(t + beat / 2, p === 3 ? r + 12 : r, beat * 0.42, bus);
   }
   // the derelict: metal struck somewhere in the dark (inharmonic FM)
   function clang(t) {
@@ -535,6 +772,12 @@ function create(opts = {}) {
   // ---------- the clock: events a little ahead ----------
   function tick() {
     const now = ctx.currentTime, ahead = now + 0.25, beat = 60 / params.tempo, lv = params.levels;
+    if (songDef() && clock.s) songTick(now, ahead);
+    else ambientTick(now, ahead, beat, lv);
+    common(now, ahead, lv);
+  }
+  // the moods: a chord every 4 bars, events by chance
+  function ambientTick(now, ahead, beat, lv) {
     // chords: every 4 bars
     if (clock.nextChord <= ahead) {
       const t = Math.max(now, clock.nextChord), dur = beat * 16;
@@ -560,6 +803,9 @@ function create(opts = {}) {
       }
       clock.nextBeat = t + beat;
     }
+  }
+  // both ways: the texture, the whispers, the voice, cleaning up
+  function common(now, ahead, lv) {
     // the texture: the radio's band wanders, crackles — or raindrops
     const tex = live.texture;
     if (tex && !tex.rain) tex.bp.frequency.setTargetAtTime(400 + 2600 * (0.5 + 0.5 * Math.sin(now * 0.07) * Math.sin(now * 0.031)), now, 2);
@@ -585,6 +831,12 @@ function create(opts = {}) {
     params,
     get playing() { return playing; },
     get chordName() { return chordName; },
+    get song() {
+      const def = songDef(), S = clock.s;
+      if (!def || !S || !playing) return null;
+      const f = def.form[Math.min(S.sec, def.form.length - 1)];
+      return { id: params.song, name: def.name, section: S.done ? "end" : f[0], bar: Math.floor(S.beat / 4) + 1, bars: f[1], part: S.sec + 1, parts: def.form.length };
+    },
     get analyser() { return N.analyser || null; },
     get stream() { return N.stream ? N.stream.stream : null; },
     start() {
@@ -599,6 +851,7 @@ function create(opts = {}) {
       clock.nextWhisper = t + 3; clock.nextVoice = t + 8; clock.nextCrackle = t;
       clock.nextLead = t + 0.5 + 4 * 60 / params.tempo; clock.leadLast = null;
       N.master.gain.cancelScheduledValues(t); N.master.gain.setTargetAtTime(params.volume, t, 1.2);
+      if (songDef()) beginSong(t + 0.3);
       if (!live.drone && params.levels.drone > 0.01) startDrone();
       if (!live.texture) startTexture();
       timer = setInterval(tick, 100);
@@ -620,7 +873,7 @@ function create(opts = {}) {
     },
     setParams(patch) {
       const before = { root: params.root, scale: params.scale, seed: params.seed, space: params.space, padVoice: params.padVoice,
-        textureKind: params.textureKind, droneVoice: params.droneVoice, progression: JSON.stringify(params.progression) };
+        textureKind: params.textureKind, droneVoice: params.droneVoice, progression: JSON.stringify(params.progression), song: params.song };
       merge(params, patch);
       if (!ctx) return;
       const t = ctx.currentTime;
@@ -631,6 +884,10 @@ function create(opts = {}) {
       if (before.space !== params.space) { clearTimeout(revTimer); revTimer = setTimeout(() => { N.reverb.buffer = impulse(2 + params.space * 6); }, 250); }
       if (before.seed !== params.seed) rand = rng(params.seed);
       if (before.progression !== JSON.stringify(params.progression)) clock.progStep = 0;
+      if (before.song !== params.song) {
+        if (songDef()) { if (playing) beginSong(t + 0.15); }
+        else { clock.s = null; clock.nextChord = t; clock.nextBeat = t + 0.2; }
+      }
       if (before.root !== params.root || before.scale !== params.scale || before.progression !== JSON.stringify(params.progression)) clock.nextChord = t;
       else if (before.padVoice !== params.padVoice && playing && params.levels.pads > 0.01 && clock.chord.length) padChord(t, Math.max(1, clock.nextChord - t));
       if (before.textureKind !== params.textureKind && live.texture) { stopTexture(); if (playing) startTexture(); }
@@ -644,5 +901,5 @@ function create(opts = {}) {
   return player;
 }
 
-return { create, PRESETS, VOICES, LAYERS, SCALES, NOTES, DEFAULTS };
+return { create, PRESETS, SONGS, VOICES, LAYERS, SCALES, NOTES, DEFAULTS };
 })();

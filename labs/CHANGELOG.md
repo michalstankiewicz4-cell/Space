@@ -9,6 +9,21 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.6.0] — 2026-10-05
+
+### Added
+- **The sound lab: MUSIC**, a tab beside MOODS — songs instead of ambient:
+  *First light* (synth-pop), *Neon heart* (80s ballad), *Midnight
+  highway* (synthwave), *Orbit lullaby* (piano), *Cathedral* (organ),
+  *Escape velocity* (drive). Each has a form — intro, verse, chorus,
+  verse, chorus, bridge, chorus, outro — a chord every bar or two, a
+  melody composed from the seed (motifs that come back, phrases ending on
+  the chord), a bass line, drums with a roll into the next section and a
+  crash on the chorus. At a song's end the next one begins; the player
+  shows the section and the bar. Another seed: other melodies.
+- MusicKit: `SONGS`, a **Bass** layer, a **Melody** instrument (synth,
+  soft flute-like, piano), the major and mixolydian scales.
+
 ## [1.5.0] — 2026-10-05
 
 ### Added

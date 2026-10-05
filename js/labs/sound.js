@@ -17,10 +17,29 @@ Object.entries(MK.PRESETS).forEach(([id, p]) => {
   $("presets").appendChild(b);
 });
 function markPreset(id) { [...$("presets").children].forEach((b) => b.classList.toggle("on", b.dataset.id === id)); }
+// MUSIC: the songs (MusicKit.SONGS) — a click plays one from its start; at its end the next one begins
+Object.entries(MK.SONGS).forEach(([id, s]) => {
+  const b = document.createElement("button"); b.className = "tBtn"; b.dataset.id = id;
+  b.innerHTML = "<span></span><small></small>"; b.firstChild.textContent = s.name.toUpperCase(); b.lastChild.textContent = s.style;
+  b.addEventListener("click", () => {
+    player.setParams(Object.assign(JSON.parse(JSON.stringify(s.params)), { song: id }));
+    if (!player.playing) toggle();
+    showAll(); markPreset(null);
+  });
+  $("songs").appendChild(b);
+});
+function showTab(music) {
+  $("tabMoods").classList.toggle("on", !music); $("tabMusic").classList.toggle("on", music);
+  $("presets").classList.toggle("hidden", music); $("songs").classList.toggle("hidden", !music);
+  try { localStorage.setItem("soundLab.tab", music ? "music" : "moods"); } catch (e) { /* blocked */ }
+  fitHud();
+}
+$("tabMoods").addEventListener("click", () => showTab(false));
+$("tabMusic").addEventListener("click", () => showTab(true));
 const LAYER_NAMES = { drone: "Drone", pads: "Pads", bells: "Bells", pulse: "Pulse", arp: "Arp", texture: "Static", whispers: "Whispers", voice: "Voice",
-  lead: "Melody", beat: "Beat", metal: "Metal" };
+  lead: "Melody", beat: "Beat", metal: "Metal", bass: "Bass" };
 // the instruments: what a layer sounds like (MusicKit.VOICES)
-const INSTR_NAMES = { padVoice: "Pads", bellVoice: "Bells", arpMode: "Arp", textureKind: "Static", droneVoice: "Drone" };
+const INSTR_NAMES = { padVoice: "Pads", bellVoice: "Bells", arpMode: "Arp", textureKind: "Static", droneVoice: "Drone", leadVoice: "Melody" };
 Object.entries(MK.VOICES).forEach(([k, opts]) => {
   const r = document.createElement("div"); r.className = "irow";
   r.innerHTML = `<span>${INSTR_NAMES[k]}</span><select class="lab" id="in_${k}"></select>`;
@@ -85,7 +104,7 @@ function startRec(limit) {
   rec.onstop = () => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob(chunks, { type: "audio/webm" }));
-    a.download = "swarm-music-seed" + P.seed + "-" + P.scale + ".webm"; a.click();
+    a.download = "swarm-music-" + (P.song || P.scale) + "-seed" + P.seed + ".webm"; a.click();
     $("recState").textContent = "Saved: " + a.download;
     ["btnRec", "btnRec60"].forEach((id) => $(id).classList.remove("on"));
     $("btnRec").textContent = "● RECORD"; rec = null;
@@ -109,6 +128,7 @@ const stars = Array.from({ length: 260 }, (_, i) => ({ x: Math.random(), y: Math
 let freq = null, wave = null, energy = 0;
 function resize() { const pr = Math.min(2, window.devicePixelRatio || 1); cv.width = innerWidth * pr; cv.height = innerHeight * pr; g.setTransform(pr, 0, 0, pr, 0, 0); }
 window.addEventListener("resize", resize); resize();
+let shownSong;
 function draw(t) {
   const w = innerWidth, h = innerHeight, cx = w / 2, cy = h / 2 + 10, R = Math.min(w, h) * 0.2;
   g.fillStyle = "rgba(1,2,10,0.32)"; g.fillRect(0, 0, w, h);
@@ -150,7 +170,11 @@ function draw(t) {
   }
   // the ring itself
   g.strokeStyle = "rgba(143,164,255,0.25)"; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R * 1.05, 0, Math.PI * 2); g.stroke();
-  $("nowPlaying").innerHTML = player.playing ? `Playing · chord <b>${player.chordName}</b> · ${MK.SCALES[P.scale].name.split(" ")[0].toLowerCase()} in ${MK.NOTES[P.root]}${Array.isArray(P.progression) && P.progression.length ? " · fixed progression" : ""}` : "Stopped";
+  // a song moves on by itself: the panels follow
+  if (P.song !== shownSong) { shownSong = P.song; showAll(); [...$("songs").children].forEach((b) => b.classList.toggle("on", b.dataset.id === P.song)); }
+  const sg = player.song;
+  if (sg) $("nowPlaying").innerHTML = `♪ <b>${sg.name}</b> · ${sg.section} · bar ${Math.min(sg.bar, sg.bars)}/${sg.bars} · chord <b>${player.chordName}</b>`;
+  else $("nowPlaying").innerHTML = player.playing ? `Playing · chord <b>${player.chordName}</b> · ${MK.SCALES[P.scale].name.split(" ")[0].toLowerCase()} in ${MK.NOTES[P.root]}${Array.isArray(P.progression) && P.progression.length ? " · fixed progression" : ""}` : "Stopped";
   requestAnimationFrame(draw);
 }
 
@@ -160,6 +184,7 @@ function fitHud() { LabKit.fitHud([$("hud"), $("opt")], 0.4, 1.3); }
 window.addEventListener("resize", fitHud);
 if (document.fonts) document.fonts.ready.then(fitHud);
 showAll(); markPreset("station"); fitHud();
+try { if (localStorage.getItem("soundLab.tab") === "music") showTab(true); } catch (e) { /* blocked */ }
 requestAnimationFrame(draw);
 window.soundLab = { player, toggle };
 })();

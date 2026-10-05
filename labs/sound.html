@@ -27,6 +27,15 @@ textarea.lab{ height:96px; width:100%; padding:6px; resize:vertical; line-height
 .lrow{ display:grid; grid-template-columns:76px 1fr 38px; gap:8px; align-items:center; margin-top:4px; font-size:13.5px; color:#c7d0ff; }
 .lrow b{ font-weight:400; color:#fff; text-align:right; font-size:12.5px; }
 .lrow input{ margin:0; }
+/* MOODS | MUSIC: two tabs in the section's header */
+.secHd.tabHd{ display:flex; gap:14px; }
+.tabHd button{ all:unset; cursor:pointer; color:#6f7fcf; letter-spacing:inherit; font:inherit; padding-bottom:1px; border-bottom:2px solid transparent; }
+.tabHd button:hover{ color:#c7d0ff; }
+.tabHd button.on{ color:#ffe2a8; border-bottom-color:#f8bb56; }
+.songList{ display:grid; gap:6px; }
+.songList .tBtn{ height:auto; min-height:38px; padding:5px 10px; display:flex; justify-content:space-between; align-items:center; text-align:left; font-size:13.5px; }
+.songList .tBtn small{ font-size:11.5px; color:#8fa4ff; letter-spacing:.5px; text-transform:none; }
+.songList .tBtn.on small{ color:#f2b84b; opacity:.85; }
 .irow{ display:grid; grid-template-columns:76px 1fr; gap:8px; align-items:center; margin-top:4px; font-size:13.5px; color:#c7d0ff; }
 .twoBtns{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
 .twoBtns .tBtn{ height:28px; font-size:12.5px; }
@@ -61,8 +70,9 @@ textarea.lab{ height:96px; width:100%; padding:6px; resize:vertical; line-height
     <div class="secHd first">PLAYER</div>
     <button class="tBtn" id="btnPlay">▶ PLAY</button>
     <div id="nowPlaying"></div>
-    <div class="secHd">MOODS</div>
+    <div class="secHd tabHd"><button type="button" id="tabMoods" class="on" title="Ambient: endless, by chance">MOODS</button><button type="button" id="tabMusic" title="Songs: intro, verse, chorus, bridge, outro">MUSIC</button></div>
     <div class="btnGrid" id="presets"></div>
+    <div class="songList hidden" id="songs"></div>
     <div class="secHd">SEED</div>
     <div class="seedRow">
       <input class="lab" id="seed" type="number" min="1" step="1" value="1" title="The same seed plays the same piece">

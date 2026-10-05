@@ -56,6 +56,43 @@ instead of the seeded random walk; `null` for the seeded one.
   (synthwave), Derelict (space horror). A mood sets everything but the
   volume, the seed and the robot's lines.
 
+## Songs (MUSIC, labs 1.6.0)
+
+The other way to play: `MusicKit.SONGS`, chosen in the lab's MUSIC tab
+(`setParams({ song: id })`; a mood sets `song: null`). A song is a mood's
+sound plus:
+
+- **form** — sections and their bars, by default intro 4, verse 8, chorus
+  8, verse 8, chorus 8, bridge 8, chorus 8, outro 4; then the last chord
+  rings out and the next song in the list begins (its own tempo, key and
+  sound).
+- **prog** — a progression per section (scale degrees, cycled), a chord
+  every `chordBars` bars (1 or 2); intro and outro play the verse's.
+- **arrange** — what plays in each section (`ARRANGE`, overridden per
+  song): pads, arp, bells on/off; bass `root8` | `pulse16` | `half`;
+  drums `full` | `full16` | `half` | `light`; lead `verse` | `chorus`;
+  a crash on the chorus. The last two beats before a section with drums
+  are a snare roll.
+- **The melody** is composed when the song starts, from the seed
+  (`compose`): one cycle of the section's progression, bar by bar on a
+  plan — A B A E (A B A C A B A E over 8 bars). An A bar's rhythm and
+  shape come back on the next A, moved to fit its chord (a sequence);
+  notes on strong beats sit on chord tones, the rest step along the
+  scale; the E bar ends on the last chord's root. Verses sit lower with
+  busier rhythms, choruses higher with longer notes. Played by
+  `leadVoice`: synth (saw + square, glide, late vibrato), soft (sine +
+  breath, flute-like), piano.
+- `player.song` → `{ id, name, section, bar, bars, part, parts }`.
+
+| Song | Style | Key, tempo | Sound |
+|---|---|---|---|
+| First light | synth-pop | G major, 112 | brass pads, synth lead, I–V–vi–IV verse |
+| Neon heart | 80s ballad | F minor, 76 | brass, piano lead, rain, half-time drums, chords every 2 bars |
+| Midnight highway | synthwave | E minor, 104 | 16th-note bass throughout, brass, synth lead |
+| Orbit lullaby | piano | D major, 80 | piano lead and chimes, glass pads, no drums |
+| Cathedral | organ | A minor, 84 | organ, the ostinato, soft lead, half-time drums in the chorus |
+| Escape velocity | drive | D minor, 120 | saws, synth lead, full drums |
+
 ## Limits (honest)
 
 - **The voice** is the browser's own speech synthesis. It sits outside the
@@ -63,8 +100,9 @@ instead of the seeded random walk; `null` for the seeded one.
   different on each system. The plan for the game: the lines generated
   once into small files and played through a vocoder in the graph.
 - **The whispers** are murmuring without words — real words need recordings.
-- It's generative, not a song: no verses, no chorus, no arc beyond the
-  ostinato's growing octave.
+- The moods are generative, not songs (no arc beyond the ostinato's
+  growing octave); the songs have a form, but one melody per section kind
+  (every verse the same, every chorus the same) and no lyrics.
 
 ## Next
 
