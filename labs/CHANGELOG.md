@@ -9,6 +9,19 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.15.0] — 2026-10-06
+
+### Changed
+- **The life lab: two low-poly humans.** Our round sculpt is no longer
+  listed (its code stays: the bust's "fitted" head uses it). **Human I**
+  has the bust's head and neck (1.13–1.14, "Lowpoly face model" by void,
+  CC BY 4.0); **Human II** is new: "Low-poly Human Head" by Chermiful
+  (sketchfab.com/Chermiful), CC BY 4.0, changed — 1:1, only scaled; our
+  eyeballs in its own eye openings with lids that blink (shells on the
+  eyeballs), its lips split so the jaw opens the mouth on our teeth,
+  tongue and dark mouth, every expression; its hair from its own
+  triangles; its open underside closed, our neck into it.
+
 ## [1.14.0] — 2026-10-06
 
 ### Added

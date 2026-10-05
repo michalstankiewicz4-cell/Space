@@ -35,20 +35,23 @@ const PARAMS = () => [
     { key: "style", name: "Style", choices: ["Smooth", "Low-poly"], value: 0 },
     { key: "seed", name: "Face", seed: true, value: 1 },
 ];
+// Our own round sculpt (the build with no variant) isn't listed any more
+// (the user's call, 2026-10-06): its grid still serves the bust's "fitted"
+// head. Two low-poly humans, the same body:
+// Human I — the head and the neck after a low-poly bust (data/bust-head.js)
 LK.register({
-  id: "human", name: "Human", group: "Animals", media: ["land"], moves: ["walk"],
-  blurb: "The makers. Gone from this world — kept in records, holograms, statues. Real proportions; walks, runs, stands.",
-  params: PARAMS(),
-  build: (P, o) => build(P, o, null),
-});
-// the second human: the same body, the head and the neck shaped after a
-// low-poly bust (js/lifekit/data/bust-head.js, CC BY 4.0 — credited)
-LK.register({
-  id: "humanBust", name: "Human II", group: "Animals", media: ["land"], moves: ["walk"],
-  blurb: "The same body; the head and the neck shaped after a low-poly bust. " + ((LK.data && LK.data.bustHead && LK.data.bustHead.credit) || ""),
+  id: "humanBust", name: "Human I", group: "Animals", media: ["land"], moves: ["walk"],
+  blurb: "A low-poly head and neck after a bust — our eyes, mouth and expressions in it. " + ((LK.data && LK.data.bustHead && LK.data.bustHead.credit) || ""),
   params: PARAMS().map((q) => (q.key === "style" ? Object.assign(q, { value: 1 }) : q))
     .concat([{ key: "headMode", name: "Head", choices: ["The bust's own (1:1)", "Fitted to our grid"], value: 0 }]),
   build: (P, o) => build(P, o, "bust"),
+});
+// Human II — a made low-poly head (data/human-head.js)
+LK.register({
+  id: "humanHead", name: "Human II", group: "Animals", media: ["land"], moves: ["walk"],
+  blurb: "A low-poly head, as it was made — our eyes, mouth and expressions in it. " + ((LK.data && LK.data.humanHead && LK.data.humanHead.credit) || ""),
+  params: PARAMS().map((q) => (q.key === "style" ? Object.assign(q, { value: 1 }) : q)),
+  build: (P, o) => build(P, o, "made"),
 });
 
 function build(P, opts, variant) {
@@ -113,8 +116,8 @@ function build(P, opts, variant) {
   ];
   parts.push({ geo: sk(torso, { capStart: 1, capLen: 0.6 }), mat: body() });
   // the neck, into the head
-  const bust = variant === "bust" ? bustFit(P.style === 1) : null;
-  const neck = bust ? bustNeck(bust, H, sh, bw) : [
+  const bust = variant === "bust" ? bustFit(P.style === 1) : variant === "made" ? headFit() : null;
+  const neck = variant === "bust" ? bustNeck(bust, H, sh, bw) : variant === "made" ? headNeck(bust, H, sh, bw) : [
     at(0.822, 0.064 * Math.sqrt(bw), 0.054, 0.06, { chest: 0.6, neck: 0.4 }, -0.01),
     at(0.85, 0.062 * Math.sqrt(bw), 0.052, 0.058, { neck: 1 }, -0.006),
     at(0.878, 0.06, 0.05, 0.056, { neck: 0.4, head: 0.6 }, 0.0),
@@ -177,7 +180,7 @@ function build(P, opts, variant) {
   const { meshes } = U.skinned(group, skel, parts);
 
   // ---------- the head ----------
-  const face = head(B.head, H, s, sh, F, P, mats, tone, hairHex, irisHex, det, bust);
+  const face = head(B.head, H, s, sh, F, P, mats, tone, hairHex, irisHex, det, bust, variant);
 
   const rig = { pelvis: B.pelvis, spine: B.spine, chest: B.chest, neck: B.neck, head: B.head,
     upperArm: [B.upperArmL, B.upperArmR], forearm: [B.forearmL, B.forearmR], hand: [B.handL, B.handR],
@@ -229,7 +232,7 @@ function foot(bone, shinBone, sg, s, ankleY, suit, mats, tone, seg, L) {
 }
 
 // ---------- the head: LifeKit's face (parts/face.js), placed and sized ----------
-function head(bone, H, s, sh, F, P, mats, tone, hairHex, irisHex, det, bust) {
+function head(bone, H, s, sh, F, P, mats, tone, hairHex, irisHex, det, bust, variant) {
   const hg = new THREE.Group();
   // the head's centre: its top at the creature's height
   const top = H - 0.116 * sh;
@@ -237,10 +240,13 @@ function head(bone, H, s, sh, F, P, mats, tone, hairHex, irisHex, det, bust) {
   let yAbs = 0; for (let b = bone; b; b = b.parent) if (b.isBone) yAbs += b.position.y;
   hg.position.y = top - yAbs;
   hg.scale.setScalar(sh);
-  hg.rotation.x = bust ? 0 : 0.13;           // our sculpt: the face a little down (the bust stands upright already)
+  hg.rotation.x = bust ? 0 : 0.13;           // our sculpt: the face a little down (the made head stands upright already)
   bone.add(hg);
   const face = LK.face.build(Object.assign({ F, tone, hair: P.hair, hairHex, irisHex, mats, detail: det, lowpoly: P.style === 1 ? 760 : 0 },
-    bust ? { baseFn: bust.shape, features: 0, layout: bust.layout, earX: bust.earX, F: Object.assign({}, F, { lips: P.headMode === 0 ? 0 : 0.45 }),
+    // the head's own triangles (1:1, only scaled), its ears, no lip bulge of ours; its
+    // surface (a field of radii) still gives the eyes their depth and the hair its shape
+    variant === "made" ? { baseFn: bust.shape, features: 0, layout: bust.layout, eyeZ: bust.eyeZ, F: Object.assign({}, F, { lips: 0 }), mesh: { V: bust.V, T: bust.T, s: 1 }, ears: false, ownEyes: true }
+    : variant === "bust" ? { baseFn: bust.shape, features: 0, layout: bust.layout, earX: bust.earX, F: Object.assign({}, F, { lips: P.headMode === 0 ? 0 : 0.45 }),
       // 1:1: the bust's own triangles (finer on their planes), its ears, no lip bulge of ours
       mesh: P.headMode === 0 ? { V: bust.V, T: bustHeadTris(bust), s: 11 } : null, ears: P.headMode === 0 ? false : true } : {}));
   hg.add(face.group);
@@ -359,5 +365,147 @@ function bustNeck(bust, H, sh, bw) {
   // keep the sections in order of height (the torso join below the first slice)
   out.sort((a, b) => a.p[1] - b.p[1]);
   return out;
+}
+
+// ---------- the made head (LifeKit.data.humanHead): 1:1, only scaled ----------
+// Its own units → metres: its crown at our head's crown, its chin at ours
+// (k = 0.218 m / its crown-to-chin), its face centred like ours. Its eye
+// openings take our eyeballs and lids, its closed mouth our slit, teeth
+// and expressions; it has no neck — ours runs up into the opening under
+// its jaw. Measured on the model: crown 1.123, chin 0.357, eye openings
+// centred at x ±0.131, y 0.767 (0.078 × 0.025), the lips' seam at y 0.500.
+const HEAD = { top: 1.123, chin: 0.357, cz: 0.03 };
+HEAD.k = 0.218 / (HEAD.top - HEAD.chin); HEAD.cy = HEAD.top - 0.113 / HEAD.k;
+const headLocal = (x, y, z) => [x * HEAD.k, (y - HEAD.cy) * HEAD.k, (z - HEAD.cz) * HEAD.k];
+let headCache = null;
+function headData() {
+  const D = LK.data.humanHead;
+  const dec = (b64, Arr) => { const bin = atob(b64), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); return new Arr(u8.buffer); };
+  const q = dec(D.v, Int16Array), T = Array.from(dec(D.t, Uint16Array)), V = [];
+  for (let i = 0; i < q.length; i += 3) {
+    const f = (k) => D.min[k] + (q[i + k] + 32767) / 65534 * (D.max[k] - D.min[k]);
+    V.push(headLocal(f(0), f(1), f(2)));
+  }
+  // it's open under the jaw: the lowest open edge loop is closed with a fan
+  const ec = new Map();
+  for (let i = 0; i < T.length; i += 3) for (let k = 0; k < 3; k++) { const a = T[i + k], b = T[i + (k + 1) % 3]; ec.set(a + "," + b, (ec.get(a + "," + b) || 0) + 1); }
+  const next = new Map();
+  ec.forEach((c, key) => { const [a, b] = key.split(",").map(Number); if (!ec.has(b + "," + a)) next.set(b, a); });   // boundary, reversed
+  const seen = new Set(); let low = null, lowY = Infinity;
+  next.forEach((_, s0) => {
+    if (seen.has(s0)) return;
+    const loop = []; let v = s0;
+    while (v !== undefined && !seen.has(v)) { seen.add(v); loop.push(v); v = next.get(v); }
+    const y = loop.reduce((s, i) => s + V[i][1], 0) / loop.length;
+    if (loop.length > 8 && y < lowY) { lowY = y; low = loop; }
+  });
+  if (low) {
+    const c = V.length, m = [0, 1, 2].map((k) => low.reduce((s, i) => s + V[i][k], 0) / low.length);
+    V.push([m[0], m[1] - 0.004, m[2]]);
+    for (let i = 0; i < low.length; i++) T.push(low[i], low[(i + 1) % low.length], c);
+  }
+  // its lips meet on one row of points (y 0.500 its units), but triangles
+  // cross it: each triangle is sorted by its other points — below the row:
+  // the lower lip (its row points become copies, so the jaw can part them);
+  // above: the upper; both (bridging the lips inside the mouth): left out —
+  // our dark mouth, teeth and tongue are behind
+  const k = HEAD.k, seam = (0.5 - HEAD.cy) * k, tol = 0.0062 * k, mw = 0.1 * k, onSeam = new Map();
+  V.forEach((v, i) => { if (Math.abs(v[1] - seam) < tol && Math.abs(v[0]) < mw && v[2] > 0.05) onSeam.set(i, -1); });
+  const out = [];
+  for (let i = 0; i < T.length; i += 3) {
+    const tri = [T[i], T[i + 1], T[i + 2]];
+    let up = 0, lo = 0, mouth = false;
+    tri.forEach((v) => { const p = V[v]; if (Math.abs(p[0]) < mw && p[2] > 0.04 && Math.abs(p[1] - seam) < 0.06 * k) mouth = true; if (onSeam.has(v)) return; if (p[1] > seam) up++; else lo++; });
+    {
+      // the mouth's inner pocket (behind the lips' front, not facing out): left out
+      const A = V[tri[0]], B = V[tri[1]], C = V[tri[2]], cz = (A[2] + B[2] + C[2]) / 3;
+      const nx = (B[1] - A[1]) * (C[2] - A[2]) - (B[2] - A[2]) * (C[1] - A[1]), ny = (B[2] - A[2]) * (C[0] - A[0]) - (B[0] - A[0]) * (C[2] - A[2]), nz = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0]);
+      if (mouth && cz < (0.345 - HEAD.cz) * k && nz / (Math.hypot(nx, ny, nz) || 1) < 0.35 && Math.abs((A[1] + B[1] + C[1]) / 3 - seam) < 0.04 * k) continue;
+    }
+    if (mouth && up && lo) {
+      // a bridge: inside the mouth (not facing the front) it goes; at the
+      // corners, facing out, it stays (it only stretches a little there)
+      const A = V[tri[0]], B = V[tri[1]], C = V[tri[2]];
+      const nx = (B[1] - A[1]) * (C[2] - A[2]) - (B[2] - A[2]) * (C[1] - A[1]), ny = (B[2] - A[2]) * (C[0] - A[0]) - (B[0] - A[0]) * (C[2] - A[2]), nz = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0]);
+      if (nz / (Math.hypot(nx, ny, nz) || 1) < 0.55 || Math.abs((A[0] + B[0] + C[0]) / 3) < 0.06 * k) continue;
+    }
+    if (lo && !up || (!lo && !up && (V[tri[0]][1] + V[tri[1]][1] + V[tri[2]][1]) / 3 < seam)) {
+      tri.forEach((v, j) => {
+        if (!onSeam.has(v)) return;
+        if (onSeam.get(v) < 0) { onSeam.set(v, V.length); V.push([V[v][0], seam - 2e-5, V[v][2]]); }
+        tri[j] = onSeam.get(v);
+      });
+    }
+    out.push(tri[0], tri[1], tri[2]);
+  }
+  onSeam.forEach((d, v) => { V[v] = [V[v][0], seam + 2e-5, V[v][2]]; });
+  return { V, T: out };
+}
+// the nearest crossing of a ray from the head's centre with its triangles —
+// the triangles binned by direction first (17k of them), each ray tests a few
+function rayField(V, T, NA, NB) {
+  const bins = Array.from({ length: NA * NB }, () => []);
+  const cell = (x, y, z) => { const l = Math.hypot(x, y, z) || 1, lat = Math.asin(y / l), lon = Math.atan2(x, z); return [Math.floor((lon + Math.PI) / (2 * Math.PI) * NA), Math.floor((lat + Math.PI / 2) / Math.PI * NB)]; };
+  for (let i = 0; i < T.length; i += 3) {
+    const cs = [T[i], T[i + 1], T[i + 2]].map((v) => cell(V[v][0], V[v][1], V[v][2]));
+    let a0 = Math.min(...cs.map((c) => c[0])), a1 = Math.max(...cs.map((c) => c[0]));
+    const b0 = Math.max(0, Math.min(...cs.map((c) => c[1])) - 1), b1 = Math.min(NB - 1, Math.max(...cs.map((c) => c[1])) + 1);
+    const wrap = a1 - a0 > NA / 2;                    // across the back seam
+    const list = wrap ? [...Array(NA).keys()].filter((a) => a <= a0 + 1 || a >= a1 - 1) : [...Array(a1 - a0 + 3).keys()].map((k) => (a0 - 1 + k + NA) % NA);
+    for (let bb = b0; bb <= b1; bb++) for (const aa of list) bins[bb * NA + aa].push(i);
+  }
+  const R = new Float32Array((NA + 1) * (NB + 1));
+  for (let ib = 0; ib <= NB; ib++) {
+    const lat = -Math.PI / 2 + Math.PI * ib / NB;
+    for (let ia = 0; ia <= NA; ia++) {
+      const lon = -Math.PI + 2 * Math.PI * ia / NA, dx = Math.cos(lat) * Math.sin(lon), dy = Math.sin(lat), dz = Math.cos(lat) * Math.cos(lon);
+      const list = bins[Math.min(NB - 1, ib) * NA + (ia % NA)];
+      let best = Infinity;
+      for (const i of list) {
+        const a = V[T[i]], b = V[T[i + 1]], c = V[T[i + 2]];
+        const e1x = b[0] - a[0], e1y = b[1] - a[1], e1z = b[2] - a[2], e2x = c[0] - a[0], e2y = c[1] - a[1], e2z = c[2] - a[2];
+        const px = dy * e2z - dz * e2y, py = dz * e2x - dx * e2z, pz = dx * e2y - dy * e2x, det = e1x * px + e1y * py + e1z * pz;
+        if (Math.abs(det) < 1e-14) continue;
+        const inv = 1 / det, tx = -a[0], ty = -a[1], tz = -a[2], u = (tx * px + ty * py + tz * pz) * inv;
+        if (u < 0 || u > 1) continue;
+        const qx = ty * e1z - tz * e1y, qy = tz * e1x - tx * e1z, qz = tx * e1y - ty * e1x, v = (dx * qx + dy * qy + dz * qz) * inv;
+        if (v < 0 || u + v > 1) continue;
+        const t = (e2x * qx + e2y * qy + e2z * qz) * inv;
+        if (t > 1e-5 && t < best) best = t;
+      }
+      R[ib * (NA + 1) + ia] = isFinite(best) ? Math.min(best, 0.16) : 0.1;
+    }
+  }
+  return R;
+}
+function headFit() {
+  if (headCache) return headCache;
+  const { V, T } = headData(), NA = 96, NB = 54, R = rayField(V, T, NA, NB);
+  const shape = (d) => {
+    const lat = Math.asin(Math.max(-1, Math.min(1, d.y))), lon = Math.atan2(d.x, d.z);
+    const fb = (lat + Math.PI / 2) / Math.PI * NB, fa = (lon + Math.PI) / (2 * Math.PI) * NA;
+    const ib = Math.min(NB - 1, Math.floor(fb)), ia = Math.min(NA - 1, Math.floor(fa)), tb = fb - ib, ta = fa - ia;
+    const g = (bb, aa) => R[bb * (NA + 1) + aa];
+    const r = (g(ib, ia) * (1 - ta) + g(ib, ia + 1) * ta) * (1 - tb) + (g(ib + 1, ia) * (1 - ta) + g(ib + 1, ia + 1) * ta) * tb;
+    return { x: d.x * r, y: d.y * r, z: d.z * r };
+  };
+  const k = HEAD.k, loc = (y) => (y - HEAD.cy) * k;
+  const layout = { ex: 0.131 * k, ey: loc(0.767), a: 0.039 * k, bu: 0.0125 * k, bl: 0.0125 * k, my: loc(0.5), mw: 0.085 * k, gap: 0.0005, teethBack: 0.011, curve: 0 };
+  // the eyeballs sit just behind its openings' rims (front at z 0.27 its units)
+  return (headCache = { shape, layout, eyeZ: (0.262 - HEAD.cz) * k - 0.0124, V, T });
+}
+// its neck: ours, running up into the opening under its jaw (measured: x ±0.174,
+// from y 0.34 at the front to 0.42 at the back, z −0.264 … 0.122)
+function headNeck(head, H, sh, bw) {
+  const top = H - 0.116 * sh, k = HEAD.k, P = (y, z) => [0, top + sh * (y - HEAD.cy) * k, 0.012 * sh + sh * (z - HEAD.cz) * k];
+  const zc = (-0.264 + 0.122) / 2, half = (0.122 + 0.264) / 2;
+  const sec = (y, rx, f, b, w) => { const p = P(y, zc); return { p, rx: rx * k * sh, f: f * k * sh, b: b * k * sh, n: 2.2, w }; };
+  return [
+    { p: [0, 0.822 * H, -0.01], rx: 0.064 * Math.sqrt(bw), f: 0.054, b: 0.06, w: { chest: 0.6, neck: 0.4 }, n: 2.3 },
+    sec(0.2, 0.2, half * 0.95, half * 0.95, { neck: 0.8, chest: 0.2 }),
+    sec(0.3, 0.19, half * 0.97, half * 0.97, { neck: 0.6, head: 0.4 }),
+    sec(0.4, 0.17, half * 0.9, half * 0.92, { neck: 0.3, head: 0.7 }),
+    sec(0.5, 0.14, half * 0.7, half * 0.75, { head: 1 }),
+  ];
 }
 })();

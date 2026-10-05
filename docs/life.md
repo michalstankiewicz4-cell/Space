@@ -13,8 +13,9 @@ the game yet. The plan and its reasons: IDEAS.md, "Life forms".
 | `js/lifekit/lifekit.js` | The core (`window.LifeKit`): the registry (`CREATURES`, `register`, `MOVES`, `registerMove`), `build(id, params, opts)`, and `util` — `skeleton`, `sweep`, `merge`, `materials`, `skinned`, `rigid`, `rng`. |
 | `js/lifekit/move/walk.js` | Moving on land: a biped's gaits (stand, walk, run, T-pose). Swimming, flying and space come as `move/<medium>.js`. |
 | `js/lifekit/parts/face.js` | A humanoid head with a face that moves (`LifeKit.face`): openings for the eyes and the mouth, teeth, a tongue, 14 expressions as morph targets. Used by the human; meant for androids and other humanoids too. |
-| `js/lifekit/creatures/human.js` | The humans: "Human" (our sculpt) and "Human II" (the bust's head and neck). One file per creature. |
-| `js/lifekit/data/bust-head.js` | A low-poly bust's mesh (187 points, 360 triangles), the shape of Human II's head and neck — "Lowpoly face model" by void (sketchfab.com/void22), CC BY 4.0, changed. The credit is in the file and in the lab's blurb. |
+| `js/lifekit/creatures/human.js` | The humans: "Human I" (a bust's head and neck) and "Human II" (a made low-poly head); our own round sculpt isn't listed. One file per creature. |
+| `js/lifekit/data/bust-head.js` | Human I's head and neck: "Lowpoly face model" by void (sketchfab.com/void22), CC BY 4.0, changed — 187 points, 360 triangles. |
+| `js/lifekit/data/human-head.js` | Human II's head: "Low-poly Human Head" by Chermiful (sketchfab.com/Chermiful), CC BY 4.0, changed — 8.6k points, 17.1k triangles, quantised. The credit is in the file and in the lab's blurb. |
 | `labs/life.html` + `js/labs/life.js` | The lab: the creatures, MOVEMENT (gait, speed, in place / around), VIEW (skeleton, wireframe, scale bar), BODY (the creature's own parameters, generated from `params`), MODEL and PERFORMANCE. |
 
 Load order on a page: THREE → `lifekit.js` → the `move/` files → `parts/` →
@@ -176,52 +177,59 @@ nearest the hairline is pulled onto it, the shell meets the skin at the
 edge and rises to its thickness above — a clean hairline instead of a
 ragged one.
 
-### Human II: a head after a bust (labs 1.13.0)
+### Two low-poly humans (labs 1.13–1.15)
 
-The user asked for a second human whose head and neck have the reference
-bust's shape (the first human stays as it was). CC BY 4.0 allows it with
-credit and a note of the changes — both are in the data file's header,
-the lab's blurb and here.
+Since 1.15 the lab lists two humans, the same body (the user's call,
+2026-10-06: "the round one goes, the two low-poly ones stay"):
 
-- **The head**: the bust turned Y-up, scaled so its crown and chin meet
-  ours (k = 0.218 m / its 1.055 units), centred front-to-back. For a
-  128 × 72 grid of directions, a ray from the head's centre finds the
-  nearest crossing of its triangles (Möller–Trumbore) — a field of radii
-  the face's grid samples (`baseFn` in `LifeKit.face.build`, bilinear).
-  Below the jaw the underside is cut flat (−0.11 m), inside the neck.
-  Smooth style: the field averaged three times (the facets melt);
-  low-poly: kept as is, so decimation finds the bust's own planes again.
-- **Our features off** (`features: 0`: its nose, brows and chin are
-  used), our lips softened (`lips: 0.45`); the eyes and the mouth placed
-  where the bust has them (`layout`), the mouth closed at rest (a 0.5 mm
-  slit), the teeth further back; our ears at its skull's side.
-- **The neck**: the bust is sliced at three heights between the chin and
-  where it widens into the shoulders (−0.465 … −0.535 its units); each
-  slice's width and depth become a skinned section of our neck (so a nod
-  still bends it), joined to the torso below and running on up inside the
-  head (no open rim under the chin).
-- No head tilt for this one (the bust stands upright already).
+- **Human I** — the head and the neck after a low-poly bust,
+  **"Lowpoly face model" by void** (sketchfab.com/void22), CC BY 4.0,
+  changed (`data/bust-head.js`; BODY → Head: its own triangles 1:1, or
+  fitted to our grid) — see "Human I" below.
+- **Human II** — **"Low-poly Human Head" by Chermiful**
+  (sketchfab.com/Chermiful), CC BY 4.0, changed (`data/human-head.js`).
 
-**The head 1:1** (labs 1.14.0, BODY → Head, the default): the bust's own
-triangles instead of our grid — `LifeKit.face.build({ mesh: { V, T, s } })`.
+Our own round sculpt (the build with no variant) is no longer listed; its
+code stays — the bust's "fitted" head runs on its grid. Each credit is in
+its data file, in the lab's blurb and here.
 
-- `subdivide`: every triangle cut into s² (s = 11) **on its own plane**,
-  so the shape doesn't change at all; the points are shared along edges.
-- Each point goes through the same function as our grid's (`pointFrom`):
-  the eyes' openings and lids, the mouth's slit, every expression — only
-  its bare surface point is the bust's vertex itself.
-- `facetsOf`: unindexed, **each small triangle keeps its parent's
-  normal** — shaded exactly like the original; the lids, the lips and the
-  cheeks move the surface without breaking the facets into noise.
-- On an irregular mesh the edges of the openings are **squeezed toward**
-  their curves instead of pulled onto them (`snap` with `SOFT`: no folded
-  triangles), and the smile's and the jaw's pull is wider (its lips are a
-  few long thin triangles that crease under a narrow one). None of this
-  changes our own grid's head (the kit check holds it).
-- Cut where its neck widens into the shoulders (−0.52 its units); our
-  neck (its slices) carries on below. Its ears, no ears of ours; no lip
-  bulge or colours of ours (blush, brows) — placed for our face.
-- ~45k triangles in the whole Human II this way (the head ~39k).
+#### Human II
+
+- **The data**: 8.6k points, 17.1k triangles, welded, stored quantised
+  (Int16 points, Uint16 triangles, base64) — 200 KB. Scaled so its crown
+  and chin meet ours (k = 0.218 m / its 0.766), face forward, upright.
+- **1:1**: its own triangles are the head (`LifeKit.face.build({ mesh })`,
+  no subdivision), each keeping its own normal (`facetsOf`), so at rest it
+  looks exactly as made.
+- **Changes to it** (`headData`): the opening under the jaw closed with a
+  fan; the lips split — the row where they meet (y 0.500 ± 0.006 its
+  units) gets copies for the triangles below, so the jaw parts them;
+  triangles bridging the lips inside the mouth and its inner pocket are
+  left out (our dark mouth, teeth and tongue are behind). The mouth line
+  is straight for it (`curve: 0` — ours curves down at the corners, which
+  sent the lower copies to the upper side).
+- **Its eyes**: our eyeballs sit in its own openings (centres ±0.131,
+  0.767; front at z 0.262 its units); its openings stay as made — the lids
+  are **shells** on the eyeball (`lids`), the upper one turning down to
+  blink (`eyeBlink*`, `eyeWide*` drive its angle); no lids in its skin.
+- **Its hair**: its own triangles above a hairline (not the ears), lifted
+  along their normals (1.5–6 mm).
+- **Its neck**: ours, running up into its opening under the jaw.
+- The face's other expressions (jaw, smile, frown, pucker, brows, cheeks)
+  move its points through the same function as our grid's (`pointFrom`).
+
+### Human I: a head after a bust (labs 1.13–1.14)
+
+The bust's surface shaped our grid first (1.13, "fitted"), then its own
+triangles became the head (1.14, "1:1", the default): `bustFit` samples
+a field of radii from the head's centre (rays against its triangles,
+smoothed for the smooth style); `bustNeck` slices its neck into our neck's
+sections; `bustHeadTris` keeps its triangles above where the neck widens
+into the shoulders; 1:1 cuts each into 121 on its own plane (`s: 11`) so
+our lids and lips can move in its skin, each keeping its parent's normal.
+Its eyes and mouth are ours, cut into its surface (it has none open);
+the smile's and the jaw's pull is wider on it (`SOFT`), fading in under
+the mouth line so its few long lip triangles don't crease.
 
 ## Limits (honest)
 

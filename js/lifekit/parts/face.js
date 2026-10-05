@@ -41,6 +41,8 @@ let BASE = null, FEAT = 1;
 // edges: our grid pulls its nearest row onto them; a mesh's irregular
 // triangles are squeezed toward them instead (no folds) — SOFT
 let SOFT = false;
+// OWN: a made head with its own eye openings (lid shells on our eyeballs, no lids in its skin)
+let OWN = false;
 const snap = (v, edge, band, dir) => {   // v beyond the edge by 0…band (dir +1 above, −1 below)
   const d = (v - edge) * dir;
   if (d <= 0 || d >= band) return v;
@@ -84,7 +86,7 @@ function pointFrom(b, F, L, ez, E) {
   const info = { eye: false, lid: 0, lower: false, lip: 0, mouthEdge: 0, upLip: 0, loLip: 0 };
   // --- the eye: the almond, the lids over the eyeball ---
   let ex = Math.abs(x) - L.ex, ey = y - L.ey, inLidZone = false, zLid = 0, wl = 0;
-  if (fr > 0.5) {
+  if (fr > 0.5 && !OWN) {
     const q = 1 - (ex / L.a) ** 2, tilt = 0.0011 * (ex / L.a);
     const zoneX = 0.0185, zoneUp = 0.0128, zoneDn = 0.0112;
     const ze = (ex / zoneX) ** 2 + (ey / (ey > 0 ? zoneUp : zoneDn)) ** 2;
@@ -118,7 +120,7 @@ function pointFrom(b, F, L, ez, E) {
     }
   }
   // --- the mouth: the slit between the lips, the lips ---
-  const lineY = L.my - 0.0022 * (x / L.mw) ** 2;
+  const lineY = L.my - (L.curve != null ? L.curve : 0.0022) * (x / L.mw) ** 2;
   let my = y - lineY;
   const qm = 1 - (x / L.mw) ** 2, gap = qm > 0 ? L.gap * Math.sqrt(qm) : 0;
   if (fr > 0.5 && !inLidZone) {
@@ -173,7 +175,7 @@ function pointFrom(b, F, L, ez, E) {
     // about the hinge; it fades out past the mouth's corners and toward the ears
     const below = U.smooth((lineY - y) / 0.03);
     const reach = L.mw * 0.9 + 0.045 * below;
-    const w = (1 - U.smooth((Math.abs(x) - reach + 0.01) / (SOFT ? 0.08 : 0.05))) * U.smooth((z + 0.02) / 0.04) * (SOFT ? U.smooth((lineY - y + 0.002) / 0.008) : 1);
+    const w = (1 - U.smooth((Math.abs(x) - reach + 0.01) / (SOFT ? 0.08 : 0.05))) * U.smooth((z + 0.02) / 0.04) * (SOFT && !OWN ? U.smooth((lineY - y + 0.002) / 0.008) : 1);
     const th = JAW_MAX * jw * w, dy = y - HINGE.y, dz = z - HINGE.z, c = Math.cos(th), s = Math.sin(th);
     y = HINGE.y + dy * c - dz * s; z = HINGE.z + dy * s + dz * c;
   }
@@ -304,13 +306,13 @@ function grid(det) {
   return { dirs, uvs, NC, NL };
 }
 function build(o) {
-  BASE = o.baseFn || skull; FEAT = o.features == null ? 1 : o.features; SOFT = !!o.mesh;
-  try { return buildFace(o); } finally { BASE = skull; FEAT = 1; SOFT = false; }
+  BASE = o.baseFn || skull; FEAT = o.features == null ? 1 : o.features; SOFT = !!o.mesh; OWN = !!o.ownEyes;
+  try { return buildFace(o); } finally { BASE = skull; FEAT = 1; SOFT = false; OWN = false; }
 }
 function buildFace(o) {
   const F = o.F, L = Object.assign(layout(F), o.layout || {}), det = o.detail || 1, mats = o.mats;
   const group = new THREE.Group();
-  const ez = eyeDepth(F, L) - R_EYE - 0.0018;
+  const ez = o.eyeZ != null ? o.eyeZ : eyeDepth(F, L) - R_EYE - 0.0018;
   const G = grid(det), M = o.mesh ? subdivide(o.mesh.V, o.mesh.T, o.mesh.s || 9) : null;
   const n = M ? M.P.length : G.dirs.length;
   const at = (i, E) => (M ? pointFrom({ x: M.P[i][0], y: M.P[i][1], z: M.P[i][2] }, F, L, ez, E) : point(G.dirs[i], F, L, ez, E));
@@ -337,8 +339,8 @@ function buildFace(o) {
     const x = (rest[a * 3] + rest[b * 3] + rest[c * 3]) / 3, y = (rest[a * 3 + 1] + rest[b * 3 + 1] + rest[c * 3 + 1]) / 3, z = (rest[a * 3 + 2] + rest[b * 3 + 2] + rest[c * 3 + 2]) / 3;
     if (z < 0.03) return false;
     const ex = Math.abs(x) - L.ex, ey = y - L.ey, q = 1 - (ex / L.a) ** 2, tilt = 0.0011 * (ex / L.a);
-    if (q > 0.07 && ey < L.bu * Math.sqrt(q) + tilt - 2e-5 && ey > -L.bl * Math.sqrt(q) + tilt + 2e-5) return true;
-    const lineY = L.my - 0.0022 * (x / L.mw) ** 2, qm = 1 - (x / L.mw) ** 2;
+    if (!o.ownEyes && q > 0.07 && ey < L.bu * Math.sqrt(q) + tilt - 2e-5 && ey > -L.bl * Math.sqrt(q) + tilt + 2e-5) return true;
+    const lineY = L.my - (L.curve != null ? L.curve : 0.0022) * (x / L.mw) ** 2, qm = 1 - (x / L.mw) ** 2;
     return qm > 0 && Math.abs(y - lineY) < L.gap * Math.sqrt(qm) - 2e-5;
   };
   const keptPar = [];
@@ -411,10 +413,19 @@ function buildFace(o) {
   morphed.push(lower, tongue, cav);
 
   // ---------- the eyes, the ears ----------
-  const eyes = [];
+  const eyes = [], lids = [];
   [1, -1].forEach((sg) => {
     const eg = o.lowpoly ? new THREE.SphereGeometry(R_EYE, 10, 8) : new THREE.SphereGeometry(R_EYE, 28, 20); eg.rotateX(Math.PI / 2);
     const e = new THREE.Mesh(eg, mats.eye(o.irisHex)); e.position.set(sg * L.ex, L.ey, ez); group.add(e); eyes.push(e);
+    if (o.ownEyes) {
+      // a made head's lids: shells on the eyeball, the upper one turning down
+      // over it to blink (its own openings stay as made)
+      const rl = R_EYE * 1.1, mat = mats.skin(o.tone, false);
+      const up = new THREE.Mesh(new THREE.SphereGeometry(rl, 22, 10, 0, Math.PI * 2, 0, 1.9), mat);
+      const lo = new THREE.Mesh(new THREE.SphereGeometry(rl, 22, 6, 0, Math.PI * 2, Math.PI - 1.25, 1.25), mat);
+      up.position.copy(e.position); lo.position.copy(e.position); group.add(up, lo);
+      lids.push({ up, side: sg > 0 ? "Left" : "Right" });
+    }
     if (o.ears === false) return;
     const ag = o.lowpoly ? new THREE.SphereGeometry(1, 7, 5) : new THREE.SphereGeometry(1, 16, 12); ag.scale(0.0085, 0.03, 0.019);
     const ear = new THREE.Mesh(ag, mats.skin(o.tone, false)); ear.castShadow = true;
@@ -425,7 +436,26 @@ function buildFace(o) {
   // The row of vertices nearest the hairline is pulled onto it (a clean edge,
   // as with the lids); the shell meets the skin at the edge and rises to its
   // thickness above it. The low-poly style decimates it, symmetric.
-  if (o.hair !== 3) {
+  if (o.hair !== 3 && M) {
+    // a made head: the hair is its own triangles above the hairline, lifted
+    // along their normals — the same facets, a little bigger
+    const lift = o.hair === 1 ? 0.0015 : 0.004, hg0 = new THREE.BufferGeometry(), all = M.T;
+    hg0.setAttribute("position", new THREE.Float32BufferAttribute(M.P.flat(), 3)); hg0.setIndex(all); hg0.computeVertexNormals();
+    const nrm = hg0.attributes.normal.array, line = (q) => { const az = Math.abs(Math.atan2(q[0], q[2])) / Math.PI;
+      return az < 0.3 ? U.lerp(0.075, 0.05, az / 0.3) : az < 0.6 ? U.lerp(0.05, 0.02, (az - 0.3) / 0.3) : U.lerp(0.02, -0.05, (az - 0.6) / 0.4); };
+    const used = new Map(), hp = [], hix = [];
+    const take = (v) => { if (!used.has(v)) { used.set(v, hp.length / 3); const q = M.P[v], k = lift * (o.hair === 1 ? 1 : 1 + 0.6 * U.smooth((q[1] - 0.03) / 0.08)); hp.push(q[0] + nrm[v * 3] * k, q[1] + nrm[v * 3 + 1] * k, q[2] + nrm[v * 3 + 2] * k); } return used.get(v); };
+    for (let t = 0; t < all.length; t += 3) {
+      const c = [0, 1, 2].map((k) => M.P[all[t + k]]), cy = (c[0][1] + c[1][1] + c[2][1]) / 3, mid = [(c[0][0] + c[1][0] + c[2][0]) / 3, cy, (c[0][2] + c[1][2] + c[2][2]) / 3];
+      if (cy > line(mid) && !(Math.abs(mid[0]) > 0.072 && cy < 0.035)) hix.push(take(all[t]), take(all[t + 1]), take(all[t + 2]));
+    }
+    hg0.dispose();
+    const hgeo = new THREE.BufferGeometry();
+    hgeo.setAttribute("position", new THREE.Float32BufferAttribute(hp, 3));
+    hgeo.setAttribute("uv", new THREE.Float32BufferAttribute(hp.map((v, i) => (i % 3 === 1 ? null : v * 14)).filter((v) => v !== null), 2));
+    hgeo.setIndex(hix); const flatH = hgeo.toNonIndexed(); hgeo.dispose(); flatH.computeVertexNormals();
+    const hm = new THREE.Mesh(flatH, mats.hair(o.hairHex, false)); hm.castShadow = true; group.add(hm);
+  } else if (o.hair !== 3) {
     const thick = o.hair === 1 ? 1.012 : 1.035;
     const hn = G.dirs.length, hp = new Float32Array(hn * 3), keep = new Uint8Array(hn), hrow = G.NC + 1;
     const hairline = (az) => (az < 0.3 ? U.lerp(0.07, 0.045, az / 0.3) : az < 0.6 ? U.lerp(0.045, 0.012, (az - 0.3) / 0.3) : U.lerp(0.012, -0.06, (az - 0.6) / 0.4));
@@ -462,11 +492,14 @@ function buildFace(o) {
   const baseVals = {}; EXPRESSIONS.forEach((k) => { baseVals[k] = 0; });
   const auto = {}; EXPRESSIONS.forEach((k) => { auto[k] = 0; });
   const look = { yaw: 0, pitch: 0, ty: 0, tp: 0, next: 1 }, blink = { next: 2, t: -1 };
+  const val = (k) => Math.max(0, Math.min(1, (baseVals[k] || 0) + (auto[k] || 0)));
   function apply() {
     morphed.forEach((m) => {
       const dict = m.morphTargetDictionary;
-      for (const k in dict) m.morphTargetInfluences[dict[k]] = Math.max(0, Math.min(1, baseVals[k] + auto[k]));
+      for (const k in dict) m.morphTargetInfluences[dict[k]] = val(k);
     });
+    // the lid shells: open at the opening's top rim (−0.6 rad), closed past the middle (−0.2)
+    lids.forEach((l) => { l.up.rotation.x = -0.6 - 0.18 * val("eyeWide" + l.side) + 0.42 * val("eyeBlink" + l.side); });
   }
   function gaze(yaw, pitch) { eyes.forEach((e) => { e.rotation.set(-pitch, yaw, 0); }); }
   function update(t, dt, st) {

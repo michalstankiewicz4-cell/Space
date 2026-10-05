@@ -551,21 +551,9 @@
    6.438
   ]
  },
- "life/human": {
-  "tris": 60243,
-  "verts": 42428,
-  "meshes": 20,
-  "materials": 12,
-  "textures": 6,
-  "size": [
-   0.67,
-   1.792,
-   0.319
-  ]
- },
  "life/humanBust": {
-  "tris": 44812,
-  "verts": 123696,
+  "tris": 55500,
+  "verts": 156398,
   "meshes": 18,
   "materials": 12,
   "textures": 4,
@@ -573,6 +561,18 @@
    0.669,
    1.773,
    0.309
+  ]
+ },
+ "life/humanHead": {
+  "tris": 25261,
+  "verts": 62549,
+  "meshes": 22,
+  "materials": 12,
+  "textures": 4,
+  "size": [
+   0.669,
+   1.767,
+   0.318
   ]
  },
  "system/game": {
