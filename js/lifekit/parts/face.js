@@ -354,6 +354,12 @@ function build(o) {
       if (st.gait === "run") auto.jawOpen = 0.18 + 0.08 * Math.sin(t * 6);
       auto.browInnerUp = 0.08 * Math.max(0, Math.sin(t * 0.37));
     } else gaze(0, 0);
+    // the body's mood layers show on the face too (move/walk.js LAYERS)
+    const Ly = st.layers || {};
+    if (Ly.sad) { auto.browInnerUp += 0.7 * Ly.sad; auto.mouthFrownLeft += 0.6 * Ly.sad; auto.mouthFrownRight += 0.6 * Ly.sad; }
+    if (Ly.angry) { auto.browDownLeft += 0.85 * Ly.angry; auto.browDownRight += 0.85 * Ly.angry; auto.mouthFrownLeft += 0.3 * Ly.angry; auto.mouthFrownRight += 0.3 * Ly.angry; }
+    if (Ly.sneak) { auto.eyeWideLeft += 0.3 * Ly.sneak; auto.eyeWideRight += 0.3 * Ly.sneak; auto.browDownLeft += 0.2 * Ly.sneak; auto.browDownRight += 0.2 * Ly.sneak; }
+    if (Ly.wave) { auto.mouthSmileLeft += 0.5 * Ly.wave; auto.mouthSmileRight += 0.5 * Ly.wave; }
     if (st.talk) {
       const s = Math.abs(Math.sin(t * 9.3) * Math.sin(t * 3.1 + 1));
       auto.jawOpen = Math.max(auto.jawOpen, 0.08 + 0.35 * s);

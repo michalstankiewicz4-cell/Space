@@ -9,6 +9,20 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.11.0] — 2026-10-05
+
+### Added
+- **The life lab: gaits that blend, and layers on top.** Changing between
+  stand, walk, run and the T-pose fades (~0.35 s) instead of jumping; the
+  speed changes like a body's (4 m/s² at most) and a walk turns into a
+  jog, then a run, as it rises. **LAYERS** add a pose on top of any gait,
+  each with a weight: sneak (the crouch lowers the body by itself — the
+  pelvis comes from the legs), sad, angry, nod, shake the head, wave, look
+  around; sad, angry, sneaking and waving show on the face too. A **slow
+  motion** slider. The idea from the three.js additive-animation example
+  (base actions with crossfades, additive poses with weights); no model or
+  clips taken from it — the motion is computed.
+
 ## [1.10.0] — 2026-10-05
 
 ### Added

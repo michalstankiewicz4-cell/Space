@@ -67,6 +67,26 @@ heel and ball lengths, pelvis and hip heights).
   swing against their legs, the head stays steady; idle breathes and
   shifts its weight.
 
+### Blending and layers (labs 1.11.0)
+
+From the three.js additive-animation example (its model and clips not
+taken — ours are computed): every gait now gives a **pose** — plain
+numbers (Euler angles per bone, the legs as hip / knee / foot pitch, the
+pelvis's sway and flight) — and only `apply` touches the bones.
+
+- **The base**: stand, T-pose, or moving; their weights fade toward the
+  chosen one (~0.35 s). Moving mixes walk and run by the speed
+  (`locoParams`: from 2.0 to 3.4 m/s the numbers slide from one to the
+  other); the speed itself eases at 4 m/s².
+- **Layers** (`LAYERS`, `state.layers = { name: weight }`): added to the
+  base pose before the pelvis height is worked out — sneak (hips and knees
+  bent, a lean, arms ready: the pelvis drops by itself), sad (the chest,
+  the neck and the head down, a damped arm swing), angry (elbows out, the
+  head forward), nod, shake, wave (the right arm up, the forearm waving),
+  look (around). The face takes the moods too (`face.update` reads
+  `state.layers`).
+- The lab's **time** slider scales the clock (slow motion).
+
 ## The human (creatures/human.js)
 
 Real proportions (about 7.5 heads), 19 bones, ~25k triangles.

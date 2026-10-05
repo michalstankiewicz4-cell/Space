@@ -62,7 +62,7 @@ const scaleBar = (() => {
 
 // ---------- the creature ----------
 const state = { id: LK.CREATURES[0].id, params: {}, gait: "idle", speed: 1.4, path: "inplace", bones: false, wire: false, scale: true,
-  face: {}, lively: true, talk: false };
+  face: {}, lively: true, talk: false, layers: {}, timeScale: 1 };
 let cre = null, helper = null;
 const stage = new THREE.Group(); scene.add(stage);
 const travel = { a: 0, R: 4 };
@@ -186,6 +186,16 @@ function showSpeed() {
   LabKit.paintSlider($("spSlider"));
 }
 $("spSlider").addEventListener("input", () => { state.speed = +$("spSlider").value; showSpeed(); });
+$("tsSlider").addEventListener("input", () => { state.timeScale = +$("tsSlider").value; $("tsVal").textContent = Math.round(state.timeScale * 100) + "%"; LabKit.paintSlider($("tsSlider")); });
+LabKit.paintSlider($("tsSlider"));
+// the layers (move/walk.js LAYERS): added on top of the gait, each with a weight
+const LAYER_NAMES = { sneak: "Sneak", sad: "Sad", angry: "Angry", nod: "Nod", shake: "Shake the head", wave: "Wave", look: "Look around" };
+(LK.MOVES.walk.LAYERS || []).forEach((k) => {
+  const l = document.createElement("label"); l.className = "sl"; l.innerHTML = "<span></span><b>0%</b>"; l.firstChild.textContent = LAYER_NAMES[k] || k;
+  const sl = document.createElement("input"); sl.type = "range"; sl.min = 0; sl.max = 1; sl.step = 0.01; sl.value = 0;
+  sl.addEventListener("input", () => { state.layers[k] = +sl.value; l.lastChild.textContent = Math.round(sl.value * 100) + "%"; LabKit.paintSlider(sl); });
+  LabKit.paintSlider(sl); $("layerSliders").append(l, sl);
+});
 const setPath = (p) => { state.path = p; $("pInPlace").classList.toggle("on", p === "inplace"); $("pCircle").classList.toggle("on", p === "circle"); if (p === "inplace") { stage.position.set(0, 0, 0); stage.rotation.y = 0; } applyView(); };
 $("pInPlace").addEventListener("click", () => setPath("inplace"));
 $("pCircle").addEventListener("click", () => setPath("circle"));
@@ -204,10 +214,12 @@ function resize() {
 }
 window.addEventListener("resize", resize);
 const clock = new THREE.Clock(), prev = new THREE.Vector3(), now = new THREE.Vector3();
+let t = 0;
 function frame() {
-  const t0 = performance.now(), dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+  const t0 = performance.now(), dt = Math.min(clock.getDelta(), 0.05) * state.timeScale;
+  t += dt;
   const moving = state.gait === "walk" || state.gait === "run";
-  cre.animate(t, dt, { gait: state.gait, speed: state.speed, lively: state.lively, talk: state.talk });
+  cre.animate(t, dt, { gait: state.gait, speed: state.speed, lively: state.lively, talk: state.talk, layers: state.layers });
   if (moving && state.path === "inplace") {
     // the ground slides back under the feet (one texture tile is 5 m)
     floorTex.offset.y -= state.speed * dt / 5;
