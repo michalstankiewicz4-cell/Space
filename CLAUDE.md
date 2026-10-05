@@ -43,8 +43,8 @@ the player's own progress stays in `localStorage`.
   player understands (the user's call, 2026-10-03; under-the-hood work:
   say what it means for them, e.g. "fixes and stability"). **Not** for: `admin.html` (+ `js/admin/`,
   `css/admin.css`, `css/devTheme.css`), **the labs in `labs/`** (their start
-  screen `labs.html` stays in the root; the root's `ship.html`… are
-  redirects for old devlog links — keep them) with the menu bar
+  screen `labs.html` stays in the root; new devlog links point to
+  `labs/…`) with the menu bar
   `js/labkit/menubar.js` on every lab and tool page (a new lab or tool
   goes into its lists; Dev Tools → LABS in the game has one button, to
   `labs.html`), the labs `ship.html` /
