@@ -18,7 +18,7 @@
 // in labs/CHANGELOG.md (CLAUDE.md, "Versioning"): x.y.z — y a new lab, tool
 // or feature, z a fix or a small change. Shown on the bar, the start screen
 // and in HELP → About.
-const LABS_VERSION = "1.2.0";
+const LABS_VERSION = "1.3.0";
 const MENU_H = 32;
 const ROOT = (document.currentScript && document.currentScript.src || "").replace(/js\/labkit\/menubar\.js.*$/, "");
 const PARTS = location.pathname.split("/"), HERE = PARTS.pop() || "index.html", DIR = PARTS.pop() || "";
@@ -37,6 +37,7 @@ const LABS = [
   { file: "labs/surface.html", name: "Surface lab", doc: "docs/surface.md", keys: [["W / S, A / D", "drive, turn"], ["Shift", "boost"], ["Right-drag / wheel", "camera"], ["B", "build the first module"], ["R / Esc / Delete", "turn / cancel / remove a module"]] },
   { file: "labs/buildings.html", name: "Building lab", doc: "docs/surface.md", keys: [["Drag / wheel", "turn and zoom the camera"]] },
   { file: "labs/vehicles.html", name: "Vehicle lab", doc: "docs/vehicles.md", keys: [["W / S, A / D", "drive, steer"], ["Drag / wheel", "camera"]] },
+  { file: "labs/sound.html", name: "Sound lab", doc: "docs/sound.md", keys: [["Space", "play / stop"], ["MOODS", "a whole mood at once"], ["SEED", "the same seed plays the same piece"]] },
   { file: "labs/marine.html", name: "Sea lab", doc: "docs/marine.md", keys: [["W / S, A / D", "drive, steer"], ["Drag / wheel", "camera"]] },
 ];
 const TOOLS = [

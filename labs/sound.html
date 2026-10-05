@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swarm Protocol // Sound lab</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../css/fonts.css">
+<!-- The sound lab: MusicKit (js/musickit/musickit.js) — the game's music,
+     generated live from layers, parameters and a seed, like ShipKit builds
+     ships. Play it, shape it, record it. docs/sound.md. -->
+<link rel="stylesheet" href="../css/lab.css">
+<style>
+.hidden{ display:none !important; }
+#viz{ position:fixed; inset:0; width:100%; height:100%; display:block; background:#01020a; }
+#btnPlay{ width:100%; height:44px; font-size:17px; letter-spacing:2px; margin-top:4px; }
+#btnPlay.on{ --c:#f8bb56; color:#241404; background:linear-gradient(180deg,#ffd98f,#e7a23f); border-color:#f8bb56; }
+#nowPlaying{ margin-top:8px; font-family:var(--fontLabel); font-size:13.5px; letter-spacing:.6px; color:#9fb1ff; min-height:18px; }
+#nowPlaying b{ color:#ffe2a8; font-weight:500; }
+.btnGrid{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.btnGrid .tBtn{ height:28px; font-size:13px; }
+.seedRow, .keyRow{ display:grid; grid-template-columns:1fr 34px; gap:6px; margin-top:6px; }
+.keyRow{ grid-template-columns:70px 1fr; }
+input.lab, select.lab, textarea.lab{ height:28px; border:1.5px solid #3c55d8; border-radius:6px; background:#02061a; color:#e6ebff;
+  font-family:var(--fontBody); font-size:13.5px; padding:0 6px; min-width:0; }
+textarea.lab{ height:96px; width:100%; padding:6px; resize:vertical; line-height:18px; }
+.lrow{ display:grid; grid-template-columns:76px 1fr 38px; gap:8px; align-items:center; margin-top:4px; font-size:13.5px; color:#c7d0ff; }
+.lrow b{ font-weight:400; color:#fff; text-align:right; font-size:12.5px; }
+.lrow input{ margin:0; }
+.twoBtns{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
+.twoBtns .tBtn{ height:28px; font-size:12.5px; }
+#recState{ font-size:12.5px; color:#7f92e8; margin-top:6px; min-height:16px; }
+#tapHint{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:1; pointer-events:none; text-align:center;
+  font-family:var(--fontLabel); letter-spacing:3px; color:#8fa4ff; font-size:15px; opacity:.85; transition:opacity .6s; }
+#tapHint b{ display:block; font-size:34px; color:#ffe2a8; letter-spacing:4px; margin-bottom:6px; }
+</style>
+</head>
+<body>
+<script src="../js/labkit/menubar.js"></script>
+<canvas id="viz"></canvas>
+<div id="tapHint"><b>PRESS PLAY</b>the music is made live, here, from code</div>
+
+<div id="hud">
+  <div id="hudTop">
+    <div class="mat blue" id="hudBracket"></div>
+    <svg id="hudLogo" viewBox="0 0 52 48" aria-hidden="true">
+      <defs>
+        <linearGradient id="gLogoGold" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#ffe0a0"/><stop offset=".5" stop-color="#f8bb56"/><stop offset="1" stop-color="#cf8a35"/></linearGradient>
+        <linearGradient id="gLogoBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8c5ff"/><stop offset="1" stop-color="#6d82f5"/></linearGradient>
+      </defs>
+      <path d="M16 8 L3 24 L16 40 M36 8 L49 24 L36 40" fill="none" stroke="url(#gLogoGold)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="26" cy="15" r="3.6" fill="url(#gLogoBlue)"/><circle cx="20" cy="30" r="3.6" fill="url(#gLogoBlue)"/><circle cx="32" cy="30" r="3.6" fill="url(#gLogoBlue)"/>
+    </svg>
+    <div id="hudTitle">SOUND</div>
+    <div id="hudSub">SWARM PROTOCOL // SOUND LAB</div>
+  </div>
+  <div class="mat gold" id="hudBar"></div>
+  <div class="hudPanel">
+    <div class="mat blue side"></div>
+    <div class="secHd first">PLAYER</div>
+    <button class="tBtn" id="btnPlay">▶ PLAY</button>
+    <div id="nowPlaying"></div>
+    <div class="secHd">MOODS</div>
+    <div class="btnGrid" id="presets"></div>
+    <div class="secHd">SEED</div>
+    <div class="seedRow">
+      <input class="lab" id="seed" type="number" min="1" step="1" value="1" title="The same seed plays the same piece">
+      <button class="tBtn" id="btnDice" title="Another seed">🎲</button>
+    </div>
+    <div class="secHd">KEY</div>
+    <div class="keyRow"><select class="lab" id="root"></select><select class="lab" id="scale"></select></div>
+    <div class="secHd">CHARACTER</div>
+    <label class="sl"><span>Tempo</span><b id="tempoVal">–</b></label>
+    <input type="range" id="tempo" min="36" max="100" step="1" value="60">
+    <label class="sl"><span>Density (how much happens)</span><b id="densityVal">–</b></label>
+    <input type="range" id="density" min="0" max="1" step="0.01" value="0.5">
+    <label class="sl"><span>Brightness</span><b id="brightnessVal">–</b></label>
+    <input type="range" id="brightness" min="0" max="1" step="0.01" value="0.45">
+    <label class="sl"><span>Space (reverb)</span><b id="spaceVal">–</b></label>
+    <input type="range" id="space" min="0" max="1" step="0.01" value="0.7">
+    <label class="sl"><span>Volume</span><b id="volumeVal">–</b></label>
+    <input type="range" id="volume" min="0" max="1" step="0.01" value="0.7">
+    <div id="hint">Space: play / stop · every change is heard at once</div>
+  </div>
+</div>
+
+<div id="opt">
+  <div class="hudPanel">
+    <div class="mat lilac side"></div>
+    <div class="secHd first">LAYERS</div>
+    <div id="layers"></div>
+    <div class="secHd">THE ROBOT'S VOICE</div>
+    <textarea class="lab" id="lines" title="One line per announcement"></textarea>
+    <label class="sl"><span>A line every</span><b id="everyVal">–</b></label>
+    <input type="range" id="every" min="10" max="120" step="1" value="45">
+    <div class="twoBtns">
+      <button class="tBtn" id="btnSay">SAY ONE NOW</button>
+      <button class="tBtn" id="btnCopy" title="These settings as data (JSON), for MusicKit">COPY SETTINGS</button>
+    </div>
+    <div class="secHd">RECORD</div>
+    <div class="twoBtns">
+      <button class="tBtn" id="btnRec">● RECORD</button>
+      <button class="tBtn" id="btnRec60">● 60 SECONDS</button>
+    </div>
+    <div id="recState">A .webm file of the music (the robot's voice isn't in it).</div>
+  </div>
+</div>
+
+<script src="../js/labkit/labkit.js"></script>
+<script src="../js/musickit/musickit.js"></script>
+<script src="../js/labs/sound.js"></script>
+</body>
+</html>

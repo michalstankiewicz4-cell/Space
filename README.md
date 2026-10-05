@@ -60,6 +60,8 @@ js/
                      under construction); the building and surface labs' and the game's ground
   vehiclekit/        VehicleKit — robot ground vehicles from ShipKit's generators (suspension, steering,
                      tracks, dust, lamps, work); the vehicle lab's (vehicles.html), not in the game yet
+  musickit/          MusicKit — the game's music generated live (Web Audio): layers over a seeded chord
+                     progression, moods, a robot voice; the sound lab's (labs/sound.html), not in the game yet
   marinekit/         MarineKit — the sea (waves the same in JS and GLSL, a seabed with an island, under water)
                      and robot vessels (foils, a barge, a submersible, an amphibian); the sea lab's (marine.html)
   labs/              each lab's own script (ship.js, bodies.js, systems.js, skins.js, surface.js,

@@ -9,6 +9,18 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.3.0] — 2026-10-05
+
+### Added
+- **The sound lab** (`labs/sound.html`) and **MusicKit**: the game's music
+  generated live, no files — a drone, pads, FM bells, a heartbeat pulse,
+  an arp, radio static, wordless whispers and a robot's voice over a
+  seeded chord progression. MOODS (the station, deep orbit, descent, the
+  black hole), SEED, KEY, tempo, density, brightness, space, a level per
+  layer, the robot's lines, recording to .webm, COPY SETTINGS; a ring of
+  the spectrum and the wave in the middle. On the start screen, in the
+  menu, in kitcheck and the sitemap.
+
 ## [1.2.0] — 2026-10-05
 
 ### Added

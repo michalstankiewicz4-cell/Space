@@ -13,7 +13,8 @@ why and the history behind each item live in `docs/`:
 [`surface.md`](docs/surface.md) (`surface.html` / `buildings.html`, SurfaceKit, BaseKit),
 [`vehicles.md`](docs/vehicles.md) (`vehicles.html`, VehicleKit),
 [`marine.md`](docs/marine.md) (`marine.html`, MarineKit),
-[`doctor.md`](docs/doctor.md) (the model doctor, `tools/doctor.html`). **Read the relevant doc before changing a subsystem** —
+[`doctor.md`](docs/doctor.md) (the model doctor, `tools/doctor.html`),
+[`sound.md`](docs/sound.md) (`sound.html`, MusicKit — not in the game yet). **Read the relevant doc before changing a subsystem** —
 the long ones have a Contents block: grep `^## ` and read only that section.
 [`README.md`](README.md) has the file map, [`CHANGELOG.md`](CHANGELOG.md)
 the versions, [`IDEAS.md`](IDEAS.md) the plans and open threads.
@@ -52,7 +53,8 @@ the player's own progress stays in `localStorage`.
   `systems.html` (+ `js/systemkit/`, not in the game yet) / `surface.html` /
   `buildings.html` (their kits `js/surfacekit/` and `js/basekit/` **are** in
   the game since v2.34.0: changing them is a bump) / `vehicles.html`
-  (+ `js/vehiclekit/`) / `marine.html` (+ `js/marinekit/`), the labs' own
+  (+ `js/vehiclekit/`) / `marine.html` (+ `js/marinekit/`) / `sound.html`
+  (+ `js/musickit/`, not in the game yet), the labs' own
   scripts (`js/labs/<lab>.js` — a lab page is markup and styles) and their LabKit
   (`js/labkit/`, `css/lab.css`),
   `tools/`, the devlog (`blog/`, Blogger), and `.md`-only edits — those are
