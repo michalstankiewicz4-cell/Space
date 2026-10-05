@@ -552,15 +552,15 @@
   ]
  },
  "life/human": {
-  "tris": 26753,
-  "verts": 16346,
+  "tris": 58748,
+  "verts": 35478,
   "meshes": 20,
-  "materials": 9,
+  "materials": 12,
   "textures": 6,
   "size": [
    0.67,
-   1.774,
-   0.284
+   1.792,
+   0.319
   ]
  },
  "system/game": {

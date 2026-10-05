@@ -21,6 +21,7 @@
 .twoBtns{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
 .threeBtns{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:8px; }
 .fourBtns .tBtn, .twoBtns .tBtn, .threeBtns .tBtn{ height:28px; font-size:12.5px; }
+#faceSliders .sl span{ font-size:12.5px; }
 .prow{ display:grid; grid-template-columns:96px 1fr; gap:8px; align-items:center; margin-top:5px; font-size:13.5px; color:#c7d0ff; }
 .seedRow{ display:grid; grid-template-columns:96px 1fr 34px; gap:8px; align-items:center; margin-top:5px; font-size:13.5px; color:#c7d0ff; }
 select.lab, input.lab{ height:28px; border:1.5px solid #3c55d8; border-radius:6px; background:#02061a; color:#e6ebff; font-family:var(--fontBody); font-size:13.5px; padding:0 6px; min-width:0; }
@@ -77,6 +78,14 @@ select.lab, input.lab{ height:28px; border:1.5px solid #3c55d8; border-radius:6p
     <div class="mat lilac side"></div>
     <div class="secHd first">BODY</div>
     <div id="params"></div>
+    <div class="secHd">FACE</div>
+    <div class="threeBtns">
+      <button class="tBtn on" id="btnLively" title="Blinks, glances, breathing">LIVELY</button>
+      <button class="tBtn" id="btnTalk" title="The jaw and the lips as if speaking">TALK</button>
+      <button class="tBtn" id="btnClose" title="The camera to the face">CLOSE-UP</button>
+    </div>
+    <div class="threeBtns" id="facePresets"></div>
+    <div id="faceSliders"></div>
     <div class="secHd">MODEL</div>
     <div id="stats"></div>
     <div class="secHd">PERFORMANCE</div>
@@ -94,6 +103,7 @@ select.lab, input.lab{ height:28px; border:1.5px solid #3c55d8; border-radius:6p
 <script src="../js/shipkit/shipkit.js"></script>
 <script src="../js/lifekit/lifekit.js"></script>
 <script src="../js/lifekit/move/walk.js"></script>
+<script src="../js/lifekit/parts/face.js"></script>
 <script src="../js/lifekit/creatures/human.js"></script>
 <script src="../js/labs/life.js"></script>
 </body>

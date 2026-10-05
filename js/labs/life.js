@@ -61,7 +61,8 @@ const scaleBar = (() => {
 })();
 
 // ---------- the creature ----------
-const state = { id: LK.CREATURES[0].id, params: {}, gait: "idle", speed: 1.4, path: "inplace", bones: false, wire: false, scale: true };
+const state = { id: LK.CREATURES[0].id, params: {}, gait: "idle", speed: 1.4, path: "inplace", bones: false, wire: false, scale: true,
+  face: {}, lively: true, talk: false };
 let cre = null, helper = null;
 const stage = new THREE.Group(); scene.add(stage);
 const travel = { a: 0, R: 4 };
@@ -76,7 +77,49 @@ function load() {
   [...$("creTabs").children].forEach((b) => b.classList.toggle("on", b.dataset.id === state.id));
   applyView();
   showStats();
+  buildFace();
 }
+// ---------- the face: expressions (morph targets), presets, LIVELY / TALK ----------
+const FACE_PRESETS = {
+  NEUTRAL: {},
+  SMILE: { mouthSmileLeft: 0.85, mouthSmileRight: 0.85, eyeBlinkLeft: 0.12, eyeBlinkRight: 0.12 },
+  SURPRISE: { jawOpen: 0.55, browInnerUp: 0.9, eyeWideLeft: 0.85, eyeWideRight: 0.85 },
+  ANGRY: { browDownLeft: 0.9, browDownRight: 0.9, mouthFrownLeft: 0.45, mouthFrownRight: 0.45 },
+  SAD: { browInnerUp: 0.75, mouthFrownLeft: 0.7, mouthFrownRight: 0.7 },
+  PUCKER: { mouthPucker: 0.9, cheekPuff: 0.5 },
+};
+const FACE_NAMES = { eyeBlinkLeft: "Blink, left", eyeBlinkRight: "Blink, right", eyeWideLeft: "Eye wide, left", eyeWideRight: "Eye wide, right",
+  jawOpen: "Jaw open", mouthSmileLeft: "Smile, left", mouthSmileRight: "Smile, right", mouthFrownLeft: "Frown, left", mouthFrownRight: "Frown, right",
+  mouthPucker: "Pucker", browInnerUp: "Brows up (inner)", browDownLeft: "Brow down, left", browDownRight: "Brow down, right", cheekPuff: "Cheeks puffed" };
+function buildFace() {
+  const box = $("faceSliders"); box.textContent = "";
+  const f = cre.face;
+  $("facePresets").parentElement && [$("facePresets"), box, $("btnLively").parentElement].forEach((el) => { el.style.display = f ? "" : "none"; });
+  if (!f) return;
+  f.names.forEach((k) => {
+    const l = document.createElement("label"); l.className = "sl"; l.innerHTML = "<span></span><b></b>"; l.firstChild.textContent = FACE_NAMES[k] || k;
+    const sl = document.createElement("input"); sl.type = "range"; sl.min = 0; sl.max = 1; sl.step = 0.01; sl.value = state.face[k] || 0; sl.dataset.k = k;
+    const show = () => { l.lastChild.textContent = Math.round(sl.value * 100) + "%"; LabKit.paintSlider(sl); };
+    sl.addEventListener("input", () => { state.face[k] = +sl.value; f.set(k, +sl.value); show(); });
+    f.set(k, +sl.value); show(); box.append(l, sl);
+  });
+}
+Object.keys(FACE_PRESETS).forEach((name) => {
+  const b = document.createElement("button"); b.className = "tBtn"; b.textContent = name;
+  b.addEventListener("click", () => {
+    state.face = Object.assign({}, FACE_PRESETS[name]);
+    if (cre.face) cre.face.names.forEach((k) => cre.face.set(k, state.face[k] || 0));
+    buildFace();
+  });
+  $("facePresets").appendChild(b);
+});
+$("btnLively").addEventListener("click", () => { state.lively = !state.lively; $("btnLively").classList.toggle("on", state.lively); });
+$("btnTalk").addEventListener("click", () => { state.talk = !state.talk; $("btnTalk").classList.toggle("on", state.talk); });
+$("btnClose").addEventListener("click", () => {
+  if (!cre.face) return;
+  const p = new THREE.Vector3(); cre.face.group.getWorldPosition(p);
+  controls.target.copy(p); camera.position.set(p.x + 0.14, p.y + 0.02, p.z + 0.42);
+});
 function showStats() {
   const st = ShipKit.modelStats(cre.group);
   let bones = 0; cre.group.traverse((o) => { if (o.isBone) bones++; });
@@ -164,7 +207,7 @@ const clock = new THREE.Clock(), prev = new THREE.Vector3(), now = new THREE.Vec
 function frame() {
   const t0 = performance.now(), dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
   const moving = state.gait === "walk" || state.gait === "run";
-  cre.animate(t, dt, { gait: state.gait, speed: state.speed });
+  cre.animate(t, dt, { gait: state.gait, speed: state.speed, lively: state.lively, talk: state.talk });
   if (moving && state.path === "inplace") {
     // the ground slides back under the feet (one texture tile is 5 m)
     floorTex.offset.y -= state.speed * dt / 5;

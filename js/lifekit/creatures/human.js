@@ -47,7 +47,8 @@ function build(P, opts) {
   const shW = 0.9 + 0.2 * P.frame, hipW = 1.1 - 0.2 * P.frame, chestF = 1.04 - 0.08 * P.frame;
   const r = U.rng(P.seed * 7 + 3);
   const F = { w: 0.94 + r() * 0.12 + (P.frame - 0.5) * 0.06, jaw: 0.7 + r() * 0.6 + (P.frame - 0.5) * 0.4, nose: 0.8 + r() * 0.45, noseW: 0.85 + r() * 0.35,
-    chin: 0.6 + r() * 0.8, cheek: 0.6 + r() * 0.8, brow: 0.7 + r() * 0.6 + (P.frame - 0.5) * 0.5, lips: 0.8 + r() * 0.5 };
+    chin: 0.6 + r() * 0.8, cheek: 0.6 + r() * 0.8, brow: 0.7 + r() * 0.6 + (P.frame - 0.5) * 0.5, lips: 0.8 + r() * 0.5,
+    eyeW: 0.92 + r() * 0.16, mouthW: 0.9 + r() * 0.2 };
   const suit = P.outfit === 0;
   const tone = TONES[P.tone][1], hairHex = HAIRS[P.hairColor][1], irisHex = EYES[P.eyes][1], suitHex = SUITS[P.suit][1];
   const mats = U.materials();
@@ -162,14 +163,14 @@ function build(P, opts) {
   const { meshes } = U.skinned(group, skel, parts);
 
   // ---------- the head ----------
-  head(B.head, H, s, sh, F, P, mats, tone, hairHex, irisHex, det);
+  const face = head(B.head, H, s, sh, F, P, mats, tone, hairHex, irisHex, det);
 
   const rig = { pelvis: B.pelvis, spine: B.spine, chest: B.chest, neck: B.neck, head: B.head,
     upperArm: [B.upperArmL, B.upperArmR], forearm: [B.forearmL, B.forearmR], hand: [B.handL, B.handR],
     thigh: [B.thighL, B.thighR], shin: [B.shinL, B.shinR], foot: [B.footL, B.footR] };
   const dims = { s, H, thigh: hipY - kneeY, shin: kneeY - ankleY, ankle: ankleY, heel: 0.05 * s, ball: 0.13 * s,
     pelvisY: 0.55 * H, hipY, armA: Math.PI / 2 - armA };
-  return { group, rig, dims, mats, skeleton: skel, meshes };
+  return { group, rig, dims, mats, skeleton: skel, meshes, face };
 }
 
 // ---------- the hand: a palm, four fingers, a thumb — rigid on the hand bone ----------
@@ -213,115 +214,19 @@ function foot(bone, shinBone, sg, s, ankleY, suit, mats, tone, seg, L) {
   }
 }
 
-// ---------- the head: sculpted from a sphere ----------
-function headShape(d, F) {
-  const ax = 0.079 * F.w, ay = 0.113, az = 0.1;
-  const pw = 2.4, xy = Math.pow(Math.abs(d.x / ax) ** pw + Math.abs(d.y / ay) ** pw, 2 / pw), rr = 1 / Math.sqrt(xy + (d.z / az) ** 2);
-  let x = d.x * rr, y = d.y * rr, z = d.z * rr;
-  if (y < -0.04) { const k = U.smooth((-y - 0.04) / 0.075); x *= 1 - 0.12 * F.jaw * k; if (z < 0) z *= 1 - 0.32 * k; }
-  if (z < 0 && y > -0.035) z *= 1.05;                                   // a fuller back of the skull
-  if (z > 0.045) z = 0.045 + (z - 0.045) * 0.8;                         // a flatter face
-  if (y < -0.045 && z > 0.02) z -= 0.011 * U.smooth((-y - 0.045) / 0.035) * U.smooth((z - 0.02) / 0.03);   // the mouth and the chin under the nose
-  const g = (cx, cy, sx, sy) => Math.exp(-((x - cx) ** 2) / (2 * sx * sx) - ((y - cy) ** 2) / (2 * sy * sy));
-  const front = U.smooth((z - 0.015) / 0.035);
-  const eyes = g(0.031, 0.012, 0.013, 0.011) + g(-0.031, 0.012, 0.013, 0.011);
-  z += front * (
-    0.0102 * F.nose * g(0, -0.012, 0.0075 * F.noseW, 0.02) * (y < -0.042 ? Math.max(0, 1 - (-0.042 - y) / 0.009) : 1)
-    + 0.0042 * F.nose * g(0, -0.032, 0.007 * F.noseW, 0.007)
-    + 0.0025 * g(0, -0.041, 0.016 * F.noseW, 0.005)
-    + 0.0048 * F.brow * g(0, 0.034, 0.05, 0.008)
-    - 0.0045 * eyes
-    + 0.0038 * F.lips * g(0, -0.062, 0.019, 0.0065)
-    - 0.0018 * g(0, -0.0615, 0.021, 0.0016)
-    + 0.006 * F.chin * g(0, -0.097, 0.024, 0.012));
-  x += Math.sign(x) * 0.0035 * F.cheek * (g(0.05, -0.008, 0.02, 0.02) + g(-0.05, -0.008, 0.02, 0.02));
-  return { x, y, z, front, g, eyes };
-}
+// ---------- the head: LifeKit's face (parts/face.js), placed and sized ----------
 function head(bone, H, s, sh, F, P, mats, tone, hairHex, irisHex, det) {
   const hg = new THREE.Group();
   // the head's centre: its top at the creature's height
   const top = H - 0.116 * sh;
   hg.position.set(0, 0, 0.012 * sh);
-  // bone positions are relative: the head bone's height in the creature's space
   let yAbs = 0; for (let b = bone; b; b = b.parent) if (b.isBone) yAbs += b.position.y;
   hg.position.y = top - yAbs;
   hg.scale.setScalar(sh);
   hg.rotation.x = 0.13;                      // the face a little down: the eyes level, not at the sky
   bone.add(hg);
-  const W = Math.round(64 * det), Hs = Math.round(48 * det);
-  const geo = new THREE.SphereGeometry(1, W, Hs), pos = geo.attributes.position, col = [];
-  const lipC = [0.83, 0.56, 0.55], hairC = new THREE.Color(hairHex);
-  const v = new THREE.Vector3();
-  for (let i = 0; i < pos.count; i++) {
-    v.fromBufferAttribute(pos, i).normalize();
-    const h = headShape(v, F);
-    pos.setXYZ(i, h.x, h.y, h.z);
-    // colours on the skin: lips, a faint blush, brows, the eyelids' shade
-    let c = [1, 1, 1];
-    const mix = (to, t) => { c = c.map((q, k) => q + (to[k] - q) * t); };
-    mix(lipC, h.front * h.g(0, -0.062, 0.02, 0.0062) * 0.7);
-    mix([0.96, 0.82, 0.8], h.front * (h.g(0.045, -0.02, 0.02, 0.018) + h.g(-0.045, -0.02, 0.02, 0.018)) * 0.35);
-    mix([0.76, 0.66, 0.64], h.front * h.eyes * 0.3);
-    const brow = h.front * (h.g(0.031, 0.031, 0.017, 0.0045) + h.g(-0.031, 0.031, 0.017, 0.0045));
-    mix([hairC.r * 1.4 + 0.05, hairC.g * 1.4 + 0.04, hairC.b * 1.4 + 0.04], Math.min(1, brow * 0.85));
-    col.push(c[0], c[1], c[2]);
-  }
-  geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
-  geo.computeVertexNormals();
-  const headMesh = new THREE.Mesh(geo, mats.skinVC(tone)); headMesh.castShadow = headMesh.receiveShadow = true; hg.add(headMesh);
-  // the eyes: in the sockets, looking ahead (the sphere's pole turned forward)
-  const ez = surfaceZ(F, 0.032, 0.012) - 0.0072;
-  [1, -1].forEach((sg) => {
-    const eg = new THREE.SphereGeometry(0.0124, 24, 18); eg.rotateX(Math.PI / 2);
-    const e = new THREE.Mesh(eg, mats.eye(irisHex)); e.position.set(sg * 0.032, 0.0125, ez); hg.add(e);
-    // the lids: parts of a slightly bigger sphere, front half only; the upper
-    // one comes down over the iris's top, the lower one up to its bottom
-    const lid = (t0, tl, tilt) => {
-      const lg = new THREE.SphereGeometry(0.0124 * 1.09, 26, 10, 0, Math.PI, t0, tl);
-      const m = new THREE.Mesh(lg, mats.skin(tone, false)); m.position.copy(e.position); m.rotation.z = sg * tilt; m.castShadow = true; hg.add(m);
-    };
-    lid(0, 1.2, 0.12);
-    lid(1.98, 1.16, -0.06);
-    // the ear: a flattened shell, turned out a little
-    const ag = new THREE.SphereGeometry(1, 16, 12); ag.scale(0.0085, 0.03, 0.019);
-    const ear = new THREE.Mesh(ag, mats.skin(tone, false)); ear.castShadow = true;
-    ear.position.set(sg * (0.077 * F.w - 0.004), -0.004, -0.008); ear.rotation.y = sg * 0.35; hg.add(ear);
-  });
-  // the hair: the same shape a little bigger, kept above a hairline
-  if (P.hair !== 3) {
-    const thick = P.hair === 1 ? 1.012 : 1.035;
-    const hgeo = new THREE.SphereGeometry(1, W, Hs), hp = hgeo.attributes.position, keep = new Array(hp.count);
-    for (let i = 0; i < hp.count; i++) {
-      v.fromBufferAttribute(hp, i).normalize();
-      const h = headShape(v, F);
-      const az = Math.abs(Math.atan2(h.x, h.z)) / Math.PI;                 // 0 front … 1 back
-      const line = az < 0.3 ? U.lerp(0.07, 0.045, az / 0.3) : az < 0.6 ? U.lerp(0.045, 0.012, (az - 0.3) / 0.3) : U.lerp(0.012, -0.06, (az - 0.6) / 0.4);
-      const up = U.smooth((h.y - line) / 0.008);
-      keep[i] = h.y > line - 0.03;
-      // fuller on top; under the hairline the shell sinks below the skin
-      const k = U.lerp(0.975, thick + (P.hair === 1 ? 0 : 0.03 * U.smooth((h.y - 0.02) / 0.09)), up);
-      hp.setXYZ(i, h.x * k, h.y * k + (P.hair === 1 ? 0 : 0.004 * up), h.z * k);
-    }
-    const idx = hgeo.index.array, out = [];
-    for (let i = 0; i < idx.length; i += 3) if (keep[idx[i]] && keep[idx[i + 1]] && keep[idx[i + 2]]) out.push(idx[i], idx[i + 1], idx[i + 2]);
-    hgeo.setIndex(out); hgeo.computeVertexNormals();
-    const hm = new THREE.Mesh(hgeo, mats.hair(hairHex, false)); hm.castShadow = true; hg.add(hm);
-    if (P.hair === 2) {
-      // a ponytail: a band, then a tapering tail down the back
-      const tail = U.sweep([[0, 0.04, -0.095, 0.017], [0, 0.0, -0.118, 0.021], [0, -0.06, -0.122, 0.017], [0, -0.13, -0.105, 0.01]].map(([x, y, z, r]) => ({ p: [x, y, z], rx: r, f: r * 0.85, b: r * 0.85 })),
-        { seg: 14, steps: 3, rigid: true, capEnd: 1, capStart: 1, front: [0, 0, -1] });
-      U.rigid(hg, [{ geo: tail, mat: mats.hair(hairHex, false) }]);
-    }
-  }
-}
-// the face's depth at (x, y): the nearest point of the sculpted surface
-function surfaceZ(F, x, y) {
-  let best = 0, bd = 1e9; const v = new THREE.Vector3();
-  for (let a = -0.6; a <= 0.6; a += 0.012) for (let b = -0.5; b <= 0.5; b += 0.012) {
-    v.set(Math.sin(a) * Math.cos(b), Math.sin(b), Math.cos(a) * Math.cos(b));
-    const h = headShape(v, F), dd = (h.x - x) ** 2 + (h.y - y) ** 2;
-    if (dd < bd) { bd = dd; best = h.z; }
-  }
-  return best;
+  const face = LK.face.build({ F, tone, hair: P.hair, hairHex, irisHex, mats, detail: det });
+  hg.add(face.group);
+  return face;
 }
 })();

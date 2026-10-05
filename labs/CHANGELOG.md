@@ -9,6 +9,20 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.10.0] — 2026-10-05
+
+### Added
+- **The life lab: a face that moves.** The human's head is new
+  (`js/lifekit/parts/face.js`): a grid dense at the front, real openings —
+  lids wrapping the eyeballs, a slit between the lips with teeth, a tongue
+  and a mouth behind — and 14 expressions as morph targets, named as in
+  the common face-capture set (blinks, eyes wide, jaw open, smile and
+  frown per side, pucker, brows up and down, cheeks puffed). FACE in the
+  lab: a slider each, presets (neutral, smile, surprise, angry, sad,
+  pucker), LIVELY (blinks, glances, breathing through the mouth when
+  running), TALK, CLOSE-UP. The idea and the expression names from the
+  three.js face morph-target example; no model taken from it.
+
 ## [1.9.0] — 2026-10-05
 
 ### Added

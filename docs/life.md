@@ -12,11 +12,12 @@ the game yet. The plan and its reasons: IDEAS.md, "Life forms".
 |---|---|
 | `js/lifekit/lifekit.js` | The core (`window.LifeKit`): the registry (`CREATURES`, `register`, `MOVES`, `registerMove`), `build(id, params, opts)`, and `util` — `skeleton`, `sweep`, `merge`, `materials`, `skinned`, `rigid`, `rng`. |
 | `js/lifekit/move/walk.js` | Moving on land: a biped's gaits (stand, walk, run, T-pose). Swimming, flying and space come as `move/<medium>.js`. |
+| `js/lifekit/parts/face.js` | A humanoid head with a face that moves (`LifeKit.face`): openings for the eyes and the mouth, teeth, a tongue, 14 expressions as morph targets. Used by the human; meant for androids and other humanoids too. |
 | `js/lifekit/creatures/human.js` | The human. One file per creature. |
 | `labs/life.html` + `js/labs/life.js` | The lab: the creatures, MOVEMENT (gait, speed, in place / around), VIEW (skeleton, wireframe, scale bar), BODY (the creature's own parameters, generated from `params`), MODEL and PERFORMANCE. |
 
-Load order on a page: THREE → `lifekit.js` → the `move/` files → the
-creature files. The lab also loads ShipKit's core (`makeEnvironment`,
+Load order on a page: THREE → `lifekit.js` → the `move/` files → `parts/` →
+the creature files. The lab also loads ShipKit's core (`makeEnvironment`,
 `modelStats`).
 
 ## How a body is built
@@ -88,12 +89,51 @@ Lore: there are no living humans in the game's world — the model is for
 the Wiki, holograms, statues, remains, a base for androids and
 biomechanical forms. The user decides its role.
 
+## The face (parts/face.js, labs 1.10.0)
+
+After four rounds of sculpting a sphere by bumps (labs 1.9.0) the face
+still looked like a mannequin's. The user pointed at the three.js face
+morph-target example; its model wasn't taken (no licence with it, and a
+scanned head would clash with bodies built from blocks) — its ideas were:
+**expressions as morph targets, under the face-capture set's names**, and
+**a mesh dense where the face is, with real openings**.
+
+- **The grid**: longitude denser at the front (φ = π(0.42s + 0.58s³)),
+  latitude denser around the face; ~16k vertices, ~32k triangles at
+  detail 1 (≈1.5–2 mm apart on the face).
+- **The shape** is still a function of the direction (`point`): the skull
+  (`base`), the features that don't move (`featuresZ`), then the eyes and
+  the mouth from a **layout** (eye centres, the almond's half-width and
+  heights, the mouth line, its half-width and gap).
+- **The openings**: triangles whose middle (at rest) lies inside an
+  almond or the lip slit are left out; the nearest row of vertices on each
+  side is **pulled onto the edge curve**, so the lid line and the lips are
+  smooth, not stepped. The almond's thin corners stay closed (no white
+  chips where it's thinner than the grid).
+- **The lids** lie on the eyeball's sphere (+1.4 mm), fading into the face
+  at the zone's edge; the eyeball sits 1.8 mm behind the face's surface.
+  The lips bulge, roll in at the slit, and are coloured by vertex colours.
+- **Inside the mouth**: the upper teeth (an arch), the lower teeth and the
+  tongue (turning with the jaw — their own `jawOpen` target), a dark mouth
+  behind them so the slit never shows through.
+- **Expressions** (`EXPRESSIONS`): the same function computed again with
+  one at full strength, stored as the difference (`morphTargetsRelative`),
+  normals too. The jaw turns the face under the mouth line about a hinge in
+  front of the ears, fading out past the corners and toward the ears.
+  r128 blends the **4 strongest at a time** (with normals) — enough for a
+  face (blink both + jaw + smile).
+- **The controller** (`face.set`, `update`): the lab's slider values plus
+  the lively motion — a blink every 2–6 s, a glance every 1–3 s (the
+  eyeballs turn), breathing through the mouth when running, TALK.
+- The creature's `animate` calls `face.update` (lifekit.js), so any
+  creature with a face gets it.
+
 ## Limits (honest)
 
-- **The face is stylised, not realistic.** Sculpting by bumps on a sphere
-  gets a believable head from a distance; up close it's a mannequin's.
-  Realism would need a proper face mesh (more vertices where the features
-  are, real eyelids and lips), or a hand-made model.
+- **The face is better, not real.** Real lids and lips and moving
+  expressions changed it most; up close it's still a sculpt (no skin
+  shading beneath the surface, the hairline is a shell's edge, the jaw's
+  edge at the cheeks is a little hard when it opens wide).
 - The hands don't move their fingers; the feet have no toes bone.
 - No inverse kinematics: on slopes the feet won't meet the ground.
 - Not in the model doctor yet (its limbs overlap the torso by design).

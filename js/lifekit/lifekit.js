@@ -223,7 +223,7 @@ function hairCanvas(seed) {
 // an eye: the sclera, the iris and the pupil around the front pole (v near 1)
 function eyeCanvas(iris) {
   const W = 128, H = 128, [c, x] = canvas(W, H);
-  x.fillStyle = "#f2efe9"; x.fillRect(0, 0, W, H);
+  x.fillStyle = "#e9e3da"; x.fillRect(0, 0, W, H);
   // a real iris is ~12 mm across on a 24 mm eyeball: the top 17% of the map
   const g = x.createLinearGradient(0, 0, 0, H * 0.17);
   g.addColorStop(0, "#050505"); g.addColorStop(0.4, "#050505"); g.addColorStop(0.46, iris); g.addColorStop(0.9, iris); g.addColorStop(1, "#2a2420");
@@ -271,9 +271,17 @@ function materials() {
       return get("eye" + iris, false, () => new THREE.MeshStandardMaterial({ map: T(tex(eyeCanvas(iris), [1, 1], true)), roughness: 0.12, metalness: 0, envMapIntensity: 1 }));
     },
     // the skin's tone through vertex colours (lips, brows, cheeks on a head)
-    skinVC(tone) {
+    // (morph: the mesh has morph targets — r128 needs the flags on the material)
+    skinVC(tone, morph) {
       skinMap = skinMap || T(tex(skinCanvas(3), [3, 3], true)); skinBump = skinBump || T(tex(grain(4, 256, 5000, 0.35), [14, 14]));
-      return get("skinvc" + tone, false, () => new THREE.MeshStandardMaterial({ color: color(tone), vertexColors: true, map: skinMap, bumpMap: skinBump, bumpScale: 0.0004, roughness: 0.55, metalness: 0, envMapIntensity: 0.55 }));
+      return get("skinvc" + tone + (morph ? "/m" : ""), false, () => new THREE.MeshStandardMaterial({ color: color(tone), vertexColors: true, map: skinMap, bumpMap: skinBump, bumpScale: 0.0004, roughness: 0.55, metalness: 0, envMapIntensity: 0.55,
+        morphTargets: !!morph, morphNormals: !!morph }));
+    },
+    // a plain colour (teeth, the inside of a mouth); o: { side, morph }
+    flat(hex, rough, o) {
+      o = o || {};
+      return get("flat" + hex + rough + (o.side || "") + (o.morph ? "/m" : ""), false, () => new THREE.MeshStandardMaterial({ color: color(hex), roughness: rough, metalness: 0, envMapIntensity: 0.5,
+        side: o.side || THREE.FrontSide, morphTargets: !!o.morph }));
     },
     dispose() { made.forEach((m) => m.dispose()); textures.forEach((t) => t.dispose()); },
   };
@@ -329,7 +337,11 @@ function build(id, params, opts) {
   c.def = def; c.params = p;
   c.phase = 0;
   const move = MOVES[(def.moves || [])[0]];
-  c.animate = (t, dt, state) => (move ? move.animate(c, t, dt, state || {}) : null);
+  c.animate = (t, dt, state) => {
+    const r = move ? move.animate(c, t, dt, state || {}) : null;
+    if (c.face) c.face.update(t, dt, Object.assign({ gait: (state || {}).gait }, state));   // a face: blinks, glances, expressions
+    return r;
+  };
   c.dispose = () => {
     c.group.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
     if (c.mats) c.mats.dispose();
