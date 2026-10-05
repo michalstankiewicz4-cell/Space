@@ -395,3 +395,17 @@ document.getElementById("logSortActor").addEventListener("click", function(){ to
 document.getElementById("dateFromInput").addEventListener("change", applyDateFilter);
 document.getElementById("dateToInput").addEventListener("change", applyDateFilter);
 document.getElementById("dateFilterClearBtn").addEventListener("click", clearDateFilter);
+
+// Reset everyone's progress (admin_reset_progress): typed confirmation, then
+// the world's epoch + 1 — every game starts over on its next connection.
+document.getElementById("resetAllBtn").addEventListener("click", async function(){
+  const secret = document.getElementById("secretInput").value.trim();
+  const msg = document.getElementById("resetAllMsg");
+  if(!secret){ msg.textContent = "Enter the secret first."; return; }
+  const typed = prompt("This erases EVERY player's progress (points, upgrades, fleet, bases, discoveries) on their next visit. Type RESET to go ahead.");
+  if(typed !== "RESET"){ msg.textContent = "Cancelled."; return; }
+  msg.textContent = "Resetting…";
+  await ready;
+  const { data, error } = await client.rpc("admin_reset_progress", { p_secret: secret });
+  msg.textContent = error ? "Failed: " + error.message : data == null ? "Refused (wrong secret, or too many tries)." : "Done: the world is in epoch " + data + ". Players start over on their next connection.";
+});

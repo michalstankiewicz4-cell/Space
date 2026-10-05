@@ -55,7 +55,7 @@ const MODULE_FILES = [
   "js/net/connect.js", "js/net/identity.js", "js/net/presence.js",
   "js/net/shipsBroadcast.js", "js/net/solarBodiesSync.js",
   "js/net/stewardFallback.js", "js/net/stewardStats.js",
-  "js/postkit/postkit.js", "js/basekit/basekit.js", "js/surfacekit/surfacekit.js", "js/surfacekit/sky.js", "js/surfacekit/weather.js", "js/surfacekit/ground.js", "js/surface/groundView.js", "js/program/runner.js", "js/program/simulate.js",
+  "js/postkit/postkit.js", "js/core/progressReset.js", "js/net/worldEpoch.js", "js/basekit/basekit.js", "js/surfacekit/surfacekit.js", "js/surfacekit/sky.js", "js/surfacekit/weather.js", "js/surfacekit/ground.js", "js/surface/groundView.js", "js/program/runner.js", "js/program/simulate.js",
   "js/program/unitBite.js", "js/program/unitMotion.js",
   "js/program/unitPrint.js", "js/program/unitPrograms.js",
   "js/scene/anisotropy.js", "js/scene/camera.js",

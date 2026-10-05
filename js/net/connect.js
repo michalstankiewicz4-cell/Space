@@ -1,4 +1,5 @@
 import { supabase } from "../supabaseClient.js";
+import { checkWorldEpoch } from "./worldEpoch.js";
 import { clientId, joinedAt, myIdentity } from "./identity.js";
 import { setPresenceState } from "./presence.js";
 import { updatePlayersHud } from "../ui/hud/topBar.js";
@@ -111,12 +112,14 @@ export function initNet(){
   supabase.auth.onAuthStateChange(function(event){
     if(event === "SIGNED_OUT" && started && !leaving) signInFresh();
   });
+  // a reset for everyone (net/worldEpoch.js) is checked before joining
+  const join = function(){ checkWorldEpoch().then(function(ok){ if(ok) connectRoom(); }); };
   supabase.auth.getSession().then(function(res){
-    if(!(res.data && res.data.session)){ signInFresh().then(connectRoom); return; }
+    if(!(res.data && res.data.session)){ signInFresh().then(join); return; }
     supabase.auth.getUser().then(function(u){
-      if(u.data && u.data.user){ connectRoom(); return; }
+      if(u.data && u.data.user){ join(); return; }
       // gone: drop it here (no server call for an account that doesn't exist), then a new one
-      supabase.auth.signOut({ scope: "local" }).catch(function(){}).then(signInFresh).then(connectRoom);
+      supabase.auth.signOut({ scope: "local" }).catch(function(){}).then(signInFresh).then(join);
     });
   });
 }

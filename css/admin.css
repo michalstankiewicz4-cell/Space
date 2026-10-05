@@ -138,3 +138,9 @@ td.copyCell{ padding: 4px 6px; text-align: center; width: 1%; white-space: nowra
 .statsChart .tick{ fill: var(--ink-dim); font-size: 10.5px; font-family: var(--font-mono); }
 #statsTip{ position: absolute; display: none; pointer-events: none; z-index: 10; background: #0c1220; border: 1px solid var(--panel-edge);
   color: var(--ink); font-size: 12px; padding: 4px 8px; white-space: nowrap; }
+
+/* the reset for everyone: out of the way, and red */
+#resetRow{ margin:10px 0; display:flex; align-items:center; gap:12px; }
+#resetRow .danger{ border-color:#a83a48; color:#ffb3b5; }
+#resetRow .danger:hover{ border-color:#e04b50; }
+#resetAllMsg{ font-size:13px; color:#9aa1b0; }

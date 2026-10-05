@@ -420,6 +420,24 @@ consent first); a sale of the game is announced 30 days ahead (section 9).
   call: 77 anonymous accounts, 73 nicks, 131 log rows, 13 activity-rate
   rows (via the Management API, one transaction); `stats_hourly` (counts
   only) and the world tables kept.
+- **Resetting progress** (v2.37.0, the user's request). A server wipe
+  (above) never touched progress: it lives in the player's browser. Now:
+  - **for everyone**: `world_meta.epoch` (readable by anyone, no client
+    write) goes up through `admin_reset_progress(p_secret)` — security
+    definer, the admin secret and its throttle, logged
+    (`admin_reset_progress` in `activity_log`); admin.html's "Reset
+    everyone's progress…" (typed RESET). Each game reads the epoch before
+    joining (`net/worldEpoch.js`): behind → `core/progressReset.js` clears
+    the progress and reloads, with a notice. A browser without a stored
+    epoch just takes the current one (nobody lost anything when this
+    arrived). Deployed 2026-10-05: the column and the function only.
+  - **for one player**: Setup → Privacy → START OVER (two clicks), local
+    only.
+  - Progress = `PROGRESS_KEYS` (points and upgrades, fleet positions,
+    bases, discoveries); settings, language, nick, colour, the account and
+    the ship / drone programs stay. A new kind of progress in the browser
+    goes into that list. During a reset the fleet's exit save is skipped.
+  - The privacy policy already covers it (section 8, game resets).
 - **After a reset, the browsers' stored sessions** (v2.36.2): the game
   used a stored session as is. An expired one healed itself (the refresh
   is refused, a new account is made), but one still valid (up to an hour)

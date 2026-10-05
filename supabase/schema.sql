@@ -70,6 +70,11 @@ create table if not exists world_meta (
 );
 insert into world_meta (id, initialized) values (1, false)
   on conflict (id) do nothing;
+-- The world's epoch: raised by admin_reset_progress (below) to reset every
+-- player's progress — each game compares it with the one it has played in
+-- (js/net/worldEpoch.js) and starts over when it's behind. Readable by
+-- anyone (the policy above), writable only through that function.
+alter table world_meta add column if not exists epoch int not null default 1;
 
 alter table bodies enable row level security;
 alter table world_meta enable row level security;
@@ -889,6 +894,29 @@ begin
               or exists (select 1 from actor_nicks n where n.actor = u.id and n.updated_at > now() - interval '30 days')),
       'db_bytes', pg_database_size(current_database()))
   );
+end;
+$$;
+
+-- A reset for everyone (admin.html): the world's epoch + 1. Each player's game
+-- clears its progress (points, upgrades, fleet, bases, discoveries — kept in
+-- the browser) the next time it connects. Same secret and throttle as
+-- admin_stats; logged. Returns the new epoch (null: refused).
+create or replace function admin_reset_progress(p_secret text)
+returns int
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_epoch int;
+begin
+  if v_actor is null or not admin_secret_ok(v_actor, p_secret) then
+    return null;
+  end if;
+  update world_meta set epoch = epoch + 1 where id = 1 returning epoch into v_epoch;
+  insert into activity_log (actor, event_type, detail) values (v_actor, 'admin_reset_progress', jsonb_build_object('epoch', v_epoch));
+  return v_epoch;
 end;
 $$;
 

@@ -130,6 +130,9 @@ the player's own progress stays in `localStorage`.
   `net/connect.js#isConnected()` + a staleness fallback
   (`stewardFallback.js`). A comet DELETE can mean eaten or flown out —
   check the local object's `health`, not the payload.
+- **Progress lives in the browser**: `core/progressReset.js#PROGRESS_KEYS`
+  lists it (a new kind of saved progress goes there) — START OVER and the
+  reset for everyone (`world_meta.epoch`, admin.html) clear exactly that.
 - **Settings / identity / i18n** stay three separate modules; all
   localStorage goes through `core/utils.js#readStorage/writeStorage`.
   Static UI text in `index.html` carries its key (`data-i18n`, `-title`,

@@ -1,6 +1,7 @@
 import { ctx } from "../core/context.js";
 import { readStorage, writeStorage } from "../core/utils.js";
 import { orderOf, resetOrder } from "./orders.js";
+import { isResetting } from "../core/progressReset.js";
 
 // Where the fleet was: every ship's position (and a course order to a
 // fixed solar body, or RETURN TO BASE, if it had one) and the drone's,
@@ -26,7 +27,7 @@ function finite3(a){
 const r2 = function(v){ return Math.round(v * 100) / 100; };
 
 function saveFleet(){
-  if(!ctx.station || pending.length) return;   // orders not restored yet: keep the old save
+  if(!ctx.station || pending.length || isResetting()) return;   // orders not restored yet: keep the old save; a reset: none at all
   const data = {
     v: 1,
     ships: ctx.ships.map(function(sh){

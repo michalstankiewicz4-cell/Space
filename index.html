@@ -98,7 +98,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.36.4">
+<link rel="stylesheet" href="css/style.css?v=2.37.0">
 </head>
 <body>
 
@@ -413,10 +413,13 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
         <div id="gfxHelpDef"></div>
       </div>
 
-      <!-- Setup -> Privacy (ui/privacy.js): the policy and "Delete my data". -->
+      <!-- Setup -> Privacy (ui/privacy.js): the policy, "Start over" (progress
+           only, core/progressReset.js) and "Delete my data". -->
       <div id="setupTabPrivacy" class="setupTabPanel hidden" data-tab="privacy">
         <div id="privacyText" data-i18n="privacy.text">The game keeps your progress in this browser. On the server: your nickname and an anonymous account; a shortened IP only when abuse is detected (30 days).</div>
         <a id="privacyPolicyLink" data-i18n="privacy.policy" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a>
+        <button type="button" class="oBtn" id="resetProgressBtn" data-i18n="privacy.resetBtn">Start over</button>
+        <div id="resetProgressStatus"></div>
         <button type="button" class="oBtn" id="deleteDataBtn" data-i18n="privacy.deleteBtn">Delete my data</button>
         <div id="deleteDataStatus"></div>
       </div>
@@ -943,7 +946,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.36.4"></script>
+<script type="module" src="js/main.js?v=2.37.0"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

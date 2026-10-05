@@ -1,3 +1,6 @@
+import { showToast } from "./ui/hud/eventLog.js";
+import { t } from "./i18n.js";
+import { takeResetNotice } from "./core/progressReset.js";
 import { initGroundView, updateGroundView, renderGroundView, isOnGround } from "./surface/groundView.js";
 import { load } from "./core/gameState.js";
 import { NET_ENABLED } from "./env.js";
@@ -62,6 +65,8 @@ import { gfxFpsCap } from "./scene/graphics.js";
 load();
 
 document.getElementById("versionTag").textContent = "v" + VERSION;
+// after a reset's reload: say what happened (core/progressReset.js)
+const resetWhy = takeResetNotice();
 // short for the tab, with a phrase for search engines (they read it after the
 // scripts run); index.html's own <title> is the long one
 document.title = "Swarm Protocol: space MMO — v" + VERSION;
@@ -128,6 +133,7 @@ await nextPaint();
 
 initWindows();
 initHudWorld();
+if(resetWhy) showToast(t(resetWhy === "world" ? "privacy.resetWorld" : "privacy.resetSelf"));
 initLinesToggle();   // orbits/trajectories on/off (needs the camera)
 initUiMode();        // key C: hide the interface step by step; key O: lines
 initAnisotropy();

@@ -55,6 +55,13 @@
     <span id="dateFilterCount"></span>
   </div>
 
+  <!-- A reset for everyone (supabase/schema.sql#admin_reset_progress): the
+       world's epoch + 1; every player's game starts over on its next
+       connection (js/net/worldEpoch.js). Needs the secret; asks twice. -->
+  <div id="resetRow">
+    <button id="resetAllBtn" type="button" class="danger">Reset everyone's progress…</button>
+    <span id="resetAllMsg"></span>
+  </div>
   <!-- Statistics (js/admin/stats.js, supabase/schema.sql#admin_stats):
        aggregate counts only, loaded with the log. -->
   <div id="statsSection" class="hidden">

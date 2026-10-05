@@ -166,6 +166,11 @@ export const en = {
     accept: "Accept",
     policy: "Privacy policy",
     text: "Your progress and settings stay in this browser. On the server: your nickname (180 days after your last visit) and an anonymous account; a shortened IP address only when abuse is detected (30 days).",
+    resetBtn: "Start over",
+    confirmReset: "Yes, start over",
+    resetHint: "Your points, upgrades, fleet, bases and discoveries will be erased. Your settings, nickname and programs stay. Click again to confirm.",
+    resetSelf: "You started over: a fresh swarm.",
+    resetWorld: "The world has been reset: everyone starts again.",
     deleteBtn: "Delete my data",
     confirmDelete: "Yes, delete everything",
     confirmHint: "This removes your nickname and account from the server and ALL game data (progress too) from this browser. Click again to confirm.",
@@ -566,6 +571,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.37.0", items: ["New in Setup → Privacy: START OVER — a fresh swarm, keeping your settings, nickname and programs."] },
     { v: "2.36.4", items: ["The game is easier to find in search engines, and its link shows a picture when you share it."] },
     { v: "2.36.3", items: ["The labs have a home of their own: a start screen with all of them (Dev Tools → LABS → Open the labs)."] },
     { v: "2.36.2", items: ["Fixes and stability: after a server reset the game reconnects you by itself, with no need to reload."] },

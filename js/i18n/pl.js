@@ -172,6 +172,11 @@ export const pl = {
     accept: "Akceptuję",
     policy: "Polityka prywatności",
     text: "Twój postęp i ustawienia zostają w tej przeglądarce. Na serwerze: twój nick (180 dni od ostatniej wizyty) i anonimowe konto; skrócony adres IP tylko przy wykryciu nadużyć (30 dni).",
+    resetBtn: "Zacznij od nowa",
+    confirmReset: "Tak, zacznij od nowa",
+    resetHint: "Twoje punkty, ulepszenia, flota, bazy i odkrycia zostaną usunięte. Ustawienia, nick i programy zostaną. Kliknij jeszcze raz, aby potwierdzić.",
+    resetSelf: "Zaczynasz od nowa: świeży rój.",
+    resetWorld: "Świat został zresetowany: wszyscy zaczynają od nowa.",
     deleteBtn: "Usuń moje dane",
     confirmDelete: "Tak, usuń wszystko",
     confirmHint: "To usunie twój nick i konto z serwera oraz WSZYSTKIE dane gry (także postęp) z tej przeglądarki. Kliknij jeszcze raz, żeby potwierdzić.",
@@ -567,6 +572,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
+    { v: "2.37.0", items: ["Nowość w Ustawienia → Prywatność: ZACZNIJ OD NOWA — świeży rój, a ustawienia, nick i programy zostają."] },
     { v: "2.36.4", items: ["Grę łatwiej znaleźć w wyszukiwarkach, a jej link pokazuje obrazek, kiedy go udostępniasz."] },
     { v: "2.36.3", items: ["Laboratoria mają własny dom: ekran startowy ze wszystkimi naraz (Dev Tools → LABS → Otwórz laboratoria)."] },
     { v: "2.36.2", items: ["Poprawki i stabilność: po resecie serwera gra sama połączy cię ponownie, bez odświeżania strony."] },

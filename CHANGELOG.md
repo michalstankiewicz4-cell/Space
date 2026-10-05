@@ -4,6 +4,18 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.37.0]
+
+### Added
+- **Start over** (Setup -> Privacy): erases your progress — points,
+  upgrades, fleet, bases, discoveries — and keeps your settings,
+  nickname and programs. Two clicks.
+- **A reset for everyone**: `world_meta.epoch` and
+  `admin_reset_progress` (admin.html, typed confirmation); every player's
+  game starts over on its next connection, with a notice. Players who
+  never saw an epoch lose nothing when this arrives.
+- `js/core/progressReset.js`, `js/net/worldEpoch.js`.
+
 ## [2.36.4]
 
 ### Added

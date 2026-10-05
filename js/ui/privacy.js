@@ -2,6 +2,7 @@ import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
 import { leaveForGood } from "../net/connect.js";
 import { readStorage, writeStorage } from "../core/utils.js";
+import { resetProgress } from "../core/progressReset.js";
 import { getLang, t } from "../i18n.js";
 
 // Privacy (docs/security.md, "Privacy"): accepting the policy on the first
@@ -54,6 +55,20 @@ export function initPrivacyNotice(){
 export function initPrivacySettings(){
   const link = document.getElementById("privacyPolicyLink");
   link.addEventListener("click", function(){ link.href = privacyUrl(); });
+  // START OVER: only the progress (core/progressReset.js), two clicks; nothing on the server
+  const rBtn = document.getElementById("resetProgressBtn"), rStatus = document.getElementById("resetProgressStatus");
+  let rArmed = false;
+  rBtn.addEventListener("click", function(){
+    if(!rArmed){
+      rArmed = true;
+      rBtn.textContent = t("privacy.confirmReset");
+      rBtn.classList.add("armed");
+      rStatus.textContent = t("privacy.resetHint");
+      return;
+    }
+    rBtn.disabled = true;
+    resetProgress("self");
+  });
   const btn = document.getElementById("deleteDataBtn");
   const status = document.getElementById("deleteDataStatus");
   let armed = false;
