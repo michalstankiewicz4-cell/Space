@@ -4,6 +4,16 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.36.2]
+
+### Fixed
+- After a server reset, a browser whose stored login was still valid
+  connected with an account that no longer existed and, once its token
+  expired, its actions stopped reaching the server until a reload. The
+  game now checks the stored login with the server first and signs in
+  again by itself when the login is lost mid-game (not after "Delete my
+  data"). `js/net/connect.js`.
+
 ## [2.36.1]
 
 ### Changed

@@ -82,17 +82,41 @@ function connectRoom(){
   });
 }
 
+// A new anonymous account — at most one sign-in in flight. Once in the room,
+// the new account registers the nick too (connectRoom does it on subscribe).
+let signingIn = null, leaving = false, started = false;
+function signInFresh(){
+  if(!signingIn){
+    signingIn = supabase.auth.signInAnonymously().then(function(res){
+      if(res.error){ console.warn("Supabase anonymous sign-in failed", res.error); return; }
+      if(connected) supabase.rpc("set_my_nick", { p_nick: myIdentity.nick })
+        .then(function(r){ if(r.error) console.warn("set_my_nick failed", r.error); });
+    }).finally(function(){ signingIn = null; });
+  }
+  return signingIn;
+}
+
+// "Delete my data" signs out on purpose (ui/privacy.js): no new account then.
+export function leaveForGood(){ leaving = true; }
+
 // Reuse the stored session: signing in anonymously on every load made a new
-// account per reload (docs/security.md, "Anonymous-auth spam").
+// account per reload (docs/security.md, "Anonymous-auth spam"). But the
+// stored session may belong to an account that's gone (a game reset deletes
+// them — docs/security.md, "Privacy"): its token can still look valid for up
+// to an hour, so the server is asked (getUser) before it's used. And if the
+// session is lost mid-game (the account deleted, a refresh refused), a new
+// one is made without a reload.
 export function initNet(){
+  started = true;
+  supabase.auth.onAuthStateChange(function(event){
+    if(event === "SIGNED_OUT" && started && !leaving) signInFresh();
+  });
   supabase.auth.getSession().then(function(res){
-    if(res.data && res.data.session){
-      connectRoom();
-      return;
-    }
-    supabase.auth.signInAnonymously().then(function(signInRes){
-      if(signInRes.error){ console.warn("Supabase anonymous sign-in failed", signInRes.error); }
-      connectRoom();
+    if(!(res.data && res.data.session)){ signInFresh().then(connectRoom); return; }
+    supabase.auth.getUser().then(function(u){
+      if(u.data && u.data.user){ connectRoom(); return; }
+      // gone: drop it here (no server call for an account that doesn't exist), then a new one
+      supabase.auth.signOut({ scope: "local" }).catch(function(){}).then(signInFresh).then(connectRoom);
     });
   });
 }

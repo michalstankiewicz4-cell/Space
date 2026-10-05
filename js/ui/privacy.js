@@ -1,5 +1,6 @@
 import { NET_ENABLED } from "../env.js";
 import { supabase } from "../supabaseClient.js";
+import { leaveForGood } from "../net/connect.js";
 import { readStorage, writeStorage } from "../core/utils.js";
 import { getLang, t } from "../i18n.js";
 
@@ -71,6 +72,7 @@ export function initPrivacySettings(){
       try {
         const res = await supabase.rpc("delete_my_data");
         if(res.error) throw res.error;
+        leaveForGood();                          // no new account after this sign-out (net/connect.js)
         await supabase.auth.signOut();
       } catch(err){
         serverOk = false;

@@ -420,6 +420,17 @@ consent first); a sale of the game is announced 30 days ahead (section 9).
   call: 77 anonymous accounts, 73 nicks, 131 log rows, 13 activity-rate
   rows (via the Management API, one transaction); `stats_hourly` (counts
   only) and the world tables kept.
+- **After a reset, the browsers' stored sessions** (v2.36.2): the game
+  used a stored session as is. An expired one healed itself (the refresh
+  is refused, a new account is made), but one still valid (up to an hour)
+  connected with a deleted account and lost server actions once it
+  expired. `net/connect.js#initNet` now asks the server (`getUser`) before
+  using a stored session, and on a mid-game SIGNED_OUT signs in again
+  (one sign-in in flight; not after "Delete my data", `leaveForGood`).
+  Tested live: a first visit makes one account; an account deleted under
+  a valid token gets a new one on reload, with its nick; "Delete my data"
+  leaves none. Everything else in the browser (progress, bases, settings,
+  the nick, the privacy acceptance) never depended on the server.
 - **License**: the code is MIT (`LICENSE`, with the third-party
   components listed there).
 
