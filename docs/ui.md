@@ -71,7 +71,9 @@ then read just that range.
   [?] button opening the About window (`ui/about.js`, a `.uiWindow`),
   and a Graphics tab in Setup (filled in since — `rendering.md`, "Image quality"; setup
   tabs and panels are matched by `data-tab`, so a new tab is markup + one
-  i18n key, no JS change).
+  i18n key, no JS change). Six tabs since v2.38.0 (Sound joined: music,
+  effects, voice — a switch and a level each, `settings.js#soundLevel`;
+  the buttons are 67 px wide to fit, "Prywatność" just fits).
 - **Story intro (v2.6.1)**: the description is the story opening
   (`banner.boot` — a terminal-style line in `#bannerBoot` — plus
   `banner.desc`, two paragraphs split by a `\n` that `#bannerDesc`'s

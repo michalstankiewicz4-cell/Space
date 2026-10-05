@@ -4,6 +4,14 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.38.0]
+
+### Added
+- **Setup -> Sound**: music, effects and voice, each a switch and a level
+  (switched off keeps the level). The game has no sound yet; the audio to
+  come reads `settings.js#soundLevel(kind)`. Setup's tabs are narrower to
+  fit six.
+
 ## [2.37.0]
 
 ### Added

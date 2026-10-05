@@ -50,6 +50,9 @@ export const pl = {
     title: "Ustawienia",
     tabLanguage: "Język",
     tabMouse: "Mysz",
+    tabSound: "Dźwięk",
+    sound: { music: "Muzyka", fx: "Efekty", voice: "Głos", off: "WYŁ.",
+      note: "Na razie gra jest cicha: muzyka, efekty i głos stacji są w drodze. Te ustawienia będą na nie gotowe." },
     tabHelp: "Pomoc",
     tabPrivacy: "Prywatność",
     invertX: "Odwróć X (obrót PPM)",
@@ -572,6 +575,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
+    { v: "2.38.0", items: ["Ustawienia mają zakładkę DŹWIĘK: muzyka, efekty i głos, każde z przełącznikiem i poziomem — gotowe na dźwięk, który nadchodzi."] },
     { v: "2.37.0", items: ["Nowość w Ustawienia → Prywatność: ZACZNIJ OD NOWA — świeży rój, a ustawienia, nick i programy zostają."] },
     { v: "2.36.4", items: ["Grę łatwiej znaleźć w wyszukiwarkach, a jej link pokazuje obrazek, kiedy go udostępniasz."] },
     { v: "2.36.3", items: ["Laboratoria mają własny dom: ekran startowy ze wszystkimi naraz (Dev Tools → LABS → Otwórz laboratoria)."] },

@@ -5,7 +5,7 @@ import { gfxQuality, gfxDetail, setGraphics, gfxUnitLights, setUnitLights, setGf
   gfxPreset, gfxAutoTier, applyPreset, onGraphicsChange, gfxAniso, gfxSharpen, gfxRays, gfxRaysStrength, gfxFpsCap } from "../scene/graphics.js";
 import { currentPixelRatio } from "../scene/resolution.js";
 
-// Setup modal (language / mouse / graphics / help tabs), opened from the
+// Setup modal (language / mouse / graphics / sound / help / privacy tabs), opened from the
 // start screen. Tabs and panels are matched by their data-tab attribute.
 
 function updateLangButtons(){
@@ -79,6 +79,7 @@ export function initSetupModal(){
   bindSettingCheckbox("swapButtonsCheck", "swapMouseButtons");
   initMouseSens();
   initAutoHide();
+  initSound();
   initGraphicsSliders();
 }
 
@@ -96,6 +97,29 @@ function initMouseSens(){
     s.value = Number(settings[p[2]]) || 1;
     paint();
     s.addEventListener("input", function(){ settings[p[2]] = Number(s.value); saveSettings(); paint(); });
+  });
+}
+
+// Setup -> Sound: a switch and a level for music, effects and voice. Off
+// keeps the level (no need to drag it to 0); moving the slider switches it on.
+function initSound(){
+  [["Music", "soundMusic"], ["Fx", "soundFx"], ["Voice", "soundVoice"]].forEach(function(p){
+    const on = document.getElementById("snd" + p[0] + "On"), s = document.getElementById("snd" + p[0] + "Slider"), v = document.getElementById("snd" + p[0] + "Val");
+    const paint = function(){
+      v.textContent = on.checked ? Math.round(s.value * 100) + "%" : t("setup.sound.off");
+      s.classList.toggle("muted", !on.checked);
+      paintFill(s);
+    };
+    on.checked = !!settings[p[1] + "On"];
+    s.value = Number(settings[p[1]]);
+    paint();
+    on.addEventListener("change", function(){ settings[p[1] + "On"] = on.checked; saveSettings(); paint(); });
+    s.addEventListener("input", function(){
+      settings[p[1]] = Number(s.value);
+      if(!on.checked){ on.checked = true; settings[p[1] + "On"] = true; }
+      saveSettings(); paint();
+    });
+    onLangChange(paint);
   });
 }
 

@@ -1,4 +1,4 @@
-/* Setup modal (language / mouse / graphics / help). Built on css/ui/kit.css. */
+/* Setup modal (language / mouse / graphics / sound / help / privacy). Built on css/ui/kit.css. */
 #setupModal{ position:fixed; inset:0; z-index:10; background:rgb(0 0 8 / .6); }
 #setupModalBox{ left:528px; top:293px; width:480px; height:380px; }
 #smSq{ left:12px; top:12px; width:22px; height:22px; border-radius:10px 3px 3px 9px; }
@@ -9,11 +9,11 @@
 #smLine{ left:12px; right:12px; top:44px; }
 #smSide{ left:12px; top:54px; width:18px; height:314px; border-radius:0 0 0 12px; }
 #setupTabs{ left:40px; top:56px; width:428px; height:30px; }
-#setupTabs button{ position:absolute; top:0; height:30px; width:80px; font-family:var(--uiFontLabel); font-weight:500;
-  font-size:15px; color:#0c1440; border-radius:8px 8px 3px 8px; transition:filter .15s; }
-#setupTabs button:nth-child(1){ left:0; } #setupTabs button:nth-child(2){ left:87px; }
-#setupTabs button:nth-child(3){ left:174px; } #setupTabs button:nth-child(4){ left:261px; }
-#setupTabs button:nth-child(5){ left:348px; }
+#setupTabs button{ position:absolute; top:0; height:30px; width:67px; font-family:var(--uiFontLabel); font-weight:500;
+  font-size:14px; white-space:nowrap; padding:0; color:#0c1440; border-radius:8px 8px 3px 8px; transition:filter .15s; }
+#setupTabs button:nth-child(1){ left:0; } #setupTabs button:nth-child(2){ left:72px; }
+#setupTabs button:nth-child(3){ left:144px; } #setupTabs button:nth-child(4){ left:216px; }
+#setupTabs button:nth-child(5){ left:288px; } #setupTabs button:nth-child(6){ left:361px; }
 #setupTabs button:hover{ filter:brightness(1.12); }
 #setupTabs button.active{ border-radius:3px 18px 0 0; }
 .setupTabPanel{ left:40px; top:100px; width:428px; height:260px; }
@@ -45,6 +45,14 @@
 #setupModal .setupCheckRow input:checked + .chk{ border-color:#f5bd5c; }
 #setupModal .setupCheckRow input:checked + .chk::after{ left:23px; background:linear-gradient(180deg,#ffda92,#f8bb56 55%,#d38b37); }
 #setupModal .setupCheckRow input:focus-visible + .chk{ box-shadow:0 0 0 2px #6f86ff; }
+/* Sound tab: a switch + its level per row, the slider under it (normal flow) */
+#setupTabSound > *{ position:relative; }
+#setupTabSound .sndRow{ display:flex; justify-content:space-between; align-items:center; height:30px; }
+#setupModal #setupTabSound .setupCheckRow{ position:relative; top:auto; font-size:16px; }
+#setupTabSound .sndRow b{ font-family:var(--uiFontLabel); font-weight:500; color:#f8bb56; letter-spacing:.6px; }
+#setupTabSound .gfxSlider{ display:block; width:100%; margin:2px 0 14px; transition:opacity .15s; }
+#setupTabSound .gfxSlider.muted{ opacity:.4; }
+#setupTabSound .sndNote{ font-size:12.5px; line-height:16px; color:#7f8fd6; margin-top:2px; }
 /* Graphics tab: the ship lab's two sliders (ship.html), shown inert for now. */
 #setupTabGraphics .gfxRow{ left:0; width:428px; display:flex; justify-content:space-between; font-size:16px; color:#c7d0ff; }
 #setupTabGraphics .gfxRow b{ font-family:var(--uiFontLabel); font-weight:500; color:#f8bb56; letter-spacing:.6px; }

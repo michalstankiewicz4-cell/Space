@@ -46,7 +46,11 @@ const DEFAULTS = {
   gfxRays: true,        // light rays from the Sun (PostKit)
   gfxRaysStrength: 1,
   gfxFpsCap: 0,         // frame limiter: 0 (none) | 30 | 60 | 120 (main.js tick)
-  gfxBiteFx: true       // sparks and a hot spot where a ship bites (fx/particles.js, fx/impact.js)
+  gfxBiteFx: true,      // sparks and a hot spot where a ship bites (fx/particles.js, fx/impact.js)
+  // sound (Setup -> Sound): a level 0..1 and a switch per kind; off keeps the level
+  soundMusic: 0.7, soundMusicOn: true,
+  soundFx: 0.8, soundFxOn: true,
+  soundVoice: 0.8, soundVoiceOn: true
 };
 
 function load(){
@@ -61,6 +65,13 @@ function load(){
 }
 
 export const settings = load();
+
+// The volume to play a kind of sound at ("music" | "fx" | "voice"): its
+// level, or 0 when switched off.
+export function soundLevel(kind){
+  const k = "sound" + kind.charAt(0).toUpperCase() + kind.slice(1);
+  return settings[k + "On"] ? Number(settings[k]) || 0 : 0;
+}
 
 export function saveSettings(){
   writeStorage("roj-settings", JSON.stringify(settings));

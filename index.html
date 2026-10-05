@@ -98,7 +98,7 @@
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.37.0">
+<link rel="stylesheet" href="css/style.css?v=2.38.0">
 </head>
 <body>
 
@@ -241,6 +241,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
         <button type="button" data-tab="language" data-i18n="setup.tabLanguage" class="mat gold active">Language</button>
         <button type="button" data-tab="mouse" data-i18n="setup.tabMouse" class="mat blueT">Mouse</button>
         <button type="button" data-tab="graphics" data-i18n="setup.tabGraphics" class="mat blueT">Graphics</button>
+        <button type="button" data-tab="sound" data-i18n="setup.tabSound" class="mat blueT">Sound</button>
         <button type="button" data-tab="help" data-i18n="setup.tabHelp" class="mat blueT">Help</button>
         <button type="button" data-tab="privacy" data-i18n="setup.tabPrivacy" class="mat blueT">Privacy</button>
       </div>
@@ -415,6 +416,19 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
 
       <!-- Setup -> Privacy (ui/privacy.js): the policy, "Start over" (progress
            only, core/progressReset.js) and "Delete my data". -->
+      <!-- Sound (ui/setupModal.js#initSound): a switch and a level per kind of
+           sound; switched off keeps the level. settings.js#soundLevel is what
+           the game's audio will read. -->
+      <div id="setupTabSound" class="setupTabPanel hidden" data-tab="sound">
+        <div class="sndRow"><label class="setupCheckRow"><input type="checkbox" id="sndMusicOn"><span class="chk"></span><span data-i18n="setup.sound.music">Music</span></label><b id="sndMusicVal"></b></div>
+        <input type="range" class="gfxSlider" id="sndMusicSlider" min="0" max="1" step="0.01">
+        <div class="sndRow"><label class="setupCheckRow"><input type="checkbox" id="sndFxOn"><span class="chk"></span><span data-i18n="setup.sound.fx">Effects</span></label><b id="sndFxVal"></b></div>
+        <input type="range" class="gfxSlider" id="sndFxSlider" min="0" max="1" step="0.01">
+        <div class="sndRow"><label class="setupCheckRow"><input type="checkbox" id="sndVoiceOn"><span class="chk"></span><span data-i18n="setup.sound.voice">Voice</span></label><b id="sndVoiceVal"></b></div>
+        <input type="range" class="gfxSlider" id="sndVoiceSlider" min="0" max="1" step="0.01">
+        <div class="sndNote" data-i18n="setup.sound.note">The game is silent for now: music, effects and the station's voice are coming. These settings will be ready for them.</div>
+      </div>
+
       <div id="setupTabPrivacy" class="setupTabPanel hidden" data-tab="privacy">
         <div id="privacyText" data-i18n="privacy.text">The game keeps your progress in this browser. On the server: your nickname and an anonymous account; a shortened IP only when abuse is detected (30 days).</div>
         <a id="privacyPolicyLink" data-i18n="privacy.policy" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a>
@@ -946,7 +960,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.37.0"></script>
+<script type="module" src="js/main.js?v=2.38.0"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

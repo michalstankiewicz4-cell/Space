@@ -44,6 +44,9 @@ export const en = {
     title: "Setup",
     tabLanguage: "Language",
     tabMouse: "Mouse",
+    tabSound: "Sound",
+    sound: { music: "Music", fx: "Effects", voice: "Voice", off: "OFF",
+      note: "The game is silent for now: music, effects and the station's voice are coming. These settings will be ready for them." },
     tabHelp: "Help",
     tabPrivacy: "Privacy",
     invertX: "Invert X (right-drag)",
@@ -571,6 +574,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.38.0", items: ["Setup has a SOUND tab: music, effects and voice, each with a switch and a level — ready for the sound that's coming."] },
     { v: "2.37.0", items: ["New in Setup → Privacy: START OVER — a fresh swarm, keeping your settings, nickname and programs."] },
     { v: "2.36.4", items: ["The game is easier to find in search engines, and its link shows a picture when you share it."] },
     { v: "2.36.3", items: ["The labs have a home of their own: a start screen with all of them (Dev Tools → LABS → Open the labs)."] },

@@ -70,5 +70,8 @@ instead of the seeded random walk; `null` for the seeded one.
 
 - Listen and tune (the user): the moods, the levels, the voice.
 - Into the game: the music following the situation (orbit, landing, near the
-  black hole, the surface), a volume and a mute in Setup, crossfades.
+  black hole, the surface), crossfades. Setup → Sound already exists
+  (v2.38.0): music / effects / voice, a switch and a level each — the
+  player's master gain is `settings.js#soundLevel("music")` (and "fx",
+  "voice"; 0 when switched off).
 - The robot's lines as files through a vocoder; maybe recorded whispers.
