@@ -1,11 +1,12 @@
 import { openFleetModal, isFleetModalOpen } from "../windows/fleet.js";
+import { openBasesModal, isBasesModalOpen } from "../windows/bases.js";
 import { openTechModal, isTechModalOpen, openPlayersModal, isPlayersModalOpen } from "../windows/windows.js";
 import { openWiki, isWikiOpen, getWikiTab } from "../windows/wiki.js";
 import { openSetupModal, isSetupModalOpen } from "../setupModal.js";
 
-// The HUD's left navigation. Six entries open a window (PLANETS is the
-// Wiki opened on its planets tab, DIPLOMACY the players online); BUILD is
-// a placeholder (.navRow.soon, "Coming soon" tooltip). The
+// The HUD's left navigation. Every entry opens a window (PLANETS is the
+// Wiki opened on its planets tab, BASES your surface bases, DIPLOMACY the
+// players online). The
 // gold "active" row follows whichever window is open, falling back to
 // FLEET (the always-visible fleet list) when none is — refreshed from
 // main.js's ~0.4s tick, so closing a window any way at all (✕, backdrop,
@@ -14,6 +15,7 @@ const ENTRIES = {
   fleet:    { open: openFleetModal,   isOpen: isFleetModalOpen },
   planets:  { open: function(){ openWiki("bodies"); }, isOpen: function(){ return isWikiOpen() && getWikiTab() === "bodies"; } },
   research: { open: openTechModal,    isOpen: isTechModalOpen },
+  bases:    { open: openBasesModal,   isOpen: isBasesModalOpen },
   diplomacy: { open: openPlayersModal, isOpen: isPlayersModalOpen },
   wiki:     { open: function(){ openWiki(); }, isOpen: function(){ return isWikiOpen() && getWikiTab() !== "bodies"; } },
   settings: { open: openSetupModal,   isOpen: isSetupModalOpen }

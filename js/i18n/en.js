@@ -181,6 +181,14 @@ export const en = {
   },
   players: { title: "PLAYERS", you: " (You)", defaultName: "Player" },
   tech: { title: "Tech Tree" },
+  bases: {
+    title: "Bases",
+    empty: "No bases yet. Land a ship on a rocky planet (click the planet with ships selected, then LAND), watch it with VIEW, and build any module down there.",
+    goDown: "TO THE SURFACE",
+    goDownNeedsShip: "No ship of yours stands on this planet: send one with LAND",
+    shipsDown: function(n){ return n === 1 ? "1 ship on the ground" : n + " ships on the ground"; },
+    noShips: "No ships on the ground"
+  },
   fleet: {
     title: "Fleet",
     ship: function(n){ return "Ship " + n; },
@@ -321,7 +329,7 @@ export const en = {
     timeNote: "Game time runs live for everyone — it can't be paused in multiplayer"
   },
   nav: {
-    fleet: "FLEET", planets: "PLANETS", research: "RESEARCH", build: "BUILD",
+    fleet: "FLEET", planets: "PLANETS", research: "RESEARCH", bases: "BASES",
     diplomacy: "DIPLOMACY", wiki: "WIKI", settings: "SETTINGS"
   },
   soon: "Coming soon",
@@ -558,6 +566,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.36.0", items: ["New BASES button in the left menu: all your surface bases in one list. Jump to a planet, or go straight down to the surface with a ship that has landed there."] },
     { v: "2.35.0", items: ["You can send ships to another player's station: they orbit it, or enter its protective field and hold there. Attacking stations comes later."] },
     { v: "2.34.2", items: ["Building is clearer: next to the pointer you see whether a module fits here, and why not if it doesn't. Any module can be the first one.", "You can now build on ice: frozen seas and ice sheets count as solid ground."] },
     { v: "2.34.1", items: ["Your graphics settings now apply on a planet's surface too: the same detail, effects and smoothing as in space."] },

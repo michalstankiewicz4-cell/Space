@@ -1,5 +1,6 @@
 import { renderPlayersList } from "./players.js";
 import { initFleet } from "./fleet.js";
+import { initBases, refreshBases } from "./bases.js";
 import { initDroneScript, refreshDroneScript } from "./droneScript.js";
 import { refreshResearch, initResearch } from "./research.js";
 import { initWiki } from "./wiki.js";
@@ -10,7 +11,7 @@ import { onLangChange } from "../../i18n.js";
 // two simple ones — Research (the upgrade tree, filled by research.js) and
 // the players online (opened from the DIPLOMACY nav, filled by players.js)
 // — and is the one init/refresh entry point for all of them, including the
-// Fleet window (fleet.js), the Wiki (wiki.js) and the drone script window
+// Fleet window (fleet.js), the Bases window (bases.js), the Wiki (wiki.js) and the drone script window
 // (droneScript.js). Each closes via its red ✕, a click on the backdrop, or
 // Escape (ui/escapeKey.js).
 function makeWindow(id, closeBtnId, onOpen){
@@ -43,6 +44,7 @@ export function initWindows(){
   tech.init();
   players.init();
   initFleet();
+  initBases();
   initDroneScript();
   initWiki();
   initGalaxyMap();
@@ -55,4 +57,5 @@ export function initWindows(){
 export function refreshWindows(){
   if(players.isOpen()) renderPlayersList();
   refreshDroneScript();
+  refreshBases();
 }

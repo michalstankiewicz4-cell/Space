@@ -70,13 +70,14 @@
 <link rel="stylesheet" href="css/ui/windows/window.css">
 <link rel="stylesheet" href="css/ui/windows/research.css">
 <link rel="stylesheet" href="css/ui/windows/fleet.css">
+<link rel="stylesheet" href="css/ui/windows/bases.css">
 <link rel="stylesheet" href="css/ui/windows/players.css">
 <link rel="stylesheet" href="css/ui/windows/wiki.css">
 <link rel="stylesheet" href="css/ui/windows/galaxy.css">
 <link rel="stylesheet" href="css/ui/windows/droneScript.css">
 <link rel="stylesheet" href="css/ui/windows/blockEditor.css">
 <link rel="stylesheet" href="css/ui/windows/about.css">
-<link rel="stylesheet" href="css/style.css?v=2.35.0">
+<link rel="stylesheet" href="css/style.css?v=2.36.0">
 </head>
 <body>
 
@@ -463,7 +464,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
     <div class="navRow" data-nav="fleet"><span class="mat gold navSq"></span><button type="button" class="mat navBtn" id="navFleet">FLEET</button></div>
     <div class="navRow" data-nav="planets"><span class="mat lilac navSq"></span><button type="button" class="mat navBtn" id="navPlanets">PLANETS</button></div>
     <div class="navRow" data-nav="research"><span class="mat lilac navSq"></span><button type="button" class="mat navBtn" id="navResearch">RESEARCH</button></div>
-    <div class="navRow soon" data-nav="build"><span class="mat blue navSq"></span><button type="button" class="mat navBtn" id="navBuild">BUILD</button></div>
+    <div class="navRow" data-nav="bases"><span class="mat blue navSq"></span><button type="button" class="mat navBtn" id="navBases">BASES</button></div>
     <div class="navRow" data-nav="diplomacy"><span class="mat blue2 navSq"></span><button type="button" class="mat navBtn" id="navDiplomacy">DIPLOMACY</button></div>
     <div class="navRow" data-nav="wiki"><span class="mat lilac navSq"></span><button type="button" class="mat navBtn" id="navWiki">WIKI</button></div>
     <div class="navRow" data-nav="settings"><span class="mat red navSq"></span><button type="button" class="mat navBtn" id="navSettings">SETTINGS</button></div>
@@ -707,6 +708,16 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
   </section>
 </div>
 
+<!-- Your surface bases (ui/windows/bases.js) -->
+<div id="basesModal" class="uiWindow hidden">
+  <section class="uiWindowBox" id="basesModalBox">
+    <div class="mat blueV uiWinSide"></div>
+    <header class="uiWinHead"><span class="mat blue hdSq"></span><h2 class="hd" data-i18n="bases.title">Bases</h2><button type="button" class="mat red closePill" id="basesCloseBtn" aria-label="Close">✕</button></header>
+    <div class="hdLine"></div>
+    <div class="uiWinBody"><div id="basesEmpty" data-i18n="bases.empty"></div><ul id="basesListEl"></ul></div>
+  </section>
+</div>
+
 <div id="playersModal" class="uiWindow hidden">
   <section class="uiWindowBox" id="playersModalBox">
     <div class="mat blueV uiWinSide"></div>
@@ -911,7 +922,7 @@ Nine orbits and a whole system lie ahead of you. Find out what happened here.</p
      scripts arrive. Execution order is unchanged — deferred classic scripts
      and module scripts run in document order, so THREE and supabase exist
      before main.js (and js/supabaseClient.js) evaluate. -->
-<script type="module" src="js/main.js?v=2.35.0"></script>
+<script type="module" src="js/main.js?v=2.36.0"></script>
 <!-- First-visit privacy policy acceptance (ui/privacy.js): required before
      playing; the game doesn't connect to the server until it's accepted. -->
 <div id="privacyNotice" class="hidden">

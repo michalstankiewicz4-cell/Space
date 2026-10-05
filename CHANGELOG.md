@@ -4,6 +4,16 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.36.0]
+
+### Added
+- BASES in the left menu (it replaces the inert BUILD): a window listing
+  your surface bases on the game's planets, like the Fleet window. Each
+  row: the planet, its modules and how many are built, your ships on the
+  ground there. A click takes the camera to the planet; TO THE SURFACE goes
+  down with a ship standing there. With no base yet, it says how to found
+  one. `js/ui/windows/bases.js`, `css/ui/windows/bases.css`.
+
 ## [2.35.0]
 
 ### Added

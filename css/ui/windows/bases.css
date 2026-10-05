@@ -1,0 +1,18 @@
+/* Bases window (ui/windows/bases.js): one row per base, like the Fleet window. */
+#basesModalBox{ width:420px; }
+#basesEmpty{ padding:6px 4px 10px; font-size:14.5px; line-height:20px; color:#9fb1ff; }
+#basesListEl{ list-style:none; margin:0; padding:2px; max-height:calc(60vh / var(--uiScale)); overflow:auto; }
+#basesListEl li{
+  display:flex; align-items:center; gap:12px; margin-bottom:6px; padding:9px 12px; cursor:pointer;
+  border:1.5px solid #1d36a0; border-radius:6px; background:linear-gradient(180deg,#040a26,#01030f);
+  transition:border-color .15s, box-shadow .15s;
+}
+#basesListEl li:hover{ border-color:#f5bd5c; box-shadow:0 0 6px rgb(245 189 92 / .45); }
+#basesListEl .bInfo{ flex:1; display:grid; grid-template-columns:auto 1fr; column-gap:10px; row-gap:2px; align-items:baseline; }
+#basesListEl .bInfo b{ font-family:var(--uiFontLabel); font-weight:500; font-size:16px; letter-spacing:.5px; color:#ffd98f; }
+#basesListEl .bKind{ font-size:13px; color:#9fb1ff; }
+#basesListEl .bMods, #basesListEl .bShips{ grid-column:1 / -1; font-size:13.5px; color:#dfe5ff; }
+#basesListEl .bShips{ color:#8fa3e8; }
+#basesListEl .bGo{ flex:none; height:28px; padding:0 12px; border-radius:6px; font-family:var(--uiFontLabel); font-weight:500; font-size:13.5px; letter-spacing:.3px; color:#241404; }
+#basesListEl .bGo:hover:not(:disabled){ filter:brightness(1.12); }
+#basesListEl .bGo:disabled{ opacity:.4; cursor:default; }

@@ -162,9 +162,18 @@ then read just that range.
   API on top of `ui/hud/unitPanel.js`); station and planet panels -> the
   shared PLANET INFO slot (`ui/hud/infoPanel.js`, owner-tracked so a late
   "close planet" can't blank the station); toasts -> EVENT LOG
-  (`showToast(msg, kind)` still the one entry point). BUILD nav, the command bar's orders, the planet's Waypoint/Scan/Colonize and
+  (`showToast(msg, kind)` still the one entry point). The command bar's orders, the planet's Waypoint/Scan/Colonize and
   the ship quick buttons are deliberately inert ("Coming soon"), as are
   the top bar's time controls (multiplayer can't pause).
+- **Bases** (`ui/windows/bases.js`, v2.36.0; the BASES nav, which replaced
+  the inert BUILD): your surface bases on the game's planets, like the
+  Fleet window lists ships. A row: the planet's own BodyKit name (two
+  planets share "Neutral planet"), its kind, the modules and how many are
+  built, your ships standing on it. The row: the camera to the planet and
+  its PLANET INFO; TO THE SURFACE: `focusCameraOnUnit` on a ship standing
+  there, and the ground view takes over (greyed out without one). Empty:
+  how to found one. Re-rendered only when a row changed (the ~0.4 s
+  refresh would swallow a click otherwise).
 - **Wiki** (`ui/windows/wiki.js`, v2.3.0; WIKI nav, and PLANETS opens it
   on the Planets tab) is read-only: tabs -> entry list -> picture +
   description. Entries live in `wikiEntries.js` (`{id, unlock, meta?,

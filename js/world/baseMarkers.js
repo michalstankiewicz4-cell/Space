@@ -14,7 +14,7 @@ const KEY = "roj-bases";
 const MARKER_SCREEN = 0.018;          // the dot's size, a fraction of the view's height
 const placed = new Map();             // "group/body" → the marker (a group of sprites)
 
-function readBases(){
+export function readBases(){
   try{
     const all = JSON.parse(readStorage(KEY) || "{}");
     return all && typeof all === "object" ? all : {};

@@ -187,6 +187,14 @@ export const pl = {
   },
   players: { title: "GRACZE", you: " (Ty)", defaultName: "Gracz" },
   tech: { title: "Drzewo rozwoju" },
+  bases: {
+    title: "Bazy",
+    empty: "Nie masz jeszcze baz. Wyląduj statkiem na skalistej planecie (kliknij planetę z zaznaczonymi statkami, potem LĄDUJ), obserwuj go przez VIEW i postaw na dole dowolny moduł.",
+    goDown: "NA POWIERZCHNIĘ",
+    goDownNeedsShip: "Na tej planecie nie stoi żaden twój statek: wyślij któryś rozkazem LĄDUJ",
+    shipsDown: function(n){ return n + " " + plPlural(n, "statek", "statki", "statków") + " na powierzchni"; },
+    noShips: "Brak statków na powierzchni"
+  },
   fleet: {
     title: "Flota",
     ship: function(n){ return "Statek " + n; },
@@ -326,7 +334,7 @@ export const pl = {
     timeNote: "Czas gry płynie na żywo dla wszystkich — w multiplayerze nie da się go zatrzymać"
   },
   nav: {
-    fleet: "FLOTA", planets: "PLANETY", research: "BADANIA", build: "BUDOWA",
+    fleet: "FLOTA", planets: "PLANETY", research: "BADANIA", bases: "BAZY",
     diplomacy: "DYPLOMACJA", wiki: "WIKI", settings: "USTAWIENIA"
   },
   soon: "Wkrótce",
@@ -559,6 +567,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
+    { v: "2.36.0", items: ["Nowy przycisk BAZY w lewym menu: wszystkie twoje bazy na powierzchni w jednej liście. Przeskocz do planety albo zejdź od razu na powierzchnię statkiem, który tam wylądował."] },
     { v: "2.35.0", items: ["Możesz wysłać statki do stacji innego gracza: krążą wokół niej albo wchodzą w jej pole ochronne i tam się zatrzymują. Atak na stacje przyjdzie później."] },
     { v: "2.34.2", items: ["Budowanie jest czytelniejsze: przy kursorze widać, czy moduł tu pasuje, a jeśli nie, to dlaczego. Pierwszym modułem może być dowolny.", "Można teraz budować na lodzie: zamarznięte morza i lądolód liczą się jako twardy grunt."] },
     { v: "2.34.1", items: ["Ustawienia grafiki działają teraz także na powierzchni planety: ten sam detal, efekty i wygładzanie co w kosmosie."] },

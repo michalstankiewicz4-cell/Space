@@ -29,7 +29,7 @@ export function applyStaticText(){
   // dynamic content re-derives its own text on every refresh.
   const $ = function(id){ return document.getElementById(id); };
   $("resBox").title = [t("telemetry.points"), t("telemetry.ships"), t("telemetry.eaten"), t("telemetry.players")].join(" · ");
-  ["fleet", "planets", "research", "build", "diplomacy", "wiki", "settings"].forEach(function(k){
+  ["fleet", "planets", "research", "bases", "diplomacy", "wiki", "settings"].forEach(function(k){
     const row = document.querySelector('#nav .navRow[data-nav="' + k + '"]');
     row.querySelector(".navBtn").textContent = t("nav." + k);
   });
