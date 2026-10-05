@@ -37,6 +37,21 @@ h2::after{ content:""; flex:1; height:1px; background:var(--line); }
 .tile{ position:relative; display:flex; flex-direction:column; border:1px solid var(--line); border-radius:16px; background:var(--card);
   color:inherit; text-decoration:none; overflow:hidden; transition:transform .18s, border-color .18s, box-shadow .18s; }
 .tile:hover{ transform:translateY(-3px); border-color:#3a4256; box-shadow:0 14px 34px rgba(0,0,0,.4), 0 0 0 1px rgba(139,156,255,.15); }
+/* reordering: the six-dot grip (top right, on hover), the tile being dragged, its gap */
+.grip{ position:absolute; right:10px; top:10px; z-index:2; width:30px; height:30px; display:grid; place-items:center; border-radius:8px;
+  background:rgba(13,15,19,.55); backdrop-filter:blur(4px); color:#c9ced8; cursor:grab; opacity:0; transition:opacity .15s, background .15s; touch-action:none; }
+.tile:hover .grip, .grip:focus-visible{ opacity:1; }
+.grip:hover{ background:rgba(43,58,99,.85); color:#fff; }
+.grip svg{ width:14px; height:14px; }
+.tile.dragging{ position:fixed; z-index:50; pointer-events:none; transform:rotate(1.5deg) scale(1.03); transition:none;
+  box-shadow:0 24px 50px rgba(0,0,0,.55), 0 0 0 1px rgba(139,156,255,.35); }
+.tile.dragging .grip{ opacity:1; cursor:grabbing; }
+.gap{ border:2px dashed #3a4256; border-radius:16px; background:rgba(139,156,255,.05); }
+body.reordering, body.reordering *{ cursor:grabbing !important; user-select:none; }
+h2 .reset{ order:2; margin-left:4px; font:inherit; font-size:11px; letter-spacing:1px; color:#7d8494; background:none; border:1px solid var(--line);
+  border-radius:999px; padding:2px 10px; cursor:pointer; text-transform:uppercase; }
+h2 .reset:hover{ color:#eef1f6; border-color:#3a4256; }
+h2::after{ order:1; }
 .art{ position:relative; aspect-ratio:16/8; overflow:hidden; }
 .art svg{ position:absolute; inset:0; width:100%; height:100%; }
 .art::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg, transparent 55%, rgba(21,24,32,.85)); }
@@ -124,8 +139,114 @@ function tile(item) {
   a.querySelector(".tags .tag:last-child").textContent = info[2];
   return a;
 }
-LABS.forEach((l) => document.getElementById("labs").appendChild(tile(l)));
-TOOLS.forEach((t) => document.getElementById("tools").appendChild(tile(t)));
+// ---------- the order: yours, dragged by the six-dot grip, kept in this browser ----------
+const ORDER_KEY = "labsHub.order";
+function loadOrder() { try { return JSON.parse(localStorage.getItem(ORDER_KEY) || "{}") || {}; } catch (e) { return {}; } }
+function saveOrder(o) { try { localStorage.setItem(ORDER_KEY, JSON.stringify(o)); } catch (e) { /* storage blocked: the order lasts this visit */ } }
+// a saved order first, anything new (a lab added later) at the end
+function ordered(items, ids) {
+  if (!ids) return items;
+  return items.slice().sort((a, b) => { const i = ids.indexOf(a.file), j = ids.indexOf(b.file); return (i < 0 ? 1e9 : i) - (j < 0 ? 1e9 : j); });
+}
+const GRIP = '<svg viewBox="0 0 14 14" aria-hidden="true">' + [3, 7, 11].map((y) => `<circle cx="4.5" cy="${y}" r="1.4" fill="currentColor"/><circle cx="9.5" cy="${y}" r="1.4" fill="currentColor"/>`).join("") + "</svg>";
+function fill(gridId, items, key) {
+  const grid = document.getElementById(gridId), saved = loadOrder();
+  grid.textContent = "";
+  ordered(items, saved[key]).forEach((it) => {
+    const t = tile(it);
+    t.dataset.file = it.file;
+    const g = document.createElement("span");
+    g.className = "grip"; g.innerHTML = GRIP; g.title = "Drag to reorder"; g.setAttribute("role", "button"); g.tabIndex = 0;
+    g.setAttribute("aria-label", "Drag to reorder " + it.name + " (or Alt+arrow keys)");
+    t.appendChild(g);
+    grid.appendChild(t);
+  });
+  grid.dataset.key = key;
+  resetButton(grid);
+}
+// "Reset order" by the section's heading, while the order is your own
+function resetButton(grid) {
+  const h = grid.previousElementSibling;
+  let b = h.querySelector(".reset");
+  const custom = !!loadOrder()[grid.dataset.key];
+  if (!custom) { if (b) b.remove(); return; }
+  if (b) return;
+  b = document.createElement("button"); b.className = "reset"; b.type = "button"; b.textContent = "Reset order";
+  b.addEventListener("click", () => { const o = loadOrder(); delete o[grid.dataset.key]; saveOrder(o); render(); });
+  h.appendChild(b);
+}
+function remember(grid) {
+  const o = loadOrder();
+  o[grid.dataset.key] = [...grid.querySelectorAll(".tile")].map((t) => t.dataset.file);
+  saveOrder(o);
+  resetButton(grid);
+}
+function render() { fill("labs", LABS, "labs"); fill("tools", TOOLS, "tools"); }
+render();
+
+// FLIP: the other tiles glide to their new places
+function glide(grid, change) {
+  const tiles = [...grid.querySelectorAll(".tile:not(.dragging)")], before = new Map(tiles.map((t) => [t, t.getBoundingClientRect()]));
+  change();
+  tiles.forEach((t) => {
+    const a = before.get(t), b = t.getBoundingClientRect(), dx = a.left - b.left, dy = a.top - b.top;
+    if (!dx && !dy) return;
+    t.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }], { duration: 180, easing: "cubic-bezier(.2,.7,.3,1)" });
+  });
+}
+let drag = null;
+document.addEventListener("pointerdown", (e) => {
+  const g = e.target.closest(".grip");
+  if (!g || e.button !== 0) return;
+  e.preventDefault();
+  const t = g.closest(".tile"), grid = t.parentElement, r = t.getBoundingClientRect();
+  const gap = document.createElement("div"); gap.className = "gap"; gap.style.height = r.height + "px";
+  grid.insertBefore(gap, t);
+  t.classList.add("dragging");
+  Object.assign(t.style, { width: r.width + "px", height: r.height + "px", left: r.left + "px", top: r.top + "px" });
+  drag = { t, grid, gap, dx: e.clientX - r.left, dy: e.clientY - r.top, id: e.pointerId };
+  document.body.classList.add("reordering");
+});
+document.addEventListener("pointermove", (e) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  drag.t.style.left = e.clientX - drag.dx + "px"; drag.t.style.top = e.clientY - drag.dy + "px";
+  // the tile under the pointer, in the same section: the gap goes before or after it
+  const over = document.elementFromPoint(e.clientX, e.clientY), target = over && over.closest(".tile");
+  if (!target || target === drag.t || target.parentElement !== drag.grid) return;
+  const r = target.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
+  const ref = after ? target.nextSibling : target;
+  if (ref === drag.gap || (after ? target.nextSibling === drag.gap : target.previousSibling === drag.gap && !after)) return;
+  glide(drag.grid, () => drag.grid.insertBefore(drag.gap, ref));
+});
+function drop() {
+  if (!drag) return;
+  const { t, grid, gap } = drag;
+  const to = gap.getBoundingClientRect();
+  t.style.transition = "left .16s, top .16s"; t.style.left = to.left + "px"; t.style.top = to.top + "px";
+  setTimeout(() => {
+    grid.insertBefore(t, gap); gap.remove();
+    t.classList.remove("dragging"); t.removeAttribute("style");
+    remember(grid);
+  }, 170);
+  drag = null;
+  document.body.classList.remove("reordering");
+}
+document.addEventListener("pointerup", drop);
+document.addEventListener("pointercancel", drop);
+// the grip is inside the tile's link: a click on it never opens the lab
+document.addEventListener("click", (e) => { if (e.target.closest(".grip")) e.preventDefault(); }, true);
+// keyboard: on a focused grip, Alt+arrows move the tile
+document.addEventListener("keydown", (e) => {
+  const g = document.activeElement && document.activeElement.closest && document.activeElement.closest(".grip");
+  if (!g || !e.altKey || !/^Arrow(Left|Right|Up|Down)$/.test(e.key)) return;
+  e.preventDefault();
+  const t = g.closest(".tile"), grid = t.parentElement, back = e.key === "ArrowLeft" || e.key === "ArrowUp";
+  const sib = back ? t.previousElementSibling : t.nextElementSibling;
+  if (!sib) return;
+  glide(grid, () => grid.insertBefore(t, back ? sib : sib.nextSibling));
+  remember(grid);
+  g.focus();
+});
 document.getElementById("nLabs").textContent = LABS.length;
 document.getElementById("nGame").textContent = LABS.filter((l) => (INFO[l.file] || [])[1] === "game").length;
 document.getElementById("nTools").textContent = TOOLS.length;
