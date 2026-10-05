@@ -205,7 +205,11 @@ the player's own progress stays in `localStorage`.
   `signInAnonymously`).
 - **Privacy (GDPR)**: `privacy.html` must match what's stored (shortened
   IP only, logs 30 days, nicks 180 days, `delete_my_data` only the
-  caller's own); **nothing connects to Supabase before the policy is
+  caller's own). It describes kinds of data, not features: a new feature
+  needs a policy update only for a new kind of personal data, purpose,
+  recipient or longer retention — the checklist in docs/security.md;
+  server-saved game state must be deleted by `delete_my_data` and after
+  180 days idle; **nothing connects to Supabase before the policy is
   accepted** (`ui/privacy.js#whenPrivacyAccepted`) — keep new server calls
   behind it. Code licence: MIT.
 

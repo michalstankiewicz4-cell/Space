@@ -8,8 +8,10 @@
 <link rel="stylesheet" href="css/fonts.css">
 <!-- The game's privacy policy, Polish first, English below (#pl / #en).
      Linked from the game's first-visit notice, the About window and
-     Setup -> Privacy. Keep it in sync with what the game and
-     supabase/schema.sql actually store (docs/security.md, "Privacy"). -->
+     Setup -> Privacy. It describes KINDS of data and purposes, not game
+     features, so new features don't change it; section 4 says when it
+     must change (a new kind of personal data, purpose, recipient or a
+     longer retention) — the checklist is in docs/security.md, "Privacy". -->
 <style>
   :root{ color-scheme:dark; }
   html,body{ margin:0; background:#02030a; color:#d8ddff; }
@@ -50,82 +52,120 @@
 <!-- ================================================================== PL -->
 <section id="pl" lang="pl">
 <h1>Polityka prywatności</h1>
-<p class="meta">Obowiązuje od 27 września 2026 r.</p>
+<p class="meta">Obowiązuje od 5 października 2026 r.</p>
 
 <div class="box">W skrócie: gra nie ma reklam, analityki ani śledzenia. Twój postęp zostaje w
 twojej przeglądarce. Na serwerze trzymamy tylko to, co jest potrzebne do gry z innymi
-graczami i do ochrony przed nadużyciami, i usuwamy to po określonym czasie. Swoje dane
+graczami i do ochrony przed nadużyciami, i wszystko usuwamy po określonym czasie. Swoje dane
 możesz w każdej chwili usunąć sam: <b>Ustawienia → Prywatność → Usuń moje dane</b>.
-Przed pierwszym wejściem do gry prosimy o akceptację tej polityki — do tego momentu gra nie
-łączy się z serwerem i nic nie jest wysyłane.</div>
+Do chwili zaakceptowania tej polityki gra nie łączy się z serwerem i niczego nie wysyła.</div>
 
 <h2>1. Administrator danych</h2>
 <p>Administratorem danych jest Michał Stankiewicz, twórca gry.
 Kontakt: <a href="mailto:michalstankiewicz@onet.eu">michalstankiewicz@onet.eu</a>.</p>
 
-<h2>2. Jakie dane przetwarzamy i po co</h2>
+<h2>2. Zasady, które się nie zmieniają</h2>
+<ul>
+<li>Gra jest darmowa i nic w niej nie jest sprzedawane.</li>
+<li>Nie prosimy o e-mail, hasło ani prawdziwe imię. Konto w grze jest anonimowe.</li>
+<li>Nie sprzedajemy danych graczy.</li>
+<li>Każdy rodzaj danych na serwerze ma określony termin usunięcia.</li>
+</ul>
+
+<h2>3. Jakie dane przetwarzamy i po co</h2>
 <div class="tableWrap"><table>
-<tr><th>Dane</th><th>Cel</th><th>Podstawa prawna</th><th>Jak długo</th></tr>
-<tr><td>Anonimowy identyfikator konta (losowy, bez e-maila i hasła)</td>
-    <td>działanie gry wieloosobowej: rozpoznanie, czyje są statki i działania</td>
-    <td>art. 6 ust. 1 lit. b RODO (świadczenie usługi — gry)</td>
-    <td>do usunięcia przez ciebie</td></tr>
-<tr><td>Nick (pseudonim), który sam wybierasz</td>
-    <td>pokazanie go innym graczom; licznik graczy; rozpoznanie sprawcy nadużyć</td>
+<tr><th>Rodzaj danych</th><th>Cel</th><th>Podstawa prawna</th><th>Jak długo</th></tr>
+<tr><td><b>Anonimowy identyfikator konta</b>: losowy, nadany przy pierwszym połączeniu, bez e-maila i hasła</td>
+    <td>rozpoznanie, które jednostki i działania w grze są twoje</td>
+    <td>art. 6 ust. 1 lit. b RODO (świadczenie usługi: gry)</td>
+    <td>do usunięcia przez ciebie albo resetu gry</td></tr>
+<tr><td><b>Nick</b>: pseudonim, który sam wybierasz</td>
+    <td>pokazanie go innym graczom; rozpoznanie sprawcy nadużyć</td>
     <td>art. 6 ust. 1 lit. b i f RODO</td>
     <td>180 dni od ostatniego wejścia do gry</td></tr>
-<tr><td>Pozycje statków, drona i stacji, kolor, punkty</td>
+<tr><td><b>Dane gry przesyłane na żywo</b>: to, co twoje jednostki robią w świecie gry i co widzą
+        inni gracze (położenie, ruch, rozkazy i wygląd twoich statków, drona i stacji, twój kolor, punkty)</td>
     <td>pokazanie ich innym graczom w czasie rzeczywistym</td>
     <td>art. 6 ust. 1 lit. b RODO</td>
-    <td>nie są zapisywane — tylko przesyłane na żywo</td></tr>
-<tr><td>Skrócony adres IP (bez ostatniego fragmentu), typ przeglądarki, kraj</td>
-    <td>ochrona gry przed nadużyciami (np. spam, zbyt częste akcje, próby złamania zabezpieczeń) —
-        zapisywane <b>tylko</b> wtedy, gdy wykryjemy takie zdarzenie</td>
+    <td>nie są zapisywane, tylko przesyłane na żywo</td></tr>
+<tr><td><b>Stan gry zapisany na serwerze</b>: jeśli jakaś funkcja gry zapisuje swój stan na serwerze,
+        powiązany z twoim anonimowym kontem (np. to, co zbudujesz w świecie gry, albo odblokowane
+        elementy wyglądu)</td>
+    <td>działanie tej funkcji</td>
+    <td>art. 6 ust. 1 lit. b RODO</td>
+    <td>do usunięcia przez ciebie, resetu gry albo 180 dni bez wejścia do gry</td></tr>
+<tr><td><b>Dziennik bezpieczeństwa</b>: skrócony adres IP (bez ostatniego fragmentu), typ
+        przeglądarki, kraj i opis zdarzenia, zapisywane <b>tylko</b> wtedy, gdy wykryjemy podejrzane
+        zdarzenie (np. spam, zbyt częste akcje, próbę obejścia zabezpieczeń)</td>
+    <td>ochrona gry przed nadużyciami</td>
     <td>art. 6 ust. 1 lit. f RODO (prawnie uzasadniony interes: bezpieczeństwo)</td>
     <td>30 dni</td></tr>
-<tr><td>Dane w pamięci przeglądarki (localStorage): postęp gry, ustawienia, język, identyfikator, nick, kolor</td>
-    <td>zapamiętanie gry i ustawień między wizytami</td>
+<tr><td><b>Dane w twojej przeglądarce</b> (localStorage): wszystko, co gra i jej laboratoria
+        pamiętają między wizytami (postęp, ustawienia, język, twoje bazy, położenie floty)</td>
+    <td>zapamiętanie gry między wizytami</td>
     <td>niezbędne do działania gry</td>
-    <td>zostają na twoim urządzeniu, dopóki ich nie usuniesz</td></tr>
+    <td>zostają na twoim urządzeniu, dopóki ich nie usuniesz; nie trafiają na serwer</td></tr>
 </table></div>
-<p>Nie używamy plików cookie reklamowych ani analitycznych. Czcionki i biblioteki gry są
-serwowane z naszego serwera, a nie z serwerów firm trzecich.</p>
+<p>Prowadzimy też <b>statystyki zbiorcze</b>: same liczby (np. połączeń w danej godzinie czy
+graczy online), niepowiązane z żadną osobą, więc niebędące danymi osobowymi. Nie używamy plików
+cookie reklamowych ani analitycznych. Czcionki i biblioteki gry są serwowane z naszego serwera,
+a nie z serwerów firm trzecich.</p>
 
-<h2>3. Komu powierzamy dane</h2>
+<h2>4. Kiedy ta polityka się zmienia</h2>
+<p>Nowe funkcje, nowe treści i zmiany zasad gry <b>nie zmieniają tej polityki</b>, o ile mieszczą
+się w rodzajach danych i celach z punktu 3. Zaktualizujemy ją, z nową datą na górze i informacją
+w grze lub na blogu, tylko wtedy, gdy będziemy chcieli:</p>
 <ul>
-<li><b>Supabase Inc.</b> — baza danych, konta anonimowe i komunikacja na żywo między graczami (podmiot przetwarzający). Baza gry znajduje się w Unii Europejskiej (region Irlandia, eu-west-1).</li>
-<li><b>GitHub, Inc.</b> — hosting strony gry (GitHub Pages).</li>
+<li>zbierać nowy rodzaj danych osobowych (np. adres e-mail, wiadomości czatu),</li>
+<li>używać danych w nowym celu (np. wyświetlać reklamy),</li>
+<li>powierzyć je nowemu podmiotowi (np. sieci reklamowej),</li>
+<li>przechowywać je dłużej, niż tu podano.</li>
+</ul>
+<p>Jeśli zmiana będzie wymagała twojej zgody, nie wejdzie w życie, dopóki jej nie wyrazisz.</p>
+
+<h2>5. Komu powierzamy dane</h2>
+<ul>
+<li><b>Supabase Inc.</b>: baza danych, konta anonimowe i komunikacja na żywo między graczami (podmiot przetwarzający). Baza gry znajduje się w Unii Europejskiej (region Irlandia, eu-west-1).</li>
+<li><b>GitHub, Inc.</b>: hosting strony gry (GitHub Pages).</li>
 </ul>
 <p>Obaj dostawcy mogą technicznie rejestrować adresy IP w swoich logach serwerowych,
 zgodnie z własnymi politykami prywatności. Mogą przetwarzać dane poza Europejskim Obszarem
 Gospodarczym na podstawie standardowych klauzul umownych. Blog gry
 (swarmprotocol.blogspot.com) to osobna strona Google Blogger z własną polityką prywatności.</p>
 
-<h2>4. Twoje prawa</h2>
+<h2>6. Twoje prawa</h2>
 <p>Masz prawo do dostępu do swoich danych, ich sprostowania, usunięcia, ograniczenia
 przetwarzania, przenoszenia oraz do sprzeciwu wobec przetwarzania opartego na prawnie
 uzasadnionym interesie. Masz też prawo wnieść skargę do Prezesa Urzędu Ochrony Danych
 Osobowych (ul. Stawki 2, 00-193 Warszawa, <a href="https://uodo.gov.pl" target="_blank" rel="noopener">uodo.gov.pl</a>).</p>
 
 <h3>Jak usunąć swoje dane</h3>
-<p>W grze: <b>Ustawienia → Prywatność → Usuń moje dane</b>. Usuwa to twój nick i anonimowe konto
-z serwera oraz wszystkie dane gry z tej przeglądarki (także postęp). Wpisy dziennika
-bezpieczeństwa z ostatnich 30 dni zostają do końca tego okresu — to wyjątek przewidziany w
-art. 17 ust. 3 RODO, żeby usunięcie danych nie pozwalało zatrzeć śladów nadużyć.
-Możesz też napisać na <a href="mailto:michalstankiewicz@onet.eu">michalstankiewicz@onet.eu</a>.</p>
+<p>W grze: <b>Ustawienia → Prywatność → Usuń moje dane</b>. Usuwa to z serwera wszystko, co jest
+powiązane z twoim kontem (łącznie z samym kontem), a z tej przeglądarki wszystkie dane gry
+(także postęp). Wpisy dziennika bezpieczeństwa z ostatnich 30 dni zostają do końca tego okresu:
+to wyjątek przewidziany w art. 17 ust. 3 RODO, żeby usunięcie konta nie pozwalało zatrzeć śladów
+nadużyć. Możesz też napisać na <a href="mailto:michalstankiewicz@onet.eu">michalstankiewicz@onet.eu</a>.</p>
 
-<h2>5. Dobra rada</h2>
-<p>Nie używaj swojego prawdziwego imienia i nazwiska jako nicku — gra nie potrzebuje żadnych
+<h2>7. Dobra rada</h2>
+<p>Nie używaj swojego prawdziwego imienia i nazwiska jako nicku. Gra nie potrzebuje żadnych
 danych, które by cię identyfikowały.</p>
 
-<h2>6. Zmiany polityki i resety gry</h2>
-<p>Swarm Protocol stale się rozwija, dlatego zastrzegamy sobie prawo do zmiany tej polityki,
-gdy wymaga tego rozwój gry albo bezpieczeństwo graczy. Aktualna wersja jest zawsze na tej
-stronie, z datą obowiązywania na górze; o istotnych zmianach poinformujemy w grze lub na blogu.</p>
-<p>Z tych samych powodów — na przykład przy dużej aktualizacji, zmianie zasad gry albo po
-wykryciu nadużyć — możemy przeprowadzić reset gry (tzw. <i>wipe</i>): usunąć dane zapisane na
-serwerze (nicki, anonimowe konta, stan świata gry) i wyzerować postęp, tak aby wszyscy
-zaczynali od nowa na równych zasadach.</p>
+<h2>8. Resety gry</h2>
+<p>Przy dużej aktualizacji, zmianie zasad gry albo po wykryciu nadużyć możemy przeprowadzić
+reset gry (tzw. <i>wipe</i>): usunąć dane zapisane na serwerze (nicki, anonimowe konta, stan
+świata gry) i wyzerować postęp, tak aby wszyscy zaczynali od nowa na równych zasadach.</p>
+
+<h2>9. Przekazanie gry</h2>
+<p>Jeśli gra zostanie sprzedana lub przekazana komuś innemu, dane graczy przejdą razem z nią na
+nowego właściciela, który zostanie ich administratorem. Poinformujemy o tym w grze i na blogu
+<b>co najmniej 30 dni wcześniej</b>; w tym czasie możesz usunąć swoje dane, jeśli nie chcesz, żeby
+przeszły dalej. Nowy właściciel musi przestrzegać tej polityki, dopóki nie zmieni jej zgodnie z
+punktem 4.</p>
+
+<h2>Poprzednie wersje</h2>
+<ul>
+<li><a href="privacy-2026-09-27.html">Obowiązująca od 27 września do 4 października 2026 r.</a></li>
+</ul>
 </section>
 
 <hr>
@@ -133,81 +173,117 @@ zaczynali od nowa na równych zasadach.</p>
 <!-- ================================================================== EN -->
 <section id="en" lang="en">
 <h1>Privacy policy</h1>
-<p class="meta">Effective from 27 September 2026.</p>
+<p class="meta">Effective from 5 October 2026.</p>
 
 <div class="box">In short: the game has no ads, no analytics and no tracking. Your progress stays
 in your browser. On the server we keep only what's needed to play with others and to protect
-the game from abuse, and we delete it after a set time. You can delete your data yourself at
-any time: <b>Setup → Privacy → Delete my data</b>. Before your first game we ask you to
-accept this policy — until then the game doesn't connect to the server and nothing is sent.</div>
+the game from abuse, and we delete everything after a set time. You can delete your data
+yourself at any time: <b>Setup → Privacy → Delete my data</b>. Until you accept this policy,
+the game doesn't connect to the server and sends nothing.</div>
 
 <h2>1. Data controller</h2>
 <p>The data controller is Michał Stankiewicz, the game's author.
 Contact: <a href="mailto:michalstankiewicz@onet.eu">michalstankiewicz@onet.eu</a>.</p>
 
-<h2>2. What data we process and why</h2>
+<h2>2. Principles that don't change</h2>
+<ul>
+<li>The game is free and nothing is sold in it.</li>
+<li>We don't ask for an e-mail address, a password or your real name. Your game account is anonymous.</li>
+<li>We don't sell players' data.</li>
+<li>Every kind of data on the server has a set time after which it's deleted.</li>
+</ul>
+
+<h2>3. What data we process and why</h2>
 <div class="tableWrap"><table>
-<tr><th>Data</th><th>Purpose</th><th>Legal basis</th><th>How long</th></tr>
-<tr><td>Anonymous account identifier (random, no e-mail or password)</td>
-    <td>running the multiplayer game: knowing whose ships and actions are whose</td>
-    <td>Art. 6(1)(b) GDPR (providing the service — the game)</td>
-    <td>until you delete it</td></tr>
-<tr><td>The nickname you choose</td>
-    <td>showing it to other players; the player counter; identifying abuse</td>
+<tr><th>Kind of data</th><th>Purpose</th><th>Legal basis</th><th>How long</th></tr>
+<tr><td><b>Anonymous account identifier</b>: random, given at your first connection, no e-mail or password</td>
+    <td>knowing which units and actions in the game are yours</td>
+    <td>Art. 6(1)(b) GDPR (providing the service: the game)</td>
+    <td>until you delete it or the game is reset</td></tr>
+<tr><td><b>Nickname</b>: the name you choose</td>
+    <td>showing it to other players; identifying abuse</td>
     <td>Art. 6(1)(b) and (f) GDPR</td>
     <td>180 days after your last visit</td></tr>
-<tr><td>Positions of your ships, drone and station, colour, points</td>
-    <td>showing them to other players live</td>
+<tr><td><b>Live game data</b>: what your units do in the game world and other players see
+        (the position, movement, orders and look of your ships, drone and station, your colour, points)</td>
+    <td>showing it to other players live</td>
     <td>Art. 6(1)(b) GDPR</td>
-    <td>not stored — only sent live</td></tr>
-<tr><td>Shortened IP address (last part removed), browser type, country</td>
-    <td>protecting the game from abuse (e.g. spam, too-frequent actions, attempts to break
-        security) — recorded <b>only</b> when such an event is detected</td>
+    <td>not stored, only sent live</td></tr>
+<tr><td><b>Game state saved on the server</b>: if a game feature saves its state on the server,
+        linked to your anonymous account (e.g. what you build in the game world, or unlocked
+        cosmetic items)</td>
+    <td>making that feature work</td>
+    <td>Art. 6(1)(b) GDPR</td>
+    <td>until you delete it, the game is reset, or 180 days after your last visit</td></tr>
+<tr><td><b>Security log</b>: a shortened IP address (last part removed), browser type, country and
+        what happened, recorded <b>only</b> when a suspicious event is detected (e.g. spam,
+        too-frequent actions, an attempt to get around the safeguards)</td>
+    <td>protecting the game from abuse</td>
     <td>Art. 6(1)(f) GDPR (legitimate interest: security)</td>
     <td>30 days</td></tr>
-<tr><td>Browser storage (localStorage): game progress, settings, language, identifier, nickname, colour</td>
-    <td>remembering your game and settings between visits</td>
+<tr><td><b>Data in your browser</b> (localStorage): everything the game and its labs remember
+        between visits (progress, settings, language, your bases, where your fleet is)</td>
+    <td>remembering your game between visits</td>
     <td>strictly necessary for the game to work</td>
-    <td>stays on your device until you delete it</td></tr>
+    <td>stays on your device until you delete it; never sent to the server</td></tr>
 </table></div>
-<p>We use no advertising or analytics cookies. The game's fonts and libraries are served from
-our own server, not from third parties.</p>
+<p>We also keep <b>aggregate statistics</b>: plain numbers (e.g. connections in an hour or players
+online), not linked to anyone, so not personal data. We use no advertising or analytics cookies.
+The game's fonts and libraries are served from our own server, not from third parties.</p>
 
-<h2>3. Who processes data for us</h2>
+<h2>4. When this policy changes</h2>
+<p>New features, new content and changes to the game's rules <b>don't change this policy</b> as
+long as they fit the kinds of data and purposes in section 3. We'll update it, with a new date
+at the top and a notice in the game or on the devlog, only if we want to:</p>
 <ul>
-<li><b>Supabase Inc.</b> — database, anonymous accounts and live communication between players (processor). The game's database is in the European Union (Ireland, eu-west-1).</li>
-<li><b>GitHub, Inc.</b> — hosting of the game's website (GitHub Pages).</li>
+<li>collect a new kind of personal data (e.g. an e-mail address, chat messages),</li>
+<li>use data for a new purpose (e.g. showing ads),</li>
+<li>entrust it to a new party (e.g. an ad network),</li>
+<li>keep it longer than stated here.</li>
+</ul>
+<p>If a change needs your consent, it won't apply to you until you give it.</p>
+
+<h2>5. Who processes data for us</h2>
+<ul>
+<li><b>Supabase Inc.</b>: database, anonymous accounts and live communication between players (processor). The game's database is in the European Union (Ireland, eu-west-1).</li>
+<li><b>GitHub, Inc.</b>: hosting of the game's website (GitHub Pages).</li>
 </ul>
 <p>Both may technically log IP addresses in their server logs under their own privacy
 policies, and may process data outside the European Economic Area under standard contractual
 clauses. The game's devlog (swarmprotocol.blogspot.com) is a separate Google Blogger site with
 its own privacy policy.</p>
 
-<h2>4. Your rights</h2>
+<h2>6. Your rights</h2>
 <p>You have the right to access your data, to rectify, erase and restrict it, to data
 portability, and to object to processing based on legitimate interest. You may also lodge a
-complaint with a supervisory authority — in Poland the President of the Personal Data
+complaint with a supervisory authority: in Poland the President of the Personal Data
 Protection Office (UODO, ul. Stawki 2, 00-193 Warszawa, <a href="https://uodo.gov.pl" target="_blank" rel="noopener">uodo.gov.pl</a>).</p>
 
 <h3>How to delete your data</h3>
-<p>In the game: <b>Setup → Privacy → Delete my data</b>. It removes your nickname and anonymous
-account from the server and all game data from this browser (including your progress).
-Security log entries from the last 30 days remain until that period ends — an exception
-allowed by Art. 17(3) GDPR, so that deleting your data can't erase traces of abuse.
-You can also write to <a href="mailto:michalstankiewicz@onet.eu">michalstankiewicz@onet.eu</a>.</p>
+<p>In the game: <b>Setup → Privacy → Delete my data</b>. It removes everything linked to your
+account from the server (the account itself included) and all game data from this browser
+(including your progress). Security log entries from the last 30 days remain until that period
+ends: an exception allowed by Art. 17(3) GDPR, so that deleting an account can't erase traces of
+abuse. You can also write to <a href="mailto:michalstankiewicz@onet.eu">michalstankiewicz@onet.eu</a>.</p>
 
-<h2>5. A piece of advice</h2>
-<p>Don't use your real name as your nickname — the game needs nothing that identifies you.</p>
+<h2>7. A piece of advice</h2>
+<p>Don't use your real name as your nickname. The game needs nothing that identifies you.</p>
 
-<h2>6. Policy changes and game resets</h2>
-<p>Swarm Protocol keeps evolving, so we reserve the right to change this policy when the
-game's development or players' safety calls for it. The current version is always on this
-page, with its effective date at the top; we'll announce significant changes in the game or
-on the devlog.</p>
-<p>For the same reasons — for example with a major update, a change to the game's rules, or
-after abuse is detected — we may reset the game (a so-called <i>wipe</i>): delete the data
-stored on the server (nicknames, anonymous accounts, the game world's state) and reset
-progress, so everyone starts over on equal terms.</p>
+<h2>8. Game resets</h2>
+<p>With a major update, a change to the game's rules, or after abuse is detected, we may reset
+the game (a so-called <i>wipe</i>): delete the data stored on the server (nicknames, anonymous
+accounts, the game world's state) and reset progress, so everyone starts over on equal terms.</p>
+
+<h2>9. Handing over the game</h2>
+<p>If the game is sold or handed over to someone else, players' data goes with it to the new
+owner, who becomes its controller. We'll announce it in the game and on the devlog <b>at least
+30 days in advance</b>; in that time you can delete your data if you don't want it passed on.
+The new owner must follow this policy until they change it under section 4.</p>
+
+<h2>Previous versions</h2>
+<ul>
+<li><a href="privacy-2026-09-27.html#en">In effect from 27 September to 4 October 2026</a></li>
+</ul>
 </section>
 </main>
 </body>

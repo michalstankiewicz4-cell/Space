@@ -4,6 +4,20 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.36.1]
+
+### Changed
+- The privacy policy (`privacy.html`, effective 5 October 2026) describes
+  kinds of data and purposes instead of game features, so new features
+  don't outdate it. New: the standing principles (free, nothing sold, no
+  e-mail or real name, data never sold), when the policy must change (a
+  new kind of personal data, purpose, recipient or longer retention),
+  game state saved on the server (on stated terms), aggregate statistics,
+  handing over the game (announced 30 days ahead). Nothing the game
+  stores changed.
+- The previous policy stays readable: `privacy-2026-09-27.html` (in
+  effect 27 September – 4 October 2026), linked under "Previous versions".
+
 ## [2.36.0]
 
 ### Added

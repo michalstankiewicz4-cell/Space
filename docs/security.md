@@ -334,6 +334,43 @@ Added in v2.18.0 (2026-09-27, the user's request). The public policy is
 the game and this schema actually store** — it's a legal statement, not
 marketing.
 
+**A policy that doesn't age (v2.36.1, 2026-10-05, the user's request).**
+It describes kinds of data and purposes, not game features, so a new
+feature that fits them needs no change. Its section 4 promises an update
+(new date, a notice in the game or on the devlog) only for these — check
+every new feature against them:
+
+1. **A new kind of personal data?** (an e-mail, chat messages, a real
+   name, anything that isn't the anonymous id, the nickname, live game
+   data, game state, the security log or browser storage) → update.
+2. **A new purpose?** (ads, profiling, anything beyond running the game
+   and protecting it) → update; ads with a third party also need consent.
+3. **A new recipient?** (any service besides Supabase and GitHub Pages
+   getting player data: an ad network, an analytics tool, another
+   host) → update.
+4. **Longer retention?** → update.
+5. **Game state saved on the server** (e.g. bases moved to the server,
+   unlocked cosmetics) is already covered — on these terms, which the
+   code must keep: linked to the anonymous account only; deleted by
+   `delete_my_data()` (add the new table to it), by a reset, and after
+   180 days without a visit (add it to `purge_old_data()`, keyed on the
+   same activity as `actor_nicks`).
+6. **Plain numbers** (counts with no actor id) aren't personal data — no
+   change (like `stats_hourly`).
+
+**Old versions stay readable (the user's call):** on an update, save the
+outgoing page unchanged as `privacy-<its start date>.html`, add only a
+note, the title's "(archive)", its dates ("in effect from … to …") and the
+banner linking the current one; list it under "Previous versions" at the
+end of `privacy.html` (both languages). First one:
+`privacy-2026-09-27.html` (27 September – 4 October 2026).
+
+Standing commitments in section 2 (the user's calls): the game is free
+and nothing is sold in it (no shop, no paid items, no link to a
+supporters' platform); no e-mail, password or real name; players' data is
+never sold. Ads aren't ruled out for the future (section 4: an update and
+consent first); a sale of the game is announced 30 days ahead (section 9).
+
 - **What's personal data here**: the anonymous account id (Supabase
   Auth), the nickname (`actor_nicks`), and in `activity_log` the IP,
   browser and country (`request_meta()`), recorded only when an abuse
