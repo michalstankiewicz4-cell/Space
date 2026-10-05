@@ -382,6 +382,54 @@ Server side for the full version: a small snapshot table (solar-body
 health) and comet history, both purged after a set time, behind privacy
 acceptance like every other server call.
 
+## Life forms (2026-10)
+
+The user's plan (2026-10-05): a **life lab** and a **LifeKit**, like the
+other kits — creatures as background to discover (the Wiki's "Life forms"
+tab), reacting to the player later.
+
+- **Style**: real-looking but invented; biomechanical ones too.
+- **Scale**: from a virus to a dinosaur — and in space a huge being or a
+  swarm of nanobots.
+- **Four environments**: sea, air, land, **space**. The physics differs by
+  medium (buoyancy and drag; lift, flapping, gliding; gait on terrain;
+  space TBD), so the **code** is split by medium — `swim.js`, `fly.js`,
+  `walk.js` (and space later) — but it's **one lab** with an ENVIRONMENT
+  switch, loading only what's chosen: creatures cross media (a frog walks
+  and swims, a penguin walks and dives, a bird walks and flies; the
+  amphibian vehicle already showed the problem with labs split by
+  medium). The environments exist: MarineKit's sea, SurfaceKit's ground
+  and sky. Split the lab later only if it gets heavy — the kit already
+  will be.
+- **LifeKit layout**: a core (anatomy from blocks: segmented bodies,
+  heads, limbs, fins, wings, tails; skins: scales, fur, chitin,
+  bioluminescence; a skeleton for animation), the movement files, one file
+  per creature (as ShipKit's ships).
+- **First model: a human** (the user's call). Lore: no living humans in
+  the game's world — a human model serves the Wiki ("what the makers
+  looked like"), holograms, statues, remains, a base for androids and
+  biomechanical forms; the user decides its role. Clothed by default (a
+  suit), a neutral mannequin anatomy underneath.
+
+## Voice in the music (MusicKit, 2026-10)
+
+The user asked whether a voice sample could become a song. Not voice
+cloning (singing new words in someone's voice is a job for specialised AI
+models — and only with that person's consent). What MusicKit could do with
+a dry recording (WAV/MP3: a few lines, held vowels "aaa", "ooo", "uuu" at
+a few pitches):
+
+- **a vocoder**: the voice "sung" through the song's chords — the robot
+  singing; fits the lore best (the assistant's pick);
+- **vocal chops**: syllables cut and placed on the melody's notes;
+- **a choir pad**: the vowels stretched into soft pads under the chords;
+- **real singing**: the user sings the melody (the MIDI export as a
+  guide), MusicKit aligns it and adds effects.
+
+Every option only transforms the recording; it never adds words. A sample
+is MusicKit's first audio file — fine in the lab; in the game a small
+download, the user's call. Parked (2026-10-05): life forms first.
+
 ## Privacy policy version history
 
 The user's idea (2026-09-27), for later — there's only one version of the
@@ -457,9 +505,11 @@ wants eventually, not scheduled.
     exported;
   - planar UVs on rounded cylinders' caps.
 - **Devlog post ideas** (Polish titles, the user's): "Pierwszy kontakt"
-  (First contact) — sending ships to another player's station, orbiting
-  it and holding inside its field (v2.35.0); a good moment once attacks or
-  other contact between players follow.
+  (First contact) — used 2026-10-05 for the long post (draft) covering
+  landing, bases, other players' stations, the labs' home and MusicKit.
+- **Music in the game** (MusicKit, `docs/sound.md`): following the
+  situation (station, black hole, landing, the surface), crossfades,
+  Setup → Sound's levels (`settings.js#soundLevel`) already waiting.
 - **The ground in the game, next** (v2.34.0 brought the landing, the
   descent, driving and building): a rover from VehicleKit instead of the
   hover craft; building costs (materials, points); the real terrain height
