@@ -161,7 +161,9 @@ the sea lab: waves, the seabed, diving, robot vessels — see
 `tools/` holds small standalone dev
 utilities (e.g. `grainTexture.html`, which regenerates `css/ui/grain.png`,
 and `kitcheck.html`, the kits' and labs' safety net: every default model's
-fingerprint against `kitcheck.golden.json`, every lab checked for errors). `blog/` isn't part of the game at all — see "Devlog"
+fingerprint against `kitcheck.golden.json`, every lab checked for errors;
+and `doctor.html`, the model doctor: every kit model examined for repeating
+mistakes — see [`docs/doctor.md`](docs/doctor.md)). `blog/` isn't part of the game at all — see "Devlog"
 below.
 
 Adding a new mechanic (e.g. another upgrade type, a new kind of celestial

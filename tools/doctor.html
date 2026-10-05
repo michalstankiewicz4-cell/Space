@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swarm Protocol // Model doctor</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<!-- The model doctor (tools/modeldoctor.js, docs/doctor.md): every model of
+     every kit, built unmerged, examined for the repeating mistakes —
+     inside-out shapes, flickering coplanar faces, floating and hidden parts,
+     specks, needle triangles. Pick a model on the left; click a finding to
+     light its parts up in red (the rest fades). Needs the local server
+     (python -m http.server 8877 → /tools/doctor.html). ?model=ship/swarmer
+     opens one model straight away; window.doctorReport holds the results. -->
+<style>
+:root{ color-scheme:dark; --err:#e04b50; --warn:#f8bb56; --info:#7f92e8; --ok:#4fe3c6; }
+html,body{ margin:0; height:100%; background:#060918; color:#e6ebff; font:13.5px/1.45 "IBM Plex Mono", ui-monospace, monospace; }
+#app{ display:grid; grid-template-columns:420px 1fr; height:100%; }
+#side{ overflow:auto; padding:18px 18px 40px; border-right:1px solid #1c3bb4; }
+h1{ font:600 20px system-ui, sans-serif; color:#f8bb56; margin:0 0 4px; }
+p{ color:var(--info); margin:0 0 12px; }
+#sum{ font:600 15px system-ui, sans-serif; margin:6px 0 12px; }
+.model{ padding:5px 8px; border:1px solid transparent; border-radius:5px; cursor:pointer; display:flex; justify-content:space-between; gap:10px; }
+.model:hover{ border-color:#3c55d8; } .model.on{ border-color:#f8bb56; background:#0b1030; }
+.tags span{ margin-left:6px; } .e{ color:var(--err); } .w{ color:var(--warn); } .i{ color:var(--info); } .ok{ color:var(--ok); }
+#findings{ margin-top:16px; }
+.f{ padding:6px 8px; margin:4px 0; border-left:3px solid; background:#0a0f2a; cursor:pointer; border-radius:0 5px 5px 0; }
+.f.error{ border-color:var(--err); } .f.warning{ border-color:var(--warn); } .f.info{ border-color:var(--info); }
+.f.on{ outline:1px solid #f8bb56; }
+.f b{ font-weight:600; } .f .d{ color:#9fb1ff; }
+#view{ position:relative; }
+#view canvas{ display:block; width:100%; height:100%; }
+#cap{ position:absolute; left:14px; top:12px; color:#9fb1ff; pointer-events:none; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="side">
+    <h1>Model doctor</h1>
+    <p>Every kit's models, built unmerged, examined for the repeating mistakes. Click a model, then a finding: its parts light up red.</p>
+    <div id="sum">examining…</div>
+    <div id="list"></div>
+    <div id="findings"></div>
+  </div>
+  <div id="view"><div id="cap"></div></div>
+</div>
+<script src="../vendor/three-r128.min.js"></script>
+<script src="../vendor/three-r128-examples/OrbitControls.js"></script>
+<script src="../js/shipkit/shipkit.js"></script>
+<script src="../js/shipkit/ships/codewing.js"></script>
+<script src="../js/shipkit/ships/scribe.js"></script>
+<script src="../js/shipkit/ships/swarmer.js"></script>
+<script src="../js/shipkit/ships/haven.js"></script>
+<script src="../js/basekit/basekit.js"></script>
+<script src="../js/vehiclekit/vehiclekit.js"></script>
+<script src="../js/marinekit/marinekit.js"></script>
+<script src="modeldoctor.js"></script>
+<script>
+(() => {
+"use strict";
+const $ = (id) => document.getElementById(id);
+// every model: build (unmerged, detail 1) → { root, dispose }
+const MODELS = [];
+ShipKit.SHIP_DEFS.forEach((d) => MODELS.push({ id: "ship/" + d.id, build: () => { const m = ShipKit.buildShipModel(d.id, { detail: 1 }); return { root: m.group, dispose: () => ShipKit.disposeShipModel(m), update: (t, dt) => m.update(t, dt, {}) }; } }));
+BaseKit.MODULES.forEach((d) => MODELS.push({ id: "base/" + d.id, build: () => { const m = BaseKit.buildModule(d.id, { detail: 1 }); m.setProgress(1); return { root: m.group, dispose: () => BaseKit.disposeModule(m) }; } }));
+VehicleKit.VEHICLES.forEach((d) => MODELS.push({ id: "vehicle/" + d.id, build: () => { const m = VehicleKit.buildVehicle(d.id, { detail: 1 }); return { root: m.group, dispose: () => VehicleKit.disposeVehicle(m) }; } }));
+MarineKit.VESSELS.forEach((d) => MODELS.push({ id: "vessel/" + d.id, build: () => { const m = MarineKit.buildVessel(d.id, { detail: 1 }); return { root: m.group, dispose: () => MarineKit.disposeVessel(m) }; } }));
+
+// ---------- the viewer ----------
+const view = $("view");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
+view.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x060918);
+scene.environment = ShipKit.makeEnvironment(renderer);
+const key = new THREE.DirectionalLight(0xffffff, 1.8); key.position.set(5, 8, 6); scene.add(key, new THREE.HemisphereLight(0x9fb2ff, 0x1a1020, 0.6));
+const camera = new THREE.PerspectiveCamera(38, 1, 0.01, 1000);
+const controls = new THREE.OrbitControls(camera, renderer.domElement); controls.enableDamping = true;
+function resize() { const r = view.getBoundingClientRect(); renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); }
+window.addEventListener("resize", resize); resize();
+(function loop() { controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop); })();
+
+// ---------- examining ----------
+const results = {};
+const tags = (fs) => {
+  const c = { error: 0, warning: 0, info: 0 }; fs.forEach((f) => c[f.severity]++);
+  return (c.error ? '<span class="e">' + c.error + " err</span>" : "") + (c.warning ? '<span class="w">' + c.warning + " warn</span>" : "") +
+    (c.info ? '<span class="i">' + c.info + " info</span>" : "") + (!fs.length ? '<span class="ok">clean</span>' : "");
+};
+function examineAll() {
+  for (const M of MODELS) {
+    try { const b = M.build(); const r = ModelDoctor.examine(b.root); b.dispose(); results[M.id] = r; }
+    catch (e) { results[M.id] = { error: String(e && e.message || e), findings: [], stats: {} }; }
+  }
+  const list = $("list"); list.textContent = "";
+  let errs = 0, warns = 0;
+  for (const M of MODELS) {
+    const r = results[M.id], row = document.createElement("div");
+    row.className = "model"; row.dataset.id = M.id;
+    row.innerHTML = "<span></span><span class='tags'></span>";
+    row.firstChild.textContent = M.id;
+    row.lastChild.innerHTML = r.error ? '<span class="e">build failed</span>' : tags(r.findings);
+    r.findings.forEach((f) => { if (f.severity === "error") errs++; if (f.severity === "warning") warns++; });
+    row.addEventListener("click", () => show(M.id));
+    list.appendChild(row);
+  }
+  $("sum").innerHTML = MODELS.length + " models · <span class='e'>" + errs + " errors</span> · <span class='w'>" + warns + " warnings</span>";
+  // for scripts: plain data, no THREE objects
+  window.doctorReport = Object.fromEntries(Object.entries(results).map(([id, r]) => [id, { error: r.error, stats: r.stats,
+    findings: r.findings.map((f) => ({ check: f.check, severity: f.severity, parts: f.parts, detail: f.detail })) }]));
+}
+
+let current = null, mats = [];
+function show(id) {
+  document.querySelectorAll(".model").forEach((x) => x.classList.toggle("on", x.dataset.id === id));
+  if (current) { scene.remove(current.root); current.dispose(); }
+  const M = MODELS.find((x) => x.id === id);
+  current = M.build();
+  scene.add(current.root);
+  const r = ModelDoctor.examine(current.root);             // again, on this copy: the findings point at its meshes
+  const box = new THREE.Box3().setFromObject(current.root), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3()).length();
+  controls.target.copy(c); camera.position.copy(c).add(new THREE.Vector3(0.7, 0.45, 0.9).multiplyScalar(s * 1.1)); camera.near = s / 500; camera.far = s * 50; camera.updateProjectionMatrix();
+  $("cap").textContent = id + " · " + r.stats.meshes + " solid parts · " + r.stats.triangles + " triangles";
+  const box2 = $("findings"); box2.textContent = "";
+  if (!r.findings.length) box2.innerHTML = '<div class="ok">No findings.</div>';
+  r.findings.forEach((f) => {
+    const el = document.createElement("div"); el.className = "f " + f.severity;
+    el.innerHTML = "<b></b> <span></span><div class='d'></div>";
+    el.querySelector("b").textContent = f.check;
+    el.querySelector("span").textContent = f.parts.join(" ↔ ");
+    el.querySelector(".d").textContent = f.detail;
+    el.addEventListener("click", () => { document.querySelectorAll(".f").forEach((x) => x.classList.toggle("on", x === el)); highlight(f.meshes); });
+    box2.appendChild(el);
+  });
+  highlight(null);
+}
+// the finding's meshes in red; the rest faded
+function highlight(list) {
+  mats.forEach(([o, m]) => { o.material = m; }); mats = [];
+  if (!list) return;
+  const red = new THREE.MeshBasicMaterial({ color: 0xff3b45, depthTest: false, transparent: true, opacity: 0.85 });
+  const ghost = new THREE.MeshStandardMaterial({ color: 0x6070a0, transparent: true, opacity: 0.12, depthWrite: false });
+  current.root.traverse((o) => {
+    if (!o.isMesh) return;
+    mats.push([o, o.material]);
+    o.material = list.includes(o) ? red : ghost;
+    if (list.includes(o)) o.renderOrder = 10;
+  });
+}
+
+examineAll();
+const q = new URLSearchParams(location.search).get("model");
+show(q && MODELS.some((m) => m.id === q) ? q : MODELS[0].id);
+})();
+</script>
+</body>
+</html>

@@ -12,7 +12,8 @@ why and the history behind each item live in `docs/`:
 (`skins.html`), [`systems.md`](docs/systems.md) (`systems.html`, SystemKit),
 [`surface.md`](docs/surface.md) (`surface.html` / `buildings.html`, SurfaceKit, BaseKit),
 [`vehicles.md`](docs/vehicles.md) (`vehicles.html`, VehicleKit),
-[`marine.md`](docs/marine.md) (`marine.html`, MarineKit). **Read the relevant doc before changing a subsystem** —
+[`marine.md`](docs/marine.md) (`marine.html`, MarineKit),
+[`doctor.md`](docs/doctor.md) (the model doctor, `tools/doctor.html`). **Read the relevant doc before changing a subsystem** —
 the long ones have a Contents block: grep `^## ` and read only that section.
 [`README.md`](README.md) has the file map, [`CHANGELOG.md`](CHANGELOG.md)
 the versions, [`IDEAS.md`](IDEAS.md) the plans and open threads.
