@@ -18,7 +18,7 @@
 // in labs/CHANGELOG.md (CLAUDE.md, "Versioning"): x.y.z — y a new lab, tool
 // or feature, z a fix or a small change. Shown on the bar, the start screen
 // and in HELP → About.
-const LABS_VERSION = "1.0.0";
+const LABS_VERSION = "1.1.0";
 const MENU_H = 32;
 const ROOT = (document.currentScript && document.currentScript.src || "").replace(/js\/labkit\/menubar\.js.*$/, "");
 const PARTS = location.pathname.split("/"), HERE = PARTS.pop() || "index.html", DIR = PARTS.pop() || "";
@@ -30,7 +30,8 @@ const REPO = "https://github.com/michalstankiewicz4-cell/Space/blob/main/";
 const LABS = [
   { file: "labs/ship.html", name: "Ship lab", doc: "docs/ship.md", keys: [["C", "change view: only the ticked blocks"], ["Double-click the name", "rename the ship"], ["Drag / wheel", "turn and zoom the camera"]] },
   { file: "labs/bodies.html", name: "Body lab", doc: "docs/bodies.md", keys: [["Drag / wheel", "turn and zoom the camera"]] },
-  { file: "labs/systems.html", name: "System lab", doc: "docs/systems.md", keys: [["Drag / wheel", "turn and zoom the camera"], ["Click a body", "focus on it"]] },
+  { file: "labs/systems.html", name: "System lab", doc: "docs/systems.md", keys: [["Drag / wheel", "turn and zoom the camera"], ["Gold diamond on the ruler", "drag: an orbit's distance"],
+    ["Teal point (FROM ABOVE)", "drag out / in: stretch along / across; around: turn the axis"], ["Violet point (FROM THE SIDE)", "drag up / down: the tilt"], ["An orbit's number", "select it: its sliders"]] },
   { file: "labs/scale.html", name: "Scale lab", doc: "docs/scale.md", keys: [["Drag / wheel", "turn and zoom the camera"]] },
   { file: "labs/skins.html", name: "Skin lab", doc: "docs/skins.md", keys: [] },
   { file: "labs/surface.html", name: "Surface lab", doc: "docs/surface.md", keys: [["W / S, A / D", "drive, turn"], ["Shift", "boost"], ["Right-drag / wheel", "camera"], ["B", "build the first module"], ["R / Esc / Delete", "turn / cancel / remove a module"]] },

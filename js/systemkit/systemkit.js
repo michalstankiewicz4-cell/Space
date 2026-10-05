@@ -9,6 +9,7 @@
        centers: [{ ref: "group/body", size, values? }],          1–3; two or
                                        three orbit their common centre
        orbits:  [{ ref, distance, size, incl, phase, values?,     one body
+                   stretch?, axis?,                           the ellipse, centred: -0.6..0.6, degrees
                    ring: null | "broad" | "narrow" | "dust",      per orbit
                    moons: [{ ref, distance, size, phase, values? }] }] }
    A `ref` is "groupId/bodyId" from BodyKit.GROUPS; an orbit whose ref is a
@@ -205,14 +206,34 @@ const PRESETS = [
 const RING_STYLE = { broad: 0, narrow: 1, dust: 2 };
 const RING_BODY = { broad: "halo", narrow: "filament", dust: "gossamer" };
 
-function circleLine(radius, color, opacity) {
-  const pts = [];
-  for (let i = 0; i <= 128; i++) { const a = i / 128 * TAU; pts.push(new THREE.Vector3(Math.cos(a) * radius, 0, Math.sin(a) * radius)); }
-  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
-    new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false }));
+// A point of an orbit in its own plane, at angle t: an ellipse CENTRED on
+// the centre (the user's call: it stretches one way and narrows the other,
+// it doesn't slide aside like a comet's). d the mean radius, stretch -0.6..0.6
+// (0 a circle; + longer along `axis`, narrower across; - the other way),
+// axis the long direction (radians, in the plane).
+function orbitPoint(d, stretch, axis, t, out) {
+  const x = d * (1 + stretch) * Math.cos(t), z = -d * (1 - stretch) * Math.sin(t);
+  const c = Math.cos(axis), s = Math.sin(axis);
+  return out.set(x * c - z * s, 0, x * s + z * c);
+}
+const LINE_SEG = 160;
+function orbitLine(d, stretch, axis, color, opacity) {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array((LINE_SEG + 1) * 3), 3));
+  const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false }));
   line.raycast = () => {};
+  line.userData.base = { color, opacity };
+  shapeLine(line, d, stretch, axis);
   return line;
 }
+const _p = new THREE.Vector3();
+function shapeLine(line, d, stretch, axis) {
+  const pos = line.geometry.attributes.position;
+  for (let i = 0; i <= LINE_SEG; i++) { orbitPoint(d, stretch, axis, i / LINE_SEG * TAU, _p); pos.setXYZ(i, _p.x, _p.y, _p.z); }
+  pos.needsUpdate = true;
+  line.geometry.computeBoundingSphere();
+}
+const circleLine = (radius, color, opacity) => orbitLine(radius, 0, 0, color, opacity);
 
 function build(sys, { detail = 0.5 } = {}) {
   const root = new THREE.Group();
@@ -238,20 +259,24 @@ function build(sys, { detail = 0.5 } = {}) {
   const sep = sys.centers.length > 1 ? Math.max(...sys.centers.map(centerReach)) * 2.2 : 0;
   const lightIndex = Math.max(0, sys.centers.findIndex((c) => c.ref.startsWith("suns/")));
 
-  // orbits
+  // orbits: a plane (tilted by incl), its line (a centred ellipse: stretch, axis) and the body
+  const orbits = [];
   sys.orbits.forEach((o, i) => {
     const plane = new THREE.Group();
     plane.rotation.x = THREE.MathUtils.degToRad(o.incl || 0);
     root.add(plane);
-    const line = circleLine(o.distance, 0x5f77f7, 0.32);
-    plane.add(line); lines.push(line);
     const isBelt = o.ref.startsWith("rings/");
+    const line = orbitLine(o.distance, isBelt ? 0 : (o.stretch || 0), THREE.MathUtils.degToRad(o.axis || 0), 0x5f77f7, 0.32);
+    plane.add(line); lines.push(line);
     const name = def(o.ref).name.split(" · ")[0];
+    const orb = { data: o, plane, line, entry: null, belt: isBelt };
+    orbits.push(orb);
     if (isBelt) {
-      // a belt around the centre: the middle of its band (~1.8 ring radii) at `distance`
+      // a belt around the centre: the middle of its band (~1.8 ring radii) at `distance` (always round)
       const body = make(o.ref, o.distance / 1.8, o.values, { tilt: 0, spin: 0.02 });
       plane.add(body.group);
-      entries.push({ name, ref: o.ref, body, role: "belt", holder: body.group, size: o.distance });
+      orb.entry = { name, ref: o.ref, body, role: "belt", holder: body.group, size: o.distance };
+      entries.push(orb.entry);
       return;
     }
     const holder = new THREE.Group();
@@ -261,7 +286,8 @@ function build(sys, { detail = 0.5 } = {}) {
     if (isGiant && o.ring) { extra.rings = 1; extra.ringStyle = RING_STYLE[o.ring] === 1 ? 1 : 0; }
     const body = make(o.ref, o.size, o.values, extra);
     holder.add(body.group);
-    const e = { name, ref: o.ref, body, role: "planet", holder, size: o.size, distance: o.distance, phase: o.phase || 0, moons: [] };
+    const e = { name, ref: o.ref, body, role: "planet", holder, size: o.size, distance: o.distance, phase: o.phase || 0, moons: [], orbit: orb };
+    orb.entry = e;
     entries.push(e);
     // a ring around a body that has none of its own: a RINGS body, the same tilt
     if (o.ring && !isGiant) {
@@ -287,9 +313,34 @@ function build(sys, { detail = 0.5 } = {}) {
   const lightPosition = new THREE.Vector3();
   const tmp = new THREE.Vector3();
   const handle = {
-    root, lines, lightPosition,
+    root, lines, lightPosition, orbits,
     bodies: entries,
     showLines(on) { lines.forEach((l) => { l.visible = on; }); },
+    // change an orbit live — distance, incl (degrees), stretch (-0.6..0.6),
+    // axis (degrees) — without building anything again; the data follows
+    setOrbit(i, patch) {
+      const orb = orbits[i]; if (!orb) return;
+      const o = Object.assign(orb.data, patch);
+      o.stretch = orb.belt ? 0 : Math.max(-0.6, Math.min(0.6, o.stretch || 0));
+      orb.plane.rotation.x = THREE.MathUtils.degToRad(o.incl || 0);
+      shapeLine(orb.line, o.distance, o.stretch, THREE.MathUtils.degToRad(o.axis || 0));
+      if (orb.belt) { orb.entry.body.setRadius(o.distance / 1.8); orb.entry.size = o.distance; }
+      else orb.entry.distance = o.distance;
+    },
+    // a point of orbit i in the world, at angle t (0: the end of its long axis)
+    orbitWorldPoint(i, t, out) {
+      const orb = orbits[i], o = orb.data;
+      orbitPoint(o.distance, o.stretch || 0, THREE.MathUtils.degToRad(o.axis || 0), t || 0, out);
+      orb.plane.updateMatrixWorld();
+      return out.applyMatrix4(orb.plane.matrixWorld);
+    },
+    // one orbit drawn brighter (the lab's selected one), or none (-1)
+    highlight(i) {
+      orbits.forEach((orb, k) => {
+        const m = orb.line.material, b = orb.line.userData.base;
+        m.color.set(k === i ? 0xf8bb56 : b.color); m.opacity = k === i ? 0.95 : b.opacity;
+      });
+    },
     // the orbits turn (Kepler: ω ∝ d^-1.5); every body is updated with the
     // main light; far bodies get fewer noise octaves
     update(t, dt, opts = {}) {
@@ -303,8 +354,9 @@ function build(sys, { detail = 0.5 } = {}) {
       const cam = opts.camera;
       for (const e of entries) {
         if (e.role === "planet") {
-          const a = e.phase + ot * 9 * Math.pow(e.distance, -1.5);
-          e.holder.position.set(Math.cos(a) * e.distance, 0, -Math.sin(a) * e.distance);
+          // along its (centred) ellipse; the pace by the mean radius (Kepler-like: ∝ d^-1.5)
+          const o = e.orbit.data;
+          orbitPoint(o.distance, o.stretch || 0, THREE.MathUtils.degToRad(o.axis || 0), e.phase + ot * 9 * Math.pow(o.distance, -1.5), e.holder.position);
         } else if (e.role === "moon") {
           const a = e.phase + ot * 3 * Math.pow(e.distance, -1.5);
           e.holder.position.set(Math.cos(a) * e.distance, 0, -Math.sin(a) * e.distance);
@@ -326,5 +378,5 @@ function build(sys, { detail = 0.5 } = {}) {
   return handle;
 }
 
-return { PRESETS, SKIES, random, options, build, centerExtent, defOf };
+return { PRESETS, SKIES, random, options, build, centerExtent, defOf, orbitPoint };
 })();

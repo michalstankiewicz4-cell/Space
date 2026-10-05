@@ -25,7 +25,8 @@ const QUALITY = [
 ];
 QUALITY.forEach((q, i) => { q.octaves = BodyKit.QUALITY_OCTAVES[i]; });
 
-const state = { system: null, quality: 2, detail: 0.4, speed: 1, lines: true, labels: true, paused: false, focus: -1, simTime: 0 };
+const state = { system: null, quality: 2, detail: 0.4, speed: 1, lines: true, labels: true, paused: false, focus: -1, simTime: 0,
+  view: "free", sel: -1 };
 let handle = null, sky = null, skyId = null;
 
 // ---------- the background ----------
@@ -53,6 +54,10 @@ function rebuild() {
   fillFocus();
   fillStats();
   buildLabels();
+  buildRuler();
+  buildHandles();
+  if (state.sel >= state.system.orbits.length) state.sel = -1;
+  selectOrbit(state.sel);
 }
 let rebuildQueued = false;
 function queueRebuild() {
@@ -65,7 +70,7 @@ function frameSystem() {
   controls.target.set(0, 0, 0);
   camera.position.set(0, far * 0.75, far * 1.9);
 }
-function load(sys) { state.system = sys; state.focus = -1; rebuild(); renderEditor(); frameSystem(); }
+function load(sys) { state.system = sys; state.focus = -1; state.sel = -1; rebuild(); renderEditor(); setView("free", true); }
 
 // ---------- the editor (left panel) ----------
 const centerOpts = SK.options("center"), orbitOpts = SK.options("orbit"), moonOpts = SK.options("moon");
@@ -121,7 +126,10 @@ function renderEditor() {
     const moons = document.createElement("input"); moons.type = "number"; moons.min = 0; moons.max = 6; moons.step = 1; moons.value = (o.moons || []).length;
     moons.disabled = belt;
     moons.addEventListener("change", () => { makeMoons(o, Math.max(0, Math.min(6, Math.round(+moons.value) || 0))); queueRebuild(); });
-    row.append(num(i + 1), select(orbitOpts, o.ref, (ref) => {
+    const n = num(i + 1); n.title = "Select this orbit: its distance, tilt and shape below";
+    n.addEventListener("click", () => selectOrbit(i));
+    if (i === state.sel) row.classList.add("sel");
+    row.append(n, select(orbitOpts, o.ref, (ref) => {
       o.ref = ref; o.size = defaultSize(ref); o.values = { seed: (o.values && o.values.seed) || i * 7 + 1 };
       if (ref.startsWith("rings/")) { o.ring = null; o.moons = []; }
       queueRebuild();
@@ -171,6 +179,7 @@ function fillFocus() {
 }
 $("focus").addEventListener("change", () => {
   state.focus = +$("focus").value;
+  glide = null;
   if (state.focus < 0) { frameSystem(); return; }
   const e = handle.bodies[state.focus];
   const p = e.body.group.getWorldPosition(new THREE.Vector3());
@@ -189,13 +198,13 @@ function fillStats() {
 }
 const paint = LabKit.paintSlider;
 $("speed").addEventListener("input", () => { state.speed = +$("speed").value; $("speedVal").textContent = "×" + state.speed.toFixed(1); paint($("speed")); });
-LabKit.toggle("btnLines", state, "lines", () => handle && handle.showLines(state.lines));
+LabKit.toggle("btnLines", state, "lines", () => { if (handle) handle.showLines(state.lines); if (ruler) ruler.visible = state.lines; });
 LabKit.toggle("btnLabels", state, "labels", () => { $("labels").classList.toggle("hidden", !state.labels); });
 $("btnRotate").addEventListener("click", () => { controls.autoRotate = !controls.autoRotate; $("btnRotate").classList.toggle("on", controls.autoRotate); });
 LabKit.toggle("btnPause", state, "paused", () => {});
 
-// labels: one per centre, planet, belt and moon; placed every frame
-let labelEls = [];
+// labels: one per centre, planet, belt and moon, and the ruler's gaps; placed every frame
+let labelEls = [], gapEls = [];
 function buildLabels() {
   const box = $("labels"); box.textContent = "";
   labelEls = handle.bodies.map((e) => {
@@ -204,13 +213,35 @@ function buildLabels() {
     d.textContent = e.name; d.className = e.role;
     box.appendChild(d); return d;
   });
+  gapEls = [];
 }
 const tmpV = new THREE.Vector3();
+// the more important first (centres, planets, belts, moons); a label that
+// would cover one already placed stays hidden this frame
+const RANK = { center: 0, planet: 1, belt: 2, moon: 3 };
 function placeLabels() {
+  const w = window.innerWidth, h = window.innerHeight, taken = [];
+  const fits = (x, y, el, centred) => {
+    const bw = el.offsetWidth || 60, bh = el.offsetHeight || 16;
+    const r = centred ? [x - bw / 2, y - bh / 2, x + bw / 2, y + bh / 2] : [x - bw / 2, y - bh, x + bw / 2, y];
+    if (taken.some((t) => r[0] < t[2] && r[2] > t[0] && r[1] < t[3] && r[3] > t[1])) return false;
+    taken.push(r); return true;
+  };
+  // the ruler's gaps first: they're what you're adjusting
+  gapEls.forEach((g) => {
+    g.el.style.display = "none";
+    if (!state.lines || !g.show) return;
+    tmpV.copy(g.at).project(camera);
+    if (tmpV.z > 1) return;
+    const x = (tmpV.x + 1) / 2 * w, y = (1 - tmpV.y) / 2 * h;
+    g.el.style.display = "";
+    if (!fits(x, y, g.el, true)) { g.el.style.display = "none"; return; }
+    g.el.style.left = x.toFixed(0) + "px"; g.el.style.top = y.toFixed(0) + "px";
+  });
   if (!state.labels) return;
-  const w = window.innerWidth, h = window.innerHeight;
-  handle.bodies.forEach((e, i) => {
-    const el = labelEls[i]; if (!el) return;
+  const order = handle.bodies.map((e, i) => i).filter((i) => labelEls[i]).sort((a, b) => RANK[handle.bodies[a].role] - RANK[handle.bodies[b].role]);
+  order.forEach((i) => {
+    const e = handle.bodies[i], el = labelEls[i];
     e.body.group.getWorldPosition(tmpV);
     const dist = tmpV.distanceTo(camera.position);
     if (e.role === "belt") tmpV.x += e.size;                         // a belt: its label on its edge
@@ -218,10 +249,189 @@ function placeLabels() {
     tmpV.project(camera);
     const hideMoon = e.role === "moon" && dist > 60;
     if (tmpV.z > 1 || hideMoon) { el.style.display = "none"; return; }
+    const x = (tmpV.x + 1) / 2 * w, y = (1 - tmpV.y) / 2 * h;
     el.style.display = "";
-    el.style.left = ((tmpV.x + 1) / 2 * w).toFixed(0) + "px";
-    el.style.top = ((1 - tmpV.y) / 2 * h).toFixed(0) + "px";
+    if (!fits(x, y, el, false)) { el.style.display = "none"; return; }
+    el.style.left = x.toFixed(0) + "px";
+    el.style.top = y.toFixed(0) + "px";
   });
+}
+
+// ---------- the ruler: a line from the centre with a tick at every orbit ----------
+// It runs along +Z in the system's plane; between two ticks, the gap.
+let ruler = null;
+const RULER_COLOR = 0xf2b84b;
+function sortedOrbits() { return state.system.orbits.map((o, i) => ({ o, i })).sort((a, b) => a.o.distance - b.o.distance); }
+function buildRuler() {
+  if (ruler) { scene.remove(ruler); ruler.geometry.dispose(); ruler.material.dispose(); ruler = null; }
+  gapEls.forEach((g) => g.el.remove()); gapEls = [];
+  const list = sortedOrbits();
+  if (!list.length) return;
+  const start = SK.centerExtent(state.system) * 1.15, end = list[list.length - 1].o.distance * 1.06;
+  const tick = Math.max(0.6, end * 0.012);
+  const pts = [0, 0, start, 0, 0, end];
+  list.forEach(({ o }) => pts.push(-tick, 0, o.distance, tick, 0, o.distance));
+  const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+  ruler = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: RULER_COLOR, transparent: true, opacity: 0.55, depthWrite: false }));
+  ruler.raycast = () => {};
+  ruler.visible = state.lines;
+  scene.add(ruler);
+  // the gaps: from the centre to the first orbit, then between neighbours
+  const box = $("labels");
+  let prev = null;
+  list.forEach(({ o }) => {
+    const from = prev == null ? 0 : prev, gap = o.distance - from;
+    const el = document.createElement("div"); el.className = "gap";
+    el.textContent = (prev == null ? "" : "Δ ") + gap.toFixed(1);
+    box.appendChild(el);
+    gapEls.push({ el, at: new THREE.Vector3(tick * 3.2, 0, prev == null ? o.distance * 0.55 : (from + o.distance) / 2), show: prev != null });
+    prev = o.distance;
+  });
+}
+
+// ---------- the handles (HTML points, placed every frame) ----------
+// distance: a gold diamond on the ruler (any view); shape: a teal point at
+// the end of the orbit's long axis (from above); tilt: a violet point at
+// the orbit's edge across from the ruler (from the side)
+let handles = [];
+function buildHandles() {
+  const box = $("handles"); box.textContent = ""; handles = [];
+  state.system.orbits.forEach((o, i) => {
+    const belt = o.ref.startsWith("rings/");
+    for (const kind of ["dist", "incl", "shape"]) {
+      if (kind === "shape" && belt) continue;
+      const el = document.createElement("div"); el.className = "hdl " + kind;
+      el.title = { dist: "Drag along the ruler: the distance", incl: "Drag up or down: the tilt", shape: "Drag out: longer this way, narrower across; in: the other way; around: turn the long axis" }[kind];
+      el.addEventListener("pointerdown", (e) => startDrag(e, i, kind));
+      box.appendChild(el);
+      handles.push({ el, i, kind });
+    }
+  });
+}
+const hp = new THREE.Vector3();
+function handlePos(h, out) {
+  const o = state.system.orbits[h.i];
+  if (h.kind === "dist") return out.set(0, 0, o.distance);
+  if (h.kind === "shape") return handle.orbitWorldPoint(h.i, 0, out);
+  // tilt: the orbit plane's -Z edge (the ruler runs along +Z: no overlap)
+  const orb = handle.orbits[h.i]; orb.plane.updateMatrixWorld();
+  return out.set(0, 0, -o.distance).applyMatrix4(orb.plane.matrixWorld);
+}
+function placeHandles() {
+  const w = window.innerWidth, h = window.innerHeight, show = state.lines;
+  handles.forEach((hd) => {
+    const want = show && (hd.kind === "dist" || (hd.kind === "shape" && state.view === "top") || (hd.kind === "incl" && state.view === "side"));
+    if (!want) { hd.el.style.display = "none"; return; }
+    handlePos(hd, hp).project(camera);
+    if (hp.z > 1) { hd.el.style.display = "none"; return; }
+    hd.el.style.display = "";
+    hd.el.style.left = ((hp.x + 1) / 2 * w).toFixed(1) + "px";
+    hd.el.style.top = ((1 - hp.y) / 2 * h).toFixed(1) + "px";
+    hd.el.classList.toggle("sel", hd.i === state.sel);
+  });
+}
+
+// ---------- dragging ----------
+const rayc = new THREE.Raycaster(), ndc = new THREE.Vector2(), hit = new THREE.Vector3(), dragPlane = new THREE.Plane();
+let drag = null;
+function pointerRay(e) { ndc.set(e.clientX / window.innerWidth * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1); rayc.setFromCamera(ndc, camera); return rayc.ray; }
+function startDrag(e, i, kind) {
+  e.preventDefault(); e.stopPropagation();
+  selectOrbit(i);
+  drag = { i, kind, id: e.pointerId };
+  controls.enabled = false;
+  document.body.classList.add("dragging");
+  const n = new THREE.Vector3();
+  if (kind === "dist") {
+    // a plane holding the ruler (+Z), turned toward the camera
+    camera.getWorldDirection(n); n.z = 0;
+    if (n.lengthSq() < 1e-6) n.set(0, 1, 0);
+    dragPlane.setFromNormalAndCoplanarPoint(n.normalize(), new THREE.Vector3());
+  } else if (kind === "incl") dragPlane.setFromNormalAndCoplanarPoint(new THREE.Vector3(1, 0, 0), new THREE.Vector3());
+  else {
+    // the orbit's own plane
+    const orb = handle.orbits[i]; orb.plane.updateMatrixWorld();
+    n.set(0, 1, 0).transformDirection(orb.plane.matrixWorld);
+    dragPlane.setFromNormalAndCoplanarPoint(n, new THREE.Vector3());
+  }
+}
+window.addEventListener("pointermove", (e) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  if (!pointerRay(e).intersectPlane(dragPlane, hit)) return;
+  const o = state.system.orbits[drag.i], list = sortedOrbits(), k = list.findIndex((x) => x.i === drag.i);
+  if (drag.kind === "dist") {
+    // between its neighbours (orbits never pass through each other)
+    const lo = k > 0 ? list[k - 1].o.distance + 1 : SK.centerExtent(state.system) * 1.3;
+    const hi = k < list.length - 1 ? list[k + 1].o.distance - 1 : 1000;
+    setOrbit(drag.i, { distance: Math.round(Math.max(lo, Math.min(hi, hit.z)) * 2) / 2 });
+  } else if (drag.kind === "incl") {
+    // the -Z edge: (0, 0, -d) turned by incl about X lands at (0, d·sin, -d·cos)
+    setOrbit(drag.i, { incl: Math.round(THREE.MathUtils.radToDeg(Math.atan2(hit.y, Math.max(0.01, -hit.z))) * 2) / 2 });
+  } else {
+    // out from the centre: longer along this direction (and narrower across);
+    // in: shorter here, longer across; around: the axis turns (an axis, so 0..180°)
+    const orb = handle.orbits[drag.i], local = orb.plane.worldToLocal(hit.clone());
+    const r = Math.hypot(local.x, local.z);
+    setOrbit(drag.i, { stretch: Math.round(Math.max(-0.6, Math.min(0.6, r / o.distance - 1)) * 100) / 100,
+      axis: ((Math.round(THREE.MathUtils.radToDeg(Math.atan2(local.z, local.x))) % 180) + 180) % 180 });
+  }
+});
+function endDrag() { if (!drag) return; drag = null; controls.enabled = true; document.body.classList.remove("dragging"); }
+window.addEventListener("pointerup", endDrag);
+window.addEventListener("pointercancel", endDrag);
+
+// ---------- the selected orbit: its sliders ----------
+function setOrbit(i, patch) {
+  handle.setOrbit(i, patch);
+  buildRuler();
+  if (i === state.sel) showSelected();
+}
+function selectOrbit(i) {
+  state.sel = i;
+  if (handle) handle.highlight(i);
+  document.querySelectorAll("#orbits .orow").forEach((r, k) => r.classList.toggle("sel", k === i));
+  showSelected();
+}
+function showSelected() {
+  const o = state.sel >= 0 && state.system.orbits[state.sel];
+  $("selHint").classList.toggle("hidden", !!o); $("selCtl").classList.toggle("hidden", !o);
+  $("selName").textContent = o ? " · " + (state.sel + 1) + " " + (SK.defOf(o.ref) || { name: o.ref }).name.split(" · ")[0] : "";
+  if (!o) return;
+  const belt = o.ref.startsWith("rings/");
+  const set = (id, v, txt) => { const s = $(id); if (document.activeElement !== s) { s.value = v; paint(s); } $(id + "Val").textContent = txt; };
+  set("oDist", o.distance, o.distance.toFixed(1));
+  set("oIncl", o.incl || 0, (o.incl || 0).toFixed(1) + "°");
+  const st = o.stretch || 0;
+  set("oEcc", st, belt ? "a belt stays round" : Math.abs(st) < 0.01 ? "0 (a circle)" : (st > 0 ? "+" : "") + st.toFixed(2));
+  set("oPeri", o.axis || 0, Math.round(o.axis || 0) + "°");
+  $("oEcc").disabled = $("oPeri").disabled = belt;
+}
+[["oDist", "distance"], ["oIncl", "incl"], ["oEcc", "stretch"], ["oPeri", "axis"]].forEach(([id, key]) => {
+  $(id).addEventListener("input", () => { if (state.sel < 0) return; paint($(id)); setOrbit(state.sel, { [key]: +$(id).value }); });
+});
+
+// ---------- the camera: from above, from the side, free ----------
+let glide = null;
+function setView(v, instant) {
+  state.view = v;
+  ["vTop", "vSide", "vFree"].forEach((id) => $(id).classList.toggle("on", id === { top: "vTop", side: "vSide", free: "vFree" }[v]));
+  state.focus = -1; if ($("focus").options.length) $("focus").value = -1;
+  if (v !== "free") { controls.autoRotate = false; $("btnRotate").classList.remove("on"); }
+  const far = state.system.orbits.reduce((m, o) => Math.max(m, o.distance * (1 + Math.abs(o.stretch || 0))), 20);
+  const to = v === "top" ? new THREE.Vector3(0, far * 2.6, 0.001) : v === "side" ? new THREE.Vector3(far * 2.6, 0, 0) : new THREE.Vector3(0, far * 0.75, far * 1.9);
+  if (instant) { controls.target.set(0, 0, 0); camera.position.copy(to); glide = null; return; }
+  glide = { from: camera.position.clone(), fromT: controls.target.clone(), to, t: 0 };
+}
+$("vTop").addEventListener("click", () => setView("top"));
+$("vSide").addEventListener("click", () => setView("side"));
+$("vFree").addEventListener("click", () => setView("free"));
+function stepGlide(dt) {
+  if (!glide) return;
+  glide.t = Math.min(1, glide.t + dt / 0.7);
+  const k = glide.t * glide.t * (3 - 2 * glide.t);
+  camera.position.lerpVectors(glide.from, glide.to, k);
+  controls.target.lerpVectors(glide.fromT, new THREE.Vector3(), k);
+  if (glide.t >= 1) glide = null;
 }
 
 // ---------- quality ----------
@@ -268,6 +478,7 @@ function frame() {
     camera.position.add(delta);
     controls.target.add(delta);
   }
+  stepGlide(dt);
   controls.update();
   camera.updateMatrixWorld();
   if (sky) sky.update(t, dt, { center: camera.position, renderer });
@@ -275,6 +486,7 @@ function frame() {
   const focusPos = e ? e.body.group.getWorldPosition(new THREE.Vector3()) : controls.target, focusR = e ? e.size : 10;
   fx.render(focusPos, focusR, systemFx);
   placeLabels();
+  placeHandles();
   perf.update(performance.now(), performance.now() - t0);
   requestAnimationFrame(frame);
 }
@@ -289,5 +501,5 @@ frame();
 const loading = $("loading");
 loading.style.opacity = "0";
 setTimeout(() => loading.remove(), 700);
-window.systemLab = { load, state, get handle() { return handle; }, camera, controls };
+window.systemLab = { load, state, get handle() { return handle; }, camera, controls, setView, selectOrbit, setOrbit };
 })();

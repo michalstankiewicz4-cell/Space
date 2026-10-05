@@ -35,7 +35,29 @@ select.lab{ cursor:pointer; }
 .colHd{ display:grid; grid-template-columns:20px 1fr 66px 44px 24px; gap:5px; font-size:11.5px; color:#7f92e8; margin-bottom:2px; }
 .addBtn{ width:100%; margin-top:6px; height:26px; }
 #sysName{ font-family:var(--fontLabel); font-size:15px; letter-spacing:.8px; color:#ffe2a8; margin:4px 0 2px; }
-#labels{ position:fixed; inset:0; pointer-events:none; }
+#labels{ position:fixed; inset:0; pointer-events:none; z-index:1; }
+#hud, #opt{ z-index:3; }
+#labels div.gap{ transform:translate(-50%, -50%); padding:1px 6px; border-radius:8px; background:rgb(2 6 26 / .72); color:#f2c97a;
+  font-size:11px; letter-spacing:.4px; border:1px solid rgb(242 184 75 / .35); }
+/* the handles: drag them in the view (distance on the ruler; shape at the
+   orbit's nearest point, seen from above; tilt, seen from the side) */
+#handles{ position:fixed; inset:0; pointer-events:none; z-index:2; }
+.hdl{ position:absolute; width:14px; height:14px; margin:-7px 0 0 -7px; border-radius:50%; pointer-events:auto; cursor:grab;
+  border:2px solid #02061a; box-shadow:0 0 0 1.5px currentColor, 0 0 8px currentColor; background:currentColor; touch-action:none; }
+.hdl.dist{ color:#f2b84b; border-radius:3px; transform:rotate(45deg); }
+.hdl.shape{ color:#36d6b5; }
+.hdl.incl{ color:#b9a2ff; }
+.hdl.sel{ width:18px; height:18px; margin:-9px 0 0 -9px; }
+.hdl:hover{ filter:brightness(1.3); }
+body.dragging, body.dragging *{ cursor:grabbing !important; }
+.viewRow{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:6px; }
+.viewRow .tBtn{ height:28px; font-size:12.5px; }
+.orow .n{ cursor:pointer; border-radius:4px; }
+.orow .n:hover{ color:#fff; }
+.orow.sel .n{ color:#02061a; background:#f8bb56; text-align:center; }
+#selBox .sl{ margin-top:8px; }
+#selBox .hintSel{ font-size:12.5px; color:#7f92e8; margin-top:4px; }
+#selName{ color:#ffe2a8; margin-left:6px; }
 #labels div{ position:absolute; transform:translate(-50%, -100%); font-family:var(--fontLabel); font-size:12px; letter-spacing:.8px;
   color:#dbe4ff; text-shadow:0 0 3px #000, 0 0 6px #000; white-space:nowrap; padding-bottom:4px; }
 #labels div.center{ color:#ffe2a8; }
@@ -47,6 +69,7 @@ select.lab{ cursor:pointer; }
 <script src="../js/labkit/menubar.js"></script>
 <canvas id="view"></canvas>
 <div id="labels"></div>
+<div id="handles"></div>
 
 <div id="hud">
   <div id="hudTop">
@@ -81,10 +104,24 @@ select.lab{ cursor:pointer; }
     <div class="colHd"><span></span><span>Body</span><span>Ring</span><span>Moons</span><span></span></div>
     <div class="list" id="orbits"></div>
     <button class="tBtn addBtn" id="addOrbit">+ ADD AN ORBIT</button>
+    <div class="secHd">SELECTED ORBIT<span id="selName"></span></div>
+    <div id="selBox">
+      <div class="hintSel" id="selHint">Click an orbit's number, or a handle in the view.</div>
+      <div id="selCtl" class="hidden">
+        <label class="sl"><span>Distance</span><b id="oDistVal">–</b></label>
+        <input type="range" id="oDist" min="4" max="300" step="0.5" value="20">
+        <label class="sl"><span>Tilt (inclination)</span><b id="oInclVal">–</b></label>
+        <input type="range" id="oIncl" min="-60" max="60" step="0.5" value="0">
+        <label class="sl"><span>Shape: − across · 0 round · + along</span><b id="oEccVal">–</b></label>
+        <input type="range" id="oEcc" min="-0.6" max="0.6" step="0.01" value="0">
+        <label class="sl"><span>Long axis, direction</span><b id="oPeriVal">–</b></label>
+        <input type="range" id="oPeri" min="0" max="180" step="1" value="0">
+      </div>
+    </div>
     <div class="secHd">BACKGROUND</div>
     <select class="lab" id="sky" style="width:100%"></select>
     <button class="tBtn wideBtn" id="btnCopy" style="width:100%;margin-top:10px" title="This system as data (JSON), for SystemKit">COPY SYSTEM</button>
-    <div id="hint">Left-drag: rotate · Right-drag: pan · Scroll: zoom</div>
+    <div id="hint">Left-drag: rotate · Right-drag: pan · Scroll: zoom · Drag a gold diamond on the ruler: distance · teal point (from above): stretch the orbit · violet point (from the side): tilt</div>
   </div>
 </div>
 
@@ -94,6 +131,12 @@ select.lab{ cursor:pointer; }
     <div class="secHd first">VIEW</div>
     <label class="sl"><span>Follow</span></label>
     <select class="lab" id="focus" style="width:100%;margin-top:4px"></select>
+    <label class="sl"><span>Camera</span></label>
+    <div class="viewRow">
+      <button class="tBtn" id="vTop" title="From above: the orbits' shapes; drag a teal point to stretch an orbit">FROM ABOVE</button>
+      <button class="tBtn" id="vSide" title="From the side: the orbits' tilts; drag a violet point to tilt an orbit">FROM THE SIDE</button>
+      <button class="tBtn on" id="vFree" title="Turn the camera freely">FREE</button>
+    </div>
     <label class="sl"><span>Time</span><b id="speedVal">×1.0</b></label>
     <input type="range" id="speed" min="0" max="6" step="0.1" value="1">
     <div id="hudBtns">

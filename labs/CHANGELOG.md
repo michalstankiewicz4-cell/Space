@@ -9,6 +9,30 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.1.0] — 2026-10-05
+
+The system lab: shape the orbits by hand.
+
+### Added
+- **The ruler**: a line from the centre with a tick at every orbit and the
+  gap between neighbours written on it; drag an orbit's gold diamond to
+  move it nearer or further.
+- **Stretched orbits** (SystemKit `stretch`, `axis`): an ellipse centred
+  on the star — from above, drag an orbit's teal point out to make it
+  longer that way and narrower across, in for the other way round,
+  around to turn its long axis.
+- **Tilt by hand**: from the side, drag an orbit's violet point up or
+  down.
+- **Camera**: FROM ABOVE, FROM THE SIDE, FREE.
+- **SELECTED ORBIT**: click an orbit's number — it turns gold, with
+  sliders for distance, tilt, stretch and the long axis's direction.
+- Everything changes live, without rebuilding the system.
+
+### Fixed
+- The system lab's labels showed through the panels and covered each
+  other (SOL / MERCURY): they stay under the panels now, and a label that
+  would cover another waits.
+
 ## [1.0.0] — 2026-10-05
 
 The labs get a home, a menu and a version of their own.
