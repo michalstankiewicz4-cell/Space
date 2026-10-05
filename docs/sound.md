@@ -27,13 +27,34 @@ random event — the same seed and parameters play the same piece.
 | texture ("Static") | pink noise through a slowly wandering band-pass, plus random high clicks |
 | whispers | wordless murmuring: per syllable, noise and a faint sawtooth hum (~200 Hz) through three band-passes at a vowel's formants (F1–F3), with a soft "s" sometimes; 3–8 syllables a phrase, panned |
 | voice | the robot's lines through the browser's speech synthesis (an English male voice if there is one, slow, low) |
+| lead ("Melody") | phrases of 3–6 notes stepping along the scale, the last one long and on a chord tone; a saw + square, a glide from the previous note, a late vibrato, rests between phrases (DENSITY: shorter rests); into the echo |
+| beat | a kick (140→42 Hz) on 1 and 3, a snare (noise + a tone) on 2 and 4 with its own big reverb send, hi-hats on 8ths (16ths above density 0.5); the bus itself sends little to the reverb |
+| metal | inharmonic FM clangs (ratios 1.41 / 2.76 / 3.17 / 1.89, long decays) and, rarely, a hull's groan (a low saw bending down) |
+
+**INSTRUMENTS** (`MusicKit.VOICES`) — what a layer sounds like:
+
+| Param | Values |
+|---|---|
+| `padVoice` | `saw` (two soft saws), `brass` (three saws, the filter swelling open, a slow vibrato — 80s), `organ` (sine drawbars on harmonics 1–8, a pedal an octave down, a slow tremolo, quick changes), `glass` (sine + triangle partials) |
+| `bellVoice` | `fm` (chimes), `piano` (five decaying partials and a soft hammer; plays more often, sometimes a second note) |
+| `arpMode` | `chord` (plucks, in about half the passages), `ostinato` (one figure per seed, every 8th, always; an octave joins every other round of a fixed progression), `bass16` (a 16th-note octave bass on the chord's root) |
+| `textureKind` | `radio` (the wandering band and crackles), `rain` (white noise, wide, and falling drops) |
+| `droneVoice` | `warm`, `dissonant` (adds a tritone and a rubbing minor second) |
+
+`progression`: an array of scale degrees cycled in order (e.g. `[0, 5, 3, 6]`)
+instead of the seeded random walk; `null` for the seeded one.
 
 - Everything goes through one reverb (an impulse generated from SPACE, 2–8 s)
   and an echo (¾ of a beat, filtered); a compressor on the master.
 - The clock schedules events 0.25 s ahead (a 100 ms timer).
 - Browsers start audio only after a click: `start()` comes from PLAY.
 - MOODS: The station (dorian, D), Deep orbit (lydian, A), Descent
-  (minor, E, faster, denser), The black hole (phrygian, C#, slow, dark).
+  (minor, E, faster, denser), The black hole (phrygian, C#, slow, dark);
+  and, inspired by kinds of film and game music (labs 1.5.0 — the
+  character, never a melody): Neon rain (80s sci-fi), Cathedral of stars
+  (organ + ostinato), Music for orbits (ambient piano), Night drive
+  (synthwave), Derelict (space horror). A mood sets everything but the
+  volume, the seed and the robot's lines.
 
 ## Limits (honest)
 
@@ -42,7 +63,8 @@ random event — the same seed and parameters play the same piece.
   different on each system. The plan for the game: the lines generated
   once into small files and played through a vocoder in the graph.
 - **The whispers** are murmuring without words — real words need recordings.
-- It's generative ambient, not a song.
+- It's generative, not a song: no verses, no chorus, no arc beyond the
+  ostinato's growing octave.
 
 ## Next
 

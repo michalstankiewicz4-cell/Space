@@ -17,7 +17,18 @@ Object.entries(MK.PRESETS).forEach(([id, p]) => {
   $("presets").appendChild(b);
 });
 function markPreset(id) { [...$("presets").children].forEach((b) => b.classList.toggle("on", b.dataset.id === id)); }
-const LAYER_NAMES = { drone: "Drone", pads: "Pads", bells: "Bells", pulse: "Pulse", arp: "Arp", texture: "Static", whispers: "Whispers", voice: "Voice" };
+const LAYER_NAMES = { drone: "Drone", pads: "Pads", bells: "Bells", pulse: "Pulse", arp: "Arp", texture: "Static", whispers: "Whispers", voice: "Voice",
+  lead: "Melody", beat: "Beat", metal: "Metal" };
+// the instruments: what a layer sounds like (MusicKit.VOICES)
+const INSTR_NAMES = { padVoice: "Pads", bellVoice: "Bells", arpMode: "Arp", textureKind: "Static", droneVoice: "Drone" };
+Object.entries(MK.VOICES).forEach(([k, opts]) => {
+  const r = document.createElement("div"); r.className = "irow";
+  r.innerHTML = `<span>${INSTR_NAMES[k]}</span><select class="lab" id="in_${k}"></select>`;
+  const sel = r.querySelector("select");
+  Object.entries(opts).forEach(([v, label]) => { const o = document.createElement("option"); o.value = v; o.textContent = label; sel.appendChild(o); });
+  sel.addEventListener("change", () => { player.setParams({ [k]: sel.value }); markPreset(null); });
+  $("instruments").appendChild(r);
+});
 MK.LAYERS.forEach((l) => {
   const r = document.createElement("div"); r.className = "lrow";
   r.innerHTML = `<span>${LAYER_NAMES[l]}</span><input type="range" min="0" max="1" step="0.01" id="lv_${l}"><b id="lv_${l}Val"></b>`;
@@ -46,6 +57,7 @@ function showAll() {
   Object.keys(FMT).forEach((k) => { const s = $(k); if (document.activeElement !== s) s.value = P[k]; paint(s); $(k + "Val").textContent = FMT[k](P[k]); });
   MK.LAYERS.forEach((l) => { const s = $("lv_" + l); if (document.activeElement !== s) s.value = P.levels[l]; paint(s); $("lv_" + l + "Val").textContent = pct(P.levels[l]); });
   $("root").value = P.root; $("scale").value = P.scale; $("seed").value = P.seed;
+  Object.keys(MK.VOICES).forEach((k) => { $("in_" + k).value = P[k]; });
   if (document.activeElement !== $("lines")) $("lines").value = P.voiceLines.join("\n");
   $("every").value = P.voiceEvery; paint($("every")); $("everyVal").textContent = P.voiceEvery + " s";
 }
@@ -138,7 +150,7 @@ function draw(t) {
   }
   // the ring itself
   g.strokeStyle = "rgba(143,164,255,0.25)"; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R * 1.05, 0, Math.PI * 2); g.stroke();
-  $("nowPlaying").innerHTML = player.playing ? `Playing · chord <b>${player.chordName}</b> · ${MK.SCALES[P.scale].name.split(" ")[0].toLowerCase()} in ${MK.NOTES[P.root]}` : "Stopped";
+  $("nowPlaying").innerHTML = player.playing ? `Playing · chord <b>${player.chordName}</b> · ${MK.SCALES[P.scale].name.split(" ")[0].toLowerCase()} in ${MK.NOTES[P.root]}${Array.isArray(P.progression) && P.progression.length ? " · fixed progression" : ""}` : "Stopped";
   requestAnimationFrame(draw);
 }
 

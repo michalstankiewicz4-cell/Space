@@ -9,6 +9,23 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.5.0] — 2026-10-05
+
+### Added
+- **The sound lab: music with a character.** Five new MOODS, each inspired
+  by a kind of film or game music (the feel, never anyone's melody):
+  *Neon rain* (80s sci-fi: brass swells, a lonely lead, piano, rain),
+  *Cathedral of stars* (an organ and an ostinato that grows), *Music for
+  orbits* (sparse ambient piano), *Night drive* (synthwave: a 16th-note
+  bass, drums, a bright lead), *Derelict* (space horror: a dissonant drone,
+  metal clangs, a hull groaning, whispers).
+- MusicKit: three new layers — **Melody** (phrases on the scale, gliding,
+  landing on the chord), **Beat** (kick, a snare in a big room, hi-hats),
+  **Metal** — and **INSTRUMENTS**: pads (soft saws, 80s brass, organ,
+  glass), bells (FM, piano), arp (plucks, ostinato, 16th bass), static
+  (radio, rain), drone (warm, dissonant); a mood can fix its chord
+  progression. Tempo up to 120 bpm.
+
 ## [1.4.0] — 2026-10-05
 
 ### Added

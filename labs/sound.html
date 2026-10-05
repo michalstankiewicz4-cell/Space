@@ -27,6 +27,7 @@ textarea.lab{ height:96px; width:100%; padding:6px; resize:vertical; line-height
 .lrow{ display:grid; grid-template-columns:76px 1fr 38px; gap:8px; align-items:center; margin-top:4px; font-size:13.5px; color:#c7d0ff; }
 .lrow b{ font-weight:400; color:#fff; text-align:right; font-size:12.5px; }
 .lrow input{ margin:0; }
+.irow{ display:grid; grid-template-columns:76px 1fr; gap:8px; align-items:center; margin-top:4px; font-size:13.5px; color:#c7d0ff; }
 .twoBtns{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
 .twoBtns .tBtn{ height:28px; font-size:12.5px; }
 #recState{ font-size:12.5px; color:#7f92e8; margin-top:6px; min-height:16px; }
@@ -71,7 +72,7 @@ textarea.lab{ height:96px; width:100%; padding:6px; resize:vertical; line-height
     <div class="keyRow"><select class="lab" id="root"></select><select class="lab" id="scale"></select></div>
     <div class="secHd">CHARACTER</div>
     <label class="sl"><span>Tempo</span><b id="tempoVal">–</b></label>
-    <input type="range" id="tempo" min="36" max="100" step="1" value="60">
+    <input type="range" id="tempo" min="36" max="120" step="1" value="60">
     <label class="sl"><span>Density (how much happens)</span><b id="densityVal">–</b></label>
     <input type="range" id="density" min="0" max="1" step="0.01" value="0.5">
     <label class="sl"><span>Brightness</span><b id="brightnessVal">–</b></label>
@@ -87,7 +88,9 @@ textarea.lab{ height:96px; width:100%; padding:6px; resize:vertical; line-height
 <div id="opt">
   <div class="hudPanel">
     <div class="mat lilac side"></div>
-    <div class="secHd first">LAYERS</div>
+    <div class="secHd first">INSTRUMENTS</div>
+    <div id="instruments"></div>
+    <div class="secHd">LAYERS</div>
     <div id="layers"></div>
     <div class="secHd">THE ROBOT'S VOICE</div>
     <textarea class="lab" id="lines" title="One line per announcement"></textarea>
