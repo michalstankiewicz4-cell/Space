@@ -110,9 +110,13 @@
 /* Privacy tab (ui/privacy.js) */
 #privacyText{ left:0; top:2px; width:428px; font-size:15px; line-height:21px; color:#c7d0ff; }
 #privacyPolicyLink{ left:0; top:96px; font-size:16px; color:#9fb1ff; text-decoration:none; border-bottom:1px solid #3c55d8; }
-#deleteDataBtn{ left:0; top:132px; height:32px; padding:0 16px; font-size:15px; }
-#deleteDataBtn.armed{ border-color:#e04b50; color:#ffb3b5; box-shadow:0 0 8px rgb(224 75 80 / .5); }
-#deleteDataStatus{ left:0; top:172px; width:428px; font-size:14px; line-height:18px; color:#f8bb56; }
+/* START OVER and Delete my data side by side; one status line under them
+   (arming one clears the other's, ui/privacy.js) */
+#resetProgressBtn, #deleteDataBtn{ top:132px; height:32px; padding:0 16px; font-size:15px; }
+#resetProgressBtn{ left:0; }
+#deleteDataBtn{ left:214px; }
+#resetProgressBtn.armed, #deleteDataBtn.armed{ border-color:#e04b50; color:#ffb3b5; box-shadow:0 0 8px rgb(224 75 80 / .5); }
+#resetProgressStatus, #deleteDataStatus{ left:0; top:174px; width:428px; font-size:14px; line-height:18px; color:#f8bb56; }
 #setupHelpText{ left:0; top:4px; width:428px; font-size:17px; line-height:30px; color:#c7d0ff; }
 /* Help in the wide window: every mouse and keyboard control, two columns */
 #setupModalBox.wide #setupTabHelp{ width:928px; height:704px; overflow-y:auto; }

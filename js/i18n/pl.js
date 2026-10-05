@@ -575,6 +575,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
+    { v: "2.38.1", items: ["Ustawienia → Prywatność: przycisk ZACZNIJ OD NOWA nie zasłania już tekstu."] },
     { v: "2.38.0", items: ["Ustawienia mają zakładkę DŹWIĘK: muzyka, efekty i głos, każde z przełącznikiem i poziomem — gotowe na dźwięk, który nadchodzi."] },
     { v: "2.37.0", items: ["Nowość w Ustawienia → Prywatność: ZACZNIJ OD NOWA — świeży rój, a ustawienia, nick i programy zostają."] },
     { v: "2.36.4", items: ["Grę łatwiej znaleźć w wyszukiwarkach, a jej link pokazuje obrazek, kiedy go udostępniasz."] },

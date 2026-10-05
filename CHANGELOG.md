@@ -4,6 +4,13 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.38.1]
+
+### Fixed
+- Setup -> Privacy: START OVER (2.37.0) had no place of its own and sat
+  over the text; now it and Delete my data stand side by side, one
+  status line under them (arming one clears the other's).
+
 ## [2.38.0]
 
 ### Added

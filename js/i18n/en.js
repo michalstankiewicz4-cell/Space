@@ -574,6 +574,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.38.1", items: ["Setup → Privacy: the START OVER button no longer covers the text."] },
     { v: "2.38.0", items: ["Setup has a SOUND tab: music, effects and voice, each with a switch and a level — ready for the sound that's coming."] },
     { v: "2.37.0", items: ["New in Setup → Privacy: START OVER — a fresh swarm, keeping your settings, nickname and programs."] },
     { v: "2.36.4", items: ["The game is easier to find in search engines, and its link shows a picture when you share it."] },

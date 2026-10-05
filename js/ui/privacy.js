@@ -63,6 +63,7 @@ export function initPrivacySettings(){
       rArmed = true;
       rBtn.textContent = t("privacy.confirmReset");
       rBtn.classList.add("armed");
+      document.getElementById("deleteDataStatus").textContent = "";
       rStatus.textContent = t("privacy.resetHint");
       return;
     }
@@ -77,6 +78,7 @@ export function initPrivacySettings(){
       armed = true;
       btn.textContent = t("privacy.confirmDelete");
       btn.classList.add("armed");
+      document.getElementById("resetProgressStatus").textContent = "";
       status.textContent = t("privacy.confirmHint");
       return;
     }
