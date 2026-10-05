@@ -35,6 +35,7 @@ LK.register({
     { key: "eyes", name: "Eyes", choices: EYES.map((x) => x[0]), value: 0 },
     { key: "outfit", name: "Outfit", choices: ["Flight suit", "Mannequin"], value: 0 },
     { key: "suit", name: "Suit colour", choices: SUITS.map((x) => x[0]), value: 0 },
+    { key: "style", name: "Style", choices: ["Smooth", "Low-poly"], value: 0 },
     { key: "seed", name: "Face", seed: true, value: 1 },
   ],
   build,
@@ -51,8 +52,10 @@ function build(P, opts) {
     eyeW: 0.92 + r() * 0.16, mouthW: 0.9 + r() * 0.2 };
   const suit = P.outfit === 0;
   const tone = TONES[P.tone][1], hairHex = HAIRS[P.hairColor][1], irisHex = EYES[P.eyes][1], suitHex = SUITS[P.suit][1];
-  const mats = U.materials();
-  const seg = Math.max(10, Math.round(22 * det)), steps = Math.max(2, Math.round(3 * det));
+  // the low-poly style: faceted materials, few sides on the limbs, a decimated head
+  const lp = P.style === 1;
+  const mats = U.materials({ flat: lp });
+  const seg = lp ? 7 : Math.max(10, Math.round(22 * det)), steps = lp ? 1 : Math.max(2, Math.round(3 * det));
 
   // ---------- the skeleton (rest: standing, arms a little out — an A-pose) ----------
   const armA = (9 + 6 * P.build) * D;            // the arms' angle from the body at rest
@@ -176,7 +179,7 @@ function build(P, opts) {
 // ---------- the hand: a palm, four fingers, a thumb — rigid on the hand bone ----------
 // Built pointing down (−Y), the palm facing the body, then turned to the arm's angle.
 function hand(bone, sg, s, armA, mat, seg) {
-  const sw = (secs, o) => U.sweep(secs, Object.assign({ seg: Math.max(8, Math.round(seg * 0.55)), steps: 2, rigid: true, front: [0, 0, 1] }, o));
+  const sw = (secs, o) => U.sweep(secs, Object.assign({ seg: seg < 10 ? 5 : Math.max(8, Math.round(seg * 0.55)), steps: seg < 10 ? 1 : 2, rigid: true, front: [0, 0, 1] }, o));
   const geos = [];
   const pc = (y, th, w, z) => ({ p: [-sg * 0.002 * s, y * s, (z || 0) * s], rx: th * s, f: w * s, b: w * s, n: 2.6 });
   geos.push(sw([pc(0.01, 0.017, 0.028, 0), pc(-0.025, 0.019, 0.04, 0.002), pc(-0.065, 0.018, 0.045, 0.002), pc(-0.09, 0.015, 0.043, 0.002)], { capEnd: 1, capLen: 0.4 }));
@@ -225,7 +228,7 @@ function head(bone, H, s, sh, F, P, mats, tone, hairHex, irisHex, det) {
   hg.scale.setScalar(sh);
   hg.rotation.x = 0.13;                      // the face a little down: the eyes level, not at the sky
   bone.add(hg);
-  const face = LK.face.build({ F, tone, hair: P.hair, hairHex, irisHex, mats, detail: det });
+  const face = LK.face.build({ F, tone, hair: P.hair, hairHex, irisHex, mats, detail: det, lowpoly: P.style === 1 ? 760 : 0 });
   hg.add(face.group);
   return face;
 }

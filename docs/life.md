@@ -148,6 +148,33 @@ scanned head would clash with bodies built from blocks) — its ideas were:
 - The creature's `animate` calls `face.update` (lifekit.js), so any
   creature with a face gets it.
 
+### The low-poly style (labs 1.12.0)
+
+The user brought a low-poly head as a reference ("Lowpoly face model" by
+void, Sketchfab, CC-BY 4.0 — looked at, not used: its file stayed out of
+the repo; credit it if it's ever used). Ours is made from our own head:
+
+- `util.weld` merges the grid's duplicate points (the seam, the poles);
+  `util.decimate` does half-edge collapses ordered by the quadric error
+  (Garland–Heckbert): a vertex merges into a neighbour **and takes its
+  position**, so every vertex kept is an original one — colours, UVs and
+  all 14 expressions carry over by index. Open edges (the eyes, the
+  mouth, the hairline, the midline of a half) hold through heavy
+  boundary planes; collapses that flip or crush a face or pinch the
+  surface are refused. Flat areas go first, so the triangles left run
+  along the features.
+- `symDecimate` (face.js): the right half is decimated and mirrored —
+  the mirrored vertex is the original one at (−x, y, z), so one-sided
+  expressions still move their own side.
+- The materials get `flatShading` (`materials({ flat })`), the limbs 7
+  sides, the fingers 5, the eyes and ears a few facets. ~760 triangles in
+  the head, ~5.4k in the whole human.
+
+The hair is now a shell on the head's own grid (both styles): the row
+nearest the hairline is pulled onto it, the shell meets the skin at the
+edge and rises to its thickness above — a clean hairline instead of a
+ragged one.
+
 ## Limits (honest)
 
 - **The face is better, not real.** Real lids and lips and moving

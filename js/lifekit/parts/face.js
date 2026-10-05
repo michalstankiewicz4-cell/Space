@@ -176,6 +176,67 @@ function eyeDepth(F, L) {
   return best;
 }
 
+// ---------- the low-poly head ----------
+// The full head welded (the grid's seam and poles are duplicate points),
+// then decimated (LifeKit.util.decimate): the vertices kept are original
+// ones, so the colours and every expression carry over — a faceted face
+// that still blinks and speaks. The openings' edges hold.
+// the right half (x ≥ 0) decimated, then mirrored: symmetric facets, as a
+// hand-made low-poly head has (the midline is an open edge in the half,
+// so it holds). Every mirrored vertex is the original vertex at (−x, y, z),
+// so one-sided expressions (a left smile) still move only their side.
+function symDecimate(pos, idx, target) {
+  const nv = pos.length / 3, key = (x, y, z) => Math.round(x * 1e6) + "," + Math.round(y * 1e6) + "," + Math.round(z * 1e6);
+  const at = new Map(); for (let i = 0; i < nv; i++) at.set(key(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]), i);
+  const mir = new Int32Array(nv); for (let i = 0; i < nv; i++) { const j = at.get(key(-pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])); mir[i] = j === undefined ? -1 : j; }
+  const used = new Map(), hp = [], back = [], hidx = [];
+  const take = (v) => { if (!used.has(v)) { used.set(v, back.length); back.push(v); hp.push(pos[v * 3], pos[v * 3 + 1], pos[v * 3 + 2]); } return used.get(v); };
+  for (let i = 0; i < idx.length; i += 3) {
+    const a = idx[i], b = idx[i + 1], c = idx[i + 2];
+    if (pos[a * 3] >= -1e-7 && pos[b * 3] >= -1e-7 && pos[c * 3] >= -1e-7) hidx.push(take(a), take(b), take(c));
+  }
+  const out = U.decimate(new Float32Array(hp), hidx, Math.round(target / 2)), faces = [];
+  for (let i = 0; i < out.length; i += 3) {
+    const a = back[out[i]], b = back[out[i + 1]], c = back[out[i + 2]];
+    faces.push(a, b, c);
+    if (mir[a] >= 0 && mir[b] >= 0 && mir[c] >= 0) faces.push(mir[a], mir[c], mir[b]);
+  }
+  return faces;
+}
+function weldedOf(geo) {
+  const P = geo.attributes.position.array, w = U.weld(P);
+  const pos = new Float32Array(w.keep.length * 3);
+  w.keep.forEach((o, i) => { pos[i * 3] = P[o * 3]; pos[i * 3 + 1] = P[o * 3 + 1]; pos[i * 3 + 2] = P[o * 3 + 2]; });
+  const ix = geo.index.array, idx = [];
+  for (let i = 0; i < ix.length; i += 3) { const a = w.map[ix[i]], b = w.map[ix[i + 1]], c = w.map[ix[i + 2]]; if (a !== b && b !== c && a !== c) idx.push(a, b, c); }
+  return { w, pos, idx };
+}
+// a plain mesh (no morphs) decimated, symmetric
+function lowPolyPlain(geo, target) {
+  const { w, pos, idx } = weldedOf(geo), out = symDecimate(pos, idx, target);
+  const used = new Map(), from = [];
+  const tri = out.map((v) => { if (!used.has(v)) { used.set(v, from.length); from.push(w.keep[v]); } return used.get(v); });
+  const g = new THREE.BufferGeometry();
+  ["position", "uv"].forEach((nm) => { const a = geo.attributes[nm], k = a.itemSize, b = new Float32Array(from.length * k); from.forEach((o, i) => { for (let q = 0; q < k; q++) b[i * k + q] = a.array[o * k + q]; }); g.setAttribute(nm, new THREE.BufferAttribute(b, k)); });
+  g.setIndex(tri); geo.dispose();
+  return g;
+}
+function lowPoly(geo, target) {
+  const { w, pos, idx } = weldedOf(geo);
+  const out = symDecimate(pos, idx, target);
+  // compact: the vertices still used, in a new order
+  const used = new Map(), from = [];
+  const tri = out.map((v) => { if (!used.has(v)) { used.set(v, from.length); from.push(w.keep[v]); } return used.get(v); });
+  const g = new THREE.BufferGeometry();
+  const pick = (attr) => { const n = attr.itemSize, a = new Float32Array(from.length * n); from.forEach((o, i) => { for (let k = 0; k < n; k++) a[i * n + k] = attr.array[o * n + k]; }); return new THREE.BufferAttribute(a, n); };
+  ["position", "uv", "color"].forEach((nm) => g.setAttribute(nm, pick(geo.attributes[nm])));
+  g.setIndex(tri); g.computeVertexNormals();
+  g.morphTargetsRelative = true;
+  ["position", "normal"].forEach((nm) => { g.morphAttributes[nm] = geo.morphAttributes[nm].map((a) => { const b = pick(a); b.name = a.name; return b; }); });
+  geo.dispose();
+  return g;
+}
+
 // ---------- building ----------
 // the grid: longitude denser at the front, latitude denser around the face
 function grid(det) {
@@ -248,7 +309,7 @@ function build(o) {
     const na = new THREE.BufferAttribute(dN, 3); na.name = name; geo.morphAttributes.normal.push(na);
   });
   tmp.dispose();
-  const head = new THREE.Mesh(geo, mats.skinVC(o.tone, true)); head.castShadow = head.receiveShadow = true;
+  const head = new THREE.Mesh(o.lowpoly ? lowPoly(geo, o.lowpoly) : geo, mats.skinVC(o.tone, true)); head.castShadow = head.receiveShadow = true;
   head.updateMorphTargets(); group.add(head);
   const morphed = [head];
 
@@ -292,31 +353,42 @@ function build(o) {
   // ---------- the eyes, the ears ----------
   const eyes = [];
   [1, -1].forEach((sg) => {
-    const eg = new THREE.SphereGeometry(R_EYE, 28, 20); eg.rotateX(Math.PI / 2);
+    const eg = o.lowpoly ? new THREE.SphereGeometry(R_EYE, 10, 8) : new THREE.SphereGeometry(R_EYE, 28, 20); eg.rotateX(Math.PI / 2);
     const e = new THREE.Mesh(eg, mats.eye(o.irisHex)); e.position.set(sg * L.ex, L.ey, ez); group.add(e); eyes.push(e);
-    const ag = new THREE.SphereGeometry(1, 16, 12); ag.scale(0.0085, 0.03, 0.019);
+    const ag = o.lowpoly ? new THREE.SphereGeometry(1, 7, 5) : new THREE.SphereGeometry(1, 16, 12); ag.scale(0.0085, 0.03, 0.019);
     const ear = new THREE.Mesh(ag, mats.skin(o.tone, false)); ear.castShadow = true;
     ear.position.set(sg * (0.077 * F.w - 0.004), -0.004, -0.008); ear.rotation.y = sg * 0.35; group.add(ear);
   });
 
-  // ---------- the hair: the skull a little bigger, above a hairline ----------
+  // ---------- the hair: a shell on the head's own grid, above a hairline ----------
+  // The row of vertices nearest the hairline is pulled onto it (a clean edge,
+  // as with the lids); the shell meets the skin at the edge and rises to its
+  // thickness above it. The low-poly style decimates it, symmetric.
   if (o.hair !== 3) {
     const thick = o.hair === 1 ? 1.012 : 1.035;
-    const W = Math.round(110 * det), Hs = Math.round(84 * det);
-    const hgeo = new THREE.SphereGeometry(1, W, Hs), hp = hgeo.attributes.position, keep = new Array(hp.count), v = new THREE.Vector3();
-    for (let i = 0; i < hp.count; i++) {
-      v.fromBufferAttribute(hp, i).normalize();
-      const h = base(v, F);
-      const az = Math.abs(Math.atan2(h.x, h.z)) / Math.PI;
-      const line = az < 0.3 ? U.lerp(0.07, 0.045, az / 0.3) : az < 0.6 ? U.lerp(0.045, 0.012, (az - 0.3) / 0.3) : U.lerp(0.012, -0.06, (az - 0.6) / 0.4);
-      const up = U.smooth((h.y - line) / 0.012);
-      keep[i] = h.y > line - 0.03;
-      const k = U.lerp(0.975, thick + (o.hair === 1 ? 0 : 0.03 * U.smooth((h.y - 0.02) / 0.09)), up);
-      hp.setXYZ(i, h.x * k, h.y * k + (o.hair === 1 ? 0 : 0.004 * up), h.z * k);
+    const hp = new Float32Array(n * 3), keep = new Uint8Array(n);
+    const hairline = (az) => (az < 0.3 ? U.lerp(0.07, 0.045, az / 0.3) : az < 0.6 ? U.lerp(0.045, 0.012, (az - 0.3) / 0.3) : U.lerp(0.012, -0.06, (az - 0.6) / 0.4));
+    for (let i = 0; i < n; i++) {
+      const h = base(G.dirs[i], F), az = Math.abs(Math.atan2(h.x, h.z)) / Math.PI, line = hairline(az);
+      let y = h.y;
+      if (y < line && y > line - 0.0042) y = line;
+      keep[i] = y >= line - 1e-7 ? 1 : 0;
+      const up = U.smooth((y - line) / 0.014);
+      const k = U.lerp(1.004, thick + (o.hair === 1 ? 0 : 0.03 * U.smooth((y - 0.02) / 0.09)), up);
+      hp[i * 3] = h.x * k; hp[i * 3 + 1] = y * k + (o.hair === 1 ? 0 : 0.004 * up); hp[i * 3 + 2] = h.z * k;
     }
-    const ix = hgeo.index.array, out = [];
-    for (let i = 0; i < ix.length; i += 3) if (keep[ix[i]] && keep[ix[i + 1]] && keep[ix[i + 2]]) out.push(ix[i], ix[i + 1], ix[i + 2]);
-    hgeo.setIndex(out); hgeo.computeVertexNormals();
+    const hidx = [];
+    for (let i = 0; i < G.NL; i++) for (let j = 0; j < G.NC; j++) {
+      const a = i * row + j, b = a + 1, c = a + row, d = c + 1;
+      if (keep[a] && keep[b] && keep[c]) hidx.push(a, b, c);
+      if (keep[b] && keep[d] && keep[c]) hidx.push(b, d, c);
+    }
+    let hgeo = new THREE.BufferGeometry();
+    hgeo.setAttribute("position", new THREE.BufferAttribute(hp, 3));
+    hgeo.setAttribute("uv", new THREE.Float32BufferAttribute(G.uvs.map((u, k) => (k % 2 ? u * 0.7 : u * 1.5)), 2));
+    hgeo.setIndex(hidx);
+    if (o.lowpoly) hgeo = lowPolyPlain(hgeo, 280);
+    hgeo.computeVertexNormals();
     const hm = new THREE.Mesh(hgeo, mats.hair(o.hairHex, false)); hm.castShadow = true; group.add(hm);
     if (o.hair === 2) {
       const tail = U.sweep([[0, 0.04, -0.095, 0.017], [0, 0.0, -0.118, 0.021], [0, -0.06, -0.122, 0.017], [0, -0.13, -0.105, 0.01]].map(([x, y, z, r]) => ({ p: [x, y, z], rx: r, f: r * 0.85, b: r * 0.85 })),

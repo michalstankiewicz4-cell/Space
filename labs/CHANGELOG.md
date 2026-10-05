@@ -9,6 +9,21 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.12.0] — 2026-10-05
+
+### Added
+- **The life lab: a low-poly style** (BODY → Style). Faceted shading, few
+  sides on the limbs, and a head decimated to ~760 triangles that still
+  blinks, smiles and speaks: LifeKit's new decimator (quadric-error
+  half-edge collapses) keeps original vertices only, so every expression
+  carries over; the right half is decimated and mirrored, so the facets
+  are symmetric like a hand-made low-poly head. The whole human: ~5.4k
+  triangles instead of ~60k.
+
+### Changed
+- The hair is a shell on the head's own grid with its nearest row pulled
+  onto the hairline: a clean edge in both styles (it was ragged).
+
 ## [1.11.0] — 2026-10-05
 
 ### Added
