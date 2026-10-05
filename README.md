@@ -44,7 +44,8 @@ js/
                      (planets, giants, pulsars, suns, rocks, holes, sky); classic scripts shared with the
                      body lab (bodies.html); see docs/bodies.md
   labkit/            LabKit — what the ship, body and system labs share around their models (grain, sliders, idle hiding,
-                     HUD scale, performance counters, image effects); styles in css/lab.css
+                     HUD scale, performance counters, image effects); styles in css/lab.css; menubar.js: the
+                     FILES / OPTIONS / TOOLS / HELP bar on every lab and tool page (the lists of labs and tools)
   galaxy/            the galaxy map's picture: the Milky Way from above as one WebGL shader
                      (galaxyRender.js; the window is ui/windows/galaxyMap.js, key M)
   systemkit/         SystemKit — star systems from BodyKit's bodies (data, presets, a seeded
@@ -137,7 +138,9 @@ supabase/schema.sql  database schema (tables, RLS, RPC functions) to paste into 
 
 `admin.html`/`css/admin.css`/`css/devTheme.css`/`js/admin/` is a separate
 developer-tool entry point, not part of the game's own module graph above —
-see "Admin panel" below. `ship.html` and `bodies.html` are standalone
+see "Admin panel" below. `labs.html` is the labs' start screen: a tile for
+every lab and tool, and the menu bar they all carry (`js/labkit/menubar.js`).
+`ship.html` and `bodies.html` are standalone
 labs for procedural ships and celestial bodies; their models live in
 `js/shipkit/` and `js/bodykit/`, shared with the game (they replaced the
 older `planetEditor.html` and `shipEditor.html`, removed in v2.2.1) — see

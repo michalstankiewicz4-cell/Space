@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swarm Protocol // Labs</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<!-- The labs' start screen: a tile for every lab and tool, with the menu
+     bar every lab and tool page carries (js/labkit/menubar.js — the lists
+     live there, the tiles' pictures and words here). Not the game's style
+     on purpose: a workshop, not a cockpit. Not part of the game. -->
+<style>
+@font-face{ font-family:"Space Grotesk"; font-weight:300 700; src:url(fonts/space-grotesk-var-latin-ext.woff2) format("woff2"); unicode-range:U+0100-024F; }
+@font-face{ font-family:"Space Grotesk"; font-weight:300 700; src:url(fonts/space-grotesk-var-latin.woff2) format("woff2"); }
+@font-face{ font-family:"IBM Plex Mono"; font-weight:400; src:url(fonts/ibm-plex-mono-400-latin.woff2) format("woff2"); }
+:root{ color-scheme:dark; --bg:#0d0f13; --card:#151820; --line:#252a34; --text:#c9ced8; --head:#eef1f6; --dim:#7d8494;
+  --game:#36d6b5; --lab:#f2b84b; --tool:#8b9cff; }
+*{ box-sizing:border-box; }
+html,body{ margin:0; min-height:100%; background:var(--bg); color:var(--text); font:15px/1.5 "Space Grotesk", system-ui, sans-serif; }
+body{ background:
+  radial-gradient(1200px 500px at 10% -10%, rgba(91,140,255,.14), transparent 60%),
+  radial-gradient(900px 500px at 100% 0%, rgba(54,214,181,.10), transparent 60%),
+  var(--bg); }
+main{ max-width:1240px; margin:0 auto; padding:76px 28px 70px; }
+header{ display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap; margin-bottom:34px; }
+h1{ margin:0; font-size:40px; line-height:1.1; font-weight:700; letter-spacing:-.5px; color:var(--head); }
+h1 span{ background:linear-gradient(90deg, #5b8cff, #36d6b5 55%, #f2b84b); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.lead{ margin:10px 0 0; max-width:640px; color:#9aa1b0; font-size:16px; }
+.stats{ display:flex; gap:10px; flex-wrap:wrap; }
+.stat{ padding:10px 14px; border:1px solid var(--line); border-radius:12px; background:rgba(21,24,32,.7); min-width:96px; }
+.stat b{ display:block; font-size:22px; color:var(--head); line-height:1.1; }
+.stat span{ font-size:12px; color:var(--dim); letter-spacing:.4px; text-transform:uppercase; }
+h2{ display:flex; align-items:center; gap:12px; margin:34px 0 14px; font-size:13px; letter-spacing:1.6px; text-transform:uppercase; color:var(--dim); font-weight:600; }
+h2::after{ content:""; flex:1; height:1px; background:var(--line); }
+.grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(268px, 1fr)); gap:16px; }
+.tile{ position:relative; display:flex; flex-direction:column; border:1px solid var(--line); border-radius:16px; background:var(--card);
+  color:inherit; text-decoration:none; overflow:hidden; transition:transform .18s, border-color .18s, box-shadow .18s; }
+.tile:hover{ transform:translateY(-3px); border-color:#3a4256; box-shadow:0 14px 34px rgba(0,0,0,.4), 0 0 0 1px rgba(139,156,255,.15); }
+.art{ position:relative; aspect-ratio:16/8; overflow:hidden; }
+.art svg{ position:absolute; inset:0; width:100%; height:100%; }
+.art::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg, transparent 55%, rgba(21,24,32,.85)); }
+.body{ padding:12px 16px 16px; display:flex; flex-direction:column; gap:6px; flex:1; }
+.name{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:18px; font-weight:600; color:var(--head); }
+.file{ font:12px "IBM Plex Mono", ui-monospace, monospace; color:var(--dim); }
+.desc{ font-size:14px; color:#a7adbb; flex:1; }
+.tags{ display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
+.tag{ font-size:11.5px; padding:2px 8px; border-radius:999px; border:1px solid var(--line); color:#a7adbb; }
+.tag.game{ color:var(--game); border-color:rgba(54,214,181,.4); background:rgba(54,214,181,.08); }
+.tag.lab{ color:var(--lab); border-color:rgba(242,184,75,.4); background:rgba(242,184,75,.08); }
+.tag.tool{ color:var(--tool); border-color:rgba(139,156,255,.4); background:rgba(139,156,255,.08); }
+footer{ margin-top:46px; color:var(--dim); font-size:13px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+footer a{ color:#9aa1b0; }
+@media (max-width:600px){ h1{ font-size:30px; } main{ padding:64px 16px 50px; } }
+</style>
+</head>
+<body>
+<script src="js/labkit/menubar.js"></script>
+<main>
+  <header>
+    <div>
+      <h1>Swarm Protocol <span>Labs</span></h1>
+      <p class="lead">The workshops where the game's ships, worlds, bases and machines are made. The labs and the game share the same kits, so what you tune here is what the game shows.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="nLabs">–</b><span>labs</span></div>
+      <div class="stat"><b id="nGame">–</b><span>in the game</span></div>
+      <div class="stat"><b id="nTools">–</b><span>tools</span></div>
+      <div class="stat"><b id="ver">–</b><span>game</span></div>
+    </div>
+  </header>
+  <h2>Laboratories</h2>
+  <div class="grid" id="labs"></div>
+  <h2>Tools</h2>
+  <div class="grid" id="tools"></div>
+  <footer><span>Swarm Protocol · MIT · the labs aren't part of the game</span><a href="index.html">Back to the game →</a></footer>
+</main>
+<script>
+(() => {
+"use strict";
+// gradient + line art per tile (viewBox 0 0 200 100)
+const ART = {
+  "ship.html": { bg: ["#1b2a5e", "#0f1630"], svg: `<path d="M38 58 L118 45 L166 54 L118 66 Z" fill="url(#g)" opacity=".95"/><path d="M92 49 L70 28 L84 28 L110 47 Z M92 62 L70 80 L84 80 L110 63 Z" fill="#9fb4ff" opacity=".55"/><circle cx="38" cy="58" r="9" fill="#5be0ff" opacity=".35"/><circle cx="38" cy="58" r="4" fill="#d8f6ff"/><path d="M14 58 H32" stroke="#5be0ff" stroke-width="3" stroke-linecap="round" opacity=".6"/>` },
+  "bodies.html": { bg: ["#3b1d4f", "#140d24"], svg: `<circle cx="100" cy="52" r="28" fill="url(#g)"/><path d="M100 24 A28 28 0 0 1 100 80 A16 28 0 0 0 100 24" fill="#0b0716" opacity=".55"/><ellipse cx="100" cy="54" rx="56" ry="12" fill="none" stroke="#f6c9ff" stroke-width="2.5" opacity=".7" transform="rotate(-12 100 54)"/><circle cx="160" cy="24" r="3" fill="#fff" opacity=".7"/><circle cx="34" cy="78" r="2" fill="#fff" opacity=".5"/>` },
+  "systems.html": { bg: ["#2c2312", "#120f08"], svg: `<circle cx="100" cy="50" r="9" fill="#ffd27a"/><circle cx="100" cy="50" r="16" fill="#ffd27a" opacity=".18"/><g fill="none" stroke="#f2b84b" stroke-width="1.4" opacity=".55"><ellipse cx="100" cy="50" rx="34" ry="13"/><ellipse cx="100" cy="50" rx="58" ry="23"/><ellipse cx="100" cy="50" rx="84" ry="34"/></g><circle cx="134" cy="50" r="4" fill="#8be0ff"/><circle cx="58" cy="66" r="5" fill="#ff9a6b"/><circle cx="168" cy="30" r="6" fill="#c7b2ff"/>` },
+  "scale.html": { bg: ["#173236", "#0a1517"], svg: `<g fill="none" stroke="url(#g)" stroke-width="2.5"><circle cx="46" cy="58" r="8"/><circle cx="86" cy="54" r="14"/><circle cx="140" cy="46" r="26"/></g><path d="M24 84 H180" stroke="#9fe8de" stroke-width="2"/><g stroke="#9fe8de" stroke-width="2">${[0,1,2,3,4,5,6,7,8].map((i) => `<path d="M${24 + i * 19.5} 84 V${i % 2 ? 80 : 76}"/>`).join("")}</g>` },
+  "skins.html": { bg: ["#3a1830", "#160a14"], svg: `<rect x="34" y="22" width="92" height="58" rx="8" fill="#1d1328" stroke="#ff8bd1" stroke-width="2"/><rect x="34" y="22" width="92" height="12" rx="6" fill="#ff8bd1" opacity=".5"/><rect x="74" y="38" width="92" height="52" rx="8" fill="#16182a" stroke="#8b9cff" stroke-width="2"/><rect x="74" y="38" width="92" height="12" rx="6" fill="#8b9cff" opacity=".5"/><g><circle cx="92" cy="68" r="7" fill="#36d6b5"/><circle cx="112" cy="68" r="7" fill="#f2b84b"/><circle cx="132" cy="68" r="7" fill="#ff6b8b"/><circle cx="152" cy="68" r="7" fill="#8b9cff"/></g>` },
+  "surface.html": { bg: ["#16304a", "#0b1420"], svg: `<circle cx="150" cy="30" r="10" fill="#ffd9a0"/><path d="M0 74 Q40 54 78 66 T150 62 T200 70 V100 H0 Z" fill="#2c5a4a"/><path d="M0 84 Q50 70 100 80 T200 78 V100 H0 Z" fill="#1d3f35"/><path d="M84 66 a12 12 0 0 1 24 0 Z" fill="#9fe8de"/><rect x="95" y="20" width="2" height="46" fill="#f2b84b" opacity=".6"/>` },
+  "buildings.html": { bg: ["#2a2a14", "#12120a"], svg: `<path d="M20 82 H180" stroke="#5c5a3a" stroke-width="2"/><path d="M40 82 a22 22 0 0 1 44 0 Z" fill="url(#g)"/><rect x="92" y="54" width="34" height="28" rx="3" fill="#cfc28a" opacity=".85"/><rect x="132" y="62" width="40" height="20" rx="3" fill="#8a8158"/><g stroke="#36d6b5" stroke-width="1.5" fill="none" stroke-dasharray="3 3"><rect x="136" y="34" width="34" height="22" rx="3"/></g>` },
+  "vehicles.html": { bg: ["#3a2a12", "#160f06"], svg: `<rect x="50" y="44" width="100" height="22" rx="6" fill="url(#g)"/><rect x="70" y="30" width="36" height="16" rx="4" fill="#ffdca0" opacity=".8"/><path d="M128 44 V22" stroke="#ffdca0" stroke-width="2.5"/><circle cx="128" cy="20" r="4" fill="#ffdca0"/><g fill="#1a1208" stroke="#f2b84b" stroke-width="3"><circle cx="64" cy="72" r="10"/><circle cx="100" cy="72" r="10"/><circle cx="136" cy="72" r="10"/></g><path d="M14 84 H186" stroke="#5a4320" stroke-width="2"/>` },
+  "marine.html": { bg: ["#0f3550", "#081722"], svg: `<path d="M64 52 H140 L128 66 H76 Z" fill="url(#g)"/><rect x="92" y="38" width="22" height="14" rx="3" fill="#c9f1ff" opacity=".85"/><path d="M0 64 Q25 56 50 64 T100 64 T150 64 T200 64 V100 H0 Z" fill="#1f6d8f" opacity=".75"/><path d="M0 74 Q25 68 50 74 T100 74 T150 74 T200 74 V100 H0 Z" fill="#164f6a"/><g fill="#c9f1ff" opacity=".6"><circle cx="60" cy="86" r="2.5"/><circle cx="68" cy="80" r="1.6"/><circle cx="150" cy="88" r="2"/></g>` },
+  "tools/doctor.html": { bg: ["#2a1622", "#120a10"], svg: `<g fill="none" stroke="#8b9cff" stroke-width="1.6" opacity=".8"><path d="M70 36 L104 24 L138 36 L104 48 Z"/><path d="M70 36 V68 L104 80 V48"/><path d="M138 36 V68 L104 80"/></g><circle cx="132" cy="62" r="14" fill="none" stroke="#ff5a6a" stroke-width="3"/><path d="M142 72 L156 86" stroke="#ff5a6a" stroke-width="4" stroke-linecap="round"/><path d="M40 30 H52 M46 24 V36" stroke="#36d6b5" stroke-width="3" stroke-linecap="round"/>` },
+  "tools/kitcheck.html": { bg: ["#123024", "#08140f"], svg: `${[0,1,2].map((i) => `<rect x="58" y="${24 + i * 20}" width="12" height="12" rx="3" fill="none" stroke="#36d6b5" stroke-width="2"/><path d="M61 ${30 + i * 20} l3 3 l6 -7" stroke="#36d6b5" stroke-width="2.4" fill="none" stroke-linecap="round"/><rect x="80" y="${27 + i * 20}" width="${70 - i * 14}" height="6" rx="3" fill="#9fe8de" opacity=".5"/>`).join("")}` },
+  "tools/grainTexture.html": { bg: ["#24242a", "#101014"], svg: `<g fill="#d8dbe4">${Array.from({ length: 140 }, (_, i) => { const x = (i * 73) % 200, y = (i * 37 + (i * i) % 23) % 100; return `<circle cx="${x}" cy="${y}" r="${0.6 + (i % 5) * 0.35}" opacity="${0.15 + (i % 7) / 12}"/>`; }).join("")}</g>` },
+};
+const INFO = {
+  "ship.html": ["Ships, the drone and the station: build, shape, rename, light, animate. The reference lab.", "game", "ShipKit"],
+  "bodies.html": ["Planets, suns, giants, rocks, comets and black holes, every slider of their shaders.", "game", "BodyKit"],
+  "systems.html": ["Whole star systems from the bodies: presets and a seeded generator.", "lab", "SystemKit"],
+  "scale.html": ["Sizes side by side: ships, bodies and distances, to keep the world in proportion.", "lab", "scale"],
+  "skins.html": ["Other looks for the game's interface, tried on a mock-up.", "lab", "UI"],
+  "surface.html": ["Land on a planet: terrain from its own look, sky, weather, day and night, a base.", "game", "SurfaceKit"],
+  "buildings.html": ["The base's modules one by one: built, as a hologram, under construction.", "game", "BaseKit"],
+  "vehicles.html": ["Robot rovers: suspension, wheels and tracks, dust, lamps.", "lab", "VehicleKit"],
+  "marine.html": ["The sea and under it: waves, a seabed, an island, robot vessels.", "lab", "MarineKit"],
+  "tools/doctor.html": ["Every model examined for the repeating mistakes: inside-out shapes, flicker, floating parts.", "tool", "ModelDoctor"],
+  "tools/kitcheck.html": ["The safety net: every model's fingerprint against the golden file, every lab for errors.", "tool", "kitcheck"],
+  "tools/grainTexture.html": ["Regenerates the film grain the interface panels use.", "tool", "texture"],
+};
+const STATUS = { game: "In the game", lab: "Lab only", tool: "Tool" };
+const { LABS, TOOLS } = window.LabMenu.ITEMS;
+function tile(item) {
+  const a = document.createElement("a"), art = ART[item.file], info = INFO[item.file] || ["", "lab", ""];
+  a.className = "tile"; a.href = item.file;
+  const id = "g" + item.file.replace(/\W/g, "");
+  a.innerHTML = `<div class="art" style="background:linear-gradient(135deg, ${art.bg[0]}, ${art.bg[1]})">
+      <svg viewBox="0 0 200 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#9fb4ff"/></linearGradient></defs>${art.svg.replace(/url\(#g\)/g, "url(#" + id + ")")}</svg></div>
+    <div class="body"><div class="name"><span></span><span class="file"></span></div><div class="desc"></div>
+      <div class="tags"><span class="tag ${info[1]}">${STATUS[info[1]]}</span><span class="tag"></span></div></div>`;
+  a.querySelector(".name span").textContent = item.name;
+  a.querySelector(".file").textContent = item.file.replace("tools/", "");
+  a.querySelector(".desc").textContent = info[0];
+  a.querySelector(".tags .tag:last-child").textContent = info[2];
+  return a;
+}
+LABS.forEach((l) => document.getElementById("labs").appendChild(tile(l)));
+TOOLS.forEach((t) => document.getElementById("tools").appendChild(tile(t)));
+document.getElementById("nLabs").textContent = LABS.length;
+document.getElementById("nGame").textContent = LABS.filter((l) => (INFO[l.file] || [])[1] === "game").length;
+document.getElementById("nTools").textContent = TOOLS.length;
+const ver = () => { if (window.LabMenu.version) document.getElementById("ver").textContent = window.LabMenu.version; else setTimeout(ver, 200); };
+ver();
+})();
+</script>
+</body>
+</html>

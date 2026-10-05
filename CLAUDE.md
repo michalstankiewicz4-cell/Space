@@ -42,7 +42,9 @@ the player's own progress stays in `localStorage`.
   the update notice's WHAT'S NEW must say what's new, in a sentence a
   player understands (the user's call, 2026-10-03; under-the-hood work:
   say what it means for them, e.g. "fixes and stability"). **Not** for: `admin.html` (+ `js/admin/`,
-  `css/admin.css`, `css/devTheme.css`), the labs `ship.html` /
+  `css/admin.css`, `css/devTheme.css`), the labs' start screen `labs.html`
+  (+ the menu bar `js/labkit/menubar.js`, on every lab and tool page — a
+  new lab or tool goes into its lists), the labs `ship.html` /
   `bodies.html` / `scale.html` (+ `js/scalelab/`) / `skins.html` /
   `systems.html` (+ `js/systemkit/`, not in the game yet) / `surface.html` /
   `buildings.html` (their kits `js/surfacekit/` and `js/basekit/` **are** in
