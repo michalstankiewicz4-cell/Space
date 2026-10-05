@@ -39,7 +39,7 @@ $("tabMusic").addEventListener("click", () => showTab(true));
 const LAYER_NAMES = { drone: "Drone", pads: "Pads", bells: "Bells", pulse: "Pulse", arp: "Arp", texture: "Static", whispers: "Whispers", voice: "Voice",
   lead: "Melody", beat: "Beat", metal: "Metal", bass: "Bass" };
 // the instruments: what a layer sounds like (MusicKit.VOICES)
-const INSTR_NAMES = { padVoice: "Pads", bellVoice: "Bells", arpMode: "Arp", textureKind: "Static", droneVoice: "Drone", leadVoice: "Melody" };
+const INSTR_NAMES = { padVoice: "Pads", bellVoice: "Bells", arpMode: "Arp", pluckVoice: "Plucks", textureKind: "Static", droneVoice: "Drone", leadVoice: "Melody" };
 Object.entries(MK.VOICES).forEach(([k, opts]) => {
   const r = document.createElement("div"); r.className = "irow";
   r.innerHTML = `<span>${INSTR_NAMES[k]}</span><select class="lab" id="in_${k}"></select>`;
@@ -65,6 +65,8 @@ $("btnDice").addEventListener("click", () => { $("seed").value = Math.floor(Math
 $("lines").addEventListener("input", () => player.setParams({ voiceLines: $("lines").value.split("\n").map((s) => s.trim()).filter(Boolean) }));
 $("every").addEventListener("input", () => { player.setParams({ voiceEvery: +$("every").value }); showAll(); });
 $("btnSay").addEventListener("click", () => { const L = P.voiceLines; if (L.length) player.say(L[Math.floor(Math.random() * L.length)]); });
+// WARM: the natural sound on or off (MusicKit's warm) — to compare
+$("btnWarm").addEventListener("click", () => { player.setParams({ warm: !P.warm }); showAll(); });
 $("btnCopy").addEventListener("click", () => {
   const text = JSON.stringify(P, (k, v) => typeof v === "number" ? Math.round(v * 1000) / 1000 : v, 1);
   console.log(text);
@@ -76,6 +78,7 @@ function showAll() {
   Object.keys(FMT).forEach((k) => { const s = $(k); if (document.activeElement !== s) s.value = P[k]; paint(s); $(k + "Val").textContent = FMT[k](P[k]); });
   MK.LAYERS.forEach((l) => { const s = $("lv_" + l); if (document.activeElement !== s) s.value = P.levels[l]; paint(s); $("lv_" + l + "Val").textContent = pct(P.levels[l]); });
   $("root").value = P.root; $("scale").value = P.scale; $("seed").value = P.seed;
+  $("btnWarm").textContent = "WARM SOUND: " + (P.warm ? "ON" : "OFF"); $("btnWarm").classList.toggle("on", !!P.warm);
   Object.keys(MK.VOICES).forEach((k) => { $("in_" + k).value = P[k]; });
   if (document.activeElement !== $("lines")) $("lines").value = P.voiceLines.join("\n");
   $("every").value = P.voiceEvery; paint($("every")); $("everyVal").textContent = P.voiceEvery + " s";

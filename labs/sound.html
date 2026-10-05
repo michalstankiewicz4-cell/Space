@@ -39,6 +39,7 @@ textarea.lab{ height:96px; width:100%; padding:6px; resize:vertical; line-height
 .irow{ display:grid; grid-template-columns:76px 1fr; gap:8px; align-items:center; margin-top:4px; font-size:13.5px; color:#c7d0ff; }
 .twoBtns{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
 .twoBtns .tBtn{ height:28px; font-size:12.5px; }
+#btnWarm{ width:100%; height:28px; font-size:12.5px; margin-top:8px; }
 #btnMidi{ width:100%; height:28px; font-size:12.5px; margin-top:6px; }
 #recState{ font-size:12.5px; color:#7f92e8; margin-top:6px; min-height:16px; }
 #tapHint{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:1; pointer-events:none; text-align:center;
@@ -92,6 +93,7 @@ textarea.lab{ height:96px; width:100%; padding:6px; resize:vertical; line-height
     <input type="range" id="space" min="0" max="1" step="0.01" value="0.7">
     <label class="sl"><span>Volume</span><b id="volumeVal">–</b></label>
     <input type="range" id="volume" min="0" max="1" step="0.01" value="0.7">
+    <button class="tBtn" id="btnWarm" title="Softer waves, breathing filters, a little imperfection, a chorus, a round bass, a darker reverb — click to compare with the raw sound">WARM SOUND: ON</button>
     <div id="hint">Space: play / stop · every change is heard at once</div>
   </div>
 </div>

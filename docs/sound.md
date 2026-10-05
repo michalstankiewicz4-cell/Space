@@ -56,6 +56,28 @@ instead of the seeded random walk; `null` for the seeded one.
   (synthwave), Derelict (space horror). A mood sets everything but the
   volume, the seed and the robot's lines.
 
+## WARM (labs 1.8.0)
+
+`params.warm` (default true; the lab's WARM SOUND button) — the user's
+"many sounds buzz" (2026-10-05): raw saws and squares, static filters,
+perfect timing and a white-noise reverb sounded like a machine. With WARM:
+
+| What | How |
+|---|---|
+| softer waves | `osc()` gives saw and square a `PeriodicWave`: the Fourier series × e^(−(k−1)/14), not normalized (the fundamental as loud as the browser's wave — normalized, they came out ~30% louder and the A/B lied) |
+| breathing filters | the lead and the pads start brighter and darken while held; the piano darkens as it decays; louder notes brighter |
+| imperfection | its own generator (`jit`, seed + 99 — the notes stay the same either way): timing ±3–8 ms, velocities ±10–15%, two slow LFOs (0.07 / 0.11 Hz, 3–4 cents) on the tuning of held notes (`drift`) |
+| chorus | the pads' bus → two delays (18 / 25 ms, wobbling 3 ms at 0.27 / 0.33 Hz), left and right |
+| round bass | a sine (felt) + a dark saw at 0.35 (heard), filter Q 1.2 instead of 5 |
+| calm drone | a sine at the root, two quiet saws ±1.5 cents (not ±6–7: that was the beating, the "buzz"), Q 0.7, half the sweep |
+| master | `tanh(1.6x)/1.6` saturation (unity when quiet), a high shelf −4 dB at 6.5 kHz, a 28 Hz high-pass |
+| reverb | the impulse's noise through a low-pass closing 9 kHz → 1.2 kHz over the tail |
+
+**Strings** (`pluckVoice: "strings"`): Karplus-Strong — a period of noise
+circling a delay, averaged each round; computed once per note into a
+buffer (`ksString`, cached), played at a corrected rate (the averaging
+adds half a sample: pitch = sr / (period + 0.5)).
+
 ## Songs (MUSIC, labs 1.6.0)
 
 The other way to play: `MusicKit.SONGS`, chosen in the lab's MUSIC tab
