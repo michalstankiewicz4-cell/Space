@@ -416,6 +416,10 @@ consent first); a sale of the game is announced 30 days ahead (section 9).
 - **History**: on 2026-09-27, at the user's request, all player data was
   wiped once (303 anonymous accounts, 268 nicks, 2962 log rows, rate-limit
   rows; the world tables untouched) — most of it test traffic.
+  A second wipe on 2026-10-05, with the new policy (v2.36.1), the user's
+  call: 77 anonymous accounts, 73 nicks, 131 log rows, 13 activity-rate
+  rows (via the Management API, one transaction); `stats_hourly` (counts
+  only) and the world tables kept.
 - **License**: the code is MIT (`LICENSE`, with the third-party
   components listed there).
 
