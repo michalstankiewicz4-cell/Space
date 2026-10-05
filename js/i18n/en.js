@@ -315,7 +315,7 @@ export const en = {
     noLights: "Turn off lights",
     perf: "Performance stats",
     labs: "LABS",
-    lab: { ship: "Ships", bodies: "Bodies", systems: "Systems", surface: "Surface", buildings: "Buildings", vehicles: "Vehicles", marine: "Sea vehicles", scale: "Scale", skins: "Skins" },
+    lab: { all: "Open the labs" },
     stats: {
       fps: "FPS", frame: "Frame time", worst: "Worst frame (0.5 s)",
       cpu: "CPU: update + render", calls: "Draw calls / frame", tris: "Triangles / frame",
@@ -566,6 +566,7 @@ export const en = {
     arms: { perseus: "Perseus Arm", scutum: "Scutum–Centaurus Arm", sagittarius: "Sagittarius–Carina Arm", norma: "Norma–Outer Arm", orion: "Orion Spur" }
   },
   whatsNew: [
+    { v: "2.36.3", items: ["The labs have a home of their own: a start screen with all of them (Dev Tools → LABS → Open the labs)."] },
     { v: "2.36.2", items: ["Fixes and stability: after a server reset the game reconnects you by itself, with no need to reload."] },
     { v: "2.36.1", items: ["Updated privacy policy: clearer, and written so new game features don't need it rewritten. Nothing the game stores has changed."] },
     { v: "2.36.0", items: ["New BASES button in the left menu: all your surface bases in one list. Jump to a planet, or go straight down to the surface with a ship that has landed there."] },

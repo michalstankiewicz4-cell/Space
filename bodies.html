@@ -1,150 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Swarm Protocol // Body lab</title>
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/fonts.css">
-<!-- Procedural celestial-body preview (companion of ship.html).
-     Script blocks, in order:
-       1. vendor/three-r128.min.js + OrbitControls – the same copy the game
-          uses (was inlined here until the 2026-10 review: 600 KB twice)
-       2. js/labkit/labkit.js                     – what both labs share around
-          the model (grain, sliders, toggles, HUD scale, performance
-          counters, the IMAGE EFFECTS render); styles in css/lab.css
-       3. js/bodykit/bodykit.js                   – THE BODIES, the same file
-          the game loads (a classic script, window.BodyKit): groups,
-          parameter schemas, shaders; see its header for the API
-       4. vendor/three-r128-examples + js/postkit/postkit.js – the IMAGE
-          EFFECTS panel: the game's post-processing (bloom, FXAA, MSAA,
-          filter, depth of field, sharpening, sun flare and light rays,
-          black-hole lensing), apart
-          from the body's own controls
-       5. <script id="viewer">                     – preview page (sky, camera,
-          HUD, sliders built from the schemas, statistics, counters)
-     Opens straight from disk, no server needed. -->
-<link rel="stylesheet" href="css/lab.css">
-<style>
-.hidden{ display:none !important; }
-.blueT{ --c:#5c6ff1; --hi:#8b9bff; --lo:#4155d6; }
-#groupTabs{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px; }
-.groupTab{ height:28px; border:0; cursor:pointer; font-family:var(--fontLabel); font-weight:500; font-size:14.5px;
-  letter-spacing:.5px; color:#0c1440; border-radius:8px 8px 3px 8px; transition:filter .15s; }
-.groupTab.gold{ border-radius:3px 16px 3px 3px; }
-.groupTab:hover{ filter:brightness(1.12); }
-#bodyIndex{ font-family:var(--fontLabel); font-size:16px; letter-spacing:1px; color:#f8bb56; }
-.note{ margin:10px 0 4px; font-size:13.5px; line-height:19px; color:#9fb1ff; }
-.param{ margin-bottom:2px; }
-.param .sl{ margin-top:4px; }
-.param input[type=range]{ height:18px; margin-top:1px; }
-.twoBtns{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
-.wideBtn{ width:100%; margin-top:8px; }
-#fpsGraph{ height:40px; }
-</style>
+<meta charset="utf-8">
+<!-- The body lab moved to labs/bodies.html (2026-10-05); this old address
+     (linked from the devlog) sends you on, keeping ?query and #hash. -->
+<title>Swarm Protocol // moved to labs/bodies.html</title>
+<meta http-equiv="refresh" content="0; url=labs/bodies.html">
+<link rel="canonical" href="labs/bodies.html">
+<script>location.replace("labs/bodies.html" + location.search + location.hash);</script>
 </head>
-<body>
-<script src="js/labkit/menubar.js"></script>
-<canvas id="view"></canvas>
-
-<div id="hud">
-  <div id="hudTop">
-    <div class="mat blue" id="hudBracket"></div>
-    <svg id="hudLogo" viewBox="0 0 52 48" aria-hidden="true">
-      <defs>
-        <linearGradient id="gLogoGold" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#ffe0a0"/><stop offset=".5" stop-color="#f8bb56"/><stop offset="1" stop-color="#cf8a35"/></linearGradient>
-        <linearGradient id="gLogoBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8c5ff"/><stop offset="1" stop-color="#6d82f5"/></linearGradient>
-      </defs>
-      <path d="M16 8 L3 24 L16 40 M36 8 L49 24 L36 40" fill="none" stroke="url(#gLogoGold)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="26" cy="15" r="3.6" fill="url(#gLogoBlue)"/><circle cx="20" cy="30" r="3.6" fill="url(#gLogoBlue)"/><circle cx="32" cy="30" r="3.6" fill="url(#gLogoBlue)"/>
-    </svg>
-    <div id="hudTitle"></div>
-    <div id="hudSub">SWARM PROTOCOL // BODY LAB</div>
-  </div>
-  <div class="mat gold" id="hudBar"></div>
-  <div class="hudPanel">
-    <div class="mat blue side"></div>
-    <div id="groupTabs"></div>
-    <div id="shipNav">
-      <button class="mat blue navArrow" id="prevBody" aria-label="Previous body"><svg viewBox="0 0 12 16"><path d="M9 2 L3 8 L9 14"/></svg></button>
-      <span id="bodyIndex">1 / 1</span>
-      <button class="mat blue navArrow" id="nextBody" aria-label="Next body"><svg viewBox="0 0 12 16"><path d="M3 2 L9 8 L3 14"/></svg></button>
-    </div>
-    <div id="emptyNote" class="note hidden">No bodies in this group yet — its shape, parameters and example bodies are still to be designed.</div>
-    <div id="bodyStats">
-      <div class="secHd">PHYSICAL</div>
-      <div id="physRows"></div>
-      <div class="secHd">MODEL</div>
-      <div id="modelRows"></div>
-    </div>
-    <div id="hudBtns">
-      <button class="tBtn on" id="btnRotate">AUTO-ROTATE</button>
-      <button class="tBtn on" id="btnClouds">CLOUDS</button>
-      <button class="tBtn on" id="btnAtmo">ATMOSPHERE</button>
-      <button class="tBtn" id="btnWire">WIREFRAME</button>
-      <button class="tBtn" id="btnGameBuild" title="Build the body the way the game does: geometry detail × BodyKit.GAME_DETAIL_SCALE (the sky: as is)">GAME BUILD</button>
-      <button class="tBtn" id="btnShipLight" title="A ship's glow light orbiting the body, as in the game when a ship bites it">SHIP LIGHT</button>
-    </div>
-    <div id="hint">Left-drag: rotate · Right-drag: pan · Scroll: zoom</div>
-  </div>
-</div>
-
-<div id="opt">
-  <div class="hudPanel">
-    <div class="mat lilac side"></div>
-    <div id="paramsEmpty" class="note hidden">Select a body to edit its parameters.</div>
-    <div id="paramsBody">
-      <div class="secHd first" id="commonHd">COMMON</div>
-      <div id="commonParams"></div>
-      <div class="secHd" id="groupParamsHd">PARAMETERS</div>
-      <div id="groupParams"></div>
-      <div class="twoBtns">
-        <button class="tBtn" id="btnSeed">NEW SEED</button>
-        <button class="tBtn" id="btnReset">RESET</button>
-      </div>
-      <button class="tBtn wideBtn" id="btnCopy" title="Copies this body's entry for js/bodykit/bodykit.js (values that differ from the defaults)">COPY VALUES</button>
-    </div>
-  </div>
-  <div class="hudPanel" style="margin-top:12px">
-    <div class="mat gold side"></div>
-    <div class="secHd first">OPTIMIZATION</div>
-    <label class="sl"><span>Render quality</span><b id="qVal">ULTRA</b></label>
-    <input type="range" id="qSlider" min="0" max="4" step="1" value="3">
-    <div class="ticks"><span>LOW</span><span>MED</span><span>HIGH</span><span>ULTRA</span><span>MAX</span></div>
-    <label class="sl"><span>Geometry detail (triangles)</span><b id="dVal">100%</b></label>
-    <input type="range" id="dSlider" min="0.2" max="2" step="0.05" value="1">
-    <div class="ticks"><span>20%</span><span>100%</span><span>200%</span></div>
-    <div id="fxPanel"></div>
-    <div class="secHd">PERFORMANCE</div>
-    <div class="row"><span>Frames per second</span><b id="statFps">–</b></div>
-    <div class="row"><span>Frame time</span><b id="statMs">–</b></div>
-    <div class="row"><span>CPU per frame</span><b id="statCpu">–</b></div>
-    <div class="row"><span>Triangles drawn / frame</span><b id="statTris">–</b></div>
-    <div class="row"><span>Draw calls / frame</span><b id="statCalls">–</b></div>
-    <div class="row"><span>Render resolution</span><b id="statRes">–</b></div>
-    <canvas id="fpsGraph" width="270" height="40"></canvas>
-  </div>
-</div>
-<div id="loading">GENERATING SKY…</div>
-
-<script src="vendor/three-r128.min.js"></script>
-<script src="vendor/three-r128-examples/OrbitControls.js"></script>
-<!-- Three.js r128 add-ons (vendor/, MIT) + PostKit: the IMAGE EFFECTS panel's post-processing, the game's own -->
-<script src="vendor/three-r128-examples/Pass.js"></script>
-<script src="vendor/three-r128-examples/CopyShader.js"></script>
-<script src="vendor/three-r128-examples/LuminosityHighPassShader.js"></script>
-<script src="vendor/three-r128-examples/UnrealBloomPass.js"></script>
-<script src="vendor/three-r128-examples/FXAAShader.js"></script>
-<script src="js/postkit/postkit.js"></script>
-<script src="js/labkit/labkit.js"></script>
-<script id="bodykit" src="js/bodykit/bodykit.js"></script>
-<script src="js/bodykit/kinds/planets.js"></script>
-<script src="js/bodykit/kinds/giants.js"></script>
-<script src="js/bodykit/kinds/pulsars.js"></script>
-<script src="js/bodykit/kinds/suns.js"></script>
-<script src="js/bodykit/kinds/rocks.js"></script>
-<script src="js/bodykit/kinds/holes.js"></script>
-<script src="js/bodykit/kinds/sky.js"></script>
-<script id="viewer" src="js/labs/bodies.js"></script>
+<body style="background:#0d0f13;color:#c9ced8;font-family:sans-serif">
+<p>The body lab has moved: <a href="labs/bodies.html" style="color:#36d6b5">labs/bodies.html</a></p>
 </body>
 </html>

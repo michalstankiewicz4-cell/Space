@@ -8,26 +8,29 @@
    It finds the site's root from its own address, adds the bar (fixed, at
    the top, MENU_H high) and moves each page's top panels down by that much
    (the selectors in OFFSETS — a new lab with a panel at the top adds its
-   own there). The start screen is labs.html. Not part of the game.
+   own there). The labs live in labs/, the tools in tools/; the start
+   screen is labs.html in the root. Not part of the game.
    ======================================================================= */
 (function () {
 "use strict";
 const MENU_H = 32;
 const ROOT = (document.currentScript && document.currentScript.src || "").replace(/js\/labkit\/menubar\.js.*$/, "");
-const HERE = location.pathname.split("/").pop() || "labs.html";
+const PARTS = location.pathname.split("/"), HERE = PARTS.pop() || "index.html", DIR = PARTS.pop() || "";
+const PAGE = (DIR === "labs" || DIR === "tools" ? DIR + "/" : "") + HERE;   // e.g. "labs/ship.html"
+const START = PAGE === "labs.html";
 const REPO = "https://github.com/michalstankiewicz4-cell/Space/blob/main/";
 
 // The labs and tools, shared with the start screen (window.LabMenu.ITEMS).
 const LABS = [
-  { file: "ship.html", name: "Ship lab", doc: "docs/ship.md", keys: [["C", "change view: only the ticked blocks"], ["Double-click the name", "rename the ship"], ["Drag / wheel", "turn and zoom the camera"]] },
-  { file: "bodies.html", name: "Body lab", doc: "docs/bodies.md", keys: [["Drag / wheel", "turn and zoom the camera"]] },
-  { file: "systems.html", name: "System lab", doc: "docs/systems.md", keys: [["Drag / wheel", "turn and zoom the camera"], ["Click a body", "focus on it"]] },
-  { file: "scale.html", name: "Scale lab", doc: "docs/scale.md", keys: [["Drag / wheel", "turn and zoom the camera"]] },
-  { file: "skins.html", name: "Skin lab", doc: "docs/skins.md", keys: [] },
-  { file: "surface.html", name: "Surface lab", doc: "docs/surface.md", keys: [["W / S, A / D", "drive, turn"], ["Shift", "boost"], ["Right-drag / wheel", "camera"], ["B", "build the first module"], ["R / Esc / Delete", "turn / cancel / remove a module"]] },
-  { file: "buildings.html", name: "Building lab", doc: "docs/surface.md", keys: [["Drag / wheel", "turn and zoom the camera"]] },
-  { file: "vehicles.html", name: "Vehicle lab", doc: "docs/vehicles.md", keys: [["W / S, A / D", "drive, steer"], ["Drag / wheel", "camera"]] },
-  { file: "marine.html", name: "Sea lab", doc: "docs/marine.md", keys: [["W / S, A / D", "drive, steer"], ["Drag / wheel", "camera"]] },
+  { file: "labs/ship.html", name: "Ship lab", doc: "docs/ship.md", keys: [["C", "change view: only the ticked blocks"], ["Double-click the name", "rename the ship"], ["Drag / wheel", "turn and zoom the camera"]] },
+  { file: "labs/bodies.html", name: "Body lab", doc: "docs/bodies.md", keys: [["Drag / wheel", "turn and zoom the camera"]] },
+  { file: "labs/systems.html", name: "System lab", doc: "docs/systems.md", keys: [["Drag / wheel", "turn and zoom the camera"], ["Click a body", "focus on it"]] },
+  { file: "labs/scale.html", name: "Scale lab", doc: "docs/scale.md", keys: [["Drag / wheel", "turn and zoom the camera"]] },
+  { file: "labs/skins.html", name: "Skin lab", doc: "docs/skins.md", keys: [] },
+  { file: "labs/surface.html", name: "Surface lab", doc: "docs/surface.md", keys: [["W / S, A / D", "drive, turn"], ["Shift", "boost"], ["Right-drag / wheel", "camera"], ["B", "build the first module"], ["R / Esc / Delete", "turn / cancel / remove a module"]] },
+  { file: "labs/buildings.html", name: "Building lab", doc: "docs/surface.md", keys: [["Drag / wheel", "turn and zoom the camera"]] },
+  { file: "labs/vehicles.html", name: "Vehicle lab", doc: "docs/vehicles.md", keys: [["W / S, A / D", "drive, steer"], ["Drag / wheel", "camera"]] },
+  { file: "labs/marine.html", name: "Sea lab", doc: "docs/marine.md", keys: [["W / S, A / D", "drive, steer"], ["Drag / wheel", "camera"]] },
 ];
 const TOOLS = [
   { file: "tools/doctor.html", name: "Model doctor", doc: "docs/doctor.md", keys: [["Click a model, then a finding", "its parts light up red"], ["Drag / wheel", "turn and zoom the view"]] },
@@ -36,7 +39,7 @@ const TOOLS = [
 ];
 // what each lab keeps in this browser (OPTIONS → Reset saved settings)
 // (not the surface lab's roj-bases: the game shows those bases too)
-const SAVED = { "ship.html": ["shipLab."], "skins.html": ["roj-skinlab"] };
+const SAVED = { "labs/ship.html": ["shipLab."], "labs/skins.html": ["roj-skinlab"] };
 // the pages' own top panels, moved down under the bar
 const OFFSETS = `
   #hud, #opt { top: ${16 + MENU_H}px !important; max-height: calc((100vh - ${32 + MENU_H}px) / var(--ui, 1)) !important; }
@@ -48,8 +51,8 @@ const OFFSETS = `
   body.lmTool #app { height: calc(100% - ${MENU_H}px) !important; margin-top: ${MENU_H}px; }
 `;
 const all = LABS.concat(TOOLS);
-const isTool = location.pathname.includes("/tools/");
-const me = all.find((x) => x.file === (isTool ? "tools/" : "") + HERE) || null;
+const isTool = DIR === "tools";
+const me = all.find((x) => x.file === PAGE) || null;
 
 const CSS = `
 #labMenu { position: fixed; left: 0; right: 0; top: 0; height: ${MENU_H}px; z-index: 1000; display: flex; align-items: center; gap: 2px;
@@ -91,7 +94,7 @@ const FONT = `@font-face{ font-family:"Space Grotesk"; font-weight:300 700; src:
 @font-face{ font-family:"Space Grotesk"; font-weight:300 700; src:url(${ROOT}fonts/space-grotesk-var-latin.woff2) format("woff2"); }`;
 
 const style = document.createElement("style");
-style.textContent = FONT + CSS + (HERE === "labs.html" ? "" : OFFSETS);
+style.textContent = FONT + CSS + (START ? "" : OFFSETS);
 document.head.appendChild(style);
 if (isTool) document.body.classList.add("lmTool");
 
@@ -132,13 +135,10 @@ function dialog(title, rows, note) {
 
 // ---------- the menus ----------
 function files() {
-  const d = [link("Start screen", ROOT + "labs.html", { on: HERE === "labs.html" }), el("div", "lmSep"), el("div", "lmLabel", "Labs")];
-  LABS.forEach((l) => d.push(link(l.name, ROOT + l.file, { on: me === l })));
-  d.push(el("div", "lmSep"), link("Back to the game", ROOT + "index.html"));
-  return d;
+  return [link("Start screen", ROOT + "labs.html", { on: START }), el("div", "lmSep"), link("Back to the game", ROOT + "index.html")];
 }
 function options() {
-  const keys = SAVED[HERE] || [];
+  const keys = SAVED[PAGE] || [];
   return [
     action("Full screen", () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); },
       { key: "F11", on: !!document.fullscreenElement }),
@@ -151,8 +151,13 @@ function options() {
     }, { disabled: !keys.length }),
   ];
 }
+// the labs and the tools, all here (FILES keeps only the start screen and the game)
 function tools() {
-  return TOOLS.map((t) => link(t.name, ROOT + t.file, { on: me === t }));
+  const d = [el("div", "lmLabel", "Labs")];
+  LABS.forEach((l) => d.push(link(l.name, ROOT + l.file, { on: me === l })));
+  d.push(el("div", "lmSep"), el("div", "lmLabel", "Tools"));
+  TOOLS.forEach((t) => d.push(link(t.name, ROOT + t.file, { on: me === t })));
+  return d;
 }
 function help() {
   return [
@@ -175,14 +180,17 @@ menus.forEach(([name, make]) => {
   const top = el("div", "lmTop"), btn = el("button", null, name); btn.type = "button";
   const drop = el("div", "lmDrop");
   top.append(btn, drop);
+  let hoverOpened = 0;
+  const open = () => { closeAll(); drop.textContent = ""; make().forEach((x) => drop.appendChild(x)); top.classList.add("open"); };
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
-    const was = top.classList.contains("open");
-    closeAll();
-    if (!was) { drop.textContent = ""; make().forEach((x) => drop.appendChild(x)); top.classList.add("open"); }
+    // a click right after the pointer opened it (below) keeps it open
+    if (top.classList.contains("open") && performance.now() - hoverOpened > 400) closeAll(); else open();
   });
   // moving across the bar while one is open opens the next, like a desktop menu
-  btn.addEventListener("pointerenter", () => { if (bar.querySelector(".lmTop.open") && !top.classList.contains("open")) btn.click(); });
+  btn.addEventListener("pointerenter", () => {
+    if (bar.querySelector(".lmTop.open") && !top.classList.contains("open")) { open(); hoverOpened = performance.now(); }
+  });
   bar.appendChild(top);
 });
 const where = el("div", "lmWhere");

@@ -1,74 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Swarm Protocol // Scale lab</title>
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/fonts.css">
-<!-- Scale lab: every object of the game side by side in one row, at the
-     size it has in the game, over a ruler in world units — to decide what
-     should grow and what should shrink (docs/scale.md). The sizes are READ
-     FROM THE GAME'S OWN FILES (js/config.js, js/world/solarSystem.js,
-     js/bodies/comet.js), never copied, so this page can't drift from the
-     game: it's an ES module, so like the game it needs a local server
-     (python -m http.server 8877, then /scale.html) — unlike ship.html /
-     bodies.html it can't be opened straight from disk.
-     Models come from the same kits as the game (ShipKit, BodyKit); the
-     outline mode draws the sizes that matter for gameplay instead. -->
-<style>
-  :root{ color-scheme:dark; }
-  html,body{ margin:0; height:100%; overflow:hidden; background:#03040a; color:#d8ddff;
-    font-family:"Roboto Condensed","Arial Narrow",sans-serif; }
-  #bar{ position:fixed; left:0; right:0; top:0; z-index:5; display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px;
-    padding:8px 14px; background:rgba(6,9,26,.92); border-bottom:1px solid #1c3bb4; }
-  #bar h1{ margin:0; font-family:"Antonio","Arial Narrow",sans-serif; font-size:20px; letter-spacing:.5px; color:#f8bb56; font-weight:700; }
-  #bar button{ font-family:"Oswald",sans-serif; font-size:14px; color:#d8ddff; background:#070b22; border:1px solid #3c55d8;
-    border-radius:6px; padding:4px 12px; cursor:pointer; }
-  #bar button.on{ border-color:#f8bb56; color:#ffe2a8; box-shadow:0 0 8px rgb(248 187 86 / .35); }
-  #bar button:hover{ filter:brightness(1.2); }
-  #legend{ display:flex; flex-wrap:wrap; gap:4px 12px; font-size:13px; color:#aab4e8; }
-  #legend i{ display:inline-block; width:18px; height:0; border-top:2px solid; vertical-align:middle; margin-right:5px; }
-  #legend i.dash{ border-top-style:dashed; }
-  #fps{ margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:13px; color:#7f8fd6; }
-  #hint{ position:fixed; left:14px; bottom:10px; z-index:5; font-size:13px; color:#7f8fd6; }
-  #labels{ position:fixed; inset:0; pointer-events:none; z-index:3; }
-  .lbl{ position:absolute; transform:translate(-50%,-100%); text-align:center; white-space:nowrap; text-shadow:0 0 4px #000, 0 0 2px #000; }
-  .lbl b{ display:block; font-family:"Oswald",sans-serif; font-weight:500; font-size:14px; color:#fff; }
-  .lbl span{ display:block; font-size:12.5px; color:#b7c4ff; line-height:1.35; }
-  #scaleBar{ position:fixed; right:18px; bottom:14px; z-index:5; text-align:center; font-family:"IBM Plex Mono",monospace; font-size:12px; color:#d8ddff; }
-  #scaleBar div{ height:6px; border:2px solid #d8ddff; border-top:0; margin-top:3px; }
-  .tick{ position:absolute; transform:translate(-50%,4px); font-family:"IBM Plex Mono",monospace; font-size:11px; color:#8fa2ff; text-shadow:0 0 3px #000; }
-</style>
+<meta charset="utf-8">
+<!-- The scale lab moved to labs/scale.html (2026-10-05); this old address
+     (linked from the devlog) sends you on, keeping ?query and #hash. -->
+<title>Swarm Protocol // moved to labs/scale.html</title>
+<meta http-equiv="refresh" content="0; url=labs/scale.html">
+<link rel="canonical" href="labs/scale.html">
+<script>location.replace("labs/scale.html" + location.search + location.hash);</script>
 </head>
-<body>
-<script src="js/labkit/menubar.js"></script>
-<div id="bar">
-  <h1>SCALE LAB</h1>
-  <button type="button" id="btnModels" class="on" title="The game's own models (ShipKit, BodyKit)">Models</button>
-  <button type="button" id="btnOutlines" class="on" title="Outlines of the sizes that matter for gameplay">Outlines</button>
-  <button type="button" id="btnDetail" title="Model detail: low keeps it light, high is the game's high setting">Detail: low</button>
-  <button type="button" id="btnFit" title="Whole row in view">Fit all</button>
-  <div id="legend"></div>   <!-- built from scaleLab.js's LEGEND, the same colours as the rings -->
-  <span id="fps"></span>
-</div>
-<div id="labels"></div>
-<div id="scaleBar"><span></span><div></div></div>
-<div id="hint">Wheel: zoom at the cursor · drag: pan · double-click an object: zoom to it · numbers in world units</div>
-<script src="vendor/three-r128.min.js"></script>
-<script id="shipkit" src="js/shipkit/shipkit.js"></script>
-<script src="js/shipkit/ships/codewing.js"></script>
-<script src="js/shipkit/ships/scribe.js"></script>
-<script src="js/shipkit/ships/swarmer.js"></script>
-<script src="js/shipkit/ships/haven.js"></script>
-<script id="bodykit" src="js/bodykit/bodykit.js"></script>
-<script src="js/bodykit/kinds/planets.js"></script>
-<script src="js/bodykit/kinds/giants.js"></script>
-<script src="js/bodykit/kinds/pulsars.js"></script>
-<script src="js/bodykit/kinds/suns.js"></script>
-<script src="js/bodykit/kinds/rocks.js"></script>
-<script src="js/bodykit/kinds/holes.js"></script>
-<script src="js/bodykit/kinds/sky.js"></script>
-<script type="module" src="js/scalelab/scaleLab.js"></script>
+<body style="background:#0d0f13;color:#c9ced8;font-family:sans-serif">
+<p>The scale lab has moved: <a href="labs/scale.html" style="color:#36d6b5">labs/scale.html</a></p>
 </body>
 </html>

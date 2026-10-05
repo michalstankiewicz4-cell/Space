@@ -138,8 +138,12 @@ supabase/schema.sql  database schema (tables, RLS, RPC functions) to paste into 
 
 `admin.html`/`css/admin.css`/`css/devTheme.css`/`js/admin/` is a separate
 developer-tool entry point, not part of the game's own module graph above —
-see "Admin panel" below. `labs.html` is the labs' start screen: a tile for
-every lab and tool, and the menu bar they all carry (`js/labkit/menubar.js`).
+see "Admin panel" below. **The labs**: their start screen `labs.html` in
+the root (a tile for every lab and tool; `/labs/` redirects to it), the
+labs themselves in `labs/` (`labs/ship.html`, `labs/bodies.html`, …), all
+with the menu bar (`js/labkit/menubar.js`). The root's `ship.html`,
+`bodies.html` and the rest are only redirects to them, kept for the
+devlog's old links — don't delete them.
 `ship.html` and `bodies.html` are standalone
 labs for procedural ships and celestial bodies; their models live in
 `js/shipkit/` and `js/bodykit/`, shared with the game (they replaced the

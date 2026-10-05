@@ -14,7 +14,7 @@
      A change that should keep the models as they are must PASS; one that
      changes them on purpose: check the diff, then UPDATE THE GOLDEN FILE
      (the button copies the new JSON) and commit it with the change.
-     ?labs=a.html,b.html checks only those labs. -->
+     ?labs=labs/a.html,labs/b.html checks only those labs. -->
 <style>
 :root{ color-scheme:dark; --ok:#4fe3c6; --bad:#e04b50; --dim:#7f92e8; }
 body{ margin:0; padding:24px 28px; background:#060918; color:#e6ebff; font:14px/1.45 "IBM Plex Mono", ui-monospace, monospace; }
@@ -62,7 +62,7 @@ iframe{ position:fixed; left:-2000px; top:0; width:1280px; height:720px; border:
 const $ = (id) => document.getElementById(id);
 // ?labs=a.html,b.html checks only those (e.g. to try the checker itself)
 const LABS = new URLSearchParams(location.search).get("labs") ? new URLSearchParams(location.search).get("labs").split(",") :
-  ["ship.html", "bodies.html", "systems.html", "scale.html", "skins.html", "surface.html", "buildings.html", "vehicles.html", "marine.html"];
+  ["labs/ship.html", "labs/bodies.html", "labs/systems.html", "labs/scale.html", "labs/skins.html", "labs/surface.html", "labs/buildings.html", "labs/vehicles.html", "labs/marine.html"];
 const r3 = (v) => Math.round(v * 1000) / 1000;
 
 // a model's fingerprint: what a refactor must not change

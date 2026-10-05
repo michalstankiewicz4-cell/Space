@@ -320,7 +320,7 @@ export const pl = {
     noLights: "Wyłącz światła",
     perf: "Statystyki wydajności",
     labs: "LABORATORIA",
-    lab: { ship: "Statki", bodies: "Ciała", systems: "Układy", surface: "Powierzchnia", buildings: "Budynki", vehicles: "Pojazdy", marine: "Pojazdy morskie", scale: "Skala", skins: "Skórki" },
+    lab: { all: "Otwórz laboratoria" },
     stats: {
       fps: "FPS", frame: "Czas klatki", worst: "Najgorsza klatka (0,5 s)",
       cpu: "CPU: logika + render", calls: "Wywołania rysowania / klatka", tris: "Trójkąty / klatka",
@@ -567,6 +567,7 @@ export const pl = {
     arms: { perseus: "Ramię Perseusza", scutum: "Ramię Tarczy–Centaura", sagittarius: "Ramię Strzelca–Kila", norma: "Ramię Węgielnicy", orion: "Ostroga Oriona" }
   },
   whatsNew: [
+    { v: "2.36.3", items: ["Laboratoria mają własny dom: ekran startowy ze wszystkimi naraz (Dev Tools → LABS → Otwórz laboratoria)."] },
     { v: "2.36.2", items: ["Poprawki i stabilność: po resecie serwera gra sama połączy cię ponownie, bez odświeżania strony."] },
     { v: "2.36.1", items: ["Zaktualizowana polityka prywatności: czytelniejsza i napisana tak, żeby nowe funkcje gry nie wymagały jej zmian. To, co gra przechowuje, się nie zmieniło."] },
     { v: "2.36.0", items: ["Nowy przycisk BAZY w lewym menu: wszystkie twoje bazy na powierzchni w jednej liście. Przeskocz do planety albo zejdź od razu na powierzchnię statkiem, który tam wylądował."] },

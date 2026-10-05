@@ -4,6 +4,15 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.36.3]
+
+### Changed
+- The labs moved to their own folder, `labs/`; their start screen is
+  `labs.html` in the root (a tile for every lab and tool; `/labs/` leads
+  there). Dev Tools -> LABS has a single button now, "Open the labs",
+  to that start screen. The old addresses (`ship.html`
+  and the rest, linked from the devlog) send you on to the new ones.
+
 ## [2.36.2]
 
 ### Fixed

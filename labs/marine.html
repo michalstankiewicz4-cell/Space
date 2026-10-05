@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swarm Protocol // Sea lab</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../css/fonts.css">
+<!-- Sea vehicles (MarineKit, js/marinekit/marinekit.js): the sea (waves the
+     same in JS and GLSL, foam, shallows), the seabed with an island,
+     under water (caustics, the sky's window, marine snow), and four robot
+     vessels — riding the waves, rising on foils, diving, driving out onto
+     the shore. docs/marine.md. -->
+<link rel="stylesheet" href="../css/lab.css">
+<style>
+.hidden{ display:none !important; }
+#vesTabs{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px; }
+#vesTabs .tBtn{ height:28px; }
+.twoBtns{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
+.threeBtns{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:8px; }
+#role{ font-size:13px; color:#9fb1ff; margin:4px 0 6px; line-height:1.35; }
+#fpsGraph{ height:40px; }
+input[type=range]:disabled{ opacity:.35; }
+</style>
+</head>
+<body>
+<script src="../js/labkit/menubar.js"></script>
+<canvas id="view"></canvas>
+<div id="hud">
+  <div id="hudTop">
+    <div class="mat blue" id="hudBracket"></div>
+    <svg id="hudLogo" viewBox="0 0 52 48" aria-hidden="true">
+      <defs>
+        <linearGradient id="gLogoGold" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#ffe0a0"/><stop offset=".5" stop-color="#f8bb56"/><stop offset="1" stop-color="#cf8a35"/></linearGradient>
+        <linearGradient id="gLogoBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8c5ff"/><stop offset="1" stop-color="#6d82f5"/></linearGradient>
+      </defs>
+      <path d="M16 8 L3 24 L16 40 M36 8 L49 24 L36 40" fill="none" stroke="url(#gLogoGold)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="26" cy="15" r="3.6" fill="url(#gLogoBlue)"/><circle cx="20" cy="30" r="3.6" fill="url(#gLogoBlue)"/><circle cx="32" cy="30" r="3.6" fill="url(#gLogoBlue)"/>
+    </svg>
+    <div id="hudTitle"></div>
+    <div id="hudSub">SWARM PROTOCOL // SEA LAB</div>
+  </div>
+  <div class="mat gold" id="hudBar"></div>
+  <div class="hudPanel">
+    <div class="mat blue side"></div>
+    <div class="secHd first">VESSELS</div>
+    <div id="vesTabs"></div>
+    <div id="role"></div>
+    <div class="secHd">DRIVE</div>
+    <div class="twoBtns">
+      <button class="tBtn on" id="dAuto">AUTO</button>
+      <button class="tBtn" id="dKeys">WASD</button>
+    </div>
+    <label class="sl"><span>Speed (auto)</span><b id="sVal">60%</b></label>
+    <input type="range" id="sSlider" min="0" max="1" step="0.01" value="0.6">
+    <label class="sl"><span>Dive (the diver)</span><b id="dVal">0 m</b></label>
+    <input type="range" id="dSlider" min="0" max="45" step="0.5" value="0">
+    <div class="secHd">SEA</div>
+    <label class="sl"><span>Waves</span><b id="wVal">100%</b></label>
+    <input type="range" id="wSlider" min="0" max="2.5" step="0.05" value="1">
+    <label class="sl"><span>Depth</span><b id="zVal">30 m</b></label>
+    <input type="range" id="zSlider" min="12" max="60" step="1" value="30">
+    <div class="threeBtns">
+      <button class="tBtn" id="btnNight">NIGHT</button>
+      <button class="tBtn on" id="btnWake">WAKE</button>
+      <button class="tBtn" id="btnWork">WORK</button>
+    </div>
+    <div id="hint">WASD: steer · Q / E: dive / rise · Left-drag: orbit the camera (take it under water) · Scroll: zoom</div>
+  </div>
+</div>
+<div id="opt">
+  <div class="hudPanel">
+    <div class="mat lilac side"></div>
+    <div class="secHd first">VESSEL</div>
+    <div id="vesRows"></div>
+    <div class="secHd">NOW</div>
+    <div class="row"><span>Speed</span><b id="nowSpeed">–</b></div>
+    <div class="row"><span>Depth</span><b id="nowDepth">–</b></div>
+    <div class="row"><span>Camera</span><b id="nowCam">–</b></div>
+    <div class="secHd">PERFORMANCE</div>
+    <div class="row"><span>Frames per second</span><b id="statFps">–</b></div>
+    <div class="row"><span>Frame time</span><b id="statMs">–</b></div>
+    <div class="row"><span>CPU per frame</span><b id="statCpu">–</b></div>
+    <div class="row"><span>Triangles drawn / frame</span><b id="statTris">–</b></div>
+    <div class="row"><span>Draw calls / frame</span><b id="statCalls">–</b></div>
+    <canvas id="fpsGraph" width="270" height="40"></canvas>
+  </div>
+</div>
+<script src="../vendor/three-r128.min.js"></script>
+<script src="../vendor/three-r128-examples/OrbitControls.js"></script>
+<script src="../js/labkit/labkit.js"></script>
+<script src="../js/shipkit/shipkit.js"></script>
+<script src="../js/shipkit/ships/codewing.js"></script>
+<script src="../js/shipkit/ships/scribe.js"></script>
+<script src="../js/shipkit/ships/swarmer.js"></script>
+<script src="../js/shipkit/ships/haven.js"></script>
+<script src="../js/vehiclekit/vehiclekit.js"></script>
+<script src="../js/marinekit/marinekit.js"></script>
+<script src="../js/labs/marine.js"></script>
+</body>
+</html>
