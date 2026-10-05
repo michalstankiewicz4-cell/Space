@@ -8,6 +8,7 @@
      { name, seed, sky: "<SKIES id>",
        centers: [{ ref: "group/body", size, values? }],          1–3; two or
                                        three orbit their common centre
+       centerGap?                                    two or three centres: the distance between them
        orbits:  [{ ref, distance, size, incl, phase, values?,     one body
                    stretch?, axis?,                           the ellipse, centred: -0.6..0.6, degrees
                    ring: null | "broad" | "narrow" | "dust",      per orbit
@@ -142,7 +143,30 @@ function randomMoon(r, planet, j, size) {
 function centerExtent(sys) {
   // how far the centre reaches: the stars' radii, a pair's separation
   const radii = sys.centers.map(centerReach);
-  return Math.max(...radii, 1) + (sys.centers.length > 1 ? Math.max(...radii) * 2.2 : 0);
+  return Math.max(...radii, 1) + centerRadius(sys);
+}
+// Two or three centres circle their common middle. `centerGap` (optional)
+// is the distance between neighbours — a pair: from one to the other; three:
+// a triangle's side; left out, it's 2.2 times the biggest one's reach from
+// the middle. Returns how far each one is from the middle.
+const GAP_TO_RADIUS = { 2: 0.5, 3: 1 / Math.sqrt(3) };
+function centerRadius(sys) {
+  const n = sys.centers.length;
+  if (n < 2) return 0;
+  if (sys.centerGap > 0) return sys.centerGap * GAP_TO_RADIUS[n];
+  return Math.max(...sys.centers.map(centerReach)) * 2.2;
+}
+// the gap the default radius gives (the lab's slider starts there)
+function centerGapOf(sys) { const n = sys.centers.length; return n < 2 ? 0 : centerRadius(sys) / GAP_TO_RADIUS[n]; }
+// the gaps that make sense: the bodies not touching; the pair inside the first orbit
+function centerGapRange(sys) {
+  const n = sys.centers.length;
+  if (n < 2) return [0, 0];
+  const reach = sys.centers.map(centerReach).sort((a, b) => b - a);
+  const min = (reach[0] + reach[1]) * 1.05;
+  const first = sys.orbits.reduce((m, o) => Math.min(m, o.distance), Infinity);
+  const max = isFinite(first) ? (first * 0.8 - reach[0]) / GAP_TO_RADIUS[n] : min * 4;
+  return [min, Math.max(min, max)];
 }
 function centerReach(c) {
   const g = c.ref.split("/")[0];
@@ -256,7 +280,7 @@ function build(sys, { detail = 0.5 } = {}) {
     entries.push(e);
     return e;
   });
-  const sep = sys.centers.length > 1 ? Math.max(...sys.centers.map(centerReach)) * 2.2 : 0;
+  let sep = centerRadius(sys);   // each centre's distance from the middle (setCenterGap changes it)
   const lightIndex = Math.max(0, sys.centers.findIndex((c) => c.ref.startsWith("suns/")));
 
   // orbits: a plane (tilted by incl), its line (a centred ellipse: stretch, axis) and the body
@@ -316,6 +340,10 @@ function build(sys, { detail = 0.5 } = {}) {
     root, lines, lightPosition, orbits,
     bodies: entries,
     showLines(on) { lines.forEach((l) => { l.visible = on; }); },
+    // the distance between the centre's bodies (two or three), live
+    setCenterGap(gap) { sys.centerGap = gap; sep = centerRadius(sys); },
+    // where each centre body is now (world)
+    centerPositions(out = []) { centers.forEach((c, i) => { out[i] = c.holder.getWorldPosition(out[i] || new THREE.Vector3()); }); out.length = centers.length; return out; },
     // change an orbit live — distance, incl (degrees), stretch (-0.6..0.6),
     // axis (degrees) — without building anything again; the data follows
     setOrbit(i, patch) {
@@ -378,5 +406,5 @@ function build(sys, { detail = 0.5 } = {}) {
   return handle;
 }
 
-return { PRESETS, SKIES, random, options, build, centerExtent, defOf, orbitPoint };
+return { PRESETS, SKIES, random, options, build, centerExtent, centerGapOf, centerGapRange, defOf, orbitPoint };
 })();

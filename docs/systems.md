@@ -27,7 +27,13 @@ A system is plain, JSON-friendly data (COPY SYSTEM copies it):
 - `ref` is `"groupId/bodyId"` from `BodyKit.GROUPS`; `values` override the
   body's own (a new `seed` makes another planet of the same kind).
 - A centre may be a star, a black hole or a pulsar (`options("center")`);
-  two or three centres circle their common middle.
+  two or three centres circle their common middle. `centerGap` (optional,
+  labs 1.2.0) is the distance between neighbours — a pair's, or a
+  triangle's side for three; left out, each sits 2.2 × the biggest one's
+  reach from the middle. `centerGapRange(sys)`: from touching to just
+  inside the first orbit; the handle's `setCenterGap(g)` changes it live.
+  The lab: a slider under CENTRE, and a line between the bodies with the
+  distance on it.
 - An orbit holds one body (`options("orbit")`: every planet group, gas
   giants, rocks, a black hole) — or, with a RINGS ref, a **belt** around
   the centre, the middle of its band at `distance`.
@@ -122,7 +128,5 @@ bodies at once. `dispose()` frees everything.
 
 ## Next
 
-The rest of the hand editor (sizes, moons one by one), **the distance
-between the centre's bodies** (binary and triple stars — the user's next
-ask, "it can wait"), moons of moons, comets on long orbits, and taking
+The rest of the hand editor (sizes, moons one by one), moons of moons, comets on long orbits, and taking
 SystemKit into the game.

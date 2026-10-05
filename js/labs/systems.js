@@ -114,6 +114,7 @@ function renderEditor() {
     cBox.appendChild(row);
   });
   $("addCenter").disabled = sys.centers.length >= 3;
+  showCenterGap();
 
   const oBox = $("orbits"); oBox.textContent = "";
   sys.orbits.forEach((o, i) => {
@@ -380,6 +381,58 @@ function endDrag() { if (!drag) return; drag = null; controls.enabled = true; do
 window.addEventListener("pointerup", endDrag);
 window.addEventListener("pointercancel", endDrag);
 
+// ---------- the centre: the distance between two or three bodies ----------
+// A slider (CENTRE), and in the view a line between the bodies with the
+// distance written on it, the ruler's style.
+function showCenterGap() {
+  const sys = state.system, n = sys.centers.length;
+  $("cGapBox").classList.toggle("hidden", n < 2);
+  if (n < 2) return;
+  const [lo, hi] = SK.centerGapRange(sys), gap = sys.centerGap || SK.centerGapOf(sys);
+  const s = $("cGap");
+  s.min = lo.toFixed(1); s.max = hi.toFixed(1);
+  if (document.activeElement !== s) s.value = gap;
+  paint(s);
+  $("cGapLbl").textContent = n === 2 ? "Distance between them" : "Distance between each two";
+  $("cGapVal").textContent = gap.toFixed(1) + (gap > hi + 0.05 ? " (past the first orbit!)" : "");
+}
+$("cGap").addEventListener("input", () => {
+  const g = +$("cGap").value;
+  handle.setCenterGap(g);
+  showCenterGap();
+  buildRuler();
+});
+let gapLine = null, gapLabel = null;
+const cPos = [];
+function placeCenterGap() {
+  // the bodies actually built (the data may already hold one more, until the rebuild)
+  const n = handle.centerPositions(cPos).length;
+  if (!gapLine) {
+    gapLine = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(18), 3)),
+      new THREE.LineBasicMaterial({ color: RULER_COLOR, transparent: true, opacity: 0.6, depthWrite: false }));
+    gapLine.raycast = () => {}; gapLine.frustumCulled = false;
+    scene.add(gapLine);
+    gapLabel = document.createElement("div"); gapLabel.className = "gap";
+  }
+  if (gapLabel.parentNode !== $("labels")) $("labels").appendChild(gapLabel);
+  const show = n > 1 && state.lines;
+  gapLine.visible = show;
+  if (!show) { gapLabel.style.display = "none"; return; }
+  // each pair of neighbours (a pair: one line; three: the triangle)
+  const pos = gapLine.geometry.attributes.position, pairs = n === 2 ? [[0, 1]] : [[0, 1], [1, 2], [2, 0]];
+  for (let k = 0; k < 3; k++) {
+    const p = pairs[k] || pairs[0];
+    pos.setXYZ(k * 2, cPos[p[0]].x, cPos[p[0]].y, cPos[p[0]].z); pos.setXYZ(k * 2 + 1, cPos[p[1]].x, cPos[p[1]].y, cPos[p[1]].z);
+  }
+  pos.needsUpdate = true;
+  tmpV.copy(cPos[0]).add(cPos[1]).multiplyScalar(0.5).project(camera);
+  if (tmpV.z > 1) { gapLabel.style.display = "none"; return; }
+  gapLabel.style.display = "";
+  gapLabel.textContent = "↔ " + cPos[0].distanceTo(cPos[1]).toFixed(1);
+  gapLabel.style.left = ((tmpV.x + 1) / 2 * window.innerWidth).toFixed(0) + "px";
+  gapLabel.style.top = ((1 - tmpV.y) / 2 * window.innerHeight + 14).toFixed(0) + "px";
+}
+
 // ---------- the selected orbit: its sliders ----------
 function setOrbit(i, patch) {
   handle.setOrbit(i, patch);
@@ -487,6 +540,7 @@ function frame() {
   fx.render(focusPos, focusR, systemFx);
   placeLabels();
   placeHandles();
+  placeCenterGap();
   perf.update(performance.now(), performance.now() - t0);
   requestAnimationFrame(frame);
 }

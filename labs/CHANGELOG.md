@@ -9,6 +9,15 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.2.0] — 2026-10-05
+
+### Added
+- The system lab: **the distance between the centre's bodies** — two or
+  three stars (or a star and a black hole…): a slider under CENTRE (from
+  touching to just inside the first orbit), and in the view a line
+  between them with the distance on it. Live, no rebuild (SystemKit's
+  `centerGap`, `setCenterGap`).
+
 ## [1.1.1] — 2026-10-05
 
 ### Changed
