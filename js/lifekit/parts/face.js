@@ -38,6 +38,14 @@ const JAW_MAX = 0.32;                       // radians at jawOpen = 1
 // the shape in use: our skull, or another head's surface (o.baseFn), and how
 // much of our own features goes on top (o.features) — set for one build
 let BASE = null, FEAT = 1;
+// edges: our grid pulls its nearest row onto them; a mesh's irregular
+// triangles are squeezed toward them instead (no folds) — SOFT
+let SOFT = false;
+const snap = (v, edge, band, dir) => {   // v beyond the edge by 0…band (dir +1 above, −1 below)
+  const d = (v - edge) * dir;
+  if (d <= 0 || d >= band) return v;
+  return SOFT ? edge + dir * band * (d / band) * (d / band) : edge;
+};
 function skull(d, F) {
   const ax = 0.079 * F.w, ay = 0.113, az = 0.1, pw = 2.4;
   const xy = Math.pow(Math.abs(d.x / ax) ** pw + Math.abs(d.y / ay) ** pw, 2 / pw), rr = 1 / Math.sqrt(xy + (d.z / az) ** 2);
@@ -67,8 +75,10 @@ function layout(F) {
 const front = (z) => U.smooth((z - 0.015) / 0.035);
 
 // one point of the head, with an expression E ({ name: weight }) or the rest (E = {})
-function point(d, F, L, ez, E) {
-  const b = BASE(d, F);
+function point(d, F, L, ez, E) { return pointFrom(BASE(d, F), F, L, ez, E); }
+// b: the bare surface point (the skull, or a mesh's own vertex), the rest
+// (eyes, lips, expressions) built on it
+function pointFrom(b, F, L, ez, E) {
   let x = b.x, y = b.y, z = b.z;
   const fr = front(z), sg = x >= 0 ? 1 : -1, side = sg > 0 ? "Left" : "Right";   // +X is the creature's left
   const info = { eye: false, lid: 0, lower: false, lip: 0, mouthEdge: 0, upLip: 0, loLip: 0 };
@@ -83,8 +93,8 @@ function point(d, F, L, ez, E) {
       const up0 = q > 0 ? L.bu * Math.sqrt(q) + tilt : tilt, lo0 = q > 0 ? -L.bl * Math.sqrt(q) + tilt : tilt;
       // pull the nearest rows onto the edges: a smooth lid line
       if (q > 0) {
-        if (ey > up0 && ey < up0 + 0.0019) ey = up0;
-        if (ey < lo0 && ey > lo0 - 0.0019) ey = lo0;
+        ey = snap(ey, up0, 0.0019, 1);
+        ey = snap(ey, lo0, 0.0019, -1);
       }
       info.eye = q > 0 && ey < up0 - 1e-7 && ey > lo0 + 1e-7;
       const blink = E["eyeBlink" + side] || 0, wide = E["eyeWide" + side] || 0;
@@ -113,16 +123,16 @@ function point(d, F, L, ez, E) {
   const qm = 1 - (x / L.mw) ** 2, gap = qm > 0 ? L.gap * Math.sqrt(qm) : 0;
   if (fr > 0.5 && !inLidZone) {
     if (qm > 0.04) {
-      if (my > 0 && my < gap + 0.0019) my = gap;
-      if (my < 0 && my > -gap - 0.0019) my = -gap;
+      // (inside the slit counts too: those points go to its edge, as before)
+      if (my > 0) my = my < gap ? gap : snap(my, gap, 0.0019, 1);
+      if (my < 0) my = my > -gap ? -gap : snap(my, -gap, 0.0019, -1);
       y = lineY + my;
     }
     info.lower = my < 0;
     info.mouth = qm > 0 && Math.abs(my) < gap - 1e-7;
   } else info.lower = y < lineY;
   // the face's depth here (base + features), then the lips on top
-  const b2 = BASE(d, F);
-  let zf = (Math.abs(y - b.y) > 1e-9 ? b2.z : z) + fr * FEAT * featuresZ(x, y, F);
+  let zf = b.z + fr * FEAT * featuresZ(x, y, F);
   const lat = Math.sqrt(Math.max(0, 1 - (x / (L.mw * 1.08)) ** 2));
   if (fr > 0.5 && lat > 0) {
     const up = my - gap, dn = -my - gap;
@@ -138,7 +148,8 @@ function point(d, F, L, ez, E) {
 
   // ---------- the expressions that move the skin ----------
   const cx = sg * L.mw, cy = L.my - 0.0022;
-  const corner = fr * gauss(x, y, cx, cy, 0.011, 0.013);
+  // (a mesh's long thin lip triangles crease under a narrow pull: wider for it)
+  const corner = fr * gauss(x, y, cx, cy, SOFT ? 0.017 : 0.011, SOFT ? 0.017 : 0.013);
   const sm = E["mouthSmile" + side] || 0, fw = E["mouthFrown" + side] || 0;
   if (sm) {
     const cheek = fr * gauss(x, y, sg * 0.04, -0.03, 0.016, 0.016);
@@ -162,7 +173,7 @@ function point(d, F, L, ez, E) {
     // about the hinge; it fades out past the mouth's corners and toward the ears
     const below = U.smooth((lineY - y) / 0.03);
     const reach = L.mw * 0.9 + 0.045 * below;
-    const w = (1 - U.smooth((Math.abs(x) - reach + 0.01) / 0.05)) * U.smooth((z + 0.02) / 0.04);
+    const w = (1 - U.smooth((Math.abs(x) - reach + 0.01) / (SOFT ? 0.08 : 0.05))) * U.smooth((z + 0.02) / 0.04) * (SOFT ? U.smooth((lineY - y + 0.002) / 0.008) : 1);
     const th = JAW_MAX * jw * w, dy = y - HINGE.y, dz = z - HINGE.z, c = Math.cos(th), s = Math.sin(th);
     y = HINGE.y + dy * c - dz * s; z = HINGE.z + dy * s + dz * c;
   }
@@ -240,6 +251,43 @@ function lowPoly(geo, target) {
   return g;
 }
 
+// ---------- a mesh's surface, finer: every triangle cut into s² on its own
+// plane (the shape and, flat-shaded, the look stay exactly the same) ----------
+function subdivide(V, T, s) {
+  const P = [], key = new Map(), tri = [], par = [];
+  const at = (x, y, z) => { const k = Math.round(x * 1e6) + "," + Math.round(y * 1e6) + "," + Math.round(z * 1e6); let i = key.get(k); if (i === undefined) { i = P.length; P.push([x, y, z]); key.set(k, i); } return i; };
+  for (let t = 0; t < T.length; t += 3) {
+    const A = V[T[t]], B = V[T[t + 1]], C = V[T[t + 2]], id = [];
+    for (let i = 0; i <= s; i++) { id.push([]); for (let j = 0; j <= s - i; j++) { const u = i / s, v = j / s; id[i].push(at(A[0] + (B[0] - A[0]) * u + (C[0] - A[0]) * v, A[1] + (B[1] - A[1]) * u + (C[1] - A[1]) * v, A[2] + (B[2] - A[2]) * u + (C[2] - A[2]) * v)); } }
+    for (let i = 0; i < s; i++) for (let j = 0; j < s - i; j++) {
+      tri.push(id[i][j], id[i + 1][j], id[i][j + 1]); par.push(t / 3);
+      if (j < s - i - 1) { tri.push(id[i + 1][j], id[i + 1][j + 1], id[i][j + 1]); par.push(t / 3); }
+    }
+  }
+  return { P, T: tri, par };
+}
+
+// a mesh's head, shaded like the original: unindexed, each small triangle
+// keeping its parent triangle's normal (so the moving lids, lips and cheeks
+// change the silhouette, never break the facets into noise)
+function facetsOf(geo, par, mesh) {
+  const idx = geo.index.array, nT = idx.length / 3, out = new THREE.BufferGeometry(), V = mesh.V, T = mesh.T;
+  const corner = (attr) => { const k = attr.itemSize, a = new Float32Array(nT * 3 * k); for (let c = 0; c < nT * 3; c++) for (let q = 0; q < k; q++) a[c * k + q] = attr.array[idx[c] * k + q]; return new THREE.BufferAttribute(a, k); };
+  ["position", "uv", "color"].forEach((nm) => out.setAttribute(nm, corner(geo.attributes[nm])));
+  const N = new Float32Array(nT * 9);
+  for (let t = 0; t < nT; t++) {
+    const o = par[t] * 3, A = V[T[o]], B = V[T[o + 1]], C = V[T[o + 2]];
+    let nx = (B[1] - A[1]) * (C[2] - A[2]) - (B[2] - A[2]) * (C[1] - A[1]), ny = (B[2] - A[2]) * (C[0] - A[0]) - (B[0] - A[0]) * (C[2] - A[2]), nz = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0]);
+    const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+    for (let c = 0; c < 3; c++) { N[t * 9 + c * 3] = nx; N[t * 9 + c * 3 + 1] = ny; N[t * 9 + c * 3 + 2] = nz; }
+  }
+  out.setAttribute("normal", new THREE.BufferAttribute(N, 3));
+  out.morphTargetsRelative = true;
+  out.morphAttributes.position = geo.morphAttributes.position.map((a) => { const b = corner(a); b.name = a.name; return b; });
+  geo.dispose();
+  return out;
+}
+
 // ---------- building ----------
 // the grid: longitude denser at the front, latitude denser around the face
 function grid(det) {
@@ -256,29 +304,31 @@ function grid(det) {
   return { dirs, uvs, NC, NL };
 }
 function build(o) {
-  BASE = o.baseFn || skull; FEAT = o.features == null ? 1 : o.features;
-  try { return buildFace(o); } finally { BASE = skull; FEAT = 1; }
+  BASE = o.baseFn || skull; FEAT = o.features == null ? 1 : o.features; SOFT = !!o.mesh;
+  try { return buildFace(o); } finally { BASE = skull; FEAT = 1; SOFT = false; }
 }
 function buildFace(o) {
   const F = o.F, L = Object.assign(layout(F), o.layout || {}), det = o.detail || 1, mats = o.mats;
   const group = new THREE.Group();
   const ez = eyeDepth(F, L) - R_EYE - 0.0018;
-  const G = grid(det), n = G.dirs.length;
+  const G = grid(det), M = o.mesh ? subdivide(o.mesh.V, o.mesh.T, o.mesh.s || 9) : null;
+  const n = M ? M.P.length : G.dirs.length;
+  const at = (i, E) => (M ? pointFrom({ x: M.P[i][0], y: M.P[i][1], z: M.P[i][2] }, F, L, ez, E) : point(G.dirs[i], F, L, ez, E));
   // the rest
   const rest = new Float32Array(n * 3), col = new Float32Array(n * 3), infos = new Array(n);
   const hairC = new THREE.Color(o.hairHex);
   for (let i = 0; i < n; i++) {
-    const p = point(G.dirs[i], F, L, ez, {});
+    const p = at(i, {});
     rest[i * 3] = p.x; rest[i * 3 + 1] = p.y; rest[i * 3 + 2] = p.z; infos[i] = p.info;
     // skin colours: the lips, a blush, the lids' shade, the brows, the slit's dark edge
     let c = [1, 1, 1];
     const mix = (to, t) => { if (t > 0) c = c.map((q, k) => q + (to[k] - q) * Math.min(1, t)); };
     mix([0.86, 0.6, 0.58], Math.pow(p.info.upLip + p.info.loLip, 0.8) * 0.7);
-    mix([0.96, 0.82, 0.8], p.fr * (gauss(p.x, p.y, 0.045, -0.02, 0.02, 0.018) + gauss(p.x, p.y, -0.045, -0.02, 0.02, 0.018)) * 0.35);
+    if (!M) mix([0.96, 0.82, 0.8], p.fr * (gauss(p.x, p.y, 0.045, -0.02, 0.02, 0.018) + gauss(p.x, p.y, -0.045, -0.02, 0.02, 0.018)) * 0.35);
     mix([0.8, 0.68, 0.66], p.info.lid * 0.22);
     mix([0.42, 0.22, 0.2], p.info.mouthEdge * 0.8);
     const brow = p.fr * (gauss(p.x, p.y, 0.031, 0.033, 0.017, 0.0045) + gauss(p.x, p.y, -0.031, 0.033, 0.017, 0.0045));
-    mix([hairC.r * 1.4 + 0.05, hairC.g * 1.4 + 0.04, hairC.b * 1.4 + 0.04], brow * 0.85);
+    if (!M) mix([hairC.r * 1.4 + 0.05, hairC.g * 1.4 + 0.04, hairC.b * 1.4 + 0.04], brow * 0.85);
     col[i * 3] = c[0]; col[i * 3 + 1] = c[1]; col[i * 3 + 2] = c[2];
   }
   // the faces, minus the openings (judged by each triangle's middle at rest)
@@ -291,14 +341,17 @@ function buildFace(o) {
     const lineY = L.my - 0.0022 * (x / L.mw) ** 2, qm = 1 - (x / L.mw) ** 2;
     return qm > 0 && Math.abs(y - lineY) < L.gap * Math.sqrt(qm) - 2e-5;
   };
-  for (let i = 0; i < G.NL; i++) for (let j = 0; j < G.NC; j++) {
+  const keptPar = [];
+  if (M) { for (let t = 0; t < M.T.length; t += 3) if (!inside(M.T[t], M.T[t + 1], M.T[t + 2])) { idx.push(M.T[t], M.T[t + 1], M.T[t + 2]); keptPar.push(M.par[t / 3]); } }
+  else for (let i = 0; i < G.NL; i++) for (let j = 0; j < G.NC; j++) {
     const a = i * row + j, b = a + 1, c = a + row, d = c + 1;
     if (!inside(a, b, c)) idx.push(a, b, c);
     if (!inside(b, d, c)) idx.push(b, d, c);
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.BufferAttribute(rest, 3));
-  geo.setAttribute("uv", new THREE.Float32BufferAttribute(G.uvs, 2));
+  // a mesh's UVs: a projection from the front (the skin's mottling is fine-grained anyway)
+  geo.setAttribute("uv", new THREE.Float32BufferAttribute(M ? M.P.flatMap((q) => [q[0] * 12 + q[2] * 4, q[1] * 12]) : G.uvs, 2));
   geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
   geo.setIndex(idx);
   geo.computeVertexNormals();
@@ -308,7 +361,7 @@ function buildFace(o) {
   const tmp = new THREE.BufferGeometry(); tmp.setIndex(idx);
   EXPRESSIONS.forEach((name) => {
     const P = new Float32Array(n * 3);
-    for (let i = 0; i < n; i++) { const p = point(G.dirs[i], F, L, ez, { [name]: 1 }); P[i * 3] = p.x; P[i * 3 + 1] = p.y; P[i * 3 + 2] = p.z; }
+    for (let i = 0; i < n; i++) { const p = at(i, { [name]: 1 }); P[i * 3] = p.x; P[i * 3 + 1] = p.y; P[i * 3 + 2] = p.z; }
     tmp.setAttribute("position", new THREE.BufferAttribute(P, 3)); tmp.computeVertexNormals();
     const N = tmp.attributes.normal.array, dP = new Float32Array(n * 3), dN = new Float32Array(n * 3);
     for (let k = 0; k < n * 3; k++) { dP[k] = P[k] - rest[k]; dN[k] = N[k] - restN[k]; }
@@ -316,7 +369,7 @@ function buildFace(o) {
     const na = new THREE.BufferAttribute(dN, 3); na.name = name; geo.morphAttributes.normal.push(na);
   });
   tmp.dispose();
-  const head = new THREE.Mesh(o.lowpoly ? lowPoly(geo, o.lowpoly) : geo, mats.skinVC(o.tone, true)); head.castShadow = head.receiveShadow = true;
+  const head = new THREE.Mesh(M ? facetsOf(geo, keptPar, o.mesh) : o.lowpoly ? lowPoly(geo, o.lowpoly) : geo, mats.skinVC(o.tone, true, !!M)); head.castShadow = head.receiveShadow = true;
   head.updateMorphTargets(); group.add(head);
   const morphed = [head];
 
@@ -374,9 +427,9 @@ function buildFace(o) {
   // thickness above it. The low-poly style decimates it, symmetric.
   if (o.hair !== 3) {
     const thick = o.hair === 1 ? 1.012 : 1.035;
-    const hp = new Float32Array(n * 3), keep = new Uint8Array(n);
+    const hn = G.dirs.length, hp = new Float32Array(hn * 3), keep = new Uint8Array(hn), hrow = G.NC + 1;
     const hairline = (az) => (az < 0.3 ? U.lerp(0.07, 0.045, az / 0.3) : az < 0.6 ? U.lerp(0.045, 0.012, (az - 0.3) / 0.3) : U.lerp(0.012, -0.06, (az - 0.6) / 0.4));
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < hn; i++) {
       const h = BASE(G.dirs[i], F), az = Math.abs(Math.atan2(h.x, h.z)) / Math.PI, line = hairline(az);
       let y = h.y;
       if (y < line && y > line - 0.0042) y = line;
@@ -387,7 +440,7 @@ function buildFace(o) {
     }
     const hidx = [];
     for (let i = 0; i < G.NL; i++) for (let j = 0; j < G.NC; j++) {
-      const a = i * row + j, b = a + 1, c = a + row, d = c + 1;
+      const a = i * hrow + j, b = a + 1, c = a + hrow, d = c + 1;
       if (keep[a] && keep[b] && keep[c]) hidx.push(a, b, c);
       if (keep[b] && keep[d] && keep[c]) hidx.push(b, d, c);
     }

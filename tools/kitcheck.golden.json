@@ -564,15 +564,15 @@
   ]
  },
  "life/humanBust": {
-  "tris": 5446,
-  "verts": 3507,
-  "meshes": 20,
+  "tris": 44812,
+  "verts": 123696,
+  "meshes": 18,
   "materials": 12,
   "textures": 4,
   "size": [
    0.669,
-   1.771,
-   0.296
+   1.773,
+   0.309
   ]
  },
  "system/game": {

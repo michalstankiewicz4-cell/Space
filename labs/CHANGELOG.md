@@ -9,6 +9,17 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.14.0] — 2026-10-06
+
+### Added
+- **Human II's head 1:1**: BODY → Head, "The bust's own (1:1)" (the
+  default) or "Fitted to our grid" (1.13.0). The bust's own triangles,
+  only scaled (its nose, brows, ears, planes as made), cut where its neck
+  widens into the shoulders — with our eyes and lids, the mouth with
+  teeth, and all the expressions. Each triangle is cut into 121 on its own
+  plane and keeps its own normal, so it looks exactly like the original
+  while the lids, the lips and the cheeks move.
+
 ## [1.13.0] — 2026-10-06
 
 ### Added

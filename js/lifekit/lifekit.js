@@ -377,10 +377,10 @@ function materials(opts) {
     },
     // the skin's tone through vertex colours (lips, brows, cheeks on a head)
     // (morph: the mesh has morph targets — r128 needs the flags on the material)
-    skinVC(tone, morph) {
+    skinVC(tone, morph, faceted) {
       skinMap = skinMap || T(tex(skinCanvas(3), [3, 3], true)); skinBump = skinBump || T(tex(grain(4, 256, 5000, 0.35), [14, 14]));
-      return get("skinvc" + tone + (morph ? "/m" : ""), false, () => new THREE.MeshStandardMaterial({ color: color(tone), vertexColors: true, map: skinMap, bumpMap: skinBump, bumpScale: 0.0004, roughness: 0.55, metalness: 0, envMapIntensity: 0.55,
-        morphTargets: !!morph, morphNormals: !!morph }));
+      return get("skinvc" + tone + (morph ? "/m" : "") + (faceted ? "/f" : ""), false, () => new THREE.MeshStandardMaterial({ color: color(tone), vertexColors: true, map: skinMap, bumpMap: faceted ? null : skinBump, bumpScale: 0.0004, roughness: 0.55, metalness: 0, envMapIntensity: 0.55,
+        morphTargets: !!morph, morphNormals: !!morph && !faceted }));   // faceted: the mesh brings its own (per-facet) normals
     },
     // a plain colour (teeth, the inside of a mouth); o: { side, morph }
     flat(hex, rough, o) {

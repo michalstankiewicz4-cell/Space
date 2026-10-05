@@ -202,6 +202,27 @@ the lab's blurb and here.
   head (no open rim under the chin).
 - No head tilt for this one (the bust stands upright already).
 
+**The head 1:1** (labs 1.14.0, BODY → Head, the default): the bust's own
+triangles instead of our grid — `LifeKit.face.build({ mesh: { V, T, s } })`.
+
+- `subdivide`: every triangle cut into s² (s = 11) **on its own plane**,
+  so the shape doesn't change at all; the points are shared along edges.
+- Each point goes through the same function as our grid's (`pointFrom`):
+  the eyes' openings and lids, the mouth's slit, every expression — only
+  its bare surface point is the bust's vertex itself.
+- `facetsOf`: unindexed, **each small triangle keeps its parent's
+  normal** — shaded exactly like the original; the lids, the lips and the
+  cheeks move the surface without breaking the facets into noise.
+- On an irregular mesh the edges of the openings are **squeezed toward**
+  their curves instead of pulled onto them (`snap` with `SOFT`: no folded
+  triangles), and the smile's and the jaw's pull is wider (its lips are a
+  few long thin triangles that crease under a narrow one). None of this
+  changes our own grid's head (the kit check holds it).
+- Cut where its neck widens into the shoulders (−0.52 its units); our
+  neck (its slices) carries on below. Its ears, no ears of ours; no lip
+  bulge or colours of ours (blush, brows) — placed for our face.
+- ~45k triangles in the whole Human II this way (the head ~39k).
+
 ## Limits (honest)
 
 - **The face is better, not real.** Real lids and lips and moving

@@ -46,7 +46,8 @@ LK.register({
 LK.register({
   id: "humanBust", name: "Human II", group: "Animals", media: ["land"], moves: ["walk"],
   blurb: "The same body; the head and the neck shaped after a low-poly bust. " + ((LK.data && LK.data.bustHead && LK.data.bustHead.credit) || ""),
-  params: PARAMS().map((q) => (q.key === "style" ? Object.assign(q, { value: 1 }) : q)),
+  params: PARAMS().map((q) => (q.key === "style" ? Object.assign(q, { value: 1 }) : q))
+    .concat([{ key: "headMode", name: "Head", choices: ["The bust's own (1:1)", "Fitted to our grid"], value: 0 }]),
   build: (P, o) => build(P, o, "bust"),
 });
 
@@ -239,7 +240,9 @@ function head(bone, H, s, sh, F, P, mats, tone, hairHex, irisHex, det, bust) {
   hg.rotation.x = bust ? 0 : 0.13;           // our sculpt: the face a little down (the bust stands upright already)
   bone.add(hg);
   const face = LK.face.build(Object.assign({ F, tone, hair: P.hair, hairHex, irisHex, mats, detail: det, lowpoly: P.style === 1 ? 760 : 0 },
-    bust ? { baseFn: bust.shape, features: 0, layout: bust.layout, earX: bust.earX, F: Object.assign({}, F, { lips: 0.45 }) } : {}));
+    bust ? { baseFn: bust.shape, features: 0, layout: bust.layout, earX: bust.earX, F: Object.assign({}, F, { lips: P.headMode === 0 ? 0 : 0.45 }),
+      // 1:1: the bust's own triangles (finer on their planes), its ears, no lip bulge of ours
+      mesh: P.headMode === 0 ? { V: bust.V, T: bustHeadTris(bust), s: 11 } : null, ears: P.headMode === 0 ? false : true } : {}));
   hg.add(face.group);
   return face;
 }
@@ -313,6 +316,13 @@ function bustFit(lowpoly) {
   const layout = { ex: 0.17 * BUST.k, ey: loc(0.09), my: loc(-0.286), mw: 0.025, gap: 0.0005, teethBack: 0.011 };
   const side = shape(new THREE.Vector3(1, 0, -0.1).normalize());
   return (bustCache[key] = { shape, layout, earX: side.x - 0.004, V, T });
+}
+// the bust's own triangles above where its neck widens into the shoulders
+// (below that our neck carries on, and the bust's base is left out)
+function bustHeadTris(bust) {
+  const cut = (-0.52 - BUST.cy) * BUST.k, V = bust.V, T = bust.T, out = [];
+  for (let i = 0; i < T.length; i += 3) if ((V[T[i]][1] + V[T[i + 1]][1] + V[T[i + 2]][1]) / 3 >= cut) out.push(T[i], T[i + 1], T[i + 2]);
+  return out;
 }
 // the bust's neck: slices of its surface at a few heights → our neck's
 // sections (skinned, so it still bends), placed where the head puts them
