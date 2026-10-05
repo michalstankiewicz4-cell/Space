@@ -57,13 +57,16 @@ iframe{ position:fixed; left:-2000px; top:0; width:1280px; height:720px; border:
 <script src="../js/vehiclekit/vehiclekit.js"></script>
 <script src="../js/marinekit/marinekit.js"></script>
 <script src="../js/systemkit/systemkit.js"></script>
+<script src="../js/lifekit/lifekit.js"></script>
+<script src="../js/lifekit/move/walk.js"></script>
+<script src="../js/lifekit/creatures/human.js"></script>
 <script>
 (() => {
 "use strict";
 const $ = (id) => document.getElementById(id);
 // ?labs=a.html,b.html checks only those (e.g. to try the checker itself)
 const LABS = new URLSearchParams(location.search).get("labs") ? new URLSearchParams(location.search).get("labs").split(",") :
-  ["labs/ship.html", "labs/bodies.html", "labs/systems.html", "labs/scale.html", "labs/skins.html", "labs/surface.html", "labs/buildings.html", "labs/vehicles.html", "labs/marine.html", "labs/sound.html"];
+  ["labs/ship.html", "labs/bodies.html", "labs/systems.html", "labs/scale.html", "labs/skins.html", "labs/surface.html", "labs/buildings.html", "labs/vehicles.html", "labs/marine.html", "labs/sound.html", "labs/life.html"];
 const r3 = (v) => Math.round(v * 1000) / 1000;
 
 // a model's fingerprint: what a refactor must not change
@@ -90,6 +93,8 @@ function collect() {
     out["vehicle/" + d.id] = safe(() => { const m = VehicleKit.buildVehicle(d.id, { detail: 1 }); const f = fingerprint(m.group); VehicleKit.disposeVehicle(m); return f; });
   for (const d of MarineKit.VESSELS)
     out["vessel/" + d.id] = safe(() => { const m = MarineKit.buildVessel(d.id, { detail: 1 }); const f = fingerprint(m.group); MarineKit.disposeVessel(m); return f; });
+  for (const d of LifeKit.CREATURES)
+    out["life/" + d.id] = safe(() => { const c = LifeKit.build(d.id, {}, { detail: 1 }); const f = fingerprint(c.group); c.dispose(); return f; });
   for (const p of SystemKit.PRESETS)
     out["system/" + p.id] = safe(() => { const h = SystemKit.build(p.make(), { detail: 0.5 }); const f = { bodies: h.bodies.length, roles: h.bodies.map((x) => x.role[0]).join("") }; h.dispose(); return f; });
   return out;

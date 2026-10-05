@@ -9,6 +9,20 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.9.0] — 2026-10-05
+
+### Added
+- **The life lab** (`labs/life.html`) and **LifeKit** (`js/lifekit/`):
+  life forms from blocks — a skeleton, bodies swept along it and skinned
+  (they bend at the joints), rigid heads, hands and feet; movement by
+  medium (`move/walk.js`: stand, walk, run, T-pose — the pelvis height
+  from the legs, the cycle from the stance foot's travel), one file per
+  creature. The first: **a human** to real proportions — height, build,
+  frame, skin, hair, eyes, a flight suit or the bare mannequin, a seeded
+  face. A studio floor with a metre grid, a 2 m scale bar, walking in place
+  (the ground slides) or around, SKELETON and WIREFRAME views. In the
+  start screen, the menus, the kit check and the sitemap.
+
 ## [1.8.0] — 2026-10-05
 
 ### Added
