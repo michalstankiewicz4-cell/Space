@@ -44,6 +44,13 @@ Supabase Management API token.
   it, Google's edge returns a bare `411 Length Required` HTML page
   instead of JSON, which `curl -X POST` (with no `-d`) doesn't send
   automatically.
+- **Links to the labs go to `labs/…`** (`…/Space/labs/ship.html`; the
+  start screen is `…/Space/labs.html`). The old root addresses
+  (`…/Space/ship.html`) were removed on 2026-10-05; the one post linking
+  them ("Laboratorium skali…", 2 links to `scale.html`) was patched then.
+  Before moving a page, search the posts' content for its URL (all
+  statuses, `view=ADMIN`) and patch only the URL — a PATCH keeps a LIVE
+  post LIVE.
 - **A `posts.patch` call landing around the same time as the user
   manually clicking "Publish" in the Blogger UI looks identical to the
   patch itself having silently published the post** — this happened once:

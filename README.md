@@ -139,7 +139,7 @@ supabase/schema.sql  database schema (tables, RLS, RPC functions) to paste into 
 `admin.html`/`css/admin.css`/`css/devTheme.css`/`js/admin/` is a separate
 developer-tool entry point, not part of the game's own module graph above —
 see "Admin panel" below. **The labs**: their start screen `labs.html` in
-the root (a tile for every lab and tool; `/labs/` redirects to it), the
+the root (a tile for every lab and tool), the
 labs themselves in `labs/` (`labs/ship.html`, `labs/bodies.html`, …), all
 with the menu bar (`js/labkit/menubar.js`). The old root addresses
 (`ship.html`…) were removed on 2026-10-05 (the user's call): the devlog's
