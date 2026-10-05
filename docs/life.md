@@ -13,7 +13,8 @@ the game yet. The plan and its reasons: IDEAS.md, "Life forms".
 | `js/lifekit/lifekit.js` | The core (`window.LifeKit`): the registry (`CREATURES`, `register`, `MOVES`, `registerMove`), `build(id, params, opts)`, and `util` — `skeleton`, `sweep`, `merge`, `materials`, `skinned`, `rigid`, `rng`. |
 | `js/lifekit/move/walk.js` | Moving on land: a biped's gaits (stand, walk, run, T-pose). Swimming, flying and space come as `move/<medium>.js`. |
 | `js/lifekit/parts/face.js` | A humanoid head with a face that moves (`LifeKit.face`): openings for the eyes and the mouth, teeth, a tongue, 14 expressions as morph targets. Used by the human; meant for androids and other humanoids too. |
-| `js/lifekit/creatures/human.js` | The human. One file per creature. |
+| `js/lifekit/creatures/human.js` | The humans: "Human" (our sculpt) and "Human II" (the bust's head and neck). One file per creature. |
+| `js/lifekit/data/bust-head.js` | A low-poly bust's mesh (187 points, 360 triangles), the shape of Human II's head and neck — "Lowpoly face model" by void (sketchfab.com/void22), CC BY 4.0, changed. The credit is in the file and in the lab's blurb. |
 | `labs/life.html` + `js/labs/life.js` | The lab: the creatures, MOVEMENT (gait, speed, in place / around), VIEW (skeleton, wireframe, scale bar), BODY (the creature's own parameters, generated from `params`), MODEL and PERFORMANCE. |
 
 Load order on a page: THREE → `lifekit.js` → the `move/` files → `parts/` →
@@ -174,6 +175,32 @@ The hair is now a shell on the head's own grid (both styles): the row
 nearest the hairline is pulled onto it, the shell meets the skin at the
 edge and rises to its thickness above — a clean hairline instead of a
 ragged one.
+
+### Human II: a head after a bust (labs 1.13.0)
+
+The user asked for a second human whose head and neck have the reference
+bust's shape (the first human stays as it was). CC BY 4.0 allows it with
+credit and a note of the changes — both are in the data file's header,
+the lab's blurb and here.
+
+- **The head**: the bust turned Y-up, scaled so its crown and chin meet
+  ours (k = 0.218 m / its 1.055 units), centred front-to-back. For a
+  128 × 72 grid of directions, a ray from the head's centre finds the
+  nearest crossing of its triangles (Möller–Trumbore) — a field of radii
+  the face's grid samples (`baseFn` in `LifeKit.face.build`, bilinear).
+  Below the jaw the underside is cut flat (−0.11 m), inside the neck.
+  Smooth style: the field averaged three times (the facets melt);
+  low-poly: kept as is, so decimation finds the bust's own planes again.
+- **Our features off** (`features: 0`: its nose, brows and chin are
+  used), our lips softened (`lips: 0.45`); the eyes and the mouth placed
+  where the bust has them (`layout`), the mouth closed at rest (a 0.5 mm
+  slit), the teeth further back; our ears at its skull's side.
+- **The neck**: the bust is sliced at three heights between the chin and
+  where it widens into the shoulders (−0.465 … −0.535 its units); each
+  slice's width and depth become a skinned section of our neck (so a nod
+  still bends it), joined to the torso below and running on up inside the
+  head (no open rim under the chin).
+- No head tilt for this one (the bust stands upright already).
 
 ## Limits (honest)
 

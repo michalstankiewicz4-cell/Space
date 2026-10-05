@@ -563,6 +563,18 @@
    0.319
   ]
  },
+ "life/humanBust": {
+  "tris": 5446,
+  "verts": 3507,
+  "meshes": 20,
+  "materials": 12,
+  "textures": 4,
+  "size": [
+   0.669,
+   1.771,
+   0.296
+  ]
+ },
  "system/game": {
   "bodies": 9,
   "roles": "cpppppppp"

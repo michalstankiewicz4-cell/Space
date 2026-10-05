@@ -35,7 +35,10 @@ const JAW_MAX = 0.32;                       // radians at jawOpen = 1
 // ---------- the head's shape ----------
 // the skull and the face without features: a superellipsoid (squarer from
 // the front, round in profile), a jaw narrowing toward the chin
-function base(d, F) {
+// the shape in use: our skull, or another head's surface (o.baseFn), and how
+// much of our own features goes on top (o.features) — set for one build
+let BASE = null, FEAT = 1;
+function skull(d, F) {
   const ax = 0.079 * F.w, ay = 0.113, az = 0.1, pw = 2.4;
   const xy = Math.pow(Math.abs(d.x / ax) ** pw + Math.abs(d.y / ay) ** pw, 2 / pw), rr = 1 / Math.sqrt(xy + (d.z / az) ** 2);
   let x = d.x * rr, y = d.y * rr, z = d.z * rr;
@@ -65,7 +68,7 @@ const front = (z) => U.smooth((z - 0.015) / 0.035);
 
 // one point of the head, with an expression E ({ name: weight }) or the rest (E = {})
 function point(d, F, L, ez, E) {
-  const b = base(d, F);
+  const b = BASE(d, F);
   let x = b.x, y = b.y, z = b.z;
   const fr = front(z), sg = x >= 0 ? 1 : -1, side = sg > 0 ? "Left" : "Right";   // +X is the creature's left
   const info = { eye: false, lid: 0, lower: false, lip: 0, mouthEdge: 0, upLip: 0, loLip: 0 };
@@ -118,8 +121,8 @@ function point(d, F, L, ez, E) {
     info.mouth = qm > 0 && Math.abs(my) < gap - 1e-7;
   } else info.lower = y < lineY;
   // the face's depth here (base + features), then the lips on top
-  const b2 = base(d, F);
-  let zf = (Math.abs(y - b.y) > 1e-9 ? b2.z : z) + fr * featuresZ(x, y, F);
+  const b2 = BASE(d, F);
+  let zf = (Math.abs(y - b.y) > 1e-9 ? b2.z : z) + fr * FEAT * featuresZ(x, y, F);
   const lat = Math.sqrt(Math.max(0, 1 - (x / (L.mw * 1.08)) ** 2));
   if (fr > 0.5 && lat > 0) {
     const up = my - gap, dn = -my - gap;
@@ -170,8 +173,8 @@ function eyeDepth(F, L) {
   let best = 0, bd = 1e9; const v = new THREE.Vector3();
   for (let a = 0.15; a <= 0.6; a += 0.006) for (let b = -0.1; b <= 0.3; b += 0.006) {
     v.set(Math.sin(a) * Math.cos(b), Math.sin(b), Math.cos(a) * Math.cos(b));
-    const p = base(v, F), dd = (p.x - L.ex) ** 2 + (p.y - L.ey) ** 2;
-    if (dd < bd) { bd = dd; best = p.z + featuresZ(p.x, p.y, F); }
+    const p = BASE(v, F), dd = (p.x - L.ex) ** 2 + (p.y - L.ey) ** 2;
+    if (dd < bd) { bd = dd; best = p.z + FEAT * featuresZ(p.x, p.y, F); }
   }
   return best;
 }
@@ -253,7 +256,11 @@ function grid(det) {
   return { dirs, uvs, NC, NL };
 }
 function build(o) {
-  const F = o.F, L = layout(F), det = o.detail || 1, mats = o.mats;
+  BASE = o.baseFn || skull; FEAT = o.features == null ? 1 : o.features;
+  try { return buildFace(o); } finally { BASE = skull; FEAT = 1; }
+}
+function buildFace(o) {
+  const F = o.F, L = Object.assign(layout(F), o.layout || {}), det = o.detail || 1, mats = o.mats;
   const group = new THREE.Group();
   const ez = eyeDepth(F, L) - R_EYE - 0.0018;
   const G = grid(det), n = G.dirs.length;
@@ -338,7 +345,7 @@ function build(o) {
     const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(ix); g.computeVertexNormals();
     return g;
   };
-  const R = 0.026, zc = lipZ - 0.0075 - R;
+  const R = 0.026, zc = lipZ - (L.teethBack || 0.0075) - R;
   const teethMat = mats.flat("#ece6d8", 0.3, { side: THREE.DoubleSide, morph: true });
   const upper = new THREE.Mesh(arch(L.my + 0.0006, L.my + 0.0092, R, zc, 0.9), teethMat);
   const lowerG = jawTarget(arch(L.my - 0.0008, L.my - 0.0075, R * 0.92, zc - 0.002, 0.8), () => true);
@@ -355,9 +362,10 @@ function build(o) {
   [1, -1].forEach((sg) => {
     const eg = o.lowpoly ? new THREE.SphereGeometry(R_EYE, 10, 8) : new THREE.SphereGeometry(R_EYE, 28, 20); eg.rotateX(Math.PI / 2);
     const e = new THREE.Mesh(eg, mats.eye(o.irisHex)); e.position.set(sg * L.ex, L.ey, ez); group.add(e); eyes.push(e);
+    if (o.ears === false) return;
     const ag = o.lowpoly ? new THREE.SphereGeometry(1, 7, 5) : new THREE.SphereGeometry(1, 16, 12); ag.scale(0.0085, 0.03, 0.019);
     const ear = new THREE.Mesh(ag, mats.skin(o.tone, false)); ear.castShadow = true;
-    ear.position.set(sg * (0.077 * F.w - 0.004), -0.004, -0.008); ear.rotation.y = sg * 0.35; group.add(ear);
+    ear.position.set(sg * (o.earX != null ? o.earX : 0.077 * F.w - 0.004), -0.004, -0.008); ear.rotation.y = sg * 0.35; group.add(ear);
   });
 
   // ---------- the hair: a shell on the head's own grid, above a hairline ----------
@@ -369,7 +377,7 @@ function build(o) {
     const hp = new Float32Array(n * 3), keep = new Uint8Array(n);
     const hairline = (az) => (az < 0.3 ? U.lerp(0.07, 0.045, az / 0.3) : az < 0.6 ? U.lerp(0.045, 0.012, (az - 0.3) / 0.3) : U.lerp(0.012, -0.06, (az - 0.6) / 0.4));
     for (let i = 0; i < n; i++) {
-      const h = base(G.dirs[i], F), az = Math.abs(Math.atan2(h.x, h.z)) / Math.PI, line = hairline(az);
+      const h = BASE(G.dirs[i], F), az = Math.abs(Math.atan2(h.x, h.z)) / Math.PI, line = hairline(az);
       let y = h.y;
       if (y < line && y > line - 0.0042) y = line;
       keep[i] = y >= line - 1e-7 ? 1 : 0;

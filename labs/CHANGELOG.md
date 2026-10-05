@@ -9,6 +9,19 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.13.0] — 2026-10-06
+
+### Added
+- **The life lab: Human II** — the same body, the head and the neck
+  shaped after a low-poly bust: "Lowpoly face model" by void
+  (sketchfab.com/void22), CC BY 4.0, changed (credited in the lab, in
+  `js/lifekit/data/bust-head.js` and in docs/life.md). Its surface gives
+  our head its shape (a field of radii, rays from the head's centre; kept
+  faceted in low-poly, smoothed otherwise); its neck's slices give our
+  neck's sections, so it still bends. Our eyes, lids, mouth, teeth and all
+  the expressions on top. Low-poly by default. The first human is
+  unchanged.
+
 ## [1.12.0] — 2026-10-05
 
 ### Added

@@ -22,10 +22,7 @@ const EYES = [["Brown", "#5b3a1d"], ["Hazel", "#7b6234"], ["Green", "#4c7748"], 
 const SUITS = [["Station blue", "#34465f"], ["Graphite", "#3a3d42"], ["Rust", "#7a4a32"], ["Sand", "#a89272"], ["Survey white", "#d9dbd6"]];
 const pct = (v) => Math.round(v * 100) + "%";
 
-LK.register({
-  id: "human", name: "Human", group: "Animals", media: ["land"], moves: ["walk"],
-  blurb: "The makers. Gone from this world — kept in records, holograms, statues. Real proportions; walks, runs, stands.",
-  params: [
+const PARAMS = () => [
     { key: "height", name: "Height", min: 1.5, max: 2.05, step: 0.01, value: 1.75, fmt: (v) => v.toFixed(2) + " m" },
     { key: "build", name: "Build (slim → heavy)", min: 0, max: 1, step: 0.01, value: 0.4, fmt: pct },
     { key: "frame", name: "Frame (hips → shoulders)", min: 0, max: 1, step: 0.01, value: 0.6, fmt: pct },
@@ -37,11 +34,23 @@ LK.register({
     { key: "suit", name: "Suit colour", choices: SUITS.map((x) => x[0]), value: 0 },
     { key: "style", name: "Style", choices: ["Smooth", "Low-poly"], value: 0 },
     { key: "seed", name: "Face", seed: true, value: 1 },
-  ],
-  build,
+];
+LK.register({
+  id: "human", name: "Human", group: "Animals", media: ["land"], moves: ["walk"],
+  blurb: "The makers. Gone from this world — kept in records, holograms, statues. Real proportions; walks, runs, stands.",
+  params: PARAMS(),
+  build: (P, o) => build(P, o, null),
+});
+// the second human: the same body, the head and the neck shaped after a
+// low-poly bust (js/lifekit/data/bust-head.js, CC BY 4.0 — credited)
+LK.register({
+  id: "humanBust", name: "Human II", group: "Animals", media: ["land"], moves: ["walk"],
+  blurb: "The same body; the head and the neck shaped after a low-poly bust. " + ((LK.data && LK.data.bustHead && LK.data.bustHead.credit) || ""),
+  params: PARAMS().map((q) => (q.key === "style" ? Object.assign(q, { value: 1 }) : q)),
+  build: (P, o) => build(P, o, "bust"),
 });
 
-function build(P, opts) {
+function build(P, opts, variant) {
   const det = opts.detail || 1;
   const H = P.height, s = H / 1.75, sh = Math.pow(s, 0.45);          // tall people: relatively smaller heads
   const bw = 0.86 + 0.42 * P.build, belly = Math.max(0, P.build - 0.45) * 0.07;
@@ -103,7 +112,8 @@ function build(P, opts) {
   ];
   parts.push({ geo: sk(torso, { capStart: 1, capLen: 0.6 }), mat: body() });
   // the neck, into the head
-  const neck = [
+  const bust = variant === "bust" ? bustFit(P.style === 1) : null;
+  const neck = bust ? bustNeck(bust, H, sh, bw) : [
     at(0.822, 0.064 * Math.sqrt(bw), 0.054, 0.06, { chest: 0.6, neck: 0.4 }, -0.01),
     at(0.85, 0.062 * Math.sqrt(bw), 0.052, 0.058, { neck: 1 }, -0.006),
     at(0.878, 0.06, 0.05, 0.056, { neck: 0.4, head: 0.6 }, 0.0),
@@ -166,7 +176,7 @@ function build(P, opts) {
   const { meshes } = U.skinned(group, skel, parts);
 
   // ---------- the head ----------
-  const face = head(B.head, H, s, sh, F, P, mats, tone, hairHex, irisHex, det);
+  const face = head(B.head, H, s, sh, F, P, mats, tone, hairHex, irisHex, det, bust);
 
   const rig = { pelvis: B.pelvis, spine: B.spine, chest: B.chest, neck: B.neck, head: B.head,
     upperArm: [B.upperArmL, B.upperArmR], forearm: [B.forearmL, B.forearmR], hand: [B.handL, B.handR],
@@ -218,7 +228,7 @@ function foot(bone, shinBone, sg, s, ankleY, suit, mats, tone, seg, L) {
 }
 
 // ---------- the head: LifeKit's face (parts/face.js), placed and sized ----------
-function head(bone, H, s, sh, F, P, mats, tone, hairHex, irisHex, det) {
+function head(bone, H, s, sh, F, P, mats, tone, hairHex, irisHex, det, bust) {
   const hg = new THREE.Group();
   // the head's centre: its top at the creature's height
   const top = H - 0.116 * sh;
@@ -226,10 +236,118 @@ function head(bone, H, s, sh, F, P, mats, tone, hairHex, irisHex, det) {
   let yAbs = 0; for (let b = bone; b; b = b.parent) if (b.isBone) yAbs += b.position.y;
   hg.position.y = top - yAbs;
   hg.scale.setScalar(sh);
-  hg.rotation.x = 0.13;                      // the face a little down: the eyes level, not at the sky
+  hg.rotation.x = bust ? 0 : 0.13;           // our sculpt: the face a little down (the bust stands upright already)
   bone.add(hg);
-  const face = LK.face.build({ F, tone, hair: P.hair, hairHex, irisHex, mats, detail: det, lowpoly: P.style === 1 ? 760 : 0 });
+  const face = LK.face.build(Object.assign({ F, tone, hair: P.hair, hairHex, irisHex, mats, detail: det, lowpoly: P.style === 1 ? 760 : 0 },
+    bust ? { baseFn: bust.shape, features: 0, layout: bust.layout, earX: bust.earX, F: Object.assign({}, F, { lips: 0.45 }) } : {}));
   hg.add(face.group);
   return face;
+}
+
+// ---------- the bust: its surface as our head's shape ----------
+// The bust (LifeKit.data.bustHead) in its own units → metres, its crown at
+// our head's crown, its face and back centred like ours. For every
+// direction from the head's centre: the nearest crossing of its surface (a
+// ray against its triangles) — a field of radii our grid samples. Below the
+// jaw the head's underside is cut flat (the neck takes over there). Smooth
+// style: the field is averaged a little (no facets); low-poly: kept flat.
+const BUST = { top: 0.625, chin: -0.43, k: 0.218 / (0.625 + 0.43), cz: -0.0075, under: -0.11 };
+BUST.cy = BUST.top - 0.113 / BUST.k;
+const bustLocal = ([x, y, z]) => [x * BUST.k, (y - BUST.cy) * BUST.k, (z - BUST.cz) * BUST.k];
+function bustTris() {
+  const D = LK.data.bustHead, V = D.v.map(bustLocal), T = D.t;
+  return { V, T };
+}
+function rayHit(V, T, dx, dy, dz) {
+  let best = Infinity;
+  for (let i = 0; i < T.length; i += 3) {
+    const a = V[T[i]], b = V[T[i + 1]], c = V[T[i + 2]];
+    const e1x = b[0] - a[0], e1y = b[1] - a[1], e1z = b[2] - a[2], e2x = c[0] - a[0], e2y = c[1] - a[1], e2z = c[2] - a[2];
+    const px = dy * e2z - dz * e2y, py = dz * e2x - dx * e2z, pz = dx * e2y - dy * e2x, det = e1x * px + e1y * py + e1z * pz;
+    if (Math.abs(det) < 1e-12) continue;
+    const inv = 1 / det, tx = -a[0], ty = -a[1], tz = -a[2], u = (tx * px + ty * py + tz * pz) * inv;
+    if (u < 0 || u > 1) continue;
+    const qx = ty * e1z - tz * e1y, qy = tz * e1x - tx * e1z, qz = tx * e1y - ty * e1x, v = (dx * qx + dy * qy + dz * qz) * inv;
+    if (v < 0 || u + v > 1) continue;
+    const t = (e2x * qx + e2y * qy + e2z * qz) * inv;
+    if (t > 1e-5 && t < best) best = t;
+  }
+  return best;
+}
+const bustCache = {};
+function bustFit(lowpoly) {
+  const key = lowpoly ? "lp" : "smooth";
+  if (bustCache[key]) return bustCache[key];
+  const { V, T } = bustTris(), NA = 128, NB = 72, R = new Float32Array((NA + 1) * (NB + 1));
+  for (let ib = 0; ib <= NB; ib++) {
+    const lat = -Math.PI / 2 + Math.PI * ib / NB;
+    for (let ia = 0; ia <= NA; ia++) {
+      const lon = -Math.PI + 2 * Math.PI * ia / NA;
+      const dx = Math.cos(lat) * Math.sin(lon), dy = Math.sin(lat), dz = Math.cos(lat) * Math.cos(lon);
+      let t = rayHit(V, T, dx, dy, dz);
+      if (!isFinite(t)) t = 0.1;
+      if (dy < 0 && dy * t < BUST.under) t = BUST.under / dy;          // the flat underside, inside the neck
+      R[ib * (NA + 1) + ia] = t;
+    }
+  }
+  if (!lowpoly) {
+    // a gentle average: the facets melt, the features stay
+    for (let pass = 0; pass < 3; pass++) {
+      const S = R.slice();
+      for (let ib = 1; ib < NB; ib++) for (let ia = 0; ia <= NA; ia++) {
+        const l = (ia + NA - 1) % NA, r = (ia + 1) % NA, i = ib * (NA + 1);
+        R[i + ia] = (S[i + ia] * 4 + S[i + l] + S[i + r] + S[i - NA - 1 + ia] + S[i + NA + 1 + ia]) / 8;
+      }
+    }
+  }
+  const shape = (d) => {
+    const lat = Math.asin(Math.max(-1, Math.min(1, d.y))), lon = Math.atan2(d.x, d.z);
+    const fb = (lat + Math.PI / 2) / Math.PI * NB, fa = (lon + Math.PI) / (2 * Math.PI) * NA;
+    const ib = Math.min(NB - 1, Math.floor(fb)), ia = Math.min(NA - 1, Math.floor(fa)), tb = fb - ib, ta = fa - ia;
+    const g = (b, a) => R[b * (NA + 1) + a];
+    const r = (g(ib, ia) * (1 - ta) + g(ib, ia + 1) * ta) * (1 - tb) + (g(ib + 1, ia) * (1 - ta) + g(ib + 1, ia + 1) * ta) * tb;
+    return { x: d.x * r, y: d.y * r, z: d.z * r };
+  };
+  // where its eyes and mouth are (measured on the bust), and its ears' side
+  const loc = (y) => (y - BUST.cy) * BUST.k;
+  const layout = { ex: 0.17 * BUST.k, ey: loc(0.09), my: loc(-0.286), mw: 0.025, gap: 0.0005, teethBack: 0.011 };
+  const side = shape(new THREE.Vector3(1, 0, -0.1).normalize());
+  return (bustCache[key] = { shape, layout, earX: side.x - 0.004, V, T });
+}
+// the bust's neck: slices of its surface at a few heights → our neck's
+// sections (skinned, so it still bends), placed where the head puts them
+function bustNeck(bust, H, sh, bw) {
+  const top = H - 0.116 * sh, out = [];
+  const slice = (Y) => {
+    let xmax = 0, zmin = Infinity, zmax = -Infinity;
+    const { V, T } = bust;
+    for (let i = 0; i < T.length; i += 3) {
+      const p = [V[T[i]], V[T[i + 1]], V[T[i + 2]]];
+      for (let k = 0; k < 3; k++) {
+        const a = p[k], b = p[(k + 1) % 3];
+        if ((a[1] - Y) * (b[1] - Y) > 0 || a[1] === b[1]) continue;
+        const t = (Y - a[1]) / (b[1] - a[1]), x = a[0] + (b[0] - a[0]) * t, z = a[2] + (b[2] - a[2]) * t;
+        xmax = Math.max(xmax, Math.abs(x)); zmin = Math.min(zmin, z); zmax = Math.max(zmax, z);
+      }
+    }
+    return { xmax, zmin, zmax };
+  };
+  // the join with the torso, then the bust's neck up into the head
+  out.push({ p: [0, 0.822 * H, -0.01], rx: 0.064 * Math.sqrt(bw), f: 0.054, b: 0.06, w: { chest: 0.6, neck: 0.4 }, n: 2.3 });
+  // (the bust's neck runs from under the chin, y −0.45, to where it widens
+  // into the shoulders, −0.55: only that stretch is a neck)
+  [-0.535, -0.5, -0.465].forEach((yb, i, all) => {
+    const sl = slice(BUST.k * (yb - BUST.cy)), zc = (sl.zmin + sl.zmax) / 2;
+    const y = top + sh * ((yb - BUST.cy) * BUST.k), z = 0.012 * sh + sh * zc;
+    const f = i / (all.length - 1);
+    out.push({ p: [0, y, z], rx: sh * sl.xmax * (1 + 0.04 * (bw - 1)), f: sh * (sl.zmax - zc), b: sh * (zc - sl.zmin), n: 2.2,
+      w: f < 0.34 ? { neck: 0.8, chest: 0.2 } : f < 0.67 ? { neck: 0.7, head: 0.3 } : { neck: 0.3, head: 0.7 } });
+  });
+  // and on up inside the head, a little narrower: no open rim under the chin
+  const lastS = out[out.length - 1];
+  out.push({ p: [0, lastS.p[1] + 0.045 * sh, lastS.p[2] + 0.004 * sh], rx: lastS.rx * 0.8, f: lastS.f * 0.75, b: lastS.b * 0.8, n: 2.2, w: { head: 1 } });
+  // keep the sections in order of height (the torso join below the first slice)
+  out.sort((a, b) => a.p[1] - b.p[1]);
+  return out;
 }
 })();

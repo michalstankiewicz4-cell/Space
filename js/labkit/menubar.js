@@ -18,7 +18,7 @@
 // in labs/CHANGELOG.md (CLAUDE.md, "Versioning"): x.y.z — y a new lab, tool
 // or feature, z a fix or a small change. Shown on the bar, the start screen
 // and in HELP → About.
-const LABS_VERSION = "1.12.0";
+const LABS_VERSION = "1.13.0";
 const MENU_H = 32;
 const ROOT = (document.currentScript && document.currentScript.src || "").replace(/js\/labkit\/menubar\.js.*$/, "");
 const PARTS = location.pathname.split("/"), HERE = PARTS.pop() || "index.html", DIR = PARTS.pop() || "";
