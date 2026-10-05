@@ -57,6 +57,12 @@ the player's own progress stays in `localStorage`.
   (`js/labkit/`, `css/lab.css`),
   `tools/`, the devlog (`blog/`, Blogger), and `.md`-only edits — those are
   plain commits, no changelog entry.
+- **The labs' own version** (the user's call, 2026-10-05): every change to
+  a lab (`labs/`, `labs.html`, `js/labs/`), a tool (`tools/`), LabKit or the
+  menu bar (`js/labkit/`) — or a kit change that changes what a lab shows —
+  bumps `LABS_VERSION` in `js/labkit/menubar.js` (y: a new lab, tool or
+  feature; z: a fix) **and** adds an entry to `labs/CHANGELOG.md`. A change
+  that touches both the game and the labs bumps both.
 - **A new `js/`/`css/` game file → add it to
   `js/versionCheck.js#MODULE_FILES`** (incl. every stylesheet index.html
   links), or "Refresh now" silently misses it.

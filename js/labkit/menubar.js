@@ -13,6 +13,12 @@
    ======================================================================= */
 (function () {
 "use strict";
+// THE LABS' VERSION — their own, apart from the game's (js/version.js).
+// Every change to a lab, a tool, LabKit or this bar bumps it, with an entry
+// in labs/CHANGELOG.md (CLAUDE.md, "Versioning"): x.y.z — y a new lab, tool
+// or feature, z a fix or a small change. Shown on the bar, the start screen
+// and in HELP → About.
+const LABS_VERSION = "1.0.0";
 const MENU_H = 32;
 const ROOT = (document.currentScript && document.currentScript.src || "").replace(/js\/labkit\/menubar\.js.*$/, "");
 const PARTS = location.pathname.split("/"), HERE = PARTS.pop() || "index.html", DIR = PARTS.pop() || "";
@@ -78,6 +84,11 @@ const CSS = `
 #labMenu .lmLabel { padding: 6px 10px 3px; color: #7d8494; font-size: 11px; letter-spacing: .8px; text-transform: uppercase; }
 #labMenu .lmWhere { margin-left: auto; color: #8a91a1; font-weight: 400; }
 #labMenu .lmWhere b { color: #eef1f6; font-weight: 600; }
+#labMenu .lmVer { margin-left: 14px; padding: 2px 8px; border: 1px solid #2c313c; border-radius: 999px; color: #8a91a1; font-size: 11.5px;
+  text-decoration: none; font-weight: 500; }
+#labMenu .lmVer:hover { color: #eef1f6; border-color: #3a4152; }
+#labMenu .lmWhere + .lmVer { margin-left: 12px; }
+#labMenu .lmTop:last-of-type + .lmVer { margin-left: auto; }
 #lmDialog { position: fixed; inset: 0; z-index: 1001; display: none; align-items: center; justify-content: center; background: rgba(5, 6, 9, .55); }
 #lmDialog.open { display: flex; }
 #lmDialog .lmBox { width: min(460px, calc(100vw - 32px)); padding: 20px 22px; border-radius: 14px; background: #1a1d24; border: 1px solid #2c313c;
@@ -164,9 +175,10 @@ function help() {
     action("Keyboard and mouse", () => dialog((me ? me.name : "Labs") + ": keys and mouse", me && me.keys.length ? me.keys : [["—", "nothing special here"]])),
     link("This page's notes", REPO + (me ? me.doc : "README.md"), { blank: true }),
     link("All the docs", REPO + "README.md", { blank: true }),
+    link("What's new in the labs", REPO + "labs/CHANGELOG.md", { blank: true }),
     el("div", "lmSep"),
     action("About the labs", () => dialog("Swarm Protocol labs", [["What", "the workshops the game's models, worlds and effects are made in"],
-      ["Game", (window.LabMenu && window.LabMenu.version) || "—"], ["Code", "MIT, github.com/michalstankiewicz4-cell/Space"]],
+      ["Labs", "v" + LABS_VERSION], ["Game", (window.LabMenu && window.LabMenu.version) || "—"], ["Code", "MIT, github.com/michalstankiewicz4-cell/Space"]],
       "The labs and the game share the same kits: what you see here is what the game shows.")),
   ];
 }
@@ -196,6 +208,10 @@ menus.forEach(([name, make]) => {
 const where = el("div", "lmWhere");
 where.append(document.createTextNode(isTool ? "Tool · " : "Lab · "), el("b", null, me ? me.name : "Start screen"));
 if (me) bar.appendChild(where);
+// the labs' version, linked to what changed
+const ver = el("a", "lmVer", "Labs v" + LABS_VERSION); ver.href = REPO + "labs/CHANGELOG.md"; ver.target = "_blank"; ver.rel = "noopener";
+ver.title = "What's new in the labs";
+bar.appendChild(ver);
 function closeAll() { bar.querySelectorAll(".lmTop.open").forEach((t) => t.classList.remove("open")); }
 document.addEventListener("pointerdown", (e) => { if (!bar.contains(e.target)) closeAll(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeAll(); dlg.classList.remove("open"); } });
@@ -204,6 +220,6 @@ document.body.prepend(bar);
 document.body.appendChild(dlg);
 
 // the game's version, for "About"
-window.LabMenu = { ITEMS: { LABS, TOOLS }, ROOT, MENU_H, version: null };
+window.LabMenu = { ITEMS: { LABS, TOOLS }, ROOT, MENU_H, LABS_VERSION, version: null };
 fetch(ROOT + "js/version.js").then((r) => r.text()).then((s) => { const m = s.match(/VERSION\s*=\s*"([^"]+)"/); if (m) window.LabMenu.version = "v" + m[1]; }).catch(() => {});
 })();

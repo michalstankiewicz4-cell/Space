@@ -81,6 +81,7 @@ footer a{ color:#9aa1b0; }
       <div class="stat"><b id="nLabs">–</b><span>labs</span></div>
       <div class="stat"><b id="nGame">–</b><span>in the game</span></div>
       <div class="stat"><b id="nTools">–</b><span>tools</span></div>
+      <div class="stat"><b id="labsVer">–</b><span>labs</span></div>
       <div class="stat"><b id="ver">–</b><span>game</span></div>
     </div>
   </header>
@@ -250,6 +251,7 @@ document.addEventListener("keydown", (e) => {
 document.getElementById("nLabs").textContent = LABS.length;
 document.getElementById("nGame").textContent = LABS.filter((l) => (INFO[l.file] || [])[1] === "game").length;
 document.getElementById("nTools").textContent = TOOLS.length;
+document.getElementById("labsVer").textContent = "v" + window.LabMenu.LABS_VERSION;
 const ver = () => { if (window.LabMenu.version) document.getElementById("ver").textContent = window.LabMenu.version; else setTimeout(ver, 200); };
 ver();
 })();
