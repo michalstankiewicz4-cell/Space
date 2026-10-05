@@ -18,7 +18,7 @@
 // in labs/CHANGELOG.md (CLAUDE.md, "Versioning"): x.y.z — y a new lab, tool
 // or feature, z a fix or a small change. Shown on the bar, the start screen
 // and in HELP → About.
-const LABS_VERSION = "1.3.0";
+const LABS_VERSION = "1.4.0";
 const MENU_H = 32;
 const ROOT = (document.currentScript && document.currentScript.src || "").replace(/js\/labkit\/menubar\.js.*$/, "");
 const PARTS = location.pathname.split("/"), HERE = PARTS.pop() || "index.html", DIR = PARTS.pop() || "";
@@ -219,6 +219,20 @@ document.addEventListener("pointerdown", (e) => { if (!bar.contains(e.target)) c
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeAll(); dlg.classList.remove("open"); } });
 
 document.body.prepend(bar);
+
+// the start screen's QUICK ACCESS row: every visit to a lab or tool is counted
+// here, in this browser (labsHub.visits: { file: count }, labsHub.recent:
+// the newest first)
+if (me) {
+  try {
+    const visits = JSON.parse(localStorage.getItem("labsHub.visits") || "{}") || {};
+    visits[me.file] = (visits[me.file] || 0) + 1;
+    localStorage.setItem("labsHub.visits", JSON.stringify(visits));
+    const recent = (JSON.parse(localStorage.getItem("labsHub.recent") || "[]") || []).filter((f) => f !== me.file);
+    recent.unshift(me.file);
+    localStorage.setItem("labsHub.recent", JSON.stringify(recent.slice(0, 8)));
+  } catch (e) { /* storage blocked: no counting */ }
+}
 document.body.appendChild(dlg);
 
 // the game's version, for "About"

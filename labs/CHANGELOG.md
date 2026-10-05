@@ -9,6 +9,15 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.4.0] — 2026-10-05
+
+### Added
+- **QUICK ACCESS** on the start screen, a row above the labs: the pinned
+  lab (the pin on any tile, beside the grip), the last opened, and the
+  two most opened (with how many times) — nothing twice; until there's
+  something to show, a hint. The menu bar counts every visit to a lab or
+  tool page (labsHub.visits, labsHub.recent — in this browser only).
+
 ## [1.3.0] — 2026-10-05
 
 ### Added
