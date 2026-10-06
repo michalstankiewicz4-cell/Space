@@ -14,6 +14,8 @@ the game yet. The plan and its reasons: IDEAS.md, "Life forms".
 | `js/lifekit/move/walk.js` | Moving on land: a biped's gaits (stand, walk, run, T-pose). Swimming, flying and space come as `move/<medium>.js`. |
 | `js/lifekit/move/quad.js` | Four legs on land: walk and trot, feet planted by IK; graze, alert, look. |
 | `js/lifekit/creatures/strider.js` | The plains strider, an invented grazer — the first land animal. |
+| `js/lifekit/design.js` + `js/lifekit/move/legs.js` | The creature editor's builder (a creature from a design, JSON) and its walker (any number of legs). |
+| `labs/creator.html` + `js/labs/creator.js` | The creature editor. |
 | `js/lifekit/parts/face.js` | A humanoid head with a face that moves (`LifeKit.face`): openings for the eyes and the mouth, teeth, a tongue, 14 expressions as morph targets. Used by the human; meant for androids and other humanoids too. |
 | `js/lifekit/creatures/human.js` | The humans: "Human I" (a bust's head and neck) and "Human II" (a made low-poly head); our own round sculpt isn't listed. One file per creature. |
 | `js/lifekit/data/bust-head.js` | Human I's head and neck: "Lowpoly face model" by void (sketchfab.com/void22), CC BY 4.0, changed — 187 points, 360 triangles. |
@@ -269,6 +271,43 @@ its own group. It's an invented grazer, built to be believable.
   to the hock, the knee bending forward on the hind legs, back on the
   front ones; the bones' local angles subtract their parents' pitch.
   Layers: graze (neck and head down), alert (up, ears forward), look.
+
+## The creature editor (labs/creator.html, labs 1.17.0)
+
+The user's idea (2026-10-06): an editor where creatures are built, not
+picked — a spine dragged into shape, parts attached anywhere, and it
+moves. Stage 1: the spine, the legs, the walk. (In the docs and the code
+it's "the creature editor" — no game names.)
+
+- **A design is data** (`LifeKit.design.clean` keeps it in range): the
+  spine's points (height, along; a half-width and a height-to-width per
+  point; tail tip first, the head's tip last), pairs of legs (where along
+  the spine 0…1, length, thickness, spread — over 1 the hip moves out
+  sideways, sprawling —, the knee's direction, the foot), the eyes, the
+  skin (colour, pattern, seed). COPY / LOAD as JSON; autosaved in
+  `creatorLab.design`.
+- **The build** (`design.build`): a bone per spine point, in two chains
+  out from the one nearest the middle (under a root); one sweep for the
+  body through the points; per leg hip → knee → foot (0.48 / 0.44 of its
+  length, a foot of 0.08), a sweep from inside the body and a rigid foot
+  (a hoof; a padded paw; a paw with three claws). **The body finds its own
+  height**: the design is lowered so its legs stand at ~90% of their
+  length on average (no legs: it lies on its belly).
+- **Any number of legs** (`move/legs.js`): pairs are ordered front to
+  back; the steps run as a wave from the back pair to the front (left
+  side), the right side half a cycle later; two pairs trot when running.
+  Each foot is planted while down, arcs forward in the air; 2-bone IK
+  from the hip (read from the skeleton) to the foot's target, the knee as
+  designed, the foot level. The spine sways in a travelling wave (gently
+  with legs, strongly without — a glider moves by it). Layers: look,
+  low (crouch).
+- **The editor**: handles in the side plane (x = 0): gold spine points
+  (drag; the wheel: thickness), teal leg points (drag along the spine —
+  the nearest point of the body's curve). Rebuilt at most every 60 ms
+  while dragging. EDIT shows the rest pose with handles, PLAY the walk.
+- **Next stages**: a library of parts (heads, jaws, horns, ears, tails,
+  spikes, fins, wings), placed anywhere; arms that don't walk; painting
+  the skin; the designs into the game as life forms.
 
 ## Limits (honest)
 

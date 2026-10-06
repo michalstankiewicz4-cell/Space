@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swarm Protocol // Creature editor</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../css/fonts.css">
+<!-- The creature editor (LifeKit design.js + move/legs.js): drag the spine
+     into shape, give it pairs of legs anywhere, and it walks — any number
+     of legs. A design is data (JSON): copy it, load it. docs/life.md,
+     "The creature editor". -->
+<link rel="stylesheet" href="../css/lab.css">
+<style>
+.hidden{ display:none !important; }
+#view{ position:fixed; inset:0; width:100%; height:100%; display:block; }
+.twoBtns{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px; }
+.threeBtns{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:6px; }
+.twoBtns .tBtn, .threeBtns .tBtn{ height:28px; font-size:12.5px; }
+#presets{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+#presets .tBtn{ height:28px; font-size:12px; }
+#pairs{ display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+#pairs .tBtn{ height:26px; min-width:44px; font-size:12px; }
+.prow{ display:grid; grid-template-columns:96px 1fr; gap:8px; align-items:center; margin-top:5px; font-size:13.5px; color:#c7d0ff; }
+select.lab, textarea.lab{ height:28px; border:1.5px solid #3c55d8; border-radius:6px; background:#02061a; color:#e6ebff; font-family:var(--fontBody); font-size:13.5px; padding:0 6px; min-width:0; }
+textarea.lab{ height:110px; width:100%; padding:6px; font-family:monospace; font-size:11px; resize:vertical; }
+#sel{ font-size:13px; color:#9fb1ff; margin:4px 0; }
+#fpsGraph{ height:40px; }
+</style>
+</head>
+<body>
+<script src="../js/labkit/menubar.js"></script>
+<canvas id="view"></canvas>
+<div id="hud">
+  <div id="hudTop">
+    <div class="mat blue" id="hudBracket"></div>
+    <svg id="hudLogo" viewBox="0 0 52 48" aria-hidden="true">
+      <defs>
+        <linearGradient id="gLogoGold" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#ffe0a0"/><stop offset=".5" stop-color="#f8bb56"/><stop offset="1" stop-color="#cf8a35"/></linearGradient>
+        <linearGradient id="gLogoBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8c5ff"/><stop offset="1" stop-color="#6d82f5"/></linearGradient>
+      </defs>
+      <path d="M16 8 L3 24 L16 40 M36 8 L49 24 L36 40" fill="none" stroke="url(#gLogoGold)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="26" cy="15" r="3.6" fill="url(#gLogoBlue)"/><circle cx="20" cy="30" r="3.6" fill="url(#gLogoBlue)"/><circle cx="32" cy="30" r="3.6" fill="url(#gLogoBlue)"/>
+    </svg>
+    <div id="hudTitle">CREATOR</div>
+    <div id="hudSub">SWARM PROTOCOL // CREATURE EDITOR</div>
+  </div>
+  <div class="mat gold" id="hudBar"></div>
+  <div class="hudPanel">
+    <div class="mat blue side"></div>
+    <div class="secHd first">START FROM</div>
+    <div id="presets"></div>
+    <div class="secHd">MODE</div>
+    <div class="twoBtns">
+      <button class="tBtn on" id="mEdit" title="Handles on, the creature at rest">EDIT</button>
+      <button class="tBtn" id="mPlay" title="Watch it move">PLAY</button>
+    </div>
+    <div id="playBox" class="hidden">
+      <div class="threeBtns" id="gaits">
+        <button class="tBtn" data-g="idle">STAND</button>
+        <button class="tBtn on" data-g="walk">WALK</button>
+        <button class="tBtn" data-g="run">RUN</button>
+      </div>
+      <label class="sl"><span>Speed</span><b id="spVal">–</b></label>
+      <input type="range" id="spSlider" min="0.3" max="5" step="0.1" value="1">
+      <label class="sl"><span>Look around</span><b id="lkVal">0%</b></label>
+      <input type="range" id="lkSlider" min="0" max="1" step="0.01" value="0">
+      <label class="sl"><span>Crouch</span><b id="lwVal">0%</b></label>
+      <input type="range" id="lwSlider" min="0" max="1" step="0.01" value="0">
+    </div>
+    <div class="secHd">SPINE</div>
+    <div id="sel">Click a gold point to select it · drag it to shape the body</div>
+    <label class="sl"><span>Thickness</span><b id="rVal">–</b></label>
+    <input type="range" id="rSlider" min="0.01" max="0.6" step="0.005" value="0.1">
+    <label class="sl"><span>Height ÷ width</span><b id="sqVal">–</b></label>
+    <input type="range" id="sqSlider" min="0.3" max="2.5" step="0.01" value="1">
+    <div class="twoBtns">
+      <button class="tBtn" id="ptAdd" title="A new point after the selected one">+ POINT</button>
+      <button class="tBtn" id="ptDel" title="Remove the selected point">− POINT</button>
+    </div>
+    <div class="twoBtns">
+      <button class="tBtn on" id="vSide" title="The camera from the side (best for dragging)">SIDE VIEW</button>
+      <button class="tBtn" id="vFree" title="Turn the camera freely">FREE VIEW</button>
+    </div>
+    <div id="hint">Drag the gold points (spine) and the teal ones (legs, along the spine) · wheel on a point: thickness</div>
+  </div>
+</div>
+<div id="opt">
+  <div class="hudPanel">
+    <div class="mat lilac side"></div>
+    <div class="secHd first">LEGS (PAIRS)</div>
+    <div id="pairs"></div>
+    <div class="twoBtns">
+      <button class="tBtn" id="lgAdd">+ PAIR</button>
+      <button class="tBtn" id="lgDel">− PAIR</button>
+    </div>
+    <div id="legBox">
+      <label class="sl"><span>Along the spine</span><b id="ltVal">–</b></label>
+      <input type="range" id="ltSlider" min="0.02" max="0.98" step="0.01">
+      <label class="sl"><span>Length</span><b id="llVal">–</b></label>
+      <input type="range" id="llSlider" min="0.1" max="2.5" step="0.01">
+      <label class="sl"><span>Thickness</span><b id="lkThVal">–</b></label>
+      <input type="range" id="lkThSlider" min="0.03" max="0.25" step="0.005">
+      <label class="sl"><span>Spread (upright → sprawled)</span><b id="lsVal">–</b></label>
+      <input type="range" id="lsSlider" min="0" max="2.5" step="0.01">
+      <div class="prow"><span>Knee</span><select class="lab" id="lKnee"><option value="1">Forward</option><option value="-1">Back</option></select></div>
+      <div class="prow"><span>Foot</span><select class="lab" id="lFoot"><option value="hoof">Hoof</option><option value="paw">Paw</option><option value="claw">Claws</option></select></div>
+    </div>
+    <div class="secHd">HEAD AND SKIN</div>
+    <label class="sl"><span>Eyes back from the tip</span><b id="eaVal">–</b></label>
+    <input type="range" id="eaSlider" min="0.02" max="0.5" step="0.01">
+    <label class="sl"><span>Eye size</span><b id="esVal">–</b></label>
+    <input type="range" id="esSlider" min="0.05" max="0.6" step="0.01">
+    <div class="prow"><span>Colour</span><select class="lab" id="sColor"></select></div>
+    <div class="prow"><span>Pattern</span><select class="lab" id="sPattern"><option value="0">Plain</option><option value="1">Stripes</option><option value="2">Spots</option><option value="3">Bands</option></select></div>
+    <div class="twoBtns"><button class="tBtn" id="sSeed" title="Another pattern">🎲 PATTERN</button><button class="tBtn" id="dName" title="Rename">NAME…</button></div>
+    <div class="secHd">DESIGN (JSON)</div>
+    <div class="twoBtns">
+      <button class="tBtn" id="fCopy">COPY</button>
+      <button class="tBtn" id="fLoad">LOAD…</button>
+    </div>
+    <textarea class="lab hidden" id="fText" placeholder="Paste a design here, then LOAD again"></textarea>
+    <div class="secHd">MODEL</div>
+    <div id="stats"></div>
+    <canvas id="fpsGraph" width="270" height="40"></canvas>
+    <div class="row hidden"><span>Frames per second</span><b id="statFps">–</b></div>
+    <div class="row hidden"><span>Frame time</span><b id="statMs">–</b></div>
+    <div class="row hidden"><span>CPU per frame</span><b id="statCpu">–</b></div>
+    <div class="row hidden"><span>Triangles drawn / frame</span><b id="statTris">–</b></div>
+    <div class="row hidden"><span>Draw calls / frame</span><b id="statCalls">–</b></div>
+  </div>
+</div>
+<script src="../vendor/three-r128.min.js"></script>
+<script src="../vendor/three-r128-examples/OrbitControls.js"></script>
+<script src="../js/labkit/labkit.js"></script>
+<script src="../js/shipkit/shipkit.js"></script>
+<script src="../js/lifekit/lifekit.js"></script>
+<script src="../js/lifekit/move/legs.js"></script>
+<script src="../js/lifekit/design.js"></script>
+<script src="../js/labs/creator.js"></script>
+</body>
+</html>

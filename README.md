@@ -64,7 +64,7 @@ js/
                      progression, moods, a robot voice; the sound lab's (labs/sound.html), not in the game yet
   lifekit/           LifeKit — life forms from blocks: skeletons, swept bodies skinned to them, rigid
                      heads, hands and feet; move/ (walk.js: a biped's gaits; quad.js: four legs), parts/ (face.js: a head
-                     with openings and expressions as morph targets), creatures/ (human.js: two low-poly humans; strider.js: a grazer),
+                     with openings and expressions as morph targets), creatures/ (human.js: two low-poly humans; strider.js: a grazer), design.js + move/legs.js (the creature editor's),
                      data/ (bust-head.js, human-head.js: CC BY low-poly heads, Humans I and II);
                      the life lab's (labs/life.html), not in the game yet
   marinekit/         MarineKit — the sea (waves the same in JS and GLSL, a seabed with an island, under water)

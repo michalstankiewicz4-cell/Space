@@ -35,61 +35,8 @@ LK.register({
   build,
 });
 
-// ---------- the hide, painted (u: around the body — 0 / 1 the belly, ½ the back; v: along it) ----------
-function hideCanvases(P, hex) {
-  const W = 512, Hh = 1024, r = U.rng(P.seed * 13 + 5);
-  const [c, x] = U.canvas(W, Hh), [cb, xb] = U.canvas(W, Hh);
-  const base = new THREE.Color(hex), dark = base.clone().multiplyScalar(0.55), pale = base.clone().lerp(new THREE.Color("#efe4d0"), 0.6);
-  const css = (col, a) => `rgba(${Math.round(col.r * 255)},${Math.round(col.g * 255)},${Math.round(col.b * 255)},${a})`;
-  // countershading: across u
-  const g = x.createLinearGradient(0, 0, W, 0);
-  g.addColorStop(0, css(pale, 1)); g.addColorStop(0.2, css(base, 1)); g.addColorStop(0.5, css(dark, 1)); g.addColorStop(0.8, css(base, 1)); g.addColorStop(1, css(pale, 1));
-  x.fillStyle = g; x.fillRect(0, 0, W, Hh);
-  // mottling
-  for (let i = 0; i < 1400; i++) {
-    const px = r() * W, py = r() * Hh, rad = 6 + r() * 30;
-    x.fillStyle = r() < 0.5 ? css(dark, 0.05 * r()) : css(pale, 0.05 * r());
-    x.beginPath(); x.ellipse(px, py, rad, rad * (1.5 + r()), 0, 0, TAU); x.fill();
-  }
-  const side = (u) => Math.max(0, Math.sin(Math.PI * u) - 0.3) / 0.7;   // 0 on the belly, 1 on the back
-  if (P.pattern === 1) {
-    // stripes across the body, wavy, fading toward the belly
-    const n = 26 + Math.floor(r() * 10);
-    for (let k = 0; k < n; k++) {
-      const v0 = (k + r() * 0.5) / n * Hh, w = 5 + r() * 9, wob = 8 + r() * 14, ph = r() * TAU;
-      for (let px = 0; px < W; px += 2) {
-        const a = side(px / W); if (a <= 0.02) continue;
-        const y = v0 + Math.sin(px / W * TAU * 2 + ph) * wob;
-        x.fillStyle = css(dark.clone().multiplyScalar(0.7), 0.75 * a); x.fillRect(px, y - w * a / 2, 2, w * a);
-      }
-    }
-  } else if (P.pattern === 2) {
-    // spots: dark blots with a paler heart (rosette-like), more on the back
-    for (let i = 0; i < 420; i++) {
-      const u = r(), a = side(u); if (r() > a) continue;
-      const px = u * W, py = r() * Hh, rad = 6 + r() * 12;
-      x.fillStyle = css(dark.clone().multiplyScalar(0.6), 0.85); x.beginPath(); x.ellipse(px, py, rad, rad * 1.4, r(), 0, TAU); x.fill();
-      x.fillStyle = css(base, 0.8); x.beginPath(); x.ellipse(px, py, rad * 0.45, rad * 0.6, r(), 0, TAU); x.fill();
-    }
-  } else if (P.pattern === 3) {
-    // banded legs: rings that show on the long legs (and faintly on the body)
-    for (let k = 0; k < 60; k++) { const py = k / 60 * Hh; x.fillStyle = css(dark.clone().multiplyScalar(0.65), k % 2 ? 0.0 : 0.55); x.fillRect(0, py, W, Hh / 120); }
-  }
-  // a darker line down the spine
-  const sp = x.createLinearGradient(W * 0.42, 0, W * 0.58, 0);
-  sp.addColorStop(0, css(dark, 0)); sp.addColorStop(0.5, css(dark.clone().multiplyScalar(0.7), 0.6)); sp.addColorStop(1, css(dark, 0));
-  x.fillStyle = sp; x.fillRect(W * 0.42, 0, W * 0.16, Hh);
-  // the bump: short hair along the body, and the pattern faintly
-  xb.fillStyle = "#808080"; xb.fillRect(0, 0, W, Hh);
-  for (let i = 0; i < 26000; i++) {
-    const px = r() * W, py = r() * Hh, len = 3 + r() * 7;
-    xb.strokeStyle = r() < 0.5 ? `rgba(255,255,255,${0.08 + r() * 0.1})` : `rgba(0,0,0,${0.08 + r() * 0.1})`; xb.lineWidth = 0.8;
-    xb.beginPath(); xb.moveTo(px, py); xb.lineTo(px + (r() - 0.5) * 1.5, py + len); xb.stroke();
-  }
-  // skin folds: soft darker creases here and there
-  for (let i = 0; i < 90; i++) { xb.strokeStyle = "rgba(0,0,0,0.12)"; xb.lineWidth = 2 + r() * 3; xb.beginPath(); const px = r() * W, py = r() * Hh; xb.moveTo(px, py); xb.quadraticCurveTo(px + 20, py + (r() - 0.5) * 20, px + 40 + r() * 40, py + (r() - 0.5) * 10); xb.stroke(); }
-  return { c, cb };
-}
+// the hide: LifeKit.util.hide (lifekit.js), shared with the creature editor
+const hideCanvases = (P, hex) => U.hide(P, hex);
 const TAU = Math.PI * 2;
 
 // horn: rings in the bump, a darker tip

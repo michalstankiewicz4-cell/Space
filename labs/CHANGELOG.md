@@ -9,6 +9,23 @@ changes what a lab shows. The number lives in `js/labkit/menubar.js`
 `x.y.z`: **y** a new lab, tool or feature; **z** a fix or a small change;
 **x** a big turn (none yet).
 
+## [1.17.0] — 2026-10-06
+
+### Added
+- **The creature editor** (`labs/creator.html`): drag the spine's points
+  into shape (the wheel on a point: thicker or thinner; + / − point; the
+  height-to-width of each section), add pairs of legs anywhere along it
+  (drag the teal point, or sliders: length, thickness, spread from upright
+  to sprawled, the knee forward or back, hoof / paw / claws), eyes, the
+  colour and the pattern — rebuilt as you drag; PLAY: it walks or runs on
+  any number of legs (a wave of steps from the back pair to the front, the
+  sides half a cycle apart, feet planted by IK, the spine swaying — a
+  legless one glides on the sway alone), look around and crouch. Five
+  starts: grazer, biped runner, six-legged crawler, low sprawler, legless
+  glider. A design is JSON (COPY / LOAD), kept in this browser.
+- LifeKit: `design.js` (a creature from a design), `move/legs.js` (any
+  number of legs), `util.hide` (the painted hide, shared).
+
 ## [1.16.0] — 2026-10-06
 
 ### Added
