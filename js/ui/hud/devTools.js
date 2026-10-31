@@ -5,11 +5,11 @@ import { svgIcon } from "../icons.js";
 import { initPerfStats, setPerfStatsVisible, perfStatsVisible } from "./perfStats.js";
 import { t, onLangChange } from "../../i18n.js";
 
-// The labs: one button, their start screen (labs.html — every lab and tool
-// is a tile there), opened in a new tab. A button, not a link: no URL shown
+// The labs: one button, their start screen — the labs moved to GameLaboratory
+// (its own repository and site; every lab and tool is a tile there), opened in a new tab. A button, not a link: no URL shown
 // on hover.
 const LABS = [
-  ["labs.html", "all", '<rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/>'],
+  ["https://michalstankiewicz4-cell.github.io/GameLaboratory/", "all", '<rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/>'],
 ];
 function renderLabs(){
   const box = document.getElementById("devLabs");

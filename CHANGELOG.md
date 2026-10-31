@@ -4,6 +4,18 @@ All notable changes to the game, version by version. The version number is
 shown next to the title on the start screen and in the browser tab title
 (see [`js/version.js`](js/version.js)).
 
+## [2.38.2]
+
+### Changed
+- The labs moved to **GameLaboratory** (https://michalstankiewicz4-cell.github.io/GameLaboratory/, repository
+  `michalstankiewicz4-cell/GameLaboratory`, with their history). Removed here:
+  `labs/`, `labs.html`, `tools/` (model doctor, kitcheck, grain texture),
+  `js/labs/`, `js/labkit/`, the lab-only kits (`js/lifekit/`, `js/systemkit/`,
+  `js/vehiclekit/`, `js/marinekit/`, `js/musickit/`, `js/scalelab/`),
+  `css/lab.css` and the docs of those labs and kits. The game used none of
+  them. Dev Tools → LABS opens GameLaboratory; `sitemap.xml` without the lab
+  pages; `versionCheck.js` without `js/labkit/labkit.js`.
+
 ## [2.38.1]
 
 ### Fixed

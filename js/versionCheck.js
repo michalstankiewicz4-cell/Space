@@ -50,7 +50,7 @@ const MODULE_FILES = [
   "js/drone/interpreter.js", "js/drone/scriptFeatures.js", "js/env.js",
   "js/fx/breakup.js", "js/fx/impact.js", "js/fx/particles.js",
   "js/fx/trails.js", "js/galaxy/galaxyRender.js", "js/i18n.js",
-  "js/i18n/en.js", "js/i18n/pl.js", "js/labkit/labkit.js", "js/main.js",
+  "js/i18n/en.js", "js/i18n/pl.js", "js/main.js",
   "js/moderation.js", "js/net/biteBudget.js", "js/net/bodiesSync.js",
   "js/net/connect.js", "js/net/identity.js", "js/net/presence.js",
   "js/net/shipsBroadcast.js", "js/net/solarBodiesSync.js",

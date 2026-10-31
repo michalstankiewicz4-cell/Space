@@ -7,15 +7,11 @@ why and the history behind each item live in `docs/`:
 [`rendering.md`](docs/rendering.md) (models, graphics, post-processing),
 [`security.md`](docs/security.md),
 [`gotchas.md`](docs/gotchas.md), [`blogger.md`](docs/blogger.md),
-[`ship.md`](docs/ship.md) / [`bodies.md`](docs/bodies.md) (the labs),
-[`scale.md`](docs/scale.md) (sizes; `scale.html`), [`skins.md`](docs/skins.md)
-(`skins.html`), [`systems.md`](docs/systems.md) (`systems.html`, SystemKit),
-[`surface.md`](docs/surface.md) (`surface.html` / `buildings.html`, SurfaceKit, BaseKit),
-[`vehicles.md`](docs/vehicles.md) (`vehicles.html`, VehicleKit),
-[`marine.md`](docs/marine.md) (`marine.html`, MarineKit),
-[`doctor.md`](docs/doctor.md) (the model doctor, `tools/doctor.html`),
-[`sound.md`](docs/sound.md) (`sound.html`, MusicKit — not in the game yet),
-[`life.md`](docs/life.md) (`life.html`, LifeKit — not in the game yet). **Read the relevant doc before changing a subsystem** —
+[`ship.md`](docs/ship.md) (ShipKit) / [`bodies.md`](docs/bodies.md) (BodyKit),
+[`surface.md`](docs/surface.md) (SurfaceKit, BaseKit). **The labs, their kits, LabKit,
+the model doctor and kitcheck moved to GameLaboratory** (repo
+`michalstankiewicz4-cell/GameLaboratory`, with their history; Dev Tools → LABS opens it) —
+mentions of labs below are history. **Read the relevant doc before changing a subsystem** —
 the long ones have a Contents block: grep `^## ` and read only that section.
 [`README.md`](README.md) has the file map, [`CHANGELOG.md`](CHANGELOG.md)
 the versions, [`IDEAS.md`](IDEAS.md) the plans and open threads.
@@ -61,7 +57,7 @@ the player's own progress stays in `localStorage`.
   (`js/labkit/`, `css/lab.css`),
   `tools/`, the devlog (`blog/`, Blogger), and `.md`-only edits — those are
   plain commits, no changelog entry.
-- **The labs' own version** (the user's call, 2026-10-05): every change to
+- **The labs' own version** (history — the labs now version themselves in GameLaboratory) (the user's call, 2026-10-05): every change to
   a lab (`labs/`, `labs.html`, `js/labs/`), a tool (`tools/`), LabKit or the
   menu bar (`js/labkit/`) — or a kit change that changes what a lab shows —
   bumps `LABS_VERSION` in `js/labkit/menubar.js` (y: a new lab, tool or
@@ -72,7 +68,7 @@ the player's own progress stays in `localStorage`.
   links), or "Refresh now" silently misses it.
 - **Testing**: no test suite. A local server (`python -m http.server
   8877`) + a throwaway Playwright script in the scratchpad (screenshots,
-  console/pageerror listeners). **Kits and labs: `tools/kitcheck.html`**.
+  console/pageerror listeners). **Kits: GameLaboratory's `tools/kitcheck.html`** (the shared kits are copied there).
   - It holds the fingerprints of every default model (ShipKit, BodyKit,
     BaseKit, VehicleKit, MarineKit, SystemKit) against
     `tools/kitcheck.golden.json`, and opens every lab looking for errors.

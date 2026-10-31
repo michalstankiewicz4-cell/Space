@@ -43,13 +43,8 @@ js/
   bodykit/           BodyKit — every procedural celestial body: the core (bodykit.js) + kinds/<kind>.js
                      (planets, giants, pulsars, suns, rocks, holes, sky); classic scripts shared with the
                      body lab (bodies.html); see docs/bodies.md
-  labkit/            LabKit — what the ship, body and system labs share around their models (grain, sliders, idle hiding,
-                     HUD scale, performance counters, image effects); styles in css/lab.css; menubar.js: the
-                     FILES / OPTIONS / TOOLS / HELP bar on every lab and tool page (the lists of labs and tools)
   galaxy/            the galaxy map's picture: the Milky Way from above as one WebGL shader
                      (galaxyRender.js; the window is ui/windows/galaxyMap.js, key M)
-  systemkit/         SystemKit — star systems from BodyKit's bodies (data, presets, a seeded
-                     generator, building); the system lab's (systems.html), not in the game yet
   surface/           the game's ground view: down to a planet with a watched landing ship
                      (groundView.js, on SurfaceKit's ground); docs/surface.md
   surfacekit/        SurfaceKit — a planet's ground up close (cube-sphere tiles from BodyKit's
@@ -58,20 +53,6 @@ js/
                      shared by the surface lab (surface.html) and the game; see docs/surface.md
   basekit/           BaseKit — planetary base modules from ShipKit's generators (built, hologram,
                      under construction); the building and surface labs' and the game's ground
-  vehiclekit/        VehicleKit — robot ground vehicles from ShipKit's generators (suspension, steering,
-                     tracks, dust, lamps, work); the vehicle lab's (vehicles.html), not in the game yet
-  musickit/          MusicKit — the game's music generated live (Web Audio): layers over a seeded chord
-                     progression, moods, a robot voice; the sound lab's (labs/sound.html), not in the game yet
-  lifekit/           LifeKit — life forms from blocks: skeletons, swept bodies skinned to them, rigid
-                     heads, hands and feet; move/ (walk.js: a biped's gaits; quad.js: four legs), parts/ (face.js: a head
-                     with openings and expressions as morph targets), creatures/ (human.js: two low-poly humans; strider.js: a grazer), design.js + move/legs.js (the creature editor's),
-                     data/ (bust-head.js, human-head.js: CC BY low-poly heads, Humans I and II);
-                     the life lab's (labs/life.html), not in the game yet
-  marinekit/         MarineKit — the sea (waves the same in JS and GLSL, a seabed with an island, under water)
-                     and robot vessels (foils, a barge, a submersible, an amphibian); the sea lab's (marine.html)
-  labs/              each lab's own script (ship.js, bodies.js, systems.js, skins.js, surface.js,
-                     buildings.js, vehicles.js, marine.js): its scene and panels, wired to the kits;
-                     the lab pages (*.html) keep the markup and styles; scale.html's is js/scalelab/
   postkit/           PostKit — post-processing (bloom, MSAA, FXAA, lensing, depth of field, sun
                      flare, the "robot eyes" filter) and the labs' IMAGE EFFECTS panel, one classic
                      script shared by the game (scene/post.js) and both labs
@@ -145,42 +126,13 @@ supabase/schema.sql  database schema (tables, RLS, RPC functions) to paste into 
 
 `admin.html`/`css/admin.css`/`css/devTheme.css`/`js/admin/` is a separate
 developer-tool entry point, not part of the game's own module graph above —
-see "Admin panel" below. **The labs**: their start screen `labs.html` in
-the root (a tile for every lab and tool), the
-labs themselves in `labs/` (`labs/ship.html`, `labs/bodies.html`, …), all
-with the menu bar (`js/labkit/menubar.js`). The labs have their own
-version (`LABS_VERSION` in the menu bar) and changelog,
-[`labs/CHANGELOG.md`](labs/CHANGELOG.md). The old root addresses
-(`ship.html`…) were removed on 2026-10-05 (the user's call): the devlog's
-older links to them no longer work.
-`ship.html` and `bodies.html` are standalone
-labs for procedural ships and celestial bodies; their models live in
-`js/shipkit/` and `js/bodykit/`, shared with the game (they replaced the
-older `planetEditor.html` and `shipEditor.html`, removed in v2.2.1) — see
-[`docs/ship.md`](docs/ship.md) and
-[`docs/bodies.md`](docs/bodies.md). `scale.html` (+ `js/scalelab/`) is the
-scale lab: every game object in one row at its in-game size, sizes
-imported from the game's own modules (needs the local server) — see
-[`docs/scale.md`](docs/scale.md). `skins.html` is the skin lab: a standalone
-prototype of the in-game HUD in two new looks (a green CRT terminal and a
-colourful code-editor theme), switchable, not yet part of the game — see
-[`docs/skins.md`](docs/skins.md). `systems.html` is the system lab: star
-systems built from the body lab's bodies — presets, random systems from a
-seed, editing (centres, orbits, rings, moons, background) — see
-[`docs/systems.md`](docs/systems.md). `surface.html` is the surface lab
-(land on a planet, drive, found a base) and `buildings.html` the building
-lab (the base modules) — see [`docs/surface.md`](docs/surface.md).
-`vehicles.html` is the vehicle lab: robot ground vehicles driving over
-rough ground — see [`docs/vehicles.md`](docs/vehicles.md). `marine.html` is
-the sea lab: waves, the seabed, diving, robot vessels — see
-[`docs/marine.md`](docs/marine.md).
-`tools/` holds small standalone dev
-utilities (e.g. `grainTexture.html`, which regenerates `css/ui/grain.png`,
-and `kitcheck.html`, the kits' and labs' safety net: every default model's
-fingerprint against `kitcheck.golden.json`, every lab checked for errors;
-and `doctor.html`, the model doctor: every kit model examined for repeating
-mistakes — see [`docs/doctor.md`](docs/doctor.md)). `blog/` isn't part of the game at all — see "Devlog"
-below.
+see "Admin panel" below. **The labs** (the ship, body, system, scale, skin, surface, building, vehicle,
+sea, sound, life labs and the creature editor), LabKit, the lab-only kits
+(SystemKit, VehicleKit, MarineKit, MusicKit, LifeKit), the model doctor and
+kitcheck **moved to GameLaboratory** (repository
+`michalstankiewicz4-cell/GameLaboratory`, with their history;
+https://michalstankiewicz4-cell.github.io/GameLaboratory/). Dev Tools → LABS opens it.
+ShipKit, BodyKit, SurfaceKit, BaseKit and PostKit stay here — the game uses them.
 
 Adding a new mechanic (e.g. another upgrade type, a new kind of celestial
 body) usually means editing a single file in the right folder, without
